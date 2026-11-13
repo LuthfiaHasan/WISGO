@@ -483,7 +483,7 @@ class _QrisPainter extends CustomPainter {
     _drawFinder(canvas, 10, size.height - 45, black);
 
     // Inner QR Matrix Dots
-    final step = 8.0;
+    const step = 8.0;
     for (double x = 15; x < size.width - 15; x += step) {
       for (double y = 15; y < size.height - 15; y += step) {
         // Skip corner finders
