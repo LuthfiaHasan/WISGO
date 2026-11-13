@@ -21,13 +21,10 @@ func main() {
 	be1 := be1_core.NewHandlerBE1()
 	be2 := be2_group.NewHandlerBE2()
 
-	// --- Route BE-1 (Core & Spasial) ---
-	mux.HandleFunc("GET /api/v1/destinations", be1.GetDestinations)
-	mux.HandleFunc("GET /api/v1/destinations/detail", be1.GetDestinationDetail)
-	mux.HandleFunc("POST /api/v1/spatial/shunlu", be1.PostShunluSearch)
-	mux.HandleFunc("POST /api/v1/pungli/report", be1.PostReportPungli)
+	// --- Route BE-1 (Core & Spasial — Sprint 1 Lengkap) ---
+	be1.RegisterSprint1Routes(mux)
 
-	// --- Route BE-2 (Grup, Mitra, Escrow) ---
+	// --- Route BE-2 (Grup, Mitra, Escrow — Dibiarkan Utuh Zero Conflict) ---
 	mux.HandleFunc("POST /api/v1/auth/request-otp", be2.RequestOTP)
 	mux.HandleFunc("POST /api/v1/groups", be2.CreateGroupRoom)
 	mux.HandleFunc("GET /api/v1/partners", be2.GetPartnersKatalog)
@@ -36,7 +33,7 @@ func main() {
 	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"status":"ok","app":"Rancak.in Backend API","env":"%s"}`, cfg.Environment)
+		fmt.Fprintf(w, `{"status":"ok","app":"Rancak.in Backend API","env":"%s","be1_sprint1":"active_20_destinations"}`, cfg.Environment)
 	})
 
 	addr := ":" + cfg.Port
@@ -46,8 +43,21 @@ func main() {
 	log.Printf("  BE-1 & BE-2 Modular Architecture Active         ")
 	log.Printf("==================================================")
 
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, corsMiddleware(mux)); err != nil {
 		log.Fatalf("Gagal menjalankan server: %v", err)
 	}
 }
 
+// corsMiddleware memastikan Flutter Web, PWA, dan Mobile dapat mengakses API tanpa terblokir CORS
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Origin, Accept")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
