@@ -7,11 +7,11 @@ import '../models/destination_model.dart';
 /// Layar 07 · Kanvas Tur Virtual 360° (Aerial-to-Ground & 4 Pin Interaktif)
 /// Pilar 1: Eksplorasi Visual 360° & Budaya Minang
 class VirtualTour360Screen extends StatefulWidget {
-  final DestinationModel destination;
+  final DestinationModel? destination;
 
   const VirtualTour360Screen({
     super.key,
-    required this.destination,
+    this.destination,
   });
 
   @override
@@ -19,6 +19,20 @@ class VirtualTour360Screen extends StatefulWidget {
 }
 
 class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
+  static const DestinationModel _defaultDest = DestinationModel(
+    id: 'dest-harau',
+    name: 'Lembah Harau (Nagari Harau)',
+    category: 'Alam',
+    cityRegency: 'Kab. Lima Puluh Kota',
+    description:
+        'Lembah tebing granit eksotis dengan air terjun dan panorama 360 derajat.',
+    latitude: -0.1023,
+    longitude: 100.6728,
+    crowdLevel: 'Sedang',
+  );
+
+  DestinationModel get _dest => widget.destination ?? _defaultDest;
+
   bool _isAerialMode = true;
   bool _isGyroEnabled = true;
   bool _isSpatialAudioPlaying = false;
@@ -26,7 +40,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   double _pitchAngle = -5.0;
 
   String get _currentPanoramaUrl {
-    final scenes = widget.destination.scenes360;
+    final scenes = _dest.scenes360;
     if (scenes.isNotEmpty) {
       final targetType = _isAerialMode ? 'aerial' : 'ground';
       final matched = scenes.where((s) => s.type == targetType).toList();
@@ -40,7 +54,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   }
 
   List<Hotspot360Model> get _currentHotspots {
-    final scenes = widget.destination.scenes360;
+    final scenes = _dest.scenes360;
     if (scenes.isNotEmpty) {
       final targetType = _isAerialMode ? 'aerial' : 'ground';
       final matched = scenes.where((s) => s.type == targetType).toList();
@@ -314,7 +328,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tur 360° · ${widget.destination.name}',
+              'Tur 360° · ${_dest.name}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,

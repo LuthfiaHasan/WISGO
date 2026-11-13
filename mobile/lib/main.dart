@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/theme/app_colors.dart';
-import 'features/fe1_visual_map/fe1_main_shell.dart';
+import 'features/auth/presentation/screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +41,7 @@ class WisgoApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const Fe1MainShell(),
+      home: const SplashScreen(),
     );
   }
 }

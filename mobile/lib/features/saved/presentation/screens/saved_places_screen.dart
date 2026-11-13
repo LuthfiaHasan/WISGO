@@ -8,9 +8,78 @@ import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
+import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
+import '../../../fe1_visual_map/destination_detail/destination_detail_screen.dart';
+import '../../../fe1_visual_map/hazard_alert_sos/hazard_sos_screen.dart';
+import '../../../fe1_visual_map/map_explore_shunlu/map_explore_screen.dart';
+import '../../../fe1_visual_map/models/destination_model.dart';
+import '../../../fe1_visual_map/offline_pocket/offline_pocket_screen.dart';
+import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
 import '../widgets/saved_skeleton_shimmer.dart';
+
+/// Extension untuk menjembatani model FE-2 dengan layar detail FE-1
+extension SavedDestinationModelFe1Bridge on SavedDestinationModel {
+  DestinationModel toFe1Destination() {
+    return DestinationModel(
+      id: id,
+      name: title,
+      category: natureType == 'ALL' ? 'Alam' : natureType,
+      cityRegency: subRegion,
+      description:
+          'Destinasi wisata $title berlokasi di $subRegion, Sumatera Barat. Dikelola resmi dengan transparansi tiket dan fasilitas sesuai regulasi $perdaRef.',
+      latitude: -0.95,
+      longitude: 100.35,
+      coverImage: imageUrl,
+      crowdLevel: 'Sedang',
+      distanceKm:
+          '${distanceKm.toStringAsFixed(distanceKm.truncateToDouble() == distanceKm ? 0 : 1)} km',
+      travelTime: duration,
+      entryFee: 'Rp ${calcRates.tiket}',
+      medanIndicator: MedanIndicatorModel(
+        id: 'medan-$id',
+        destinationId: id,
+        vehicleAccess: 'Mobil OK',
+        trekkingLevel: terrainNote.toLowerCase().contains('jalan kaki') ||
+                terrainNote.toLowerCase().contains('trekking')
+            ? 'Sedang (Jalan Kaki)'
+            : 'Mudah (Datar)',
+        cellularSignal: 'Sinyal Lemah / Siap Luring',
+        facilities: facilities.join(', '),
+        guideNeed: 'Bisa Mandiri',
+      ),
+      tips: [
+        LocalTipModel(
+          id: 'tip-$id-1',
+          destinationId: id,
+          content:
+              'Simpan tiket QR digital di perangkat Anda sebelum tiba di lokasi agar tidak terkendala sinyal lemah.',
+          isImportant: true,
+        ),
+        LocalTipModel(
+          id: 'tip-$id-2',
+          destinationId: id,
+          content:
+              'Patuhi tata tertib lokal dan gunakan tarif resmi sesuai $perdaRef.',
+          isImportant: false,
+        ),
+      ],
+      tariffs: tariffs
+          .map((t) => OfficialTariffModel(
+                id: '$id-${t.name}',
+                destinationId: id,
+                itemName: t.name,
+                price: (int.tryParse(t.official.replaceAll(RegExp(r'\D'), '')) ??
+                        10000)
+                    .toDouble(),
+                unit: t.note.isNotEmpty ? t.note : 'per orang/kendaraan',
+                regulationRef: perdaRef,
+              ))
+          .toList(),
+    );
+  }
+}
 
 /// Layar Utama WISGO (1:1 dari `wisgo_interactive_3d_prototype (1).html`):
 /// - Minimal Editorial Status Bar (`09:41 | WISGO SUMBAR | Daring / Tanpa Sinyal`)
@@ -532,7 +601,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
+
+              // Fitur Wisata Pintar (FE-1: Shunlu, SOS Jalur Rawan, Kamus Budaya, Luring & 360)
+              _buildFe1QuickFeatureRow(),
+              const SizedBox(height: 12),
 
               // Search Bar (REQUEST 2)
               Container(
@@ -813,6 +886,178 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // NAVIGASI FITUR PINTAR INTEGRASI FE-1 & DETAIL MEDAN (LAYAR 01, 02, 03, 07)
+  // ===========================================================================
+  void _openFe1DetailScreen(SavedDestinationModel place) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DestinationDetailScreen(
+          destination: place.toFe1Destination(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFe1QuickFeatureRow() {
+    final features = [
+      {
+        'title': 'Peta Shunlu',
+        'sub': 'Detour & Pejalan Kaki',
+        'icon': Icons.alt_route_rounded,
+        'badge': 'OSM v8',
+        'action': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MapExploreShunluScreen()),
+            ),
+      },
+      {
+        'title': 'Jalur Rawan & SOS',
+        'sub': 'Sitinjau Lauik & Anai',
+        'icon': Icons.warning_amber_rounded,
+        'badge': 'Siaga Bencana',
+        'action': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HazardSosScreen()),
+            ),
+      },
+      {
+        'title': 'Kamus Minang',
+        'sub': 'Audio Guide & Budaya',
+        'icon': Icons.record_voice_over_rounded,
+        'badge': 'Kamus Audio',
+        'action': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AudioCultureScreen()),
+            ),
+      },
+      {
+        'title': 'Mode Luring',
+        'sub': 'Paket Blank Spot',
+        'icon': Icons.offline_pin_rounded,
+        'badge': 'Offline Pack',
+        'action': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const OfflinePocketScreen()),
+            ),
+      },
+      {
+        'title': 'Tur 360° Panorama',
+        'sub': 'Sensor Gyroscope',
+        'icon': Icons.view_in_ar_rounded,
+        'badge': '360 Gyro',
+        'action': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const VirtualTour360Screen()),
+            ),
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'FITUR WISATA PINTAR (FE-1):',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.8,
+            color: AppColors.muted,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: features.map((feat) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: feat['action'] as VoidCallback,
+                  child: Container(
+                    width: 160,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.sageBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.ink.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppColors.sage,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                feat['icon'] as IconData,
+                                size: 14,
+                                color: AppColors.forest,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: AppColors.creamSubtle,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                feat['badge'] as String,
+                                style: const TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.brush,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          feat['title'] as String,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          feat['sub'] as String,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            color: AppColors.muted,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],
@@ -1348,20 +1593,23 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Visual Image Header (h-40 = 160px)
-          SizedBox(
-            height: 160,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(color: AppColors.forest),
-                Image.network(
-                  place.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: AppColors.forest),
-                ),
+          // Visual Image Header (h-40 = 160px) - Ketuk untuk Buka Layar 02 FE-1
+          GestureDetector(
+            onTap: () => _openFe1DetailScreen(place),
+            behavior: HitTestBehavior.opaque,
+            child: SizedBox(
+              height: 160,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(color: AppColors.forest),
+                  Image.network(
+                    place.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: AppColors.forest),
+                  ),
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -1484,6 +1732,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ],
             ),
           ),
+        ),
 
           // Card Content Body (Clean & User Friendly - NO FEE TABLE ON CARD)
           Padding(
@@ -2106,6 +2355,59 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           'Buka bagian bawah Tabel Tarif untuk melapor pungli',
                         );
                       },
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Peta Shunlu & Detour Rute (Layar 03)',
+                      subtitle:
+                          'Navigasi rute Padang - Harau & denah mikro pejalan kaki',
+                      badge: 'Peta OSM',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MapExploreShunluScreen(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Kamus Minang & Audio Panduan Budaya',
+                      subtitle:
+                          'Pelajari frasa Minang autentik, audio playback & kalender acara nagari',
+                      badge: 'Budaya',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AudioCultureScreen(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Peringatan Jalur Rawan Bencana & SOS GPS',
+                      subtitle:
+                          'Pantau status longsor Sitinjau Lauik, Lembah Anai & tombol darurat',
+                      badge: 'Darurat',
+                      isWarning: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HazardSosScreen(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Manajemen Mode Luring (Pocket Bundle)',
+                      subtitle:
+                          'Unduh paket wisata daerah terpencil tanpa koneksi internet',
+                      badge: 'Luring',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OfflinePocketScreen(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -2800,6 +3102,55 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                 yaw: _yaw,
                 pitch: _pitch,
                 placeTitle: widget.place.title,
+              ),
+            ),
+          ),
+        ),
+
+        // Tombol Mode Sensor Gyroscope Interaktif FE-1 (Layar 07)
+        Positioned(
+          top: 12,
+          right: 14,
+          child: GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => VirtualTour360Screen(
+                    destination: widget.place.toFe1Destination(),
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.forest,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.screen_rotation_rounded,
+                      size: 14, color: AppColors.cream),
+                  SizedBox(width: 5),
+                  Text(
+                    'Sensor Gyro 360° Penuh',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.cream,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -4200,6 +4551,47 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                 ),
                               ),
                               TextSpan(text: widget.place.terrainNote),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DestinationDetailScreen(
+                                destination: widget.place.toFe1Destination(),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.forest,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.terrain_rounded, color: AppColors.cream, size: 15),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Panduan Medan (Layar 02 FE-1)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.cream,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
-import '../saved/presentation/screens/saved_places_screen.dart';
 import 'audio_guide_culture/audio_culture_screen.dart';
 import 'hazard_alert_sos/hazard_sos_screen.dart';
 import 'home/home_screen.dart';
@@ -67,25 +66,6 @@ class _Fe1MainShellState extends State<Fe1MainShell> {
           ),
         ],
       ),
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton.extended(
-              heroTag: 'fe2_bridge_btn',
-              backgroundColor: AppColors.green800,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              icon: const Icon(Icons.swap_horiz_rounded, size: 20),
-              label: const Text(
-                'Buka Fitur FE-2 (Tersimpan & QR)',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SavedPlacesScreen()),
-                );
-              },
-            )
-          : null,
     );
   }
 }
