@@ -2979,28 +2979,56 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Bottom Action Button to Detail
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: widget.onOpenDetail,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.forest,
-                foregroundColor: AppColors.cream,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          // Bottom Action: Buka Navigasi Peta Rute & Google Maps
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showMapNavigationSheet(
+                      context,
+                      widget.place,
+                      _selectedDenahType,
+                      widget.onOpenDetail,
+                    );
+                  },
+                  icon: const Icon(Icons.directions_rounded, size: 18),
+                  label: const Text(
+                    'Buka Peta & Rute Navigasi',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                 ),
               ),
-              child: const Text(
-                'Buka Detail Wisata, Ulasan & Biaya Resmi',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: widget.onOpenDetail,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.forest,
+                  side: const BorderSide(color: AppColors.warmBorder),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Detail',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -3098,6 +3126,383 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
       ),
     );
   }
+}
+
+// =============================================================================
+// MODAL PETA NAVIGASI & RUTE LOKASI (GOOGLE MAPS)
+// =============================================================================
+
+void _showMapNavigationSheet(
+  BuildContext context,
+  SavedDestinationModel place,
+  String targetFacility,
+  VoidCallback onOpenDetail,
+) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => _MapNavigationSheet(
+      place: place,
+      targetFacility: targetFacility,
+      onOpenDetail: onOpenDetail,
+    ),
+  );
+}
+
+class _MapNavigationSheet extends StatelessWidget {
+  final SavedDestinationModel place;
+  final String targetFacility;
+  final VoidCallback onOpenDetail;
+
+  const _MapNavigationSheet({
+    required this.place,
+    required this.targetFacility,
+    required this.onOpenDetail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final facilityName = targetFacility == 'PARKIR'
+        ? 'Tempat Parkir Resmi'
+        : targetFacility == 'LOKET'
+            ? 'Loket Tiket Pokdarwis'
+            : targetFacility == 'UMKM'
+                ? 'Warung UMKM Makanan'
+                : targetFacility == 'TOILET'
+                    ? 'Toilet & Sanitasi'
+                    : targetFacility == 'MUSHOLLA'
+                        ? 'Musholla & Tempat Ibadah'
+                        : targetFacility;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(top: 10, bottom: 6),
+            decoration: BoxDecoration(
+              color: AppColors.warmBorder,
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 6, 18, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'PETA NAVIGASI & RUTE LOKASI',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          color: AppColors.brush,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        place.title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.warmBorder),
+
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(18),
+              children: [
+                // Info Card
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.sageBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.sage,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Menuju: $facilityName',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              place.subRegion,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${place.distanceKm} km',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                          Text(
+                            '± ${place.distanceKm * 2} mnt',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Simulated Live GPS Map Container
+                Container(
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEBF2ED),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.forest, width: 2),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Road Path CustomPaint
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _RouteMapPainter(),
+                        ),
+                      ),
+
+                      // Status GPS pill
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.sageBorder),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.gps_fixed_rounded, size: 12, color: Colors.green),
+                              SizedBox(width: 4),
+                              Text(
+                                'GPS Aktif • Akurasi 5m',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Turn guidance strip at bottom
+                      Positioned(
+                        bottom: 10,
+                        left: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.sageBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.turn_right_rounded, color: AppColors.forest, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Akses via ${place.subRegion} menuju area parkir & fasilitas resmi.',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Start Navigation Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Membuka rute GPS Google Maps menuju ${place.title}...'),
+                          backgroundColor: AppColors.forest,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.navigation_rounded, size: 18),
+                    label: const Text(
+                      'Mulai Navigasi Langsung di Google Maps',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.forest,
+                      foregroundColor: AppColors.cream,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Check Detail Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onOpenDetail();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.forest,
+                      side: const BorderSide(color: AppColors.warmBorder),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Lihat Rincian Biaya & Tiket Masuk Resmi',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteMapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Background terrain curves
+    final greenPaint = Paint()
+      ..color = const Color(0xFFCCE0D1)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.2), 60, greenPaint);
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.8), 80, greenPaint);
+
+    // Road path
+    final roadPaint = Paint()
+      ..color = const Color(0xFFD5DFD7)
+      ..strokeWidth = 14
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path()
+      ..moveTo(size.width * 0.15, size.height * 0.85)
+      ..cubicTo(
+        size.width * 0.35, size.height * 0.70,
+        size.width * 0.55, size.height * 0.40,
+        size.width * 0.82, size.height * 0.25,
+      );
+    canvas.drawPath(path, roadPaint);
+
+    // Active GPS Line (Orange)
+    final gpsPaint = Paint()
+      ..color = const Color(0xFFE65F2B)
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, gpsPaint);
+
+    // Start point (Padang GPS)
+    final startPaint = Paint()..color = AppColors.forest;
+    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.85), 7, startPaint);
+    final startInner = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.85), 3, startInner);
+
+    // End point (Target pin)
+    final endPaint = Paint()..color = const Color(0xFFE65F2B);
+    canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.25), 9, endPaint);
+    final endInner = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.25), 4, endInner);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // =============================================================================
