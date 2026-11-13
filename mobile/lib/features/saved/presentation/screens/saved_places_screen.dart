@@ -2543,6 +2543,77 @@ class _CurvedNotchBarPainter extends CustomPainter {
 // MODAL BOTTOM SHEETS: 360° & DENAH, DETAIL & ULASAN, CHECKOUT WISGO ESCROW
 // =============================================================================
 
+class _Facility360Data {
+  final String category;
+  final String title;
+  final String label;
+  final String imageUrl;
+  final String badge;
+  final String description;
+  final String subDetail;
+  final double yaw;
+  final IconData icon;
+
+  const _Facility360Data({
+    required this.category,
+    required this.title,
+    required this.label,
+    required this.imageUrl,
+    required this.badge,
+    required this.description,
+    required this.subDetail,
+    required this.yaw,
+    required this.icon,
+  });
+}
+
+const List<_Facility360Data> _k360Facilities = [
+  _Facility360Data(
+    category: 'PARKIR',
+    title: 'Tempat Parkir Resmi Kendaraan',
+    label: 'Tempat Parkir',
+    imageUrl: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=800&q=80',
+    badge: 'Parkir Resmi Pokdarwis',
+    description: 'Area parkir beratap pepohonan rindang dengan penjagaan pemuda nagari. Karcis resmi sesuai Perda tanpa pungli liar.',
+    subDetail: 'Kapasitas 40 Mobil & 120 Motor • Karcis Resmi Rp 5.000 / Rp 10.000',
+    yaw: -70.0,
+    icon: Icons.local_parking_rounded,
+  ),
+  _Facility360Data(
+    category: 'UMKM',
+    title: 'Warung Kuliner UMKM Tradisional Minang',
+    label: 'UMKM Kuliner Minang',
+    imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+    badge: 'Kuliner Nagari • Standar Tarif',
+    description: 'Menyajikan hidangan lokal nagari: Nasi Kapau, sate lokan, kelapa muda murni segar, dan gorengan hangat dengan daftar menu berharga pasti.',
+    subDetail: 'Menu Transparan • Kelapa Muda Rp 12.000 • Kopi Nagari Rp 8.000',
+    yaw: 15.0,
+    icon: Icons.restaurant_rounded,
+  ),
+  _Facility360Data(
+    category: 'TOILET',
+    title: 'Toilet Bersih & Kamar Bilas Pos 1',
+    label: 'Toilet & Bilas',
+    imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
+    badge: 'Sanitasi & Bilas Segar',
+    description: 'Fasilitas kamar mandi dan bilas menggunakan air sumber pegunungan alami yang dingin dan jernih, dirawat rutin oleh pengelola.',
+    subDetail: 'Air Alami Sumber Pegunungan • Kebersihan Terawat Rutin',
+    yaw: 65.0,
+    icon: Icons.wc_rounded,
+  ),
+  _Facility360Data(
+    category: 'MUSHOLLA',
+    title: 'Musholla Al-Ikhlas Pos 1 Wisata',
+    label: 'Musholla',
+    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80',
+    badge: 'Tempat Ibadah • Terverifikasi',
+    description: 'Musholla bernuansa kayu asri khas nagari. Tersedia tempat wudhu dengan air alami yang mengalir segar dan perlengkapan sholat bersih.',
+    subDetail: 'Air Wudhu Alami Mengalir • Mukena & Sajadah Bersih • Buka 24 Jam',
+    yaw: 115.0,
+    icon: Icons.mosque_rounded,
+  ),
+];
+
 class _Explore360AndDenahSheet extends StatefulWidget {
   final SavedDestinationModel place;
   final VoidCallback onOpenDetail;
@@ -2559,6 +2630,7 @@ class _Explore360AndDenahSheet extends StatefulWidget {
 class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   String _subTab = '360'; // '360' | 'denah'
   String _selectedDenahType = 'UMKM';
+  _Facility360Data? _selectedFacility360;
   double _yaw = 0.0;
   double _pitch = 0.0;
 
@@ -2709,6 +2781,8 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   }
 
   Widget _build360PanoramaView() {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Stack(
       children: [
         // Pan gesture detector over panorama
@@ -2731,7 +2805,78 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
           ),
         ),
 
-        // Floating Badges in 360 scene
+        // Interactive Hotspot Pins pinned directly onto the 360 scene
+        ..._k360Facilities.map((facility) {
+          double delta = (facility.yaw - _yaw) % 360.0;
+          if (delta > 180.0) delta -= 360.0;
+          if (delta < -180.0) delta += 360.0;
+
+          // Only visible when in field of view (-60 to +60 deg)
+          if (delta.abs() > 60.0) return const SizedBox.shrink();
+
+          final screenX = (screenWidth / 2) + (delta / 60.0) * (screenWidth * 0.42);
+          final screenY = 220.0 + (_pitch * 1.5);
+
+          final isSelected = _selectedFacility360?.category == facility.category;
+
+          return Positioned(
+            top: screenY,
+            left: screenX - 60,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedFacility360 = facility;
+                  _yaw = facility.yaw;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.90),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? Colors.white : AppColors.sageBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white : Colors.greenAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Icon(facility.icon, size: 12, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      facility.label,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+
+        // Interactive Badges/Pills on top of 360 scene
         Positioned(
           top: 14,
           left: 14,
@@ -2740,66 +2885,206 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
             alignment: WrapAlignment.center,
             spacing: 8,
             runSpacing: 6,
-            children: [
-              _buildScenePill('Tempat Parkir', Icons.local_parking_rounded),
-              _buildScenePill('UMKM Kuliner Minang', Icons.restaurant_rounded),
-              _buildScenePill('Toilet & Bilas', Icons.wc_rounded),
-              _buildScenePill('Musholla', Icons.mosque_rounded),
-            ],
+            children: _k360Facilities.map((facility) {
+              final isSelected = _selectedFacility360?.category == facility.category;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedFacility360 = facility;
+                    _yaw = facility.yaw;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.white30,
+                      width: isSelected ? 1.8 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(facility.icon, size: 12, color: isSelected ? Colors.white : AppColors.sage),
+                      const SizedBox(width: 4),
+                      Text(
+                        facility.label,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: isSelected ? Colors.white : AppColors.cream,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
 
-        // Bottom gesture prompt
-        Positioned(
-          bottom: 18,
-          left: 20,
-          right: 20,
-          child: Center(
+        // Floating Photo Preview Card when a facility is tapped
+        if (_selectedFacility360 != null)
+          Positioned(
+            bottom: 12,
+            left: 14,
+            right: 14,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.ink.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white24),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: const Text(
-                'Sentuh & geser layar untuk melihat sekeliling 360°',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.cream,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Facility Real Photo
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          _selectedFacility360!.imageUrl,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, error, stackTrace) => Container(
+                            width: 80,
+                            height: 80,
+                            color: AppColors.sage,
+                            child: Icon(_selectedFacility360!.icon, color: AppColors.forest, size: 32),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sage,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    _selectedFacility360!.badge,
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.forest,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => setState(() => _selectedFacility360 = null),
+                                  child: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _selectedFacility360!.title,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _selectedFacility360!.description,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.muted,
+                                height: 1.25,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _showMapNavigationSheet(
+                              context,
+                              widget.place,
+                              _selectedFacility360!.category,
+                              widget.onOpenDetail,
+                            );
+                          },
+                          icon: const Icon(Icons.directions_rounded, size: 16),
+                          label: const Text(
+                            'Buka Rute di Peta (Google Maps)',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.forest,
+                            foregroundColor: AppColors.cream,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          // Bottom gesture prompt when no facility is selected
+          Positioned(
+            bottom: 18,
+            left: 20,
+            right: 20,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.ink.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Text(
+                  'Sentuh & geser layar untuk melihat sekeliling 360°',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.cream,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildScenePill(String label, IconData iconData) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.ink.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white30),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(iconData, size: 12, color: AppColors.sage),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
-              color: AppColors.cream,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
