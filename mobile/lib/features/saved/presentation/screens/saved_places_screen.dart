@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
@@ -446,36 +447,54 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       filtered.sort((a, b) => b.rating.compareTo(a.rating));
     }
 
-    return Column(
+    return Stack(
       children: [
-        // Sticky Region & Nature Sub-Category Navigator Header
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-          decoration: const BoxDecoration(
-            color: AppColors.cream,
-            border: Border(
-              bottom: BorderSide(color: AppColors.warmBorder),
-            ),
+        CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          slivers: [
+            // Pinned Frosted Glass App Bar Header
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              automaticallyImplyLeading: false,
+              toolbarHeight: 56,
+              titleSpacing: 16,
+              flexibleSpace: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.cream.withValues(alpha: 0.82),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.warmBorder.withValues(alpha: 0.70),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'DIREKTORI WILAYAH & BIAYA RESMI',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 1.3,
+                            letterSpacing: 1.2,
                             color: AppColors.brush,
                           ),
                         ),
@@ -483,7 +502,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Text(
                           'Jelajah Daerah Sumbar',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                             letterSpacing: -0.4,
@@ -493,6 +512,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                   ),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       GestureDetector(
                         onTap: _openQrScannerModal,
@@ -503,6 +523,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.qr_code_scanner_rounded, size: 13, color: AppColors.cream),
                               SizedBox(width: 4),
@@ -541,431 +562,442 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+            ),
 
-              // Quick Trip Planner & Group Room Banner (ITEM 10, 11, 12)
-              GestureDetector(
-                onTap: _openTripPlannerModal,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.forest, AppColors.brush],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.forest.withValues(alpha: 0.18),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.route_rounded, color: AppColors.cream, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Perencana Trip Rombongan',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Durasi hari, estimasi anggaran & tautan grup',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                color: AppColors.sage,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: AppColors.sage,
-                        size: 14,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Fitur Wisata Pintar (FE-1: Shunlu, SOS Jalur Rawan, Kamus Budaya, Luring & 360)
-              _buildFe1QuickFeatureRow(),
-              const SizedBox(height: 10),
-
-              // Quick Access Action Bar: Pantau Rombongan, Paspor Digital, Budaya & Forum Nagari (FE-2)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+            // Scrollable Header Content
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Quick Trip Planner & Group Room Banner (ITEM 10, 11, 12)
                     GestureDetector(
-                      onTap: _openLiveGroupTrackingModal,
+                      onTap: _openTripPlannerModal,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.sageBorder),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.radar_rounded, size: 13, color: AppColors.forest),
-                            SizedBox(width: 5),
-                            Text(
-                              'Pantau Rombongan',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                          gradient: const LinearGradient(
+                            colors: [AppColors.forest, AppColors.brush],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.forest.withValues(alpha: 0.18),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: _openDigitalPassportModal,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.sageBorder),
-                        ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.military_tech_rounded, size: 13, color: AppColors.terracotta),
-                            SizedBox(width: 5),
-                            Text(
-                              'Paspor Digital',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () => _openCultureAndCommunityModal(),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.sageBorder),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.auto_awesome_rounded, size: 13, color: AppColors.forest),
-                            SizedBox(width: 5),
-                            Text(
-                              'Budaya & Forum',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Search Bar (REQUEST 2)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.sageBorder),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: 'Cari wisata, daerah, fasilitas (toilet, umkm)...',
-                    hintStyle: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.muted.withValues(alpha: 0.7),
-                    ),
-                    prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.muted),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? GestureDetector(
-                            onTap: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                            child: const Icon(Icons.close, size: 16, color: AppColors.muted),
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Sort Mode Chips (REQUEST 2: Jarak Terdekat)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildSortChip(
-                      key: 'default',
-                      label: 'Semua',
-                      isSelected: _sortMode == 'default',
-                      onTap: () => setState(() => _sortMode = 'default'),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildSortChip(
-                      key: 'distance',
-                      label: 'Jarak Terdekat (GPS)',
-                      isSelected: _sortMode == 'distance',
-                      onTap: () => setState(() => _sortMode = 'distance'),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildSortChip(
-                      key: 'rating',
-                      label: 'Rating Tertinggi',
-                      isSelected: _sortMode == 'rating',
-                      onTap: () => setState(() => _sortMode = 'rating'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              const Text(
-                'PILIH DAERAH / KABUPATEN-KOTA:',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                  color: AppColors.muted,
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              // Primary Region Navigator Buttons
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _exploreRegions.map((reg) {
-                    final isSelected = _currentExploreRegion == reg['key'];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: GestureDetector(
-                        onTap: () => setState(
-                          () => _currentExploreRegion = reg['key']!,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.forest
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.forest
-                                  : AppColors.sageBorder,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                reg['title']!,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: isSelected
-                                      ? AppColors.cream
-                                      : AppColors.ink,
-                                ),
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                reg['sub']!,
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: isSelected
-                                      ? AppColors.cream.withValues(alpha: 0.80)
-                                      : AppColors.muted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Secondary Nature / Terrain Sub-Category Navigator
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _exploreTypes.map((type) {
-                    final isSelected = _currentExploreType == type['key'];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: GestureDetector(
-                        onTap: () => setState(
-                          () => _currentExploreType = type['key']!,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.sage
-                                : AppColors.creamSubtle,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            type['label']!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? AppColors.forest
-                                  : AppColors.muted,
+                              child: const Icon(Icons.route_rounded, color: AppColors.cream, size: 20),
                             ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Scrollable Destination Feed
-        Expanded(
-          child: Stack(
-            children: [
-              filtered.isEmpty
-                  ? ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.warmBorder),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: () =>
-                                    setState(() => _currentExploreType = 'ALL'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.forest,
-                                  foregroundColor: AppColors.cream,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Perencana Trip Rombongan',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
                                   ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Durasi hari, estimasi anggaran & tautan grup',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: AppColors.sage,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: AppColors.sage,
+                              size: 14,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Fitur Wisata Pintar (FE-1: Shunlu, SOS Jalur Rawan, Kamus Budaya, Luring & 360)
+                    _buildFe1QuickFeatureRow(),
+                    const SizedBox(height: 10),
+
+                    // Quick Access Action Bar: Pantau Rombongan, Paspor Digital, Budaya & Forum Nagari (FE-2)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: _openLiveGroupTrackingModal,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.sageBorder),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.radar_rounded, size: 13, color: AppColors.forest),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    'Pantau Rombongan',
+                                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: _openDigitalPassportModal,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.sageBorder),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.military_tech_rounded, size: 13, color: AppColors.terracotta),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    'Paspor Digital',
+                                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => _openCultureAndCommunityModal(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.sageBorder),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.auto_awesome_rounded, size: 13, color: AppColors.forest),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    'Budaya & Forum',
+                                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Search Bar (REQUEST 2)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.sageBorder),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: 'Cari wisata, daerah, fasilitas (toilet, umkm)...',
+                          hintStyle: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.muted.withValues(alpha: 0.7),
+                          ),
+                          prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.muted),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                  child: const Icon(Icons.close, size: 16, color: AppColors.muted),
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Sort Mode Chips (REQUEST 2: Jarak Terdekat)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildSortChip(
+                            key: 'default',
+                            label: 'Semua',
+                            isSelected: _sortMode == 'default',
+                            onTap: () => setState(() => _sortMode = 'default'),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildSortChip(
+                            key: 'distance',
+                            label: 'Jarak Terdekat (GPS)',
+                            isSelected: _sortMode == 'distance',
+                            onTap: () => setState(() => _sortMode = 'distance'),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildSortChip(
+                            key: 'rating',
+                            label: 'Rating Tertinggi',
+                            isSelected: _sortMode == 'rating',
+                            onTap: () => setState(() => _sortMode = 'rating'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    const Text(
+                      'PILIH DAERAH / KABUPATEN-KOTA:',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Primary Region Navigator Buttons
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _exploreRegions.map((reg) {
+                          final isSelected = _currentExploreRegion == reg['key'];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: GestureDetector(
+                              onTap: () => setState(
+                                () => _currentExploreRegion = reg['key']!,
+                              ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.forest
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.forest
+                                        : AppColors.sageBorder,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      reg['title']!,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: isSelected
+                                            ? AppColors.cream
+                                            : AppColors.ink,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      reg['sub']!,
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: isSelected
+                                            ? AppColors.cream.withValues(alpha: 0.80)
+                                            : AppColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Secondary Nature / Terrain Sub-Category Navigator
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _exploreTypes.map((type) {
+                          final isSelected = _currentExploreType == type['key'];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: GestureDetector(
+                              onTap: () => setState(
+                                () => _currentExploreType = type['key']!,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.sage
+                                      : AppColors.creamSubtle,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  'Tampilkan Semua Kategori di $_currentExploreRegion',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                                  type['label']!,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isSelected
+                                        ? AppColors.forest
+                                        : AppColors.muted,
                                   ),
                                 ),
                               ),
-                            ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Scrollable Destination Feed
+            if (filtered.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: () =>
+                              setState(() => _currentExploreType = 'ALL'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.forest,
+                            foregroundColor: AppColors.cream,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Tampilkan Semua Kategori di $_currentExploreRegion',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildDestinationCard(
-                            filtered[index],
-                            isSavedContext: false,
-                          ),
-                        );
-                      },
                     ),
-              Positioned(
-                bottom: 16,
-                right: 16,
-                child: FloatingActionButton.extended(
-                  onPressed: _openUsulDestinasiModal,
-                  backgroundColor: AppColors.forest,
-                  foregroundColor: AppColors.cream,
-                  elevation: 4,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text(
-                    'Usul Wisata',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildDestinationCard(
+                          filtered[index],
+                          isSavedContext: false,
+                        ),
+                      );
+                    },
+                    childCount: filtered.length,
                   ),
                 ),
               ),
-            ],
+          ],
+        ),
+
+        // Floating Action Button
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton.extended(
+            onPressed: _openUsulDestinasiModal,
+            backgroundColor: AppColors.forest,
+            foregroundColor: AppColors.cream,
+            elevation: 4,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text(
+              'Usul Wisata',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+            ),
           ),
         ),
       ],
