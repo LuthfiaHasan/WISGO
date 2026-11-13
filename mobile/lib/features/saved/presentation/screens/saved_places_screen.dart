@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
@@ -3255,365 +3256,66 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   }
 
   Widget _build360PanoramaView() {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Stack(
-      children: [
-        // Pan gesture detector over panorama
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onPanUpdate: (details) {
-              setState(() {
-                _yaw += details.delta.dx * 0.45;
-                _pitch = (_pitch - details.delta.dy * 0.45).clamp(-35.0, 35.0);
-              });
-            },
-            child: CustomPaint(
-              painter: _Panorama360Painter(
-                yaw: _yaw,
-                pitch: _pitch,
-                placeTitle: widget.place.title,
-              ),
-            ),
-          ),
-        ),
-
-        // Tombol Mode Sensor Gyroscope Interaktif FE-1 (Layar 07)
-        Positioned(
-          top: 12,
-          right: 14,
-          child: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => VirtualTour360Screen(
-                    destination: widget.place.toFe1Destination(),
-                  ),
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.forest,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.35),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.screen_rotation_rounded,
-                      size: 14, color: AppColors.cream),
-                  SizedBox(width: 5),
-                  Text(
-                    'Sensor Gyro 360° Penuh',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.cream,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // Interactive Hotspot Pins pinned directly onto the 360 scene
-        ..._k360Facilities.map((facility) {
-          double delta = (facility.yaw - _yaw) % 360.0;
-          if (delta > 180.0) delta -= 360.0;
-          if (delta < -180.0) delta += 360.0;
-
-          // Only visible when in field of view (-60 to +60 deg)
-          if (delta.abs() > 60.0) return const SizedBox.shrink();
-
-          final screenX = (screenWidth / 2) + (delta / 60.0) * (screenWidth * 0.42);
-          final screenY = 220.0 + (_pitch * 1.5);
-
-          final isSelected = _selectedFacility360?.category == facility.category;
-
-          return Positioned(
-            top: screenY,
-            left: screenX - 60,
-            child: GestureDetector(
-              onTap: () {
+    return SizedBox.expand(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Viewer Panorama 360° Interaktif (3D Equirectangular Sphere + Touch Pan)
+          Positioned.fill(
+            child: PanoramaViewer(
+              animSpeed: 0.1,
+              latitude: _pitch,
+              longitude: _yaw,
+              onViewChanged: (lon, lat, tilt) {
                 setState(() {
-                  _selectedFacility360 = facility;
-                  _yaw = facility.yaw;
+                  _yaw = lon;
+                  _pitch = lat;
                 });
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.90),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? Colors.white : AppColors.sageBorder,
-                    width: isSelected ? 2 : 1,
+              child: Image.network(
+                widget.place.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: const Color(0xFF193D22),
+                  child: CustomPaint(
+                    size: Size.infinite,
+                    painter: _Panorama360Painter(
+                      yaw: _yaw,
+                      pitch: _pitch,
+                      placeTitle: widget.place.title,
+                    ),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.white : Colors.greenAccent,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Icon(facility.icon, size: 12, color: Colors.white),
-                    const SizedBox(width: 4),
-                    Text(
-                      facility.label,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
-          );
-        }),
-
-        // Interactive Badges/Pills on top of 360 scene
-        Positioned(
-          top: 14,
-          left: 14,
-          right: 14,
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 6,
-            children: _k360Facilities.map((facility) {
-              final isSelected = _selectedFacility360?.category == facility.category;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedFacility360 = facility;
-                    _yaw = facility.yaw;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.white30,
-                      width: isSelected ? 1.8 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(facility.icon, size: 12, color: isSelected ? Colors.white : AppColors.sage),
-                      const SizedBox(width: 4),
-                      Text(
-                        facility.label,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          color: isSelected ? Colors.white : AppColors.cream,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
           ),
-        ),
 
-        // Floating Photo Preview Card when a facility is tapped
-        if (_selectedFacility360 != null)
+          // 2. Baris Kontrol Atas: Status 360 & Tombol Sensor Gyro Fullscreen FE-1
           Positioned(
-            bottom: 12,
+            top: 12,
             left: 14,
             right: 14,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Facility Real Photo
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          _selectedFacility360!.imageUrl,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, error, stackTrace) => Container(
-                            width: 80,
-                            height: 80,
-                            color: AppColors.sage,
-                            child: Icon(_selectedFacility360!.icon, color: AppColors.forest, size: 32),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.sage,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    _selectedFacility360!.badge,
-                                    style: const TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.forest,
-                                    ),
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () => setState(() => _selectedFacility360 = null),
-                                  child: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _selectedFacility360!.title,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.ink,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _selectedFacility360!.description,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: AppColors.muted,
-                                height: 1.25,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showMapNavigationSheet(
-                              context,
-                              widget.place,
-                              _selectedFacility360!.category,
-                              widget.onOpenDetail,
-                            );
-                          },
-                          icon: const Icon(Icons.directions_rounded, size: 16),
-                          label: const Text(
-                            'Buka Rute di Peta (Google Maps)',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.forest,
-                            foregroundColor: AppColors.cream,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        // Floating Quick Booking Button (Requirement 14)
-        if (!_isQuickBookingOpen && _selectedFacility360 == null)
-          Positioned(
-            bottom: 58,
-            left: 20,
-            right: 20,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => setState(() => _isQuickBookingOpen = true),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.forest,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    color: AppColors.ink.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white24),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.flash_on_rounded, size: 16, color: AppColors.cream),
-                      SizedBox(width: 6),
+                      Icon(Icons.threed_rotation_rounded, size: 14, color: AppColors.sage),
+                      SizedBox(width: 5),
                       Text(
-                        'Pesan Layanan Cepat 360° (Setengah Layar)',
+                        'Geser 360° Aktif',
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.cream,
                         ),
@@ -3621,51 +3323,332 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                     ],
                   ),
                 ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => VirtualTour360Screen(
+                          destination: widget.place.toFe1Destination(),
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white, width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.screen_rotation_rounded,
+                            size: 14, color: AppColors.cream),
+                        SizedBox(width: 5),
+                        Text(
+                          'Sensor Gyro 360° Penuh',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.cream,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 3. Filter Chips Fasilitas (top: 48)
+          Positioned(
+            top: 48,
+            left: 14,
+            right: 14,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _k360Facilities.map((facility) {
+                  final isSelected = _selectedFacility360?.category == facility.category;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedFacility360 = facility;
+                          _yaw = facility.yaw;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.terracotta
+                              : AppColors.ink.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? Colors.white : Colors.white30,
+                            width: isSelected ? 1.8 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              facility.icon,
+                              size: 12,
+                              color: isSelected ? Colors.white : AppColors.sage,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              facility.label,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: isSelected ? Colors.white : AppColors.cream,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
 
-        // Bottom gesture prompt when no facility is selected and panel closed
-        if (!_isQuickBookingOpen && _selectedFacility360 == null)
-          Positioned(
-            bottom: 18,
-            left: 20,
-            right: 20,
-            child: Center(
+          // 4. Floating Photo Preview Card when a facility is tapped
+          if (_selectedFacility360 != null)
+            Positioned(
+              bottom: 12,
+              left: 14,
+              right: 14,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.ink.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white24),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  'Sentuh & geser layar untuk melihat sekeliling 360°',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.cream,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            _selectedFacility360!.imageUrl,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, error, stackTrace) => Container(
+                              width: 80,
+                              height: 80,
+                              color: AppColors.sage,
+                              child: Icon(_selectedFacility360!.icon, color: AppColors.forest, size: 32),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.sage,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      _selectedFacility360!.badge,
+                                      style: const TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => setState(() => _selectedFacility360 = null),
+                                    child: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _selectedFacility360!.title,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _selectedFacility360!.description,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.muted,
+                                  height: 1.25,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showMapNavigationSheet(
+                                context,
+                                widget.place,
+                                _selectedFacility360!.category,
+                                widget.onOpenDetail,
+                              );
+                            },
+                            icon: const Icon(Icons.directions_rounded, size: 16),
+                            label: const Text(
+                              'Buka Rute di Peta (Google Maps)',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.forest,
+                              foregroundColor: AppColors.cream,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // 5. Floating Quick Booking Button (Requirement 14)
+          if (!_isQuickBookingOpen && _selectedFacility360 == null)
+            Positioned(
+              bottom: 58,
+              left: 20,
+              right: 20,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isQuickBookingOpen = true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.flash_on_rounded, size: 16, color: AppColors.cream),
+                        SizedBox(width: 6),
+                        Text(
+                          'Pesan Layanan Cepat 360° (Setengah Layar)',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.cream,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-        // Quick Booking Sliding Half-Panel over 360 view (Requirement 14 & 15)
-        if (_isQuickBookingOpen)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: QuickBookingPanel(
-              place: widget.place,
-              onClose: () => setState(() => _isQuickBookingOpen = false),
-              onProceedToPayment: (total, items) {
-                _openQrisPayment(total, items);
-              },
+          // 6. Bottom gesture prompt when no facility is selected and panel closed
+          if (!_isQuickBookingOpen && _selectedFacility360 == null)
+            Positioned(
+              bottom: 18,
+              left: 20,
+              right: 20,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Text(
+                    'Sentuh & geser layar untuk melihat sekeliling 360°',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cream,
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-      ],
+
+          // 7. Quick Booking Sliding Half-Panel over 360 view (Requirement 14 & 15)
+          if (_isQuickBookingOpen)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: QuickBookingPanel(
+                place: widget.place,
+                onClose: () => setState(() => _isQuickBookingOpen = false),
+                onProceedToPayment: (total, items) {
+                  _openQrisPayment(total, items);
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 
