@@ -52,7 +52,7 @@ func (h *HandlerBE1) UpdateDestinationTariffsCMS(w http.ResponseWriter, r *http.
 		return
 	}
 
-	updated, err := h.repo.SyncTariffsCMS(r.Context(), id, items)
+	updated, err := h.repo.SyncTariffsCMS(id, items)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		_ = json.NewEncoder(w).Encode(map[string]string{

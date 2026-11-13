@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"sort"
 	"strings"
-
-	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
 
 // SQLQueryShunluCorridorPostGIS adalah query SQL PostGIS produksi untuk Hari 8 (Rabu)
