@@ -3,6 +3,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../../fair_price/presentation/widgets/fair_price_barometer_table.dart';
+import '../../../group_room/presentation/widgets/group_room_sheet.dart';
+import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
+import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
+import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
+import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
 import '../widgets/saved_skeleton_shimmer.dart';
@@ -413,25 +418,119 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.sage,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${filtered.length} Destinasi',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.forest,
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _openQrScannerModal,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.forest,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.qr_code_scanner_rounded, size: 13, color: AppColors.cream),
+                              SizedBox(width: 4),
+                              Text(
+                                'Scan QR',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.cream,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.sage,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${filtered.length} Destinasi',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+
+              // Quick Trip Planner & Group Room Banner (ITEM 10, 11, 12)
+              GestureDetector(
+                onTap: _openTripPlannerModal,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.forest, AppColors.brush],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.forest.withValues(alpha: 0.18),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.route_rounded, color: AppColors.cream, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Perencana Trip Rombongan',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Durasi hari, estimasi anggaran & tautan grup',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: AppColors.sage,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: AppColors.sage,
+                        size: 14,
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
 
@@ -489,14 +588,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     const SizedBox(width: 6),
                     _buildSortChip(
                       key: 'distance',
-                      label: '📍 Jarak Terdekat (GPS)',
+                      label: 'Jarak Terdekat (GPS)',
                       isSelected: _sortMode == 'distance',
                       onTap: () => setState(() => _sortMode = 'distance'),
                     ),
                     const SizedBox(width: 6),
                     _buildSortChip(
                       key: 'rating',
-                      label: '⭐ Rating Tertinggi',
+                      label: 'Rating Tertinggi',
                       isSelected: _sortMode == 'rating',
                       onTap: () => setState(() => _sortMode = 'rating'),
                     ),
@@ -627,75 +726,94 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
         // Scrollable Destination Feed
         Expanded(
-          child: filtered.isEmpty
-              ? ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.warmBorder),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
-                            ),
+          child: Stack(
+            children: [
+              filtered.isEmpty
+                  ? ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.warmBorder),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: AppColors.muted,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: () =>
-                                setState(() => _currentExploreType = 'ALL'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.forest,
-                              foregroundColor: AppColors.cream,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              'Tampilkan Semua Kategori di $_currentExploreRegion',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.muted,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () =>
+                                    setState(() => _currentExploreType = 'ALL'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.forest,
+                                  foregroundColor: AppColors.cream,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Tampilkan Semua Kategori di $_currentExploreRegion',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildDestinationCard(
+                            filtered[index],
+                            isSavedContext: false,
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildDestinationCard(
-                        filtered[index],
-                        isSavedContext: false,
-                      ),
-                    );
-                  },
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: _openUsulDestinasiModal,
+                  backgroundColor: AppColors.forest,
+                  foregroundColor: AppColors.cream,
+                  elevation: 4,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text(
+                    'Usul Wisata',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                  ),
                 ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1166,6 +1284,37 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 destinationData: activeDest,
                 selectedCategory: _activeBarometerCategory,
               ),
+              const SizedBox(height: 14),
+              GestureDetector(
+                onTap: () => _openLaporPungliModal(tab: 'pungli'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.coralTint,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.terracotta.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.terracotta),
+                          SizedBox(width: 8),
+                          Text(
+                            'Temukan Pungli atau Fasilitas Rusak?',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.terracotta),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Lapor GPS →',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.terracotta, decoration: TextDecoration.underline),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -1319,7 +1468,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '📍 ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                              '${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -1376,7 +1525,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '📍 Jarak ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                        'Jarak ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
                         style: const TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w800,
@@ -1410,13 +1559,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: AppColors.warmBorder),
                       ),
-                      child: Text(
-                        fac,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.forest,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_getFacilityIcon(fac), size: 12, color: AppColors.brush),
+                          const SizedBox(width: 4),
+                          Text(
+                            fac,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }).toList(),
@@ -1604,6 +1760,81 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           },
         );
       },
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 4: PEMINDAIAN PLANG SMART QR WISATA (ITEM 8)
+  // ===========================================================================
+  void _openQrScannerModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const QrScannerSheet(),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 5: LAPORAN SATGAS SABER PUNGLI & FASILITAS RUSAK (ITEM 9)
+  // ===========================================================================
+  void _openLaporPungliModal({String tab = 'pungli'}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => LaporPungliSheet(
+        initialTab: tab,
+        onSubmitSuccess: (ticket) {
+          _showAppToast('Laporan Resmi #$ticket berhasil diteruskan ke Satgas!');
+        },
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 6: LAYAR 06 TRIP PLANNER & KAPASITAS ORANG (ITEM 10 & 12)
+  // ===========================================================================
+  void _openTripPlannerModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => TripPlannerSheet(
+        onOpenGroupRoom: _openGroupRoomModal,
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 7: RUANG ROMBONGAN PRIBADI & UNDANGAN WHATSAPP (ITEM 11)
+  // ===========================================================================
+  void _openGroupRoomModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GroupRoomSheet(
+        onInviteWhatsApp: () {
+          _showAppToast('Tautan Undangan WhatsApp Rombongan Siap Dikirim!');
+        },
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 8: FORMULIR USULAN DESTINASI WISATA BARU (ITEM 13)
+  // ===========================================================================
+  void _openUsulDestinasiModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => UsulDestinasiSheet(
+        onSubmitSuccess: (name) {
+          _showAppToast('Usulan destinasi "$name" berhasil diajukan ke Dispar Sumbar!');
+        },
+      ),
     );
   }
 
@@ -2312,6 +2543,77 @@ class _CurvedNotchBarPainter extends CustomPainter {
 // MODAL BOTTOM SHEETS: 360° & DENAH, DETAIL & ULASAN, CHECKOUT WISGO ESCROW
 // =============================================================================
 
+class _Facility360Data {
+  final String category;
+  final String title;
+  final String label;
+  final String imageUrl;
+  final String badge;
+  final String description;
+  final String subDetail;
+  final double yaw;
+  final IconData icon;
+
+  const _Facility360Data({
+    required this.category,
+    required this.title,
+    required this.label,
+    required this.imageUrl,
+    required this.badge,
+    required this.description,
+    required this.subDetail,
+    required this.yaw,
+    required this.icon,
+  });
+}
+
+const List<_Facility360Data> _k360Facilities = [
+  _Facility360Data(
+    category: 'PARKIR',
+    title: 'Tempat Parkir Resmi Kendaraan',
+    label: 'Tempat Parkir',
+    imageUrl: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=800&q=80',
+    badge: 'Parkir Resmi Pokdarwis',
+    description: 'Area parkir beratap pepohonan rindang dengan penjagaan pemuda nagari. Karcis resmi sesuai Perda tanpa pungli liar.',
+    subDetail: 'Kapasitas 40 Mobil & 120 Motor • Karcis Resmi Rp 5.000 / Rp 10.000',
+    yaw: -70.0,
+    icon: Icons.local_parking_rounded,
+  ),
+  _Facility360Data(
+    category: 'UMKM',
+    title: 'Warung Kuliner UMKM Tradisional Minang',
+    label: 'UMKM Kuliner Minang',
+    imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+    badge: 'Kuliner Nagari • Standar Tarif',
+    description: 'Menyajikan hidangan lokal nagari: Nasi Kapau, sate lokan, kelapa muda murni segar, dan gorengan hangat dengan daftar menu berharga pasti.',
+    subDetail: 'Menu Transparan • Kelapa Muda Rp 12.000 • Kopi Nagari Rp 8.000',
+    yaw: 15.0,
+    icon: Icons.restaurant_rounded,
+  ),
+  _Facility360Data(
+    category: 'TOILET',
+    title: 'Toilet Bersih & Kamar Bilas Pos 1',
+    label: 'Toilet & Bilas',
+    imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
+    badge: 'Sanitasi & Bilas Segar',
+    description: 'Fasilitas kamar mandi dan bilas menggunakan air sumber pegunungan alami yang dingin dan jernih, dirawat rutin oleh pengelola.',
+    subDetail: 'Air Alami Sumber Pegunungan • Kebersihan Terawat Rutin',
+    yaw: 65.0,
+    icon: Icons.wc_rounded,
+  ),
+  _Facility360Data(
+    category: 'MUSHOLLA',
+    title: 'Musholla Al-Ikhlas Pos 1 Wisata',
+    label: 'Musholla',
+    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80',
+    badge: 'Tempat Ibadah • Terverifikasi',
+    description: 'Musholla bernuansa kayu asri khas nagari. Tersedia tempat wudhu dengan air alami yang mengalir segar dan perlengkapan sholat bersih.',
+    subDetail: 'Air Wudhu Alami Mengalir • Mukena & Sajadah Bersih • Buka 24 Jam',
+    yaw: 115.0,
+    icon: Icons.mosque_rounded,
+  ),
+];
+
 class _Explore360AndDenahSheet extends StatefulWidget {
   final SavedDestinationModel place;
   final VoidCallback onOpenDetail;
@@ -2328,6 +2630,7 @@ class _Explore360AndDenahSheet extends StatefulWidget {
 class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   String _subTab = '360'; // '360' | 'denah'
   String _selectedDenahType = 'UMKM';
+  _Facility360Data? _selectedFacility360;
   double _yaw = 0.0;
   double _pitch = 0.0;
 
@@ -2429,7 +2732,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '🌐 360° Virtual Kawasan',
+                          '360° Virtual Kawasan',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
@@ -2451,7 +2754,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '🗺️ Denah Lokasi Interaktif',
+                          'Denah Lokasi Interaktif',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
@@ -2478,6 +2781,8 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   }
 
   Widget _build360PanoramaView() {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Stack(
       children: [
         // Pan gesture detector over panorama
@@ -2500,7 +2805,78 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
           ),
         ),
 
-        // Floating Badges in 360 scene
+        // Interactive Hotspot Pins pinned directly onto the 360 scene
+        ..._k360Facilities.map((facility) {
+          double delta = (facility.yaw - _yaw) % 360.0;
+          if (delta > 180.0) delta -= 360.0;
+          if (delta < -180.0) delta += 360.0;
+
+          // Only visible when in field of view (-60 to +60 deg)
+          if (delta.abs() > 60.0) return const SizedBox.shrink();
+
+          final screenX = (screenWidth / 2) + (delta / 60.0) * (screenWidth * 0.42);
+          final screenY = 220.0 + (_pitch * 1.5);
+
+          final isSelected = _selectedFacility360?.category == facility.category;
+
+          return Positioned(
+            top: screenY,
+            left: screenX - 60,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedFacility360 = facility;
+                  _yaw = facility.yaw;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.90),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? Colors.white : AppColors.sageBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white : Colors.greenAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Icon(facility.icon, size: 12, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      facility.label,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+
+        // Interactive Badges/Pills on top of 360 scene
         Positioned(
           top: 14,
           left: 14,
@@ -2509,59 +2885,206 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
             alignment: WrapAlignment.center,
             spacing: 8,
             runSpacing: 6,
-            children: [
-              _buildScenePill('🅿️ Tempat Parkir'),
-              _buildScenePill('🍜 UMKM Makanan Minang'),
-              _buildScenePill('🚻 Toilet & Bilas'),
-              _buildScenePill('🕌 Musholla'),
-            ],
+            children: _k360Facilities.map((facility) {
+              final isSelected = _selectedFacility360?.category == facility.category;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedFacility360 = facility;
+                    _yaw = facility.yaw;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.white30,
+                      width: isSelected ? 1.8 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(facility.icon, size: 12, color: isSelected ? Colors.white : AppColors.sage),
+                      const SizedBox(width: 4),
+                      Text(
+                        facility.label,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: isSelected ? Colors.white : AppColors.cream,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
 
-        // Bottom gesture prompt
-        Positioned(
-          bottom: 18,
-          left: 20,
-          right: 20,
-          child: Center(
+        // Floating Photo Preview Card when a facility is tapped
+        if (_selectedFacility360 != null)
+          Positioned(
+            bottom: 12,
+            left: 14,
+            right: 14,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.ink.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white24),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: const Text(
-                '👆 Sentuh & geser layar untuk melihat sekeliling 360°',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.cream,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Facility Real Photo
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          _selectedFacility360!.imageUrl,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, error, stackTrace) => Container(
+                            width: 80,
+                            height: 80,
+                            color: AppColors.sage,
+                            child: Icon(_selectedFacility360!.icon, color: AppColors.forest, size: 32),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sage,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    _selectedFacility360!.badge,
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.forest,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => setState(() => _selectedFacility360 = null),
+                                  child: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _selectedFacility360!.title,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _selectedFacility360!.description,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.muted,
+                                height: 1.25,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _showMapNavigationSheet(
+                              context,
+                              widget.place,
+                              _selectedFacility360!.category,
+                              widget.onOpenDetail,
+                            );
+                          },
+                          icon: const Icon(Icons.directions_rounded, size: 16),
+                          label: const Text(
+                            'Buka Rute di Peta (Google Maps)',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.forest,
+                            foregroundColor: AppColors.cream,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          // Bottom gesture prompt when no facility is selected
+          Positioned(
+            bottom: 18,
+            left: 20,
+            right: 20,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.ink.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Text(
+                  'Sentuh & geser layar untuk melihat sekeliling 360°',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.cream,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildScenePill(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.ink.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white30),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w800,
-          color: AppColors.cream,
-        ),
-      ),
     );
   }
 
@@ -2634,35 +3157,35 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                 // Interactive Pin 1: Parkir
                 _buildDenahPin(
                   category: 'PARKIR',
-                  label: '🅿️ Parkir',
+                  label: 'Parkir', iconData: Icons.local_parking_rounded,
                   topPct: 0.68,
                   leftPct: 0.16,
                 ),
                 // Interactive Pin 2: Loket
                 _buildDenahPin(
                   category: 'LOKET',
-                  label: '🎟️ Loket',
+                  label: 'Loket', iconData: Icons.confirmation_number_rounded,
                   topPct: 0.55,
                   leftPct: 0.36,
                 ),
                 // Interactive Pin 3: UMKM
                 _buildDenahPin(
                   category: 'UMKM',
-                  label: '🍜 UMKM Makanan',
+                  label: 'UMKM Makanan', iconData: Icons.restaurant_rounded,
                   topPct: 0.42,
                   leftPct: 0.56,
                 ),
                 // Interactive Pin 4: Toilet
                 _buildDenahPin(
                   category: 'TOILET',
-                  label: '🚻 Toilet',
+                  label: 'Toilet', iconData: Icons.wc_rounded,
                   topPct: 0.28,
                   leftPct: 0.42,
                 ),
                 // Interactive Pin 5: Musholla
                 _buildDenahPin(
                   category: 'MUSHOLLA',
-                  label: '🕌 Musholla',
+                  label: 'Musholla', iconData: Icons.mosque_rounded,
                   topPct: 0.22,
                   leftPct: 0.72,
                 ),
@@ -2741,28 +3264,56 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Bottom Action Button to Detail
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: widget.onOpenDetail,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.forest,
-                foregroundColor: AppColors.cream,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          // Bottom Action: Buka Navigasi Peta Rute & Google Maps
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showMapNavigationSheet(
+                      context,
+                      widget.place,
+                      _selectedDenahType,
+                      widget.onOpenDetail,
+                    );
+                  },
+                  icon: const Icon(Icons.directions_rounded, size: 18),
+                  label: const Text(
+                    'Buka Peta & Rute Navigasi',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                 ),
               ),
-              child: const Text(
-                'Buka Detail Wisata, Ulasan & Biaya Resmi',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: widget.onOpenDetail,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.forest,
+                  side: const BorderSide(color: AppColors.warmBorder),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Detail',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -2772,6 +3323,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   Widget _buildDenahPin({
     required String category,
     required String label,
+    required IconData iconData,
     required double topPct,
     required double leftPct,
   }) {
@@ -2780,37 +3332,462 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
       top: 220 * topPct - 14,
       left: 320 * leftPct - 30,
       child: GestureDetector(
-        onTap: () => setState(() => _selectedDenahType = category),
+        onTap: () {
+          setState(() {
+            _selectedDenahType = category;
+            // Geser yaw visual ke arah lokasi hotspot titik yang dipilih
+            if (category == 'PARKIR') {
+              _yaw = -60.0;
+            } else if (category == 'LOKET') {
+              _yaw = -25.0;
+            } else if (category == 'UMKM') {
+              _yaw = 20.0;
+            } else if (category == 'TOILET') {
+              _yaw = 65.0;
+            } else if (category == 'MUSHOLLA') {
+              _yaw = 110.0;
+            }
+          });
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(iconData, size: 16, color: AppColors.cream),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Menuju lokasi:  (Koordinat Titik Terpilih)',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.forest,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.cream : Colors.white,
+            color: isSelected ? AppColors.forest : Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isSelected ? AppColors.terracotta : AppColors.forest,
-              width: isSelected ? 2.5 : 1.5,
+              color: isSelected ? AppColors.terracotta : AppColors.sageBorder,
+              width: isSelected ? 2 : 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 6,
+                color: isSelected ? AppColors.terracotta.withValues(alpha: 0.4) : Colors.black12,
+                blurRadius: isSelected ? 8 : 4,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: isSelected ? AppColors.terracotta : AppColors.forest,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                iconData,
+                size: 13,
+                color: isSelected ? AppColors.cream : AppColors.forest,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? AppColors.cream : AppColors.ink,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+// =============================================================================
+// MODAL PETA NAVIGASI & RUTE LOKASI (GOOGLE MAPS)
+// =============================================================================
+
+void _showMapNavigationSheet(
+  BuildContext context,
+  SavedDestinationModel place,
+  String targetFacility,
+  VoidCallback onOpenDetail,
+) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => _MapNavigationSheet(
+      place: place,
+      targetFacility: targetFacility,
+      onOpenDetail: onOpenDetail,
+    ),
+  );
+}
+
+class _MapNavigationSheet extends StatelessWidget {
+  final SavedDestinationModel place;
+  final String targetFacility;
+  final VoidCallback onOpenDetail;
+
+  const _MapNavigationSheet({
+    required this.place,
+    required this.targetFacility,
+    required this.onOpenDetail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final facilityName = targetFacility == 'PARKIR'
+        ? 'Tempat Parkir Resmi'
+        : targetFacility == 'LOKET'
+            ? 'Loket Tiket Pokdarwis'
+            : targetFacility == 'UMKM'
+                ? 'Warung UMKM Makanan'
+                : targetFacility == 'TOILET'
+                    ? 'Toilet & Sanitasi'
+                    : targetFacility == 'MUSHOLLA'
+                        ? 'Musholla & Tempat Ibadah'
+                        : targetFacility;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(top: 10, bottom: 6),
+            decoration: BoxDecoration(
+              color: AppColors.warmBorder,
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 6, 18, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'PETA NAVIGASI & RUTE LOKASI',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          color: AppColors.brush,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        place.title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.warmBorder),
+
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(18),
+              children: [
+                // Info Card
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.sageBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.sage,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Menuju: $facilityName',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              place.subRegion,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${place.distanceKm} km',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                          Text(
+                            '± ${place.distanceKm * 2} mnt',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Simulated Live GPS Map Container
+                Container(
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEBF2ED),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.forest, width: 2),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Road Path CustomPaint
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _RouteMapPainter(),
+                        ),
+                      ),
+
+                      // Status GPS pill
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.sageBorder),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.gps_fixed_rounded, size: 12, color: Colors.green),
+                              SizedBox(width: 4),
+                              Text(
+                                'GPS Aktif • Akurasi 5m',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Turn guidance strip at bottom
+                      Positioned(
+                        bottom: 10,
+                        left: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.sageBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.turn_right_rounded, color: AppColors.forest, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Akses via ${place.subRegion} menuju area parkir & fasilitas resmi.',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Start Navigation Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Membuka rute GPS Google Maps menuju ${place.title}...'),
+                          backgroundColor: AppColors.forest,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.navigation_rounded, size: 18),
+                    label: const Text(
+                      'Mulai Navigasi Langsung di Google Maps',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.forest,
+                      foregroundColor: AppColors.cream,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Check Detail Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onOpenDetail();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.forest,
+                      side: const BorderSide(color: AppColors.warmBorder),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Lihat Rincian Biaya & Tiket Masuk Resmi',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteMapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Background terrain curves
+    final greenPaint = Paint()
+      ..color = const Color(0xFFCCE0D1)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.2), 60, greenPaint);
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.8), 80, greenPaint);
+
+    // Road path
+    final roadPaint = Paint()
+      ..color = const Color(0xFFD5DFD7)
+      ..strokeWidth = 14
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path()
+      ..moveTo(size.width * 0.15, size.height * 0.85)
+      ..cubicTo(
+        size.width * 0.35, size.height * 0.70,
+        size.width * 0.55, size.height * 0.40,
+        size.width * 0.82, size.height * 0.25,
+      );
+    canvas.drawPath(path, roadPaint);
+
+    // Active GPS Line (Orange)
+    final gpsPaint = Paint()
+      ..color = const Color(0xFFE65F2B)
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, gpsPaint);
+
+    // Start point (Padang GPS)
+    final startPaint = Paint()..color = AppColors.forest;
+    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.85), 7, startPaint);
+    final startInner = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.85), 3, startInner);
+
+    // End point (Target pin)
+    final endPaint = Paint()..color = const Color(0xFFE65F2B);
+    canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.25), 9, endPaint);
+    final endInner = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.25), 4, endInner);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // =============================================================================
@@ -3033,7 +4010,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  '📍 ${widget.place.distanceKm.toStringAsFixed(widget.place.distanceKm.truncateToDouble() == widget.place.distanceKm ? 0 : 1)} km',
+                                  '${widget.place.distanceKm.toStringAsFixed(widget.place.distanceKm.truncateToDouble() == widget.place.distanceKm ? 0 : 1)} km',
                                   style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w800,
@@ -4116,4 +5093,19 @@ class _SitePlanPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SitePlanPainter oldDelegate) => false;
+}
+
+IconData _getFacilityIcon(String name) {
+  final lower = name.toLowerCase();
+  if (lower.contains('parkir')) return Icons.local_parking_rounded;
+  if (lower.contains('toilet') || lower.contains('bilas')) return Icons.wc_rounded;
+  if (lower.contains('kuliner') || lower.contains('warung') || lower.contains('makan')) return Icons.restaurant_rounded;
+  if (lower.contains('musholla') || lower.contains('masjid')) return Icons.mosque_rounded;
+  if (lower.contains('trekking') || lower.contains('jalan')) return Icons.hiking_rounded;
+  if (lower.contains('rakit') || lower.contains('perahu') || lower.contains('danau')) return Icons.directions_boat_rounded;
+  if (lower.contains('foto') || lower.contains('spot')) return Icons.camera_alt_rounded;
+  if (lower.contains('camping') || lower.contains('kemah')) return Icons.cabin_rounded;
+  if (lower.contains('sejarah') || lower.contains('istano')) return Icons.account_balance_rounded;
+  if (lower.contains('pemandu') || lower.contains('guide')) return Icons.support_agent_rounded;
+  return Icons.check_circle_outline_rounded;
 }

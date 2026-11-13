@@ -36,8 +36,8 @@ void main() {
     expect(find.text('Lembah Harau & Air Terjun Sarasah Bunta'), findsOneWidget);
 
     // 3. Distance sort chip is present
-    expect(find.text('📍 Jarak Terdekat (GPS)'), findsOneWidget);
-    await tester.tap(find.text('📍 Jarak Terdekat (GPS)'));
+    expect(find.text('Jarak Terdekat (GPS)'), findsOneWidget);
+    await tester.tap(find.text('Jarak Terdekat (GPS)'));
     await tester.pumpAndSettle();
 
     // 4. Tap 'Detail & Pesan' on Lembah Harau to open detail modal

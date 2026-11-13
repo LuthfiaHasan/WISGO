@@ -158,11 +158,11 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.8,
     reviewsCount: 142,
     facilities: [
-      '🅿️ Tempat Parkir Warga',
-      '🍜 Warung UMKM Makanan',
-      '🚻 Toilet & Kamar Bilas',
-      '🕌 Musholla Nagari',
-      '🌿 Jalur Trekking Hutan',
+      'Tempat Parkir Warga',
+      'Warung UMKM Makanan',
+      'Toilet & Kamar Bilas',
+      'Musholla Nagari',
+      'Jalur Trekking Hutan',
     ],
     reviews: [
       UserReview(
@@ -309,11 +309,11 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.9,
     reviewsCount: 286,
     facilities: [
-      '🅿️ Tempat Parkir Dishub',
-      '🍜 Pusat Kuliner UMKM Jembatan',
-      '🚻 Toilet Bersih Pos Atas',
-      '🕌 Musholla Kaki Bukit',
-      '📸 Gardu Pandang Laut',
+      'Tempat Parkir Dishub',
+      'Pusat Kuliner UMKM Jembatan',
+      'Toilet Bersih Pos Atas',
+      'Musholla Kaki Bukit',
+      'Gardu Pandang Laut',
     ],
     reviews: [
       UserReview(
@@ -445,11 +445,11 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.9,
     reviewsCount: 310,
     facilities: [
-      '🅿️ Tempat Parkir Luas Tepi Tebing',
-      '🍜 Sentra UMKM Makanan & Galamai',
-      '🚻 Toilet & Kamar Ganti',
-      '🕌 Musholla Harau Asri',
-      '⛺ Gazebo Lesehan Tepi Aliran Air',
+      'Tempat Parkir Luas Tepi Tebing',
+      'Sentra UMKM Makanan & Galamai',
+      'Toilet & Kamar Ganti',
+      'Musholla Harau Asri',
+      'Gazebo Lesehan Tepi Aliran Air',
     ],
     reviews: [
       UserReview(
@@ -589,11 +589,11 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.8,
     reviewsCount: 198,
     facilities: [
-      '🅿️ Tempat Parkir Pinus',
-      '🍜 Warung UMKM Nagari Taram',
-      '🚻 Toilet Bersih Bendungan',
-      '🕌 Musholla Nagari',
-      '🛶 Rakit Bambu Wisata',
+      'Tempat Parkir Pinus',
+      'Warung UMKM Nagari Taram',
+      'Toilet Bersih Bendungan',
+      'Musholla Nagari',
+      'Rakit Bambu Wisata',
     ],
     reviews: [
       UserReview(
@@ -718,11 +718,11 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.9,
     reviewsCount: 420,
     facilities: [
-      '🅿️ Tempat Parkir Gedung Dishub',
-      '🍜 Pasar Kuliner Los Lambuang',
-      '🚻 Toilet Bersih Panorama',
-      '🕌 Musholla Jam Gadang',
-      '📸 Gardu Pandang Ngarai Sianok',
+      'Tempat Parkir Gedung Dishub',
+      'Pasar Kuliner Los Lambuang',
+      'Toilet Bersih Panorama',
+      'Musholla Jam Gadang',
+      'Gardu Pandang Ngarai Sianok',
     ],
     reviews: [
       UserReview(
@@ -855,11 +855,11 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.8,
     reviewsCount: 165,
     facilities: [
-      '🅿️ Tempat Parkir Posko Salibutan',
-      '🍜 Warung UMKM Makanan Hutan',
-      '🚻 Toilet & Kamar Bilas Alami',
-      '🕌 Musholla Pos Ekowisata',
-      '🧭 Pemandu Hutan Terlatih',
+      'Tempat Parkir Posko Salibutan',
+      'Warung UMKM Makanan Hutan',
+      'Toilet & Kamar Bilas Alami',
+      'Musholla Pos Ekowisata',
+      'Pemandu Hutan Terlatih',
     ],
     reviews: [
       UserReview(
@@ -992,10 +992,10 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.9,
     reviewsCount: 230,
     facilities: [
-      '🅿️ Tempat Parkir Nagari Adat',
-      '🍜 Kedai Kopi Kawa Daun UMKM',
+      'Tempat Parkir Nagari Adat',
+      'Kedai Kopi Kawa Daun UMKM',
       '♨️ Pemandian Air Panas Alami',
-      '🕌 Masjid Ishlah Bersejarah',
+      'Masjid Ishlah Bersejarah',
       '🏛️ Rumah Gadang Asli Kuno',
     ],
     reviews: [
@@ -1121,11 +1121,11 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
     rating: 4.9,
     reviewsCount: 340,
     facilities: [
-      '🅿️ Tempat Parkir Dermaga TPI',
-      '🍜 Pusat Kuliner Ikan Bakar UMKM',
-      '🚻 Toilet & Kamar Bilas Dermaga',
-      '🕌 Musholla Dermaga Tarusan',
-      '⛵ Dermaga Kapal Wisata Resmi',
+      'Tempat Parkir Dermaga TPI',
+      'Pusat Kuliner Ikan Bakar UMKM',
+      'Toilet & Kamar Bilas Dermaga',
+      'Musholla Dermaga Tarusan',
+      'Dermaga Kapal Wisata Resmi',
     ],
     reviews: [
       UserReview(
