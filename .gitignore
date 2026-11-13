@@ -1,8 +1,55 @@
-node_modules/
-build/
-dist/
-coverage/
+# Prerequisites & OS files
 .DS_Store
+Thumbs.db
 *.log
-.env*
-!.env.example
+*.tmp
+*.bak
+
+# IDE & Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Backend (Go)
+backend/bin/
+backend/*.exe
+backend/*.exe~
+backend/*.dll
+backend/*.so
+backend/*.dylib
+backend/vendor/
+*.test
+*.out
+
+# Frontend Mobile (Flutter / Dart)
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+
+# Fullstack Web Admin (Node / Next.js)
+web-admin/node_modules/
+web-admin/.next/
+web-admin/out/
+web-admin/build/
+web-admin/dist/
+web-admin/.cache/
+

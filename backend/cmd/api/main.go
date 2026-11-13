@@ -21,10 +21,13 @@ func main() {
 	be1 := be1_core.NewHandlerBE1()
 	be2 := be2_group.NewHandlerBE2()
 
-	// --- Route BE-1 (Core & Spasial — Sprint 1 Lengkap) ---
-	be1.RegisterSprint1Routes(mux)
+	// --- Route BE-1 (Core & Spasial) ---
+	mux.HandleFunc("GET /api/v1/destinations", be1.GetDestinations)
+	mux.HandleFunc("GET /api/v1/destinations/detail", be1.GetDestinationDetail)
+	mux.HandleFunc("POST /api/v1/spatial/shunlu", be1.PostShunluSearch)
+	mux.HandleFunc("POST /api/v1/pungli/report", be1.PostReportPungli)
 
-	// --- Route BE-2 (Grup, Mitra, Escrow — Dibiarkan Utuh Zero Conflict) ---
+	// --- Route BE-2 (Grup, Mitra, Escrow) ---
 	mux.HandleFunc("POST /api/v1/auth/request-otp", be2.RequestOTP)
 	mux.HandleFunc("POST /api/v1/groups", be2.CreateGroupRoom)
 	mux.HandleFunc("GET /api/v1/partners", be2.GetPartnersKatalog)
@@ -33,7 +36,7 @@ func main() {
 	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"status":"ok","app":"Rancak.in Backend API","env":"%s","be1_sprint1":"active_20_destinations"}`, cfg.Environment)
+		fmt.Fprintf(w, `{"status":"ok","app":"Rancak.in Backend API","env":"%s"}`, cfg.Environment)
 	})
 
 	addr := ":" + cfg.Port
@@ -47,3 +50,4 @@ func main() {
 		log.Fatalf("Gagal menjalankan server: %v", err)
 	}
 }
+

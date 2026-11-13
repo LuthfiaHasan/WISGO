@@ -37,3 +37,4 @@ func LoadConfig() *Config {
 		Environment: env,
 	}
 }
+

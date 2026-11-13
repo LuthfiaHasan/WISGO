@@ -7,51 +7,62 @@ import (
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
 
-// HandlerBE2 menangani endpoint Grup, Mitra, Escrow & Komunitas (Pilar 4, 5, 6, 8)
-// CATATAN: File ini milik BE-2 — dibiarkan utuh 100% sesuai branch dev agar Zero Merge Conflict.
+// HandlerBE2 menangani endpoint Grup, Mitra, Escrow & Gamifikasi (Pilar 4, 5, 6, 8)
 type HandlerBE2 struct{}
 
 func NewHandlerBE2() *HandlerBE2 {
 	return &HandlerBE2{}
 }
 
+// RequestOTP mengirim kode OTP 4 kotak ke nomor HP
 func (h *HandlerBE2) RequestOTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	resp := map[string]string{
-		"status":   "OTP_SENT",
-		"otp_mock": "1234",
-		"message":  "Kode OTP 4 digit telah dikirim ke WhatsApp Anda",
+		"status":  "sent",
+		"message": "Kode OTP 4 digit telah dikirimkan via WhatsApp/SMS",
 	}
 	json.NewEncoder(w).Encode(resp)
 }
 
+// CreateGroupRoom membuat private group room perjalanan
 func (h *HandlerBE2) CreateGroupRoom(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	room := models.GroupRoom{
-		ID:       "grp-001",
-		RoomCode: "RANCAK-772",
-		Title:    "Liburan Keluarga Besar ke Bukittinggi",
-		LeaderID: "usr-001",
+		ID:       "grp-9912",
+		RoomCode: "RANCAK-MINANG-88",
+		Title:    "Liburan Keluarga Lembah Harau - Bukittinggi",
 	}
 	json.NewEncoder(w).Encode(room)
 }
 
+// GetPartnersKatalog katalog 5 mitra nagari + level pedas
 func (h *HandlerBE2) GetPartnersKatalog(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	partners := []models.PartnerNagari{
 		{
-			ID:          "ptn-001",
-			Name:        "Homestay Rumah Gadang Uda Zul",
+			ID:          "ptr-01",
+			Name:        "Homestay Rumah Gadang Etek Nur",
 			Category:    "Homestay Rumah Gadang",
 			WhatsApp:    "6281234567890",
 			IsVerified:  true,
 			StandardFee: 250000,
+			NagariName:  "Nagari Sungai Buluah",
+		},
+		{
+			ID:          "ptr-02",
+			Name:        "Itiak Lado Mudo Ngarai Sianok",
+			Category:    "Kuliner Halal",
+			WhatsApp:    "6281298765432",
+			SpicyLevel:  4, // Level Pedas 4
+			IsVerified:  true,
+			StandardFee: 45000,
 			NagariName:  "Nagari Koto Gadang",
 		},
 	}
 	json.NewEncoder(w).Encode(partners)
 }
 
+// WAWebhookSimulation simulator respon Bot WA Mitra (1 Terima, 0 Tolak)
 func (h *HandlerBE2) WAWebhookSimulation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	resp := map[string]string{
@@ -62,3 +73,4 @@ func (h *HandlerBE2) WAWebhookSimulation(w http.ResponseWriter, r *http.Request)
 	}
 	json.NewEncoder(w).Encode(resp)
 }
+
