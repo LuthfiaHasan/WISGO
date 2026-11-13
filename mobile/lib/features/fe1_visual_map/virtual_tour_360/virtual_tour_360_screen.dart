@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../models/destination_model.dart';
@@ -23,6 +24,21 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   bool _isSpatialAudioPlaying = false;
   double _yawAngle = 20.0;
   double _pitchAngle = -5.0;
+
+  String get _currentPanoramaUrl {
+    final scenes = widget.destination.scenes360;
+    if (scenes.isNotEmpty) {
+      final targetType = _isAerialMode ? 'aerial' : 'ground';
+      final matched = scenes.where((s) => s.type == targetType).toList();
+      if (matched.isNotEmpty && matched.first.panoramaUrl.isNotEmpty) {
+        return matched.first.panoramaUrl;
+      }
+    }
+    // Panorama Equirectangular default resolusi tinggi
+    return _isAerialMode
+        ? 'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama.jpg'
+        : 'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama2.jpg';
+  }
 
   List<Hotspot360Model> get _currentHotspots {
     final scenes = widget.destination.scenes360;
@@ -237,6 +253,49 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     );
   }
 
+  Widget _buildSimulationCanvas() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: _isAerialMode
+              ? [
+                  const Color(0xFF102A43),
+                  const Color(0xFF1C4532),
+                  const Color(0xFF234B24),
+                ]
+              : [
+                  const Color(0xFF1A3626),
+                  const Color(0xFF234B24),
+                  const Color(0xFF2D3748),
+                ],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _isAerialMode ? Icons.flight : Icons.panorama_photosphere,
+              size: 64,
+              color: Colors.white.withOpacity(0.22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Yaw: ${_yawAngle.toStringAsFixed(0)}° · Pitch: ${_pitchAngle.toStringAsFixed(0)}°',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,215 +334,272 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
           ),
         ],
       ),
-      body: GestureDetector(
-        onPanUpdate: (details) {
-          setState(() {
-            _yawAngle = (_yawAngle + details.delta.dx * 0.4) % 360;
-            _pitchAngle = (_pitchAngle - details.delta.dy * 0.25).clamp(-65.0, 65.0);
-          });
-        },
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Kanvas Panorama Simulasi Interaktif
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 450),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: _isAerialMode
-                      ? [
-                          const Color(0xFF102A43),
-                          const Color(0xFF1C4532),
-                          const Color(0xFF234B24),
-                        ]
-                      : [
-                          const Color(0xFF1A3626),
-                          const Color(0xFF234B24),
-                          const Color(0xFF2D3748),
-                        ],
-                ),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _isAerialMode ? Icons.flight : Icons.panorama_photosphere,
-                      size: 64,
-                      color: Colors.white.withOpacity(0.22),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. VIEWER PANORAMA 360° SUNGGUHAN (EQUIRECTANGULAR + GYROSCOPE)
+          PanoramaViewer(
+            sensorControl:
+                _isGyroEnabled ? SensorControl.orientation : SensorControl.none,
+            animSpeed: 0.2,
+            latitude: _pitchAngle,
+            longitude: _yawAngle,
+            onViewChanged: (lon, lat, tilt) {
+              setState(() {
+                _yawAngle = lon;
+                _pitchAngle = lat;
+              });
+            },
+            hotspots: _currentHotspots.map((hotspot) {
+              final color = _pinColor(hotspot.type);
+              return Hotspot(
+                latitude: hotspot.pitch,
+                longitude: hotspot.yaw,
+                width: 48,
+                height: 48,
+                widget: GestureDetector(
+                  onTap: () => _showHotspotSheet(hotspot),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.white, width: 2.5),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Yaw: ${_yawAngle.toStringAsFixed(0)}° · Pitch: ${_pitchAngle.toStringAsFixed(0)}°',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                    child: Icon(
+                      _pinIcon(hotspot.type),
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+            child: Image.network(
+              _currentPanoramaUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildSimulationCanvas(),
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildSimulationCanvas(),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.green500,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Memuat Panorama 360°...',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Geser layar & ketuk salah satu dari 4 Pin di bawah',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
-                    ),
                   ],
-                ),
-              ),
+                );
+              },
             ),
+          ),
 
-            // Switcher Aerial-to-Ground di Bagian Atas
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+          // 2. SWITCHER AERIAL-TO-GROUND DI BAGIAN ATAS
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.55),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildModeChip(
+                        label: 'Drone Udara',
+                        icon: Icons.flight_takeoff,
+                        selected: _isAerialMode,
+                        onTap: () => setState(() => _isAerialMode = true),
+                      ),
+                      _buildModeChip(
+                        label: 'Titik Darat',
+                        icon: Icons.directions_walk,
+                        selected: !_isAerialMode,
+                        onTap: () => setState(() => _isAerialMode = false),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_isSpatialAudioPlaying)
                   Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.55),
-                      borderRadius: BorderRadius.circular(24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    child: Row(
+                    decoration: BoxDecoration(
+                      color: AppColors.pinAudioEmas,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildModeChip(
-                          label: 'Drone Udara',
-                          icon: Icons.flight_takeoff,
-                          selected: _isAerialMode,
-                          onTap: () => setState(() => _isAerialMode = true),
-                        ),
-                        _buildModeChip(
-                          label: 'Titik Darat',
-                          icon: Icons.directions_walk,
-                          selected: !_isAerialMode,
-                          onTap: () => setState(() => _isAerialMode = false),
+                        Icon(Icons.graphic_eq, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Audio 360° Aktif',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  if (_isSpatialAudioPlaying)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+              ],
+            ),
+          ),
+
+          // 3. PANEL DAFTAR 4 PIN INTERAKTIF (Standar desain.md)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.cream100,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '4 Pin Interaktif pada Scene Ini:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.ink900,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.pinAudioEmas,
-                        borderRadius: BorderRadius.circular(20),
+                      Text(
+                        '${_yawAngle.toStringAsFixed(0)}° / ${_pitchAngle.toStringAsFixed(0)}°',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black54,
+                          fontFamily: 'monospace',
+                        ),
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.graphic_eq, color: Colors.white, size: 16),
-                          SizedBox(width: 6),
-                          Text(
-                            'Audio 360° Aktif',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ..._currentHotspots.map((hotspot) {
+                    final color = _pinColor(hotspot.type);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => _showHotspotSheet(hotspot),
+                        child: Container(
+                          constraints: const BoxConstraints(minHeight: 44),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
                           ),
-                        ],
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: color.withOpacity(0.35)),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: color,
+                                child: Icon(
+                                  _pinIcon(hotspot.type),
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      hotspot.title,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.ink900,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${_pinBadgeLabel(hotspot.type)} · Pitch ${hotspot.pitch}°, Yaw ${hotspot.yaw}°',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.chevron_right, color: color),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    );
+                  }),
                 ],
               ),
             ),
-
-            // Panel Daftar 4 Pin Interaktif (Standar desain.md)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 24,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.cream100,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      '4 Pin Interaktif pada Scene Ini (Ketuk untuk Uji):',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.ink900,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ..._currentHotspots.map((hotspot) {
-                      final color = _pinColor(hotspot.type);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () => _showHotspotSheet(hotspot),
-                          child: Container(
-                            constraints: const BoxConstraints(minHeight: 44),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: color.withOpacity(0.35)),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: color,
-                                  child: Icon(
-                                    _pinIcon(hotspot.type),
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        hotspot.title,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.ink900,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${_pinBadgeLabel(hotspot.type)} · Pitch ${hotspot.pitch}°, Yaw ${hotspot.yaw}°',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(Icons.chevron_right, color: color),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -159,6 +159,8 @@ class DestinationRepository {
           destinationId: 'dest-001',
           title: 'Panorama Drone Udara Lembah Harau (150m)',
           type: 'aerial',
+          panoramaUrl:
+              'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama.jpg',
           initialPitch: -12.0,
           initialYaw: 25.0,
           hotspots: [
@@ -189,6 +191,8 @@ class DestinationRepository {
           destinationId: 'dest-001',
           title: 'Tepi Air Terjun Sarasah Bunta (Ground)',
           type: 'ground',
+          panoramaUrl:
+              'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama2.jpg',
           initialPitch: 0.0,
           initialYaw: 0.0,
           hotspots: [
@@ -282,6 +286,8 @@ class DestinationRepository {
           destinationId: 'dest-002',
           title: 'Kolam Utama Lubuk Nyarai (Ground)',
           type: 'ground',
+          panoramaUrl:
+              'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama.jpg',
           hotspots: [
             Hotspot360Model(
               id: 'hs-ny-1',
