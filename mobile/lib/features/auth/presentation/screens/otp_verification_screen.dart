@@ -106,6 +106,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => const Fe1MainShell(),
+          builder: (_) => const SavedPlacesScreen(),
         ),
         (route) => false,
       );

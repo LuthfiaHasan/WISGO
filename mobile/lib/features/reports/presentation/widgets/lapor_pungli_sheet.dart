@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/theme/app_colors.dart';
 import '../../fe1_visual_map/data/destination_repository.dart';
+import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Item 9: Formulir Laporan Pungutan Liar dan Fasilitas Rusak
 /// Unggah foto bukti disertai penandaan titik koordinat lokasi otomatis langsung dikirim ke petugas pengawasan.
@@ -367,25 +369,6 @@ class _LaporPungliSheetState extends State<LaporPungliSheet> {
                 ElevatedButton(
                   onPressed: () {
                     final ticket = 'SABER-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-                    
-                    // Kirim log laporan ke endpoint BE-1 (Pilar 3)
-                    http.post(
-                      Uri.parse('${DestinationRepository.baseUrl}/pungli/report'),
-                      headers: {'Content-Type': 'application/json'},
-                      body: jsonEncode({
-                        'destination_id': 'dest-001',
-                        'reporter_name': 'Wisatawan Anonim',
-                        'incident_category': _activeTab == 'pungli' ? 'Pungli Tiket / Parkir Liar' : 'Fasilitas Rusak',
-                        'photo_evidence': 'https://cdn.rancak.in/evidence/bukti-karcis.jpg',
-                        'description': _descController.text.trim().isNotEmpty
-                            ? _descController.text.trim()
-                            : 'Laporan pungli di lokasi wisata',
-                        'charged_amount_idr': double.tryParse(_amountController.text) ?? 20000,
-                        'latitude': -0.1023,
-                        'longitude': 100.6728,
-                      }),
-                    ).catchError((_) => http.Response('{}', 500));
-
                     Navigator.pop(context);
                     if (widget.onSubmitSuccess != null) {
                       widget.onSubmitSuccess!(ticket);
