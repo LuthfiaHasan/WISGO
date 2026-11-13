@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 175" width="260" height="175" fill="none">
+  <defs>
+    <linearGradient id="wisgoBrushLeft" x1="45" y1="35" x2="155" y2="145" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5B8758" />
+      <stop offset="55%" stop-color="#4A754A" />
+      <stop offset="100%" stop-color="#355B36" />
+    </linearGradient>
+    <linearGradient id="wisgoBrushRight" x1="125" y1="150" x2="225" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1D3B1B" />
+      <stop offset="60%" stop-color="#294D26" />
+      <stop offset="100%" stop-color="#3E673B" />
+    </linearGradient>
+  </defs>
+  <path d="M52 46 C78 42, 92 68, 79 108 C73 125, 63 139, 55 147 C52 150, 57 153, 66 150 C88 142, 128 106, 168 62 C164 60, 159 61, 152 67 C124 94, 97 116, 82 125 C94 94, 98 64, 79 49 C70 42, 58 43, 52 46 Z" fill="url(#wisgoBrushLeft)"/>
+  <path d="M142 74 C154 62, 165 54, 173 50 C171 55, 163 65, 148 79 Z" fill="#588255" opacity="0.75"/>
+  <path d="M148 82 C160 70, 169 61, 176 56 C173 62, 164 73, 152 85 Z" fill="#466F45" opacity="0.65"/>
+  <path d="M158 72 C145 96, 134 123, 129 143 C127 151, 133 156, 142 152 C168 139, 206 94, 229 30 C231 24, 228 21, 225 27 C203 77, 173 115, 148 132 C153 112, 161 89, 169 70 C166 68, 161 68, 158 72 Z" fill="url(#wisgoBrushRight)"/>
+  <path d="M214 54 C221 38, 226 24, 231 15 C231 23, 226 39, 219 56 Z" fill="#2A4E27"/>
+  <path d="M220 48 C226 34, 230 22, 234 12 C233 21, 229 36, 223 51 Z" fill="#3B6337" opacity="0.8"/>
+  <path d="M161 67 C166 57, 170 50, 174 45 C173 51, 169 60, 165 69 Z" fill="#2A4E27" opacity="0.7"/>
+</svg>
+
