@@ -130,7 +130,7 @@ class _LaporPungliSheetState extends State<LaporPungliSheet> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              '🚨 Pungutan Liar',
+                              'Pungutan Liar',
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
@@ -151,7 +151,7 @@ class _LaporPungliSheetState extends State<LaporPungliSheet> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              '🛠️ Fasilitas Rusak',
+                              'Fasilitas Rusak',
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
@@ -318,7 +318,7 @@ class _LaporPungliSheetState extends State<LaporPungliSheet> {
                               const SizedBox(height: 4),
                               Text(
                                 _photoAttached
-                                    ? 'Foto_Bukti_Pungli_Terlampir.jpg (2.4 MB) ✅'
+                                    ? 'Foto_Bukti_Pungli_Terlampir.jpg (2.4 MB)'
                                     : 'Ketuk untuk Ambil Foto Kamera / Galeri',
                                 style: TextStyle(
                                   fontSize: 11,

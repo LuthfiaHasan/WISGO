@@ -249,7 +249,7 @@ class _GroupRoomSheetState extends State<GroupRoomSheet> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '🗳️ LIVE VOTING DESTINASI ROMBONGAN:',
+                            'LIVE VOTING DESTINASI ROMBONGAN:',
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
                           ),
                           Text('Bebas Pilih', style: TextStyle(fontSize: 9.5, color: AppColors.muted)),

@@ -244,7 +244,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                               const SizedBox(height: 4),
                               Text(
                                 _photoAttached
-                                    ? 'Foto_Sarasah_Murai_Terlampir.jpg ✅'
+                                    ? 'Foto_Sarasah_Murai_Terlampir.jpg'
                                     : 'Ketuk untuk Unggah Foto Tempat',
                                 style: TextStyle(
                                   fontSize: 11,

@@ -588,14 +588,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     const SizedBox(width: 6),
                     _buildSortChip(
                       key: 'distance',
-                      label: '📍 Jarak Terdekat (GPS)',
+                      label: 'Jarak Terdekat (GPS)',
                       isSelected: _sortMode == 'distance',
                       onTap: () => setState(() => _sortMode = 'distance'),
                     ),
                     const SizedBox(width: 6),
                     _buildSortChip(
                       key: 'rating',
-                      label: '⭐ Rating Tertinggi',
+                      label: 'Rating Tertinggi',
                       isSelected: _sortMode == 'rating',
                       onTap: () => setState(() => _sortMode = 'rating'),
                     ),
@@ -1468,7 +1468,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '📍 ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                              '${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -1525,7 +1525,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '📍 Jarak ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                        'Jarak ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
                         style: const TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w800,
@@ -1559,13 +1559,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: AppColors.warmBorder),
                       ),
-                      child: Text(
-                        fac,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.forest,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_getFacilityIcon(fac), size: 12, color: AppColors.brush),
+                          const SizedBox(width: 4),
+                          Text(
+                            fac,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }).toList(),
@@ -2653,7 +2660,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '🌐 360° Virtual Kawasan',
+                          '360° Virtual Kawasan',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
@@ -2675,7 +2682,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '🗺️ Denah Lokasi Interaktif',
+                          'Denah Lokasi Interaktif',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
@@ -2734,10 +2741,10 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
             spacing: 8,
             runSpacing: 6,
             children: [
-              _buildScenePill('🅿️ Tempat Parkir'),
-              _buildScenePill('🍜 UMKM Makanan Minang'),
-              _buildScenePill('🚻 Toilet & Bilas'),
-              _buildScenePill('🕌 Musholla'),
+              _buildScenePill('Tempat Parkir', Icons.local_parking_rounded),
+              _buildScenePill('UMKM Kuliner Minang', Icons.restaurant_rounded),
+              _buildScenePill('Toilet & Bilas', Icons.wc_rounded),
+              _buildScenePill('Musholla', Icons.mosque_rounded),
             ],
           ),
         ),
@@ -2756,7 +2763,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                 border: Border.all(color: Colors.white24),
               ),
               child: const Text(
-                '👆 Sentuh & geser layar untuk melihat sekeliling 360°',
+                'Sentuh & geser layar untuk melihat sekeliling 360°',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -2770,7 +2777,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
     );
   }
 
-  Widget _buildScenePill(String label) {
+  Widget _buildScenePill(String label, IconData iconData) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -2778,13 +2785,20 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white30),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w800,
-          color: AppColors.cream,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(iconData, size: 12, color: AppColors.sage),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              color: AppColors.cream,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2858,35 +2872,35 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                 // Interactive Pin 1: Parkir
                 _buildDenahPin(
                   category: 'PARKIR',
-                  label: '🅿️ Parkir',
+                  label: 'Parkir', iconData: Icons.local_parking_rounded,
                   topPct: 0.68,
                   leftPct: 0.16,
                 ),
                 // Interactive Pin 2: Loket
                 _buildDenahPin(
                   category: 'LOKET',
-                  label: '🎟️ Loket',
+                  label: 'Loket', iconData: Icons.confirmation_number_rounded,
                   topPct: 0.55,
                   leftPct: 0.36,
                 ),
                 // Interactive Pin 3: UMKM
                 _buildDenahPin(
                   category: 'UMKM',
-                  label: '🍜 UMKM Makanan',
+                  label: 'UMKM Makanan', iconData: Icons.restaurant_rounded,
                   topPct: 0.42,
                   leftPct: 0.56,
                 ),
                 // Interactive Pin 4: Toilet
                 _buildDenahPin(
                   category: 'TOILET',
-                  label: '🚻 Toilet',
+                  label: 'Toilet', iconData: Icons.wc_rounded,
                   topPct: 0.28,
                   leftPct: 0.42,
                 ),
                 // Interactive Pin 5: Musholla
                 _buildDenahPin(
                   category: 'MUSHOLLA',
-                  label: '🕌 Musholla',
+                  label: 'Musholla', iconData: Icons.mosque_rounded,
                   topPct: 0.22,
                   leftPct: 0.72,
                 ),
@@ -2996,6 +3010,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   Widget _buildDenahPin({
     required String category,
     required String label,
+    required IconData iconData,
     required double topPct,
     required double leftPct,
   }) {
@@ -3004,32 +3019,80 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
       top: 220 * topPct - 14,
       left: 320 * leftPct - 30,
       child: GestureDetector(
-        onTap: () => setState(() => _selectedDenahType = category),
+        onTap: () {
+          setState(() {
+            _selectedDenahType = category;
+            // Geser yaw visual ke arah lokasi hotspot titik yang dipilih
+            if (category == 'PARKIR') {
+              _yaw = -60.0;
+            } else if (category == 'LOKET') {
+              _yaw = -25.0;
+            } else if (category == 'UMKM') {
+              _yaw = 20.0;
+            } else if (category == 'TOILET') {
+              _yaw = 65.0;
+            } else if (category == 'MUSHOLLA') {
+              _yaw = 110.0;
+            }
+          });
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(iconData, size: 16, color: AppColors.cream),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Menuju lokasi:  (Koordinat Titik Terpilih)',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.forest,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.cream : Colors.white,
+            color: isSelected ? AppColors.forest : Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: isSelected ? AppColors.terracotta : AppColors.forest,
-              width: isSelected ? 2.5 : 1.5,
+              color: isSelected ? AppColors.terracotta : AppColors.sageBorder,
+              width: isSelected ? 2 : 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 6,
+                color: isSelected ? AppColors.terracotta.withValues(alpha: 0.4) : Colors.black12,
+                blurRadius: isSelected ? 8 : 4,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: isSelected ? AppColors.terracotta : AppColors.forest,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                iconData,
+                size: 13,
+                color: isSelected ? AppColors.cream : AppColors.forest,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? AppColors.cream : AppColors.ink,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -3257,7 +3320,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  '📍 ${widget.place.distanceKm.toStringAsFixed(widget.place.distanceKm.truncateToDouble() == widget.place.distanceKm ? 0 : 1)} km',
+                                  '${widget.place.distanceKm.toStringAsFixed(widget.place.distanceKm.truncateToDouble() == widget.place.distanceKm ? 0 : 1)} km',
                                   style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w800,
@@ -4340,4 +4403,19 @@ class _SitePlanPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SitePlanPainter oldDelegate) => false;
+}
+
+IconData _getFacilityIcon(String name) {
+  final lower = name.toLowerCase();
+  if (lower.contains('parkir')) return Icons.local_parking_rounded;
+  if (lower.contains('toilet') || lower.contains('bilas')) return Icons.wc_rounded;
+  if (lower.contains('kuliner') || lower.contains('warung') || lower.contains('makan')) return Icons.restaurant_rounded;
+  if (lower.contains('musholla') || lower.contains('masjid')) return Icons.mosque_rounded;
+  if (lower.contains('trekking') || lower.contains('jalan')) return Icons.hiking_rounded;
+  if (lower.contains('rakit') || lower.contains('perahu') || lower.contains('danau')) return Icons.directions_boat_rounded;
+  if (lower.contains('foto') || lower.contains('spot')) return Icons.camera_alt_rounded;
+  if (lower.contains('camping') || lower.contains('kemah')) return Icons.cabin_rounded;
+  if (lower.contains('sejarah') || lower.contains('istano')) return Icons.account_balance_rounded;
+  if (lower.contains('pemandu') || lower.contains('guide')) return Icons.support_agent_rounded;
+  return Icons.check_circle_outline_rounded;
 }

@@ -329,7 +329,7 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
-                                  '🎧 PANDUAN AUDIO SUARA BUDAYA',
+                                  'PANDUAN AUDIO SUARA BUDAYA',
                                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
                                 ),
                                 Text(
@@ -405,7 +405,7 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
                             Icon(Icons.pin_drop_rounded, size: 24, color: AppColors.terracotta),
                             SizedBox(height: 4),
                             Text(
-                              '📍 Posisi Anda: Depan Plang Fisik Gerbang Kawasan',
+                              'Posisi Anda: Depan Plang Fisik Gerbang Kawasan',
                               style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
                             ),
                             Text(
