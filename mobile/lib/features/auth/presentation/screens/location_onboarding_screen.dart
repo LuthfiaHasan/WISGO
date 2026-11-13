@@ -24,8 +24,8 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 400),
-        pageBuilder: (_, _, _) => const LoginScreen(),
-        transitionsBuilder: (_, animation, _, child) {
+        pageBuilder: (_, __, ___) => const LoginScreen(),
+        transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
       ),

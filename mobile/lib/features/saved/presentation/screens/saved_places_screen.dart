@@ -1210,7 +1210,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 Image.network(
                   place.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) =>
+                  errorBuilder: (_, __, ___) =>
                       Container(color: AppColors.forest),
                 ),
                 Container(
@@ -2984,7 +2984,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         Image.network(
                           widget.place.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(color: AppColors.forest),
+                          errorBuilder: (_, __, ___) => Container(color: AppColors.forest),
                         ),
                         Container(
                           decoration: BoxDecoration(

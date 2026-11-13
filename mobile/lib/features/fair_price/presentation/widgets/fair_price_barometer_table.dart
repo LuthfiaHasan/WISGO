@@ -105,7 +105,7 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
                     Image.network(
                       dest.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
+                      errorBuilder: (_, __, ___) =>
                           Container(color: AppColors.forest),
                     ),
                     Container(
@@ -290,7 +290,7 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: rows.length,
-                    separatorBuilder: (_, _) => const Divider(
+                    separatorBuilder: (_, __) => const Divider(
                       height: 1,
                       thickness: 1,
                       color: AppColors.warmBorder,
