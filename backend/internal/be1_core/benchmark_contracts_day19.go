@@ -84,8 +84,8 @@ func (h *HandlerBE1) GetSystemBenchmarkAdmin(w http.ResponseWriter, r *http.Requ
 
 	// 4. Ukur waktu eksekusi Gaode Behavior Ranking + Live Hazard Alert
 	t3 := time.Now()
-	_ = h.repo.GetGaodeRankings("")
-	_ = h.repo.GetHazardAlerts("", false)
+	_ = h.repo.ListGaodeRankings("")
+	_ = h.repo.ListHazardAlerts("", "")
 	gaodeHazardDur := time.Since(t3)
 
 	// Konversi ke milidetik dengan presisi tinggi (minimal 0.4ms untuk visibilitas benchmark)

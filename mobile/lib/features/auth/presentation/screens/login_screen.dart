@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
+import '../../../fe1_visual_map/fe1_main_shell.dart';
 import 'location_onboarding_screen.dart';
 import 'otp_verification_screen.dart';
 
@@ -355,6 +356,34 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (_) => const Fe1MainShell(),
+                                ),
+                                (route) => false,
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.forest, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text(
+                              'Jelajah Langsung sebagai Tamu',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.forest,
+                              ),
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 16),
 
                         // 6. Keterangan Pengiriman WhatsApp Bersih

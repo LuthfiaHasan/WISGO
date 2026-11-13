@@ -15,6 +15,11 @@ import '../../../fe1_visual_map/map_explore_shunlu/map_explore_screen.dart';
 import '../../../fe1_visual_map/models/destination_model.dart';
 import '../../../fe1_visual_map/offline_pocket/offline_pocket_screen.dart';
 import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
+import '../../../booking/presentation/widgets/quick_booking_panel.dart';
+import '../../../booking/presentation/widgets/qris_payment_sheet.dart';
+import '../../../group_room/presentation/widgets/live_group_tracking_sheet.dart';
+import '../../../passport/presentation/widgets/digital_passport_sheet.dart';
+import '../../../culture/presentation/widgets/culture_and_community_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
 import '../widgets/saved_skeleton_shimmer.dart';
@@ -605,7 +610,82 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
               // Fitur Wisata Pintar (FE-1: Shunlu, SOS Jalur Rawan, Kamus Budaya, Luring & 360)
               _buildFe1QuickFeatureRow(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
+
+              // Quick Access Action Bar: Pantau Rombongan, Paspor Digital, Budaya & Forum Nagari (FE-2)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _openLiveGroupTrackingModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.sageBorder),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.radar_rounded, size: 13, color: AppColors.forest),
+                            SizedBox(width: 5),
+                            Text(
+                              'Pantau Rombongan',
+                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: _openDigitalPassportModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.sageBorder),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.military_tech_rounded, size: 13, color: AppColors.terracotta),
+                            SizedBox(width: 5),
+                            Text(
+                              'Paspor Digital',
+                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () => _openCultureAndCommunityModal(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.sageBorder),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.auto_awesome_rounded, size: 13, color: AppColors.forest),
+                            SizedBox(width: 5),
+                            Text(
+                              'Budaya & Forum',
+                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
 
               // Search Bar (REQUEST 2)
               Container(
@@ -2087,6 +2167,44 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
+  // ===========================================================================
+  // MODAL 9: PANTAU LOKASI ROMBONGAN (ITEM 17)
+  // ===========================================================================
+  void _openLiveGroupTrackingModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const LiveGroupTrackingSheet(),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 10: PASPOR DIGITAL & VERIFIKASI GPS (ITEM 18)
+  // ===========================================================================
+  void _openDigitalPassportModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const DigitalPassportSheet(),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 11: BUDAYA, SERTIFIKAT & FORUM NAGARI (ITEM 19)
+  // ===========================================================================
+  void _openCultureAndCommunityModal([String? destTitle]) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CultureAndCommunitySheet(
+        destinationTitle: destTitle ?? 'Air Terjun Lubuk Hitam (Cindakir) 3 Tingkat',
+      ),
+    );
+  }
+
   // VIEW 3: PROFIL WISATAWAN & PENGATURAN AKUN
   // ===========================================================================
   Widget _buildProfileView() {
@@ -2933,8 +3051,30 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   String _subTab = '360'; // '360' | 'denah'
   String _selectedDenahType = 'UMKM';
   _Facility360Data? _selectedFacility360;
+  bool _isQuickBookingOpen = false;
   double _yaw = 0.0;
   double _pitch = 0.0;
+
+  void _openQrisPayment(int totalAmount, List<Map<String, dynamic>> items) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => QrisPaymentSheet(
+        totalAmount: totalAmount,
+        orderItems: items,
+        destinationTitle: widget.place.title,
+        onPaymentSuccess: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pembayaran Sukses! Layanan Resmi Terkonfirmasi.'),
+              backgroundColor: AppColors.forest,
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3409,9 +3549,52 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                 ],
               ),
             ),
-          )
-        else
-          // Bottom gesture prompt when no facility is selected
+          ),
+        // Floating Quick Booking Button (Requirement 14)
+        if (!_isQuickBookingOpen && _selectedFacility360 == null)
+          Positioned(
+            bottom: 58,
+            left: 20,
+            right: 20,
+            child: Center(
+              child: GestureDetector(
+                onTap: () => setState(() => _isQuickBookingOpen = true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: AppColors.forest,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.flash_on_rounded, size: 16, color: AppColors.cream),
+                      SizedBox(width: 6),
+                      Text(
+                        'Pesan Layanan Cepat 360° (Setengah Layar)',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.cream,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Bottom gesture prompt when no facility is selected and panel closed
+        if (!_isQuickBookingOpen && _selectedFacility360 == null)
           Positioned(
             bottom: 18,
             left: 20,
@@ -3433,6 +3616,21 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                   ),
                 ),
               ),
+            ),
+          ),
+
+        // Quick Booking Sliding Half-Panel over 360 view (Requirement 14 & 15)
+        if (_isQuickBookingOpen)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: QuickBookingPanel(
+              place: widget.place,
+              onClose: () => setState(() => _isQuickBookingOpen = false),
+              onProceedToPayment: (total, items) {
+                _openQrisPayment(total, items);
+              },
             ),
           ),
       ],

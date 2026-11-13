@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../fe1_visual_map/fe1_main_shell.dart';
 import '../../../saved/presentation/screens/saved_places_screen.dart';
 
 /// Layar 4: Verifikasi Kode OTP 4 Digit (Bahasa Indonesia Bersih, Tanpa Dekorasi Ikon Berlebih).
@@ -104,6 +105,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       setState(() => _isVerifying = false);
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
+          builder: (_) => const Fe1MainShell(),
           builder: (_) => const SavedPlacesScreen(),
         ),
         (route) => false,
