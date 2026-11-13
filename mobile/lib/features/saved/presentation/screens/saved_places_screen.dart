@@ -3,6 +3,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../../fair_price/presentation/widgets/fair_price_barometer_table.dart';
+import '../../../group_room/presentation/widgets/group_room_sheet.dart';
+import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
+import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
+import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
+import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
 import '../widgets/saved_skeleton_shimmer.dart';
@@ -413,25 +418,119 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.sage,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${filtered.length} Destinasi',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.forest,
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _openQrScannerModal,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.forest,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.qr_code_scanner_rounded, size: 13, color: AppColors.cream),
+                              SizedBox(width: 4),
+                              Text(
+                                'Scan QR',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.cream,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.sage,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${filtered.length} Destinasi',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+
+              // Quick Trip Planner & Group Room Banner (ITEM 10, 11, 12)
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.forest, AppColors.brush],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.group_rounded, color: AppColors.sage, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Perencana Trip Rombongan',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                          Text(
+                            'Auto-Itinerary Durasi, Budget & WhatsApp Grup',
+                            style: TextStyle(fontSize: 9.5, color: AppColors.sage),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _openTripPlannerModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('Buat Trip', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest)),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: _openGroupRoomModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('Grup WA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
 
@@ -627,75 +726,94 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
         // Scrollable Destination Feed
         Expanded(
-          child: filtered.isEmpty
-              ? ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.warmBorder),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
-                            ),
+          child: Stack(
+            children: [
+              filtered.isEmpty
+                  ? ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.warmBorder),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: AppColors.muted,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: () =>
-                                setState(() => _currentExploreType = 'ALL'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.forest,
-                              foregroundColor: AppColors.cream,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              'Tampilkan Semua Kategori di $_currentExploreRegion',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.muted,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () =>
+                                    setState(() => _currentExploreType = 'ALL'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.forest,
+                                  foregroundColor: AppColors.cream,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Tampilkan Semua Kategori di $_currentExploreRegion',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildDestinationCard(
+                            filtered[index],
+                            isSavedContext: false,
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildDestinationCard(
-                        filtered[index],
-                        isSavedContext: false,
-                      ),
-                    );
-                  },
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: _openUsulDestinasiModal,
+                  backgroundColor: AppColors.forest,
+                  foregroundColor: AppColors.cream,
+                  elevation: 4,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text(
+                    'Usul Wisata',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                  ),
                 ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1166,6 +1284,37 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 destinationData: activeDest,
                 selectedCategory: _activeBarometerCategory,
               ),
+              const SizedBox(height: 14),
+              GestureDetector(
+                onTap: () => _openLaporPungliModal(tab: 'pungli'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.coralTint,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.terracotta.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.terracotta),
+                          SizedBox(width: 8),
+                          Text(
+                            'Temukan Pungli atau Fasilitas Rusak?',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.terracotta),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Lapor GPS →',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.terracotta, decoration: TextDecoration.underline),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -1604,6 +1753,81 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           },
         );
       },
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 4: PEMINDAIAN PLANG SMART QR WISATA (ITEM 8)
+  // ===========================================================================
+  void _openQrScannerModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const QrScannerSheet(),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 5: LAPORAN SATGAS SABER PUNGLI & FASILITAS RUSAK (ITEM 9)
+  // ===========================================================================
+  void _openLaporPungliModal({String tab = 'pungli'}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => LaporPungliSheet(
+        initialTab: tab,
+        onSubmitSuccess: (ticket) {
+          _showAppToast('Laporan Resmi #$ticket berhasil diteruskan ke Satgas!');
+        },
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 6: LAYAR 06 TRIP PLANNER & KAPASITAS ORANG (ITEM 10 & 12)
+  // ===========================================================================
+  void _openTripPlannerModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => TripPlannerSheet(
+        onOpenGroupRoom: _openGroupRoomModal,
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 7: RUANG ROMBONGAN PRIBADI & UNDANGAN WHATSAPP (ITEM 11)
+  // ===========================================================================
+  void _openGroupRoomModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GroupRoomSheet(
+        onInviteWhatsApp: () {
+          _showAppToast('Tautan Undangan WhatsApp Rombongan Siap Dikirim!');
+        },
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 8: FORMULIR USULAN DESTINASI WISATA BARU (ITEM 13)
+  // ===========================================================================
+  void _openUsulDestinasiModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => UsulDestinasiSheet(
+        onSubmitSuccess: (name) {
+          _showAppToast('Usulan destinasi "$name" berhasil diajukan ke Dispar Sumbar!');
+        },
+      ),
     );
   }
 
