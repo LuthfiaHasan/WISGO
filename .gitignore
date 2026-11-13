@@ -1,9 +1,5 @@
 # Prerequisites & OS files
 .DS_Store
-
-
-
-
 Thumbs.db
 *.log
 *.tmp
@@ -56,4 +52,10 @@ web-admin/out/
 web-admin/build/
 web-admin/dist/
 web-admin/.cache/
+
+# AI Agent & Internal Configurations
+.agents/
+memory/
+GEMINI.md
+
 
