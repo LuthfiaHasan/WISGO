@@ -1731,7 +1731,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // 2. Fasilitas Lingkungan (Single Clean Row)
+                // 2. Fasilitas Lingkungan: Ikon informatif di kartu, judul lengkap di detail
                 Row(
                   children: [
                     const Text(
@@ -1743,37 +1743,33 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         color: AppColors.muted,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: place.facilities.map((fac) {
                             return Padding(
-                              padding: const EdgeInsets.only(right: 5),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.creamSubtle,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppColors.warmBorder.withValues(alpha: 0.6),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(_getFacilityIcon(fac), size: 10.5, color: AppColors.forest),
-                                    const SizedBox(width: 3.5),
-                                    Text(
-                                      fac,
-                                      style: const TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.ink,
-                                      ),
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Tooltip(
+                                message: fac,
+                                preferBelow: false,
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.creamSubtle,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.warmBorder.withValues(alpha: 0.8),
                                     ),
-                                  ],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    _getFacilityIcon(fac),
+                                    size: 14.5,
+                                    color: AppColors.forest,
+                                  ),
                                 ),
                               ),
                             );
@@ -4553,18 +4549,34 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         runSpacing: 6,
                         children: widget.place.facilities.map((fac) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
                             decoration: BoxDecoration(
                               color: AppColors.cream,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: AppColors.warmBorder),
                             ),
-                            child: Text(
-                              fac,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.forest,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 300),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _getFacilityIcon(fac),
+                                    size: 13,
+                                    color: AppColors.forest,
+                                  ),
+                                  const SizedBox(width: 4.5),
+                                  Flexible(
+                                    child: Text(
+                                      fac,
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -5534,14 +5546,17 @@ class _SitePlanPainter extends CustomPainter {
 IconData _getFacilityIcon(String name) {
   final lower = name.toLowerCase();
   if (lower.contains('parkir')) return Icons.local_parking_rounded;
-  if (lower.contains('toilet') || lower.contains('bilas')) return Icons.wc_rounded;
-  if (lower.contains('kuliner') || lower.contains('warung') || lower.contains('makan')) return Icons.restaurant_rounded;
+  if (lower.contains('toilet') || lower.contains('bilas') || lower.contains('kamar ganti')) return Icons.wc_rounded;
+  if (lower.contains('kuliner') || lower.contains('warung') || lower.contains('makan') || lower.contains('kopi')) return Icons.restaurant_rounded;
   if (lower.contains('musholla') || lower.contains('masjid')) return Icons.mosque_rounded;
-  if (lower.contains('trekking') || lower.contains('jalan')) return Icons.hiking_rounded;
-  if (lower.contains('rakit') || lower.contains('perahu') || lower.contains('danau')) return Icons.directions_boat_rounded;
+  if (lower.contains('trekking') || lower.contains('jalur') || lower.contains('hutan')) return Icons.hiking_rounded;
+  if (lower.contains('rakit') || lower.contains('perahu') || lower.contains('boat') || lower.contains('kapal') || lower.contains('dermaga')) return Icons.directions_boat_rounded;
+  if (lower.contains('pemandian') || lower.contains('air panas') || lower.contains('kolam')) return Icons.hot_tub_rounded;
+  if (lower.contains('gardu') || lower.contains('pandang') || lower.contains('panorama')) return Icons.visibility_rounded;
+  if (lower.contains('gazebo') || lower.contains('lesehan')) return Icons.deck_rounded;
+  if (lower.contains('rumah gadang') || lower.contains('istano') || lower.contains('sejarah') || lower.contains('kuno')) return Icons.account_balance_rounded;
+  if (lower.contains('pemandu') || lower.contains('guide')) return Icons.support_agent_rounded;
   if (lower.contains('foto') || lower.contains('spot')) return Icons.camera_alt_rounded;
   if (lower.contains('camping') || lower.contains('kemah')) return Icons.cabin_rounded;
-  if (lower.contains('sejarah') || lower.contains('istano')) return Icons.account_balance_rounded;
-  if (lower.contains('pemandu') || lower.contains('guide')) return Icons.support_agent_rounded;
   return Icons.check_circle_outline_rounded;
 }
