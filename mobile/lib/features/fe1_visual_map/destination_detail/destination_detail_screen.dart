@@ -469,6 +469,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     required Color color,
   }) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 16,
@@ -476,18 +477,31 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
           child: Icon(icon, size: 16, color: color),
         ),
         const SizedBox(width: 12),
-        Expanded(
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
           child: Text(
             title,
-            style: const TextStyle(fontSize: 13, color: AppColors.ink900),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink900,
+            ),
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.bold,
-            color: color,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: color,
+                height: 1.35,
+              ),
+            ),
           ),
         ),
       ],

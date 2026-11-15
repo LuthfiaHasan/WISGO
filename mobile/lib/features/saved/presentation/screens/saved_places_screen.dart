@@ -53,7 +53,9 @@ extension SavedDestinationModelFe1Bridge on SavedDestinationModel {
             ? 'Sedang (Jalan Kaki)'
             : 'Mudah (Datar)',
         cellularSignal: 'Sinyal Lemah / Siap Luring',
-        facilities: facilities.join(', '),
+        facilities: facilities.length > 2
+            ? '${facilities.take(2).join(', ')}, +${facilities.length - 2} lainnya'
+            : (facilities.isNotEmpty ? facilities.join(', ') : 'Ada Toilet & Musala'),
         guideNeed: 'Bisa Mandiri',
       ),
       tips: [
