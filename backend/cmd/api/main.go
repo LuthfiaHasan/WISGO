@@ -1,87 +1,165 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"time"
 
-	"github.com/LuthfiaHasan/WISGO/backend/internal/be1_core"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/be2_group"
+	"github.com/gin-gonic/gin"
+
 	"github.com/LuthfiaHasan/WISGO/backend/internal/config"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/database"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/analytics"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/auth"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/booking_escrow"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/community"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/culture_ranking"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/destination"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/gamification"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/group"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/itinerary"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/partner"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/pungli"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/scenes360"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/spatial"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/system_core"
 )
+
+// setupRouter menginisialisasi router Gin dengan seluruh modul Clean 3-Layer Architecture (BE-1 & BE-2)
+func setupRouter(cfg *config.Config) *gin.Engine {
+	if cfg.Environment == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r := gin.Default()
+	r.Use(middleware.CORSMiddleware())
+
+	// Health Check
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+			"app":    "Rancak.in Backend API",
+			"env":    cfg.Environment,
+			"engine": "Gin Web Framework v1.10.0 (Clean Architecture)",
+		})
+	})
+
+	v1 := r.Group("/api/v1")
+
+	// ==========================================
+	// 1. INFRASTRUCTURE & SHARED MIDDLEWARE
+	// ==========================================
+	cache := middleware.NewInMemoryTTLCache(5 * time.Minute)
+	rateLimiter := middleware.NewTokenBucketRateLimiter(60, 60*time.Second)
+
+	// ==========================================
+	// 2. MODUL BE-1 (CORE & SPASIAL RANAH MINANG)
+	// ==========================================
+	// Modul D1: Katalog 20 Destinasi Prioritas, Detail, Tarif, & Offline Bundle v2 (Pilar 2 & 7)
+	destRepo := destination.NewRepository()
+	destService := destination.NewService(destRepo)
+	destHandler := destination.NewHandler(destService, cache)
+	destHandler.RegisterRoutes(v1)
+
+	// Modul D2: Tur Imersif 360° Aerial-to-Ground & CMS Studio 4-Pin (Pilar 1)
+	scenesRepo := scenes360.NewRepository()
+	scenesService := scenes360.NewService(scenesRepo, destRepo)
+	scenesHandler := scenes360.NewHandler(scenesService, cache)
+	scenesHandler.RegisterRoutes(v1)
+
+	// Modul D3: Engine Along-the-Route "Shunlu", Peta Mikro, Audio GPS <=15m, Radar Bencana & SOS (Pilar 1, 2, 7)
+	spatialRepo := spatial.NewRepository()
+	spatialService := spatial.NewService(spatialRepo, destRepo)
+	spatialHandler := spatial.NewHandler(spatialService, rateLimiter)
+	spatialHandler.RegisterRoutes(v1)
+
+	// Modul D4: Scanner Plang Smart QR, Lapor Pungli Anonim, & Pusat Komando Satgas Saber Pungli (Pilar 3)
+	pungliRepo := pungli.NewRepository()
+	pungliService := pungli.NewService(pungliRepo, destRepo, scenesRepo, spatialRepo)
+	pungliHandler := pungli.NewHandler(pungliService, rateLimiter)
+	pungliHandler.RegisterRoutes(v1)
+
+	// Modul D5: Gaode Behavior-Based Ranking, Kamus Saku Audio Minang, & Kalender Budaya Hari Pakan (Pilar 1 & 2)
+	cultureRepo := culture_ranking.NewRepository()
+	cultureService := culture_ranking.NewService(cultureRepo)
+	cultureHandler := culture_ranking.NewHandler(cultureService)
+	cultureHandler.RegisterRoutes(v1)
+
+	// Modul D6: Live SLA Benchmark <100ms, Manual Cache Flush, & Katalog Kontrak 24 Endpoint (Sprint 4)
+	systemRepo := system_core.NewRepository(destRepo, scenesRepo, spatialRepo, cultureRepo)
+	systemService := system_core.NewService(systemRepo, cache, rateLimiter)
+	systemHandler := system_core.NewHandler(systemService)
+	systemHandler.RegisterRoutes(v1)
+
+	// ==========================================
+	// 3. MODUL BE-2 (GROUP, ESCROW, ITINERARY, DLL)
+	// ==========================================
+	// Modul B1: Autentikasi OTP & Simpan Tempat Favorit (Pilar 4 & 5)
+	authRepo := auth.NewRepository()
+	authService := auth.NewService(authRepo)
+	authHandler := auth.NewHandler(authService)
+	authHandler.RegisterRoutes(v1)
+
+	// Modul B2: Mitra Nagari Minang & Filter Level Pedas (Pilar 5)
+	partnerRepo := partner.NewRepository()
+	partnerService := partner.NewService(partnerRepo)
+	partnerHandler := partner.NewHandler(partnerService)
+	partnerHandler.RegisterRoutes(v1)
+
+	// Modul B3: Rencana Perjalanan 7 Hari — AI & Manual (Pilar 4)
+	itineraryRepo := itinerary.NewRepository()
+	itineraryService := itinerary.NewService(itineraryRepo)
+	itineraryHandler := itinerary.NewHandler(itineraryService)
+	itineraryHandler.RegisterRoutes(v1)
+
+	// Modul B4: Private Group Room, Live Voting, Split-Bill & Live Radar (Pilar 4)
+	groupRepo := group.NewRepository()
+	groupService := group.NewService(groupRepo)
+	groupHandler := group.NewHandler(groupService)
+	groupHandler.RegisterRoutes(v1)
+
+	// Modul B5: Quick Booking 360°, Escrow State Machine, Bot WA & E-Ticket QR (Pilar 5)
+	bookingRepo := booking_escrow.NewRepository()
+	bookingService := booking_escrow.NewService(bookingRepo)
+	bookingHandler := booking_escrow.NewHandler(bookingService)
+	bookingHandler.RegisterRoutes(v1)
+
+	// Modul B6: Komunitas, Hidden Gem, Masking GPS, & Shared Trips (Pilar 6)
+	communityRepo := community.NewRepository()
+	communityService := community.NewService(communityRepo)
+	communityHandler := community.NewHandler(communityService)
+	communityHandler.RegisterRoutes(v1)
+
+	// Modul B7: Paspor Digital Minang, Anti-Fake GPS & Sertifikat Gubernur (Pilar 6)
+	gamificationRepo := gamification.NewRepository()
+	gamificationService := gamification.NewService(gamificationRepo)
+	gamificationHandler := gamification.NewHandler(gamificationService)
+	gamificationHandler.RegisterRoutes(v1)
+
+	// Modul B8: Executive Dashboard Dispar Sumbar (Pilar 8)
+	analyticsRepo := analytics.NewRepository()
+	analyticsService := analytics.NewService(analyticsRepo)
+	analyticsHandler := analytics.NewHandler(analyticsService)
+	analyticsHandler.RegisterRoutes(v1)
+
+	return r
+}
 
 func main() {
 	cfg := config.LoadConfig()
 	database.InitDB(cfg)
 
-	mux := http.NewServeMux()
-
-	// Inisialisasi Handler Tim BE-1 & BE-2
-	be1 := be1_core.NewHandlerBE1()
-	be2 := be2_group.NewHandlerBE2()
-
-	// --- Route BE-1 (Core & Spasial) ---
-	mux.HandleFunc("GET /api/v1/destinations", be1.GetDestinations)
-	mux.HandleFunc("GET /api/v1/destinations/detail", be1.GetDestinationDetail)
-	mux.HandleFunc("POST /api/v1/spatial/shunlu", be1.PostShunluSearch)
-	mux.HandleFunc("POST /api/v1/pungli/report", be1.PostReportPungli)
-
-	// --- Route BE-2 (Grup, Mitra, Escrow & Komunitas) ---
-	mux.HandleFunc("POST /api/v1/auth/request-otp", be2.RequestOTP)
-	mux.HandleFunc("POST /api/v1/auth/verify-otp", be2.VerifyOTP)
-	mux.HandleFunc("GET /api/v1/partners", be2.GetPartnersKatalog)
-	mux.HandleFunc("GET /api/v1/partners/detail", be2.GetPartnerDetail)
-	mux.HandleFunc("GET /api/v1/users/saved", be2.GetSavedPlaces)
-	mux.HandleFunc("POST /api/v1/users/saved", be2.ToggleSavedPlace)
-	mux.HandleFunc("GET /api/v1/itineraries", be2.GetItineraries)
-	mux.HandleFunc("POST /api/v1/itineraries", be2.CreateItinerary)
-	mux.HandleFunc("POST /api/v1/itineraries/auto-generate", be2.AutoGenerateItinerary)
-	mux.HandleFunc("POST /api/v1/groups", be2.CreateGroupRoom)
-	mux.HandleFunc("GET /api/v1/groups/{code}", be2.GetGroupRoom)
-	mux.HandleFunc("POST /api/v1/groups/{code}/join", be2.JoinGroupRoom)
-	mux.HandleFunc("POST /api/v1/groups/{code}/vote", be2.VoteGroupDestination)
-	mux.HandleFunc("GET /api/v1/groups/{code}/results", be2.GetGroupVoteResults)
-	mux.HandleFunc("GET /api/v1/groups/detail", be2.GetGroupRoom)
-	mux.HandleFunc("POST /api/v1/groups/vote", be2.VoteGroupDestination)
-	mux.HandleFunc("GET /api/v1/groups/results", be2.GetGroupVoteResults)
-	mux.HandleFunc("POST /api/v1/groups/{code}/split-bill", be2.SplitBill)
-	mux.HandleFunc("POST /api/v1/groups/split-bill", be2.SplitBill)
-	mux.HandleFunc("POST /api/v1/groups/{code}/radar-ping", be2.RadarPing)
-	mux.HandleFunc("GET /api/v1/groups/{code}/radar", be2.GetGroupRadar)
-	mux.HandleFunc("GET /api/v1/community/places", be2.GetCommunityPlaces)
-	mux.HandleFunc("POST /api/v1/community/places", be2.CreateCommunityPlace)
-	mux.HandleFunc("GET /api/v1/community/shared-trips", be2.GetSharedTrips)
-	mux.HandleFunc("POST /api/v1/community/shared-trips", be2.CreateSharedTrip)
-	mux.HandleFunc("POST /api/v1/bookings/create", be2.CreateBooking)
-	mux.HandleFunc("POST /api/v1/bookings/wa-webhook", be2.WAWebhookSimulation)
-	mux.HandleFunc("GET /api/v1/bookings/{id}/ticket-qr", be2.GetBookingTicketQR)
-	mux.HandleFunc("GET /api/v1/bookings/ticket-qr", be2.GetBookingTicketQR)
-	mux.HandleFunc("POST /api/v1/escrow/scan-redeem", be2.ScanRedeemEscrow)
-	mux.HandleFunc("GET /api/v1/escrow/currency/myr-rate", be2.GetMYRConversionRate)
-
-	// Registrasi Route BE-2: Minggu 4 (Gamifikasi Paspor Digital, Anti-Fake GPS, Sertifikat & Analitik Dispar)
-	mux.HandleFunc("POST /api/v1/gamification/checkin", be2.ValidateGPSCheckIn)
-	mux.HandleFunc("GET /api/v1/gamification/passport", be2.GetDigitalPassport)
-	mux.HandleFunc("POST /api/v1/gamification/certificate", be2.GenerateGovernorCertificate)
-	mux.HandleFunc("GET /api/v1/gamification/certificate", be2.GenerateGovernorCertificate)
-	mux.HandleFunc("GET /api/v1/analytics/dispar/summary", be2.GetDisparAnalyticsSummary)
-
-	// Health check
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"status":"ok","app":"Rancak.in Backend API","env":"%s"}`, cfg.Environment)
-	})
+	r := setupRouter(cfg)
 
 	addr := ":" + cfg.Port
 	log.Printf("==================================================")
-	log.Printf("  Rancak.in API Server (Go Gin/Net-HTTP Engine)  ")
+	log.Printf("  Rancak.in API Server (Gin Web Framework 3-Layer)")
 	log.Printf("  Port: %s | Environment: %s                      ", cfg.Port, cfg.Environment)
-	log.Printf("  BE-1 & BE-2 Modular Architecture Active         ")
+	log.Printf("  Seluruh Modul BE-1 & BE-2 Aktif (Native Gin)    ")
 	log.Printf("==================================================")
 
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := r.Run(addr); err != nil {
 		log.Fatalf("Gagal menjalankan server: %v", err)
 	}
 }
-

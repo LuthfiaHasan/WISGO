@@ -2,23 +2,25 @@
 # Ekosistem Wisata Pintar Sumatera Barat (Rancak.in)
 
 > **Status Dokumen**: *Living Document* (Dapat diperbarui sewaktu-waktu mengikuti kesepakatan integrasi tim).  
-> **Terakhir Diperbarui**: 2026-11-13  
+> **Terakhir Diperbarui**: 2026-11-15  
 > **Pemegang Peran**: **BE-2 (Backend 2 — Grup, Mitra, Escrow & Gamifikasi)**  
 > **Branch Git**: `Backend-2`  
-> **Direktori Kerja Utama**: [`backend/internal/be2_group/`](file:///D:/WISGO/backend/internal/be2_group/handlers.go)  
-> **Stack Teknologi**: Go 1.22+ (`net/http` / Gin) + PostgreSQL
+> **Direktori Kerja Utama**: [`backend/internal/modules/`](file:///D:/WISGO/backend/internal/modules/) (Clean Architecture Vertical Slices)  
+> **Stack Teknologi**: Go 1.22+ (Gin Web Framework v1.10.0) + PostgreSQL
 
 ---
 
 ## 01. Batasan Tanggung Jawab (Zero Merge Conflict)
 
-Untuk menjaga prinsip zero merge conflict dengan 4 developer lainnya:
-- **Area Eksklusif BE-2**: Folder [`backend/internal/be2_group/`](file:///D:/WISGO/backend/internal/be2_group/) serta migrasi tabel sosial, trip, mitra, dan escrow.
-- **Area Bersama (Koordinasi)**: 
-  - [`backend/cmd/api/main.go`](file:///D:/WISGO/backend/cmd/api/main.go) (Registrasi route BE-2)
-  - [`backend/internal/models/models.go`](file:///D:/WISGO/backend/internal/models/models.go) (Penambahan struct BE-2)
+Untuk menjaga prinsip zero merge conflict dan konsistensi arsitektur sistem:
+- **Arsitektur Modul Terpadu**: Seluruh modul backend kini terstandarisasi di folder [`backend/internal/modules/`](file:///D:/WISGO/backend/internal/modules/), [`backend/internal/common/`](file:///D:/WISGO/backend/internal/common/), [`backend/internal/middleware/`](file:///D:/WISGO/backend/internal/middleware/) dengan arsitektur 3-Layer (DTO, Repository, Service, Handler) dan test suite lengkap.
+- **Area Eksklusif BE-2**: Modul `auth`, `partner`, `itinerary`, `group`, `booking_escrow`, `community`, `gamification`, `analytics`.
+- **Modul Domain BE-1 (Direfaktor & Teruji)**: Modul `destination`, `scenes360`, `spatial`, `pungli`, `culture_ranking`, `system_core`.
+- **Area Bersama (Terpusat)**: 
+  - [`backend/cmd/api/main.go`](file:///D:/WISGO/backend/cmd/api/main.go) (Registrasi route terpadu v1 Gin)
+  - [`backend/internal/models/models.go`](file:///D:/WISGO/backend/internal/models/models.go) (Entitas domain backend)
   - [`backend/internal/database/db.go`](file:///D:/WISGO/backend/internal/database/db.go) (Pool koneksi PostgreSQL)
-- **Bukan Ranah BE-2 (Milik BE-1)**: Folder `backend/internal/be1_core/`, query spasial PostGIS ST_Buffer (Shunlu), Peta Mikro, CRUD Destinasi dasar, Hotspot 360, dan Tiket Lapor Pungli.
+- **Status Legacy Code**: Folder `backend/internal/be1_core/` dan `backend/internal/be2_group/` telah sepenuhnya dihapus dan dimigrasi secara aman tanpa regresi.
 
 ---
 
@@ -31,6 +33,9 @@ Untuk menjaga prinsip zero merge conflict dengan 4 developer lainnya:
 | 2026-11-13 | Inisialisasi Kontrak 24 Endpoint | Tim 5 Dev | Pemetaan awal sesuai PRD v1.0 & API Contract | **Aktif** |
 | 2026-11-13 | Penyelesaian Sprint Minggu 3 (Escrow & WA Bot) | BE-2 | Integrasi Escrow state machine, Bot WA 1/0, Split-bill, & Group Radar (18 Unit Tests PASS) | **Selesai 100%** |
 | 2026-11-13 | Penyelesaian Sprint Minggu 4 & Finalisasi Kontrak 24 Endpoint | BE-2 | Integrasi Paspor Digital Minang (Haversine Anti-Fake GPS <= 200m), Sertifikat Gubernur Sumbar & Analitik Dispar 19 Kab/Kota (22 Unit Tests PASS) | **Selesai 100% (Final)** |
+| 2026-11-13 | Refactoring Clean Architecture & Gin Framework (BE-2) | BE-2 | Refactoring menyeluruh modul BE-2 ke Gin Framework v1.10.0 dengan 3-Layer Architecture (DTO, Repo, Service, Handler) terbagi dalam 8 modul vertikal terisolasi. 52 Unit Tests PASS 100%. | **Selesai 100% (Production-Ready)** |
+| 2026-11-15 | Refactoring Menyeluruh Modul BE-1 ke Clean 3-Layer Gin (Tahap 1 - 8) | BE-1 & BE-2 | Eksekusi bertahap migrasi BE-1: Tahap 1 (Security/JWT/Rate-Limiter/Cache ETag), Tahap 2 (`destination`), Tahap 3 (`scenes360`), Tahap 4 (`spatial`/Shunlu/Hazard/SOS), Tahap 5 (`pungli`), Tahap 6 (`culture_ranking`/Gaode/Kato Nan Ampek), Tahap 7 (`system_core`/Benchmark SLA/Catalog), Tahap 8 (Pembersihan legacy `be1_core/` & migrasi DDL). 100% Unit Tests PASS di seluruh package (`go test ./...`) dan `go build ./...` Exit Code 0. | **Selesai 100% (Production-Ready)** |
+| 2026-11-15 | Audit Menyeluruh Fitur Backend & Sinkronisasi Kontrak API Lengkap | Tim BE & FE | Pengujian komprehensif end-to-end seluruh 48 endpoint BE-1 dan BE-2. Menemukan dan menuntaskan 17 potensi ketidaksesuaian/bug (route alias kontrak, anti-fake GPS validator bug pada equator 0.0, perbaikan ID mapping, dan implementasi endpoint hilang seperti /nearby & /optimize-tsp). Seluruh unit test PASS 100% (0 errors). | **Selesai 100% (Verified)** |
 
 ---
 
