@@ -1532,13 +1532,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.sageBorder),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.warmBorder.withValues(alpha: 0.70)),
         boxShadow: [
           BoxShadow(
             color: AppColors.ink.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1546,12 +1546,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Visual Image Header (h-40 = 160px) - Ketuk untuk Buka Layar 02 FE-1
+          // Visual Image Header (Cinematic & Clean) - Ketuk untuk Buka Detail
           GestureDetector(
             onTap: () => _openFe1DetailScreen(place),
             behavior: HitTestBehavior.opaque,
             child: SizedBox(
-              height: 160,
+              height: 175,
               width: double.infinity,
               child: Stack(
                 fit: StackFit.expand,
@@ -1560,144 +1560,135 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   Image.network(
                     place.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: AppColors.forest),
+                    errorBuilder: (_, __, ___) => Container(color: AppColors.forest),
                   ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        AppColors.ink.withValues(alpha: 0.88),
-                        AppColors.ink.withValues(alpha: 0.22),
-                        Colors.transparent,
-                      ],
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          AppColors.ink.withValues(alpha: 0.88),
+                          AppColors.ink.withValues(alpha: 0.18),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.55, 1.0],
+                      ),
                     ),
                   ),
-                ),
 
-                // Top Region & Nature Category Badges
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  right: 12,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.cream.withValues(alpha: 0.95),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            place.categoryTag,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.forest,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.forest.withValues(alpha: 0.90),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          place.natureType,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.cream,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Bottom Image Overlay Title & Distance
-                Positioned(
-                  bottom: 10,
-                  left: 12,
-                  right: 12,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        place.title,
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.cream,
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              place.subRegion,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.sage,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  // Top Category Tag & Floating Bookmark Button
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    right: 12,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                             decoration: BoxDecoration(
-                              color: AppColors.brush.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(4),
+                              color: AppColors.cream.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              '${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                              place.categoryTag,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.cream,
+                                color: AppColors.forest,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _toggleBookmark(place.id),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.30),
+                                width: 1,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                              size: 18,
+                              color: isBookmarked ? Colors.amber : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+
+                  // Bottom Image Overlay: Title & Subregion with Distance
+                  Positioned(
+                    bottom: 12,
+                    left: 14,
+                    right: 14,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          place.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.3,
+                            height: 1.25,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 12, color: AppColors.sage),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                '${place.subRegion} • ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.cream,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
 
-          // Card Content Body (Clean & User Friendly - NO FEE TABLE ON CARD)
+          // Card Content Body (Clean & Elegant)
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Rating & Distance Row
+                // 1. Rating & Official Entry Fee Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
                         const SizedBox(width: 3),
@@ -1711,10 +1702,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          '(${place.reviewsCount} ulasan)',
+                          '(${place.reviewsCount})',
                           style: const TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.muted,
                           ),
                         ),
@@ -1723,13 +1714,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.sage,
-                        borderRadius: BorderRadius.circular(6),
+                        color: AppColors.creamSubtle,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.sageBorder),
                       ),
                       child: Text(
-                        'Jarak ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                        'Tiket: Rp ${place.calcRates.tiket}',
                         style: const TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: AppColors.forest,
                         ),
@@ -1739,71 +1731,82 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // Fasilitas Lingkungan Chips (REQUEST 1)
-                const Text(
-                  'FASILITAS LINGKUNGAN:',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                    color: AppColors.muted,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: place.facilities.map((fac) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.warmBorder),
+                // 2. Fasilitas Lingkungan (Single Clean Row)
+                Row(
+                  children: [
+                    const Text(
+                      'FASILITAS LINGKUNGAN:',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        color: AppColors.muted,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(_getFacilityIcon(fac), size: 12, color: AppColors.brush),
-                          const SizedBox(width: 4),
-                          Text(
-                            fac,
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.forest,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 10),
-
-                // Terrain & Route Access Info
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 11,
-                      height: 1.4,
-                      color: AppColors.muted,
                     ),
-                    children: [
-                      const TextSpan(
-                        text: 'Info Medan: ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: place.facilities.map((fac) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 5),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.creamSubtle,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.warmBorder.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(_getFacilityIcon(fac), size: 10.5, color: AppColors.forest),
+                                    const SizedBox(width: 3.5),
+                                    Text(
+                                      fac,
+                                      style: const TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.ink,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
-                      TextSpan(text: place.terrainNote),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 8),
 
-                // Action Buttons: 360 & Denah + Detail & Pesan Tiket + Bookmark
+                // 3. Terrain Note Hint
+                Row(
+                  children: [
+                    const Icon(Icons.terrain_rounded, size: 12, color: AppColors.brush),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        place.terrainNote,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // 4. Two Balanced Primary Action Buttons
                 Row(
                   children: [
                     Expanded(
@@ -1811,10 +1814,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       child: OutlinedButton(
                         onPressed: () => _open360AndDenahModal(place),
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: AppColors.sage,
+                          backgroundColor: AppColors.creamSubtle,
                           foregroundColor: AppColors.forest,
                           side: const BorderSide(color: AppColors.sageBorder),
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -1824,11 +1827,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.threed_rotation_rounded, size: 16),
+                              Icon(Icons.threed_rotation_rounded, size: 15),
                               SizedBox(width: 4),
                               Text(
                                 '360° & Denah',
-                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                               ),
                             ],
                           ),
@@ -1844,37 +1847,25 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           backgroundColor: AppColors.forest,
                           foregroundColor: AppColors.cream,
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Detail & Pesan',
-                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Detail & Pesan',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_rounded, size: 13),
+                            ],
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _toggleBookmark(place.id),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: isBookmarked ? AppColors.sage : Colors.white,
-                        foregroundColor: isBookmarked ? AppColors.forest : AppColors.muted,
-                        side: BorderSide(
-                          color: isBookmarked ? AppColors.forest : AppColors.sageBorder,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Icon(
-                        isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                        size: 18,
                       ),
                     ),
                   ],
