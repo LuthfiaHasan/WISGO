@@ -2,6 +2,7 @@ package booking_escrow
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -105,6 +106,18 @@ func (r *inMemoryRepository) seedData() {
 		CreatedAt:    time.Now().Add(-2 * time.Hour),
 	}
 	r.bookings[sampleBooking.ID] = sampleBooking
+
+	booking001 := &models.BookingEscrow{
+		ID:           "bkg-001",
+		PartnerID:    "ptr-01",
+		UserID:       "usr-001",
+		TotalAmount:  350000.00,
+		Currency:     "IDR",
+		Status:       "ESCROW_LOCKED",
+		QRCodeTicket: "QR-RANCAK-TKT-bkg-001",
+		CreatedAt:    time.Now().Add(-1 * time.Hour),
+	}
+	r.bookings[booking001.ID] = booking001
 }
 
 func (r *inMemoryRepository) SaveBooking(booking *models.BookingEscrow) error {
@@ -127,8 +140,13 @@ func (r *inMemoryRepository) GetBookingByQRCode(qrCode string) (*models.BookingE
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	norm := strings.TrimSpace(qrCode)
 	for _, b := range r.bookings {
-		if b.QRCodeTicket == qrCode {
+		if b.QRCodeTicket == norm ||
+			strings.EqualFold(b.QRCodeTicket, norm) ||
+			norm == fmt.Sprintf("QR-TICKET-%s", b.ID) ||
+			norm == fmt.Sprintf("QR-RANCAK-TKT-%s", b.ID) ||
+			norm == b.ID {
 			return b, true
 		}
 	}

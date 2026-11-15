@@ -36,6 +36,7 @@ Untuk menjaga prinsip zero merge conflict dan konsistensi arsitektur sistem:
 | 2026-11-13 | Refactoring Clean Architecture & Gin Framework (BE-2) | BE-2 | Refactoring menyeluruh modul BE-2 ke Gin Framework v1.10.0 dengan 3-Layer Architecture (DTO, Repo, Service, Handler) terbagi dalam 8 modul vertikal terisolasi. 52 Unit Tests PASS 100%. | **Selesai 100% (Production-Ready)** |
 | 2026-11-15 | Refactoring Menyeluruh Modul BE-1 ke Clean 3-Layer Gin (Tahap 1 - 8) | BE-1 & BE-2 | Eksekusi bertahap migrasi BE-1: Tahap 1 (Security/JWT/Rate-Limiter/Cache ETag), Tahap 2 (`destination`), Tahap 3 (`scenes360`), Tahap 4 (`spatial`/Shunlu/Hazard/SOS), Tahap 5 (`pungli`), Tahap 6 (`culture_ranking`/Gaode/Kato Nan Ampek), Tahap 7 (`system_core`/Benchmark SLA/Catalog), Tahap 8 (Pembersihan legacy `be1_core/` & migrasi DDL). 100% Unit Tests PASS di seluruh package (`go test ./...`) dan `go build ./...` Exit Code 0. | **Selesai 100% (Production-Ready)** |
 | 2026-11-15 | Audit Menyeluruh Fitur Backend & Sinkronisasi Kontrak API Lengkap | Tim BE & FE | Pengujian komprehensif end-to-end seluruh 48 endpoint BE-1 dan BE-2. Menemukan dan menuntaskan 17 potensi ketidaksesuaian/bug (route alias kontrak, anti-fake GPS validator bug pada equator 0.0, perbaikan ID mapping, dan implementasi endpoint hilang seperti /nearby & /optimize-tsp). Seluruh unit test PASS 100% (0 errors). | **Selesai 100% (Verified)** |
+| 2026-11-16 | Sentralisasi Database ke Supabase PostgreSQL + PostGIS Cloud & Strict Guard | Tim 5 Dev | Migrasi penuh seluruh 27 tabel BE-1 & BE-2 ke Supabase PostgreSQL Cloud terpusat (Singapore ap-southeast-1 Pooler). Implementasi PostgreSQL Repository Layer untuk seluruh modul BE-2 (`auth`, `booking_escrow`, `partner`, `itinerary`, `group`, `community`, `gamification`) dan modul utama BE-1 (`destination`). Menambahkan `DatabaseGuardMiddleware` strictly offline handler (HTTP 503 jika koneksi terputus, no phantom mock). `go build ./...` Exit Code 0 & 100% PASS Unit Test. | **Selesai 100% (Production-Ready)** |
 
 ---
 
@@ -43,18 +44,18 @@ Untuk menjaga prinsip zero merge conflict dan konsistensi arsitektur sistem:
 
 | No | Nama Tabel | Deskripsi & Keterangan Kunci | Relasi Luar | Status Migrasi |
 | :---: | :--- | :--- | :--- | :---: |
-| 1 | `users` | Akun wisatawan & nomor HP untuk OTP | - | ✅ DDL Ready |
-| 2 | `saved_places` | Bookmark/favorit destinasi wisatawan | `destinations(id)` [BE-1] | ✅ DDL Ready |
-| 3 | `itineraries` | Master rencana perjalanan 7 hari | `users(id)` | ✅ DDL Ready |
-| 4 | `itinerary_items` | Rincian per jam, hari ke-N & destinasi | `itineraries(id)`, `destinations(id)` | ✅ DDL Ready |
-| 5 | `group_rooms` | Ruang koordinasi rombongan (`room_code` unik) | `users(leader_id)` | ✅ DDL Ready |
-| 6 | `group_members` | Daftar anggota dalam group room | `group_rooms(id)`, `users(id)` | ✅ DDL Ready |
-| 7 | `group_votes` | Hasil voting live destinasi/homestay | `group_rooms(id)`, `destinations(id)` | ✅ DDL Ready |
-| 8 | `partners` | 5 Kategori Mitra Minang (+ `spicy_level` 0-5) | - | ✅ DDL Ready |
-| 9 | `booking_escrows` | Ledger rekening bersama & status tiket QR | `partners(id)`, `users(id)` | ✅ DDL Ready |
-| 10 | `community_places`| Tempat baru usulan wisatawan (masking radius) | `users(id)` | ✅ DDL Ready |
-| 11 | `shared_trips` | Papan cari barengan / patungan sewa mobil | `users(id)` | ✅ DDL Ready |
-| 12 | `digital_passports`| Stempel check-in GPS $\le 200\text{ m}$ & sertifikat | `users(id)`, `destinations(id)` | ✅ DDL Ready |
+| 1 | `users` | Akun wisatawan & nomor HP untuk OTP | - | ✅ Live on Supabase |
+| 2 | `saved_places` | Bookmark/favorit destinasi wisatawan | `destinations(id)` [BE-1] | ✅ Live on Supabase |
+| 3 | `itineraries` | Master rencana perjalanan 7 hari | `users(id)` | ✅ Live on Supabase |
+| 4 | `itinerary_items` | Rincian per jam, hari ke-N & destinasi | `itineraries(id)`, `destinations(id)` | ✅ Live on Supabase |
+| 5 | `group_rooms` | Ruang koordinasi rombongan (`room_code` unik) | `users(leader_id)` | ✅ Live on Supabase |
+| 6 | `group_members` | Daftar anggota dalam group room | `group_rooms(id)`, `users(id)` | ✅ Live on Supabase |
+| 7 | `group_votes` | Hasil voting live destinasi/homestay | `group_rooms(id)`, `destinations(id)` | ✅ Live on Supabase |
+| 8 | `partners` | 5 Kategori Mitra Minang (+ `spicy_level` 0-5) | - | ✅ Live on Supabase |
+| 9 | `booking_escrows` | Ledger rekening bersama & status tiket QR | `partners(id)`, `users(id)` | ✅ Live on Supabase |
+| 10 | `community_places`| Tempat baru usulan wisatawan (masking radius) | `users(id)` | ✅ Live on Supabase |
+| 11 | `shared_trips` | Papan cari barengan / patungan sewa mobil | `users(id)` | ✅ Live on Supabase |
+| 12 | `digital_passports`| Stempel check-in GPS $\le 200\text{ m}$ & sertifikat | `users(id)`, `destinations(id)` | ✅ Live on Supabase |
 
 ---
 

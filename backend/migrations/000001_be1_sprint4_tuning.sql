@@ -34,7 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_panorama_scenes_dest_default
     ON panorama_scenes (destination_id, is_default_scene DESC);
 
 CREATE INDEX IF NOT EXISTS idx_panorama_hotspots_scene_type
-    ON panorama_hotspots (scene_id, type);
+    ON panorama_hotspots (scene_id, pin_type);
 
 -- 5. INDEKS SPASIAL KORIDOR SHUNLU (+X MENIT DETOUR) & PETA MIKRO (TABEL #7 & #8)
 CREATE INDEX IF NOT EXISTS idx_shunlu_pois_category_detour

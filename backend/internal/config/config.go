@@ -32,7 +32,8 @@ func loadDotEnv(filepath string) {
 			key := strings.TrimSpace(parts[0])
 			val := strings.TrimSpace(parts[1])
 			val = strings.Trim(val, `"'`)
-			if os.Getenv(key) == "" {
+			// Di lingkungan cloud (misal Render), hormati environment variables dari cloud dashboard
+			if os.Getenv("RENDER") == "" || os.Getenv(key) == "" {
 				os.Setenv(key, val)
 			}
 		}
