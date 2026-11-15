@@ -353,7 +353,10 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
           child: Image.network(
             _currentPanoramaUrl,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildSimulationCanvas(),
+            errorBuilder: (_, __, ___) => Image.asset(
+              'assets/images/panorama_sumbar_default.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         // Reticle Crosshair di tengah layar VR
@@ -502,7 +505,10 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                   child: Image.network(
                     _currentPanoramaUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildSimulationCanvas(),
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/images/panorama_sumbar_default.jpg',
+                      fit: BoxFit.cover,
+                    ),
                     loadingBuilder: (context, child, progress) {
                       if (progress == null) return child;
                       return Stack(

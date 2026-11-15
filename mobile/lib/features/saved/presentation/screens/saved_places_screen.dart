@@ -3091,72 +3091,20 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
         children: [
           // 1. Viewer Panorama 360° Interaktif (3D Equirectangular Sphere + Touch Pan)
           Positioned.fill(
-            child: PanoramaViewer(
-              animSpeed: 0.1,
-              latitude: _pitch,
-              longitude: _yaw,
-              onViewChanged: (lon, lat, tilt) {
-                setState(() {
-                  _yaw = lon;
-                  _pitch = lat;
-                });
-              },
-              child: Image.network(
-                // Foto 2D Unsplash bukan format 360°. Gunakan panorama equirectangular 360° asli
-                widget.place.imageUrl.contains('unsplash.com')
-                    ? 'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama.jpg'
-                    : widget.place.imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: const Color(0xFF142618),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: CircularProgressIndicator(
-                              color: AppColors.sage,
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Memuat Panorama 360° Kawasan...',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.place.title,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+            child: ClipRect(
+              child: PanoramaViewer(
+                animSpeed: 0.1,
+                latitude: _pitch,
+                longitude: _yaw,
+                onViewChanged: (lon, lat, tilt) {
+                  setState(() {
+                    _yaw = lon;
+                    _pitch = lat;
+                  });
                 },
-                errorBuilder: (_, __, ___) => Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  color: const Color(0xFF193D22),
-                  child: CustomPaint(
-                    size: Size.infinite,
-                    painter: _Panorama360Painter(
-                      yaw: _yaw,
-                      pitch: _pitch,
-                      placeTitle: widget.place.title,
-                    ),
-                  ),
+                child: Image.asset(
+                  'assets/images/panorama_sumbar_default.jpg',
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
@@ -5489,64 +5437,8 @@ class _BookingCheckoutSheetState extends State<_BookingCheckoutSheet> {
 }
 
 // =============================================================================
-// CUSTOM PAINTERS: PANORAMA 360 & SITE PLAN DENAH
+// CUSTOM PAINTERS: SITE PLAN DENAH
 // =============================================================================
-
-class _Panorama360Painter extends CustomPainter {
-  final double yaw;
-  final double pitch;
-  final String placeTitle;
-
-  _Panorama360Painter({
-    required this.yaw,
-    required this.pitch,
-    required this.placeTitle,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // Sky & Horizon Gradient
-    final skyPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: const [
-          Color(0xFF142618),
-          Color(0xFF2F663E),
-          Color(0xFF8EB897),
-          Color(0xFFDFECE2),
-          Color(0xFF193D22),
-        ],
-        stops: const [0.0, 0.35, 0.6, 0.75, 1.0],
-      ).createShader(Rect.fromLTWH(0, pitch * 2, w, h));
-    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), skyPaint);
-
-    // Stylized rolling mountains shifted by yaw
-    final mountainPaint = Paint()
-      ..color = const Color(0xFF193D22).withValues(alpha: 0.65)
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(0, h);
-    final baseY = h * 0.65 + pitch * 1.5;
-    for (double x = 0; x <= w; x += 15) {
-      final rad = (x + yaw * 2.5) * 0.02;
-      final y = baseY + (30 * (rad).remainder(1.0) * ((rad).toInt() % 2 == 0 ? 1 : -1));
-      path.lineTo(x, y);
-    }
-    path.lineTo(w, h);
-    path.close();
-    canvas.drawPath(path, mountainPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _Panorama360Painter oldDelegate) {
-    return oldDelegate.yaw != yaw || oldDelegate.pitch != pitch;
-  }
-}
 
 class _SitePlanPainter extends CustomPainter {
   @override
