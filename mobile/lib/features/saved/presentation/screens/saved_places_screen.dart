@@ -3102,7 +3102,10 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                 });
               },
               child: Image.network(
-                widget.place.imageUrl,
+                // Foto 2D Unsplash bukan format 360°. Gunakan panorama equirectangular 360° asli
+                widget.place.imageUrl.contains('unsplash.com')
+                    ? 'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama.jpg'
+                    : widget.place.imageUrl,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
