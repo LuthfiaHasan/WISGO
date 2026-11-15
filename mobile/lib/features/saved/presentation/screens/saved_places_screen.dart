@@ -3104,6 +3104,44 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
               child: Image.network(
                 widget.place.imageUrl,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: const Color(0xFF142618),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(
+                              color: AppColors.sage,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Memuat Panorama 360° Kawasan...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.place.title,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
                 errorBuilder: (_, __, ___) => Container(
                   width: double.infinity,
                   height: double.infinity,
