@@ -214,11 +214,11 @@ class DestinationRepository {
     };
   }
 
-  /// Mengambil alert peringatan dini jalur rawan (`GET /api/v1/hazards/active`)
-  Future<List<Map<String, dynamic>>> getHazardAlerts() async {
+  /// Mengambil alert peringatan dini jalur rawan (`GET /api/v1/spatial/hazards` atau `/api/v1/hazards/active`)
+  Future<List<HazardAlertModel>> getHazardAlerts() async {
     try {
       final response = await http
-          .get(Uri.parse('$baseUrl/hazards/active'))
+          .get(Uri.parse('$baseUrl/spatial/hazards'))
           .timeout(const Duration(milliseconds: 2500));
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
@@ -228,28 +228,368 @@ class DestinationRepository {
                 ? decoded['data'] as List<dynamic>
                 : <dynamic>[]);
         if (list.isNotEmpty) {
-          return list.map((item) => item as Map<String, dynamic>).toList();
+          return list.map((item) => HazardAlertModel.fromJson(item as Map<String, dynamic>)).toList();
         }
       }
     } catch (_) {}
 
+    return _mockHazardAlerts;
+  }
+
+  /// Mengirim sinyal darurat SOS GPS ke Posko SAR & Satgas Nagari (`POST /api/v1/hazards/sos`)
+  Future<bool> sendSosSignal(SOSSignalModel signal) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/hazards/sos'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(signal.toJson()),
+          )
+          .timeout(const Duration(milliseconds: 2500));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      }
+    } catch (_) {}
+    // Fallback sukses untuk simulasi luring / demo
+    return true;
+  }
+
+  /// Mengambil frasa Kamus Saku Audio Minang (`GET /api/v1/culture/audio-phrases`)
+  Future<List<MinangPhraseModel>> getCulturePhrases({String category = 'Semua'}) async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/culture/audio-phrases'))
+          .timeout(const Duration(milliseconds: 2500));
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        final List<dynamic> list = (decoded is List)
+            ? decoded
+            : (decoded is Map<String, dynamic> && decoded['data'] is List
+                ? decoded['data'] as List<dynamic>
+                : <dynamic>[]);
+        if (list.isNotEmpty) {
+          final phrases = list.map((item) => MinangPhraseModel.fromJson(item as Map<String, dynamic>)).toList();
+          if (category == 'Semua') return phrases;
+          return phrases.where((p) => p.category.toLowerCase().contains(category.toLowerCase())).toList();
+        }
+      }
+    } catch (_) {}
+
+    if (category == 'Semua') return _mockMinangPhrases;
+    return _mockMinangPhrases.where((p) => p.category.toLowerCase().contains(category.toLowerCase())).toList();
+  }
+
+  /// Mengambil agenda Kalender Budaya & Hari Pakan Nagari
+  Future<List<CulturalEventModel>> getCulturalEvents() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/culture/events'))
+          .timeout(const Duration(milliseconds: 2500));
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        final List<dynamic> list = (decoded is List)
+            ? decoded
+            : (decoded is Map<String, dynamic> && decoded['data'] is List
+                ? decoded['data'] as List<dynamic>
+                : <dynamic>[]);
+        if (list.isNotEmpty) {
+          return list.map((item) => CulturalEventModel.fromJson(item as Map<String, dynamic>)).toList();
+        }
+      }
+    } catch (_) {}
+
+    return _mockCulturalEvents;
+  }
+
+  /// Landmark Gunung untuk Fitur Kompas Visual (Pilar 2 — Minggu 4)
+  List<MountainLandmarkModel> getMountainLandmarks() {
     return const [
-      {
-        'id': 'hz-001',
-        'location': 'Sitinjau Lauik (Padang - Solok)',
-        'severity': 'Waspada',
-        'message': 'Hujan deras, aspal licin & antrean truk di tikungan 1.',
-        'detour_route': 'Jalur Malalak atau via Singkarak',
-      },
-      {
-        'id': 'hz-002',
-        'location': 'Lembah Anai (Padang Panjang)',
-        'severity': 'Siaga',
-        'message': 'Debit air terjun meningkat mendekati bibir jalan nasional.',
-        'detour_route': 'Jalur alternatif Sicincin - Malalak',
-      },
+      MountainLandmarkModel(
+        name: 'Gunung Marapi',
+        elevationMdpl: 2891,
+        latitude: -0.3808,
+        longitude: 100.4728,
+        regency: 'Kab. Tanah Datar & Agam',
+        defaultBearingDeg: 45.0,
+        description: 'Gunung berapi paling aktif di Sumatera Barat, pusat asal-usul kultural Nagari Pariangan.',
+      ),
+      MountainLandmarkModel(
+        name: 'Gunung Singgalang',
+        elevationMdpl: 2877,
+        latitude: -0.3922,
+        longitude: 100.3325,
+        regency: 'Kab. Tanah Datar & Agam',
+        defaultBearingDeg: 335.0,
+        description: 'Memiliki Telaga Dewi di puncaknya dan jalur hutan lumut eksotis.',
+      ),
+      MountainLandmarkModel(
+        name: 'Gunung Tandikat',
+        elevationMdpl: 2438,
+        latitude: -0.4328,
+        longitude: 100.3167,
+        regency: 'Kab. Padang Pariaman',
+        defaultBearingDeg: 290.0,
+        description: 'Puncak kembar Singgalang dengan kawah megah dan panorama ke arah pesisir barat.',
+      ),
+      MountainLandmarkModel(
+        name: 'Gunung Sago',
+        elevationMdpl: 2271,
+        latitude: -0.3278,
+        longitude: 100.6694,
+        regency: 'Kab. Lima Puluh Kota',
+        defaultBearingDeg: 80.0,
+        description: 'Membentengi kawasan Payakumbuh dan lembah perkebunan nagari.',
+      ),
+      MountainLandmarkModel(
+        name: 'Gunung Talang',
+        elevationMdpl: 2597,
+        latitude: -0.9778,
+        longitude: 100.6789,
+        regency: 'Kab. Solok',
+        defaultBearingDeg: 165.0,
+        description: 'Dikelilingi hamparan kebun teh Danau Kembar (Danau Diatas & Danau Dibawah).',
+      ),
     ];
   }
+
+  /// Katalog Pakaian Adat Minangkabau (Pilar 1 — Minggu 4)
+  List<TraditionalAttireModel> getTraditionalAttires() {
+    return const [
+      TraditionalAttireModel(
+        id: 'attire-bundo',
+        name: 'Baju Kurung Basiba & Tengkuluk Tanduk',
+        userType: 'Bundo Kanduang (Wanita Adat)',
+        regency: 'Darek (Tanah Datar, Agam, 50 Kota)',
+        philosophy: 'Bentuk tanduk kerbau melambangkan ketegasan pemimpin rumah gadang dan keanggunan perempuan Minang dalam musyawarah adat.',
+        imageUrl: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=700&q=80',
+        elements: ['Tengkuluk Tanduk Balenggek', 'Baju Kurung Basiba Beludru Emas', 'Salempang Songket Silungkang', 'Kodek Sarung Songket Tabur'],
+      ),
+      TraditionalAttireModel(
+        id: 'attire-marapulai',
+        name: 'Pakaian Marapulai & Saluak Deta',
+        userType: 'Marapulai (Pengantin Pria)',
+        regency: 'Seluruh Luhak Nan Tigo',
+        philosophy: 'Saluak deta berkerut-kerut melambangkan lilitan akal budi dan musyawarah mufakat seorang pemimpin keluarga baru.',
+        imageUrl: 'https://images.unsplash.com/photo-1583391733975-4752662c64df?auto=format&fit=crop&w=700&q=80',
+        elements: ['Destar / Saluak Bertatah Emas', 'Baju Roki / Jas Beludru Sikoci', 'Kain Samping Songket Pandai Sikek', 'Keris Sandang & Tali Ameh'],
+      ),
+      TraditionalAttireModel(
+        id: 'attire-penghulu',
+        name: 'Baju Gadang Kebesaran Datuak Penghulu',
+        userType: 'Penghulu / Ninik Mamak',
+        regency: 'Nagari Adat Luhak Nan Tigo',
+        philosophy: 'Baju hitam longgar mencerminkan dada lapang tempat menyimpan segala rahasia nagari serta sikap adil tak berpihak.',
+        imageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=700&q=80',
+        elements: ['Deta Saluak Hitam', 'Baju Hitam Longgar Tak Berkantong', 'Celana Sarawa Gadang', 'Sesamping Songket & Cawek', 'Tungkek / Tongkat Adat'],
+      ),
+      TraditionalAttireModel(
+        id: 'attire-suntiang',
+        name: 'Suntiang Anak Daro Minangkabau',
+        userType: 'Anak Daro (Pengantin Wanita)',
+        regency: 'Pesisir & Darek',
+        philosophy: 'Mahkota bertingkat 7–11 lapis seberat 3–5 kg sebagai lambang kesiapan memikul tanggung jawab besar sebagai ibu dan ratu rumah tangga.',
+        imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=700&q=80',
+        elements: ['Suntiang Gadang Jurai 11', 'Baju Beludru Tabur Emas', 'Kalung Maniak & Gelang Garobak', 'Kain Songket Tenun Tangan Asli'],
+      ),
+    ];
+  }
+
+  static const List<HazardAlertModel> _mockHazardAlerts = [
+    HazardAlertModel(
+      id: 'hz-001',
+      corridorCode: 'SITINJAU-LAUIK',
+      location: 'Sitinjau Lauik (Padang - Solok)',
+      roadSegment: 'Km 14 - Km 18 Tikungan Panorama 1 & 2',
+      cityRegency: 'Kota Padang & Kab. Solok',
+      latitude: -0.9468,
+      longitude: 100.5182,
+      severity: 'Waspada',
+      hazardType: 'Tanjakan Curam 24° & Kabut Tebal',
+      weatherStatus: 'Hujan Gerimis Berkabut',
+      slopeGradientDeg: 24,
+      message: 'Antrean truk bermuatan di tanjakan panorama 1. Aspal licin akibat hujan rintik. Jaga jarak minimal 20 meter.',
+      detourRoute: 'Alternatif: Jalur Padang Panjang - Singkarak (Detour: +35 mnt).',
+      nearestRescuePost: 'Posko Gabungan Dishub & SAR Sitinjau',
+      emergencyContact: '0812-6677-8899 (Posko SAR Sitinjau)',
+    ),
+    HazardAlertModel(
+      id: 'hz-002',
+      corridorCode: 'LEMBAH-ANAI',
+      location: 'Lembah Anai (Padang Panjang)',
+      roadSegment: 'Jl. Raya Padang - Bukittinggi Km 64',
+      cityRegency: 'Kab. Tanah Datar',
+      latitude: -0.4855,
+      longitude: 100.3472,
+      severity: 'Siaga',
+      hazardType: 'Debit Air Terjun Meningkat & Rawan Longsor Tebing',
+      weatherStatus: 'Hujan Hulu Deras',
+      slopeGradientDeg: 18,
+      message: 'Aliran sungai Batang Anai mendekati bibir aspal. Sistem buka-tutup bergantian di pos air terjun.',
+      detourRoute: 'Alternatif: Sicincin - Malalak - Bukittinggi (Detour: +40 mnt).',
+      nearestRescuePost: 'Posko Siaga Bencana Silaiang Bawah',
+      emergencyContact: '112 / 0752-82113 (BPBD Tanah Datar)',
+    ),
+    HazardAlertModel(
+      id: 'hz-003',
+      corridorCode: 'KELOK-9',
+      location: 'Kelok 9 (Payakumbuh - Riau)',
+      roadSegment: 'Flyover Kelok 9 Km 28 - 32',
+      cityRegency: 'Kab. Lima Puluh Kota',
+      latitude: -0.0750,
+      longitude: 100.7020,
+      severity: 'Normal',
+      hazardType: 'Lalu Lintas Wisatawan Ramai Lancar',
+      weatherStatus: 'Cerah Berawan',
+      slopeGradientDeg: 12,
+      message: 'Jalur jembatan layang lancar dua arah. Dilarang parkir di atas flyover untuk berfoto.',
+      detourRoute: 'Tidak ada pengalihan arus.',
+      nearestRescuePost: 'Posko Lantas Kelok Sembilan',
+      emergencyContact: '0752-92110 (Polres 50 Kota)',
+    ),
+    HazardAlertModel(
+      id: 'hz-004',
+      corridorCode: 'KELOK-44',
+      location: 'Kelok 44 (Danau Maninjau)',
+      roadSegment: 'Nagari Maninjau - Matur Km 1 s/d 44',
+      cityRegency: 'Kab. Agam',
+      latitude: -0.3012,
+      longitude: 100.2245,
+      severity: 'Waspada',
+      hazardType: '44 Tikungan Sempit 180° & Kawanan Kera Liar',
+      weatherStatus: 'Kabut Sore Tipis',
+      slopeGradientDeg: 20,
+      message: 'Gunakan gigi rendah saat menurun. Bunyikan klakson di tikungan tanpa cermin cembung.',
+      detourRoute: 'Alternatif: Jalur Pariaman - Lubuk Basung.',
+      nearestRescuePost: 'Posko Polsek Tanjung Raya Maninjau',
+      emergencyContact: '0752-61110 (Polsek Tanjung Raya)',
+    ),
+  ];
+
+  static const List<MinangPhraseModel> _mockMinangPhrases = [
+    MinangPhraseModel(
+      id: 'phr-1',
+      category: 'Pasar & Belanja',
+      minangText: 'Bara haragonyo ko, Uni / Uda?',
+      indonesianText: 'Berapa harganya ini, Kakak?',
+      phoneticGuide: 'ba-ra ha-ra-go-nyo ko, u-ni / u-da?',
+      usageContextTip: 'Berbelanja di Pasar Atas / Los Lambuang Bukittinggi',
+      dialectNote: 'Darek (Bukittinggi & Payakumbuh)',
+      politenessLevel: 'Kato Mandata (Sesama Sebaya)',
+    ),
+    MinangPhraseModel(
+      id: 'phr-2',
+      category: 'Kuliner',
+      minangText: 'Tambuah ciek, Uni!',
+      indonesianText: 'Tambah satu porsi nasi/lauk lagi, Kak!',
+      phoneticGuide: 'tam-bu-ah cie-k, u-ni!',
+      usageContextTip: 'Saat bersantap di Rumah Makan Padang / Los Lambuang Kapau',
+      dialectNote: 'Umum Minangkabau',
+      politenessLevel: 'Kato Mandata (Akrab Santun)',
+    ),
+    MinangPhraseModel(
+      id: 'phr-3',
+      category: 'Sapaan Nagari',
+      minangText: 'Tarimo kasih banyak, sanak.',
+      indonesianText: 'Terima kasih banyak, saudara/sahabat.',
+      phoneticGuide: 'ta-ri-mo ka-sih ba-nyak, sa-nak',
+      usageContextTip: 'Ucapan terima kasih santun kepada warga nagari & pemandu',
+      dialectNote: 'Luhak Nan Tigo',
+      politenessLevel: 'Kato Malereang (Sangat Menghormati)',
+    ),
+    MinangPhraseModel(
+      id: 'phr-4',
+      category: 'Arah & Navigasi',
+      minangText: 'Kama jalan ka Sarasah Bunta, Uda?',
+      indonesianText: 'Ke mana arah jalan menuju Air Terjun Sarasah Bunta, Kak?',
+      phoneticGuide: 'ka-ma ja-lan ka sa-ra-sah bun-ta, u-da?',
+      usageContextTip: 'Menanyakan rute setapak pejalan kaki di Lembah Harau',
+      dialectNote: 'Luhak 50 Kota',
+      politenessLevel: 'Kato Mandaki (Kepada yang Dituakan)',
+    ),
+    MinangPhraseModel(
+      id: 'phr-5',
+      category: 'Kuliner',
+      minangText: 'Jan padeh bana yo, Da.',
+      indonesianText: 'Jangan terlalu pedas ya, Kak.',
+      phoneticGuide: 'jan pa-deh ba-na yo, da',
+      usageContextTip: 'Memesan dendeng lambok atau gulai dengan kepedasan sedang',
+      dialectNote: 'Padang Pesisir',
+      politenessLevel: 'Kato Mandata',
+    ),
+    MinangPhraseModel(
+      id: 'phr-6',
+      category: 'Pasar & Belanja',
+      minangText: 'Buliah kurang saketek, Mak?',
+      indonesianText: 'Boleh tawar sedikit harganya, Ibu?',
+      phoneticGuide: 'bu-liah ku-rang sa-ke-tek, mak?',
+      usageContextTip: 'Tawar-menawar santun untuk suvenir songket atau kerupuk sanjai',
+      dialectNote: 'Darek & Pesisir',
+      politenessLevel: 'Kato Mandaki (Kepada Ibu/Pedagang Senior)',
+    ),
+    MinangPhraseModel(
+      id: 'phr-7',
+      category: 'Sapaan Nagari',
+      minangText: 'Salamaik tibo di Ranah Minang, sanak!',
+      indonesianText: 'Selamat datang di Tanah Minangkabau, sahabat!',
+      phoneticGuide: 'sa-la-maik ti-bo di ra-nah mi-nang, sa-nak!',
+      usageContextTip: 'Ucapan salam pembuka saat tiba di desa wisata / homestay',
+      dialectNote: 'Resmi Ranah Minang',
+      politenessLevel: 'Kato Malereang',
+    ),
+    MinangPhraseModel(
+      id: 'phr-8',
+      category: 'Arah & Navigasi',
+      minangText: 'Lai jauah lai ka posko pemandu nagari?',
+      indonesianText: 'Apakah masih jauh menuju posko pemandu nagari?',
+      phoneticGuide: 'lai jau-ah lai ka pos-ko pe-man-du na-ga-ri?',
+      usageContextTip: 'Mengecek jarak trekking di kawasan hutan Lubuk Nyarai / Harau',
+      dialectNote: 'Padang Pariaman',
+      politenessLevel: 'Kato Mandata',
+    ),
+  ];
+
+  static const List<CulturalEventModel> _mockCulturalEvents = [
+    CulturalEventModel(
+      id: 'evt-1',
+      title: 'Alek Nagari Pacu Jawi (Balap Sapi Sawah Lumpur)',
+      eventType: 'Tradisi Adat Panen',
+      nagariLocation: 'Nagari Pariangan & Nagari Sungai Tarab',
+      cityRegency: 'Kab. Tanah Datar',
+      scheduleRule: 'Setiap Sabtu Sore Bergilir antar Nagari',
+      badge: 'Warisan Budaya Takbenda',
+      description: 'Atraksi joki memacu sepasang sapi di sawah berlumpur tanpa pecut, simbol keselarasan manusia dengan alam pasca panen.',
+    ),
+    CulturalEventModel(
+      id: 'evt-2',
+      title: 'Festival Budaya Hoyak Tabuik Piaman',
+      eventType: 'Festival Akbar Pesisir',
+      nagariLocation: 'Pantai Gandoriah & Muaro',
+      cityRegency: 'Kota Pariaman',
+      scheduleRule: '1–10 Muharram (Puncak: 10 Muharram)',
+      badge: 'Karisma Event Nusantara',
+      description: 'Upacara budaya melarung sepasang menara Tabuik megah setinggi 12 meter ke Samudra Hindia saat terbenam matahari.',
+    ),
+    CulturalEventModel(
+      id: 'evt-3',
+      title: 'Hari Pakan (Pasar Tradisional Nagari Minang)',
+      eventType: 'Pasar Rakyat & Sentra Kuliner',
+      nagariLocation: 'Pakan Sinayan & Pakan Koto Baru',
+      cityRegency: 'Kab. Agam & Tanah Datar',
+      scheduleRule: 'Setiap Senin & Kamis Pagi (06:00 - 12:00)',
+      badge: 'Kuliner & UMKM Nagari',
+      description: 'Pusat bertemunya petani nagari menjual bika talam, lamang tapai, beras organik pulut, dan hasil bumi segar asli gunung.',
+    ),
+    CulturalEventModel(
+      id: 'evt-4',
+      title: 'Pawai Alek Batagak Gala & Randai Malam',
+      eventType: 'Upacara Pengangkatan Gelar Datuak',
+      nagariLocation: 'Balai Adat Nagari Tuo Pariangan',
+      cityRegency: 'Kab. Tanah Datar',
+      scheduleRule: 'Musiman (Saat Pelantikan Penghulu Nagari)',
+      badge: 'Hukum Adat & Seni',
+      description: 'Pementasan teater rakyat Randai melingkar dengan dendang Saluang dan arak-arakan Bundo Kanduang menjunjung jamba.',
+    ),
+  ];
 
   static const List<DestinationModel> _mockDestinations = [
     DestinationModel(

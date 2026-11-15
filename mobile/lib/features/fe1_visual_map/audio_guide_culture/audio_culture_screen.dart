@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
+import '../data/destination_repository.dart';
+import '../models/destination_model.dart';
 
-/// Modul FE-1: Kamus Saku Audio Minang & Kalender Budaya Nagari (Pilar 1)
+/// Modul FE-1: Kamus Saku Audio Minang, Kalender Budaya & Katalog Pakaian Adat (Pilar 1)
 class AudioCultureScreen extends StatefulWidget {
   const AudioCultureScreen({super.key});
 
@@ -9,13 +11,23 @@ class AudioCultureScreen extends StatefulWidget {
   State<AudioCultureScreen> createState() => _AudioCultureScreenState();
 }
 
-class _AudioCultureScreenState extends State<AudioCultureScreen> {
+class _AudioCultureScreenState extends State<AudioCultureScreen>
+    with SingleTickerProviderStateMixin {
+  final DestinationRepository _repository = DestinationRepository();
+  late TabController _tabController;
+
   String _selectedCategory = 'Semua';
   String _searchQuery = '';
   String? _currentlyPlayingId;
   bool _isAudioPlaying = false;
+  double _playbackProgress = 0.0;
 
-  static const List<String> _categories = [
+  List<MinangPhraseModel> _phrases = [];
+  List<CulturalEventModel> _culturalEvents = [];
+  List<TraditionalAttireModel> _attires = [];
+  bool _isLoading = true;
+
+  static const List<String> _phraseCategories = [
     'Semua',
     'Kuliner',
     'Pasar & Belanja',
@@ -23,100 +35,69 @@ class _AudioCultureScreenState extends State<AudioCultureScreen> {
     'Arah & Navigasi',
   ];
 
-  static const List<Map<String, String>> _phrases = [
-    {
-      'id': 'phr-1',
-      'category': 'Pasar & Belanja',
-      'minang': 'Bara haragonyo ko, Uni / Uda?',
-      'indo': 'Berapa harganya ini, Kakak?',
-      'context': 'Berbelanja di Pasar Atas / Los Lambuang Bukittinggi',
-      'phonetic': 'ba-ra ha-ra-go-nyo ko, u-ni / u-da?',
-    },
-    {
-      'id': 'phr-2',
-      'category': 'Kuliner',
-      'minang': 'Tambuah ciek, Uni!',
-      'indo': 'Tambah satu porsi nasi/lauk lagi, Kak!',
-      'context': 'Saat bersantap di Rumah Makan Padang / Kapau',
-      'phonetic': 'tam-bu-ah cie-k, u-ni!',
-    },
-    {
-      'id': 'phr-3',
-      'category': 'Sapaan Nagari',
-      'minang': 'Tarimo kasih banyak, sanak.',
-      'indo': 'Terima kasih banyak, saudara/sahabat.',
-      'context': 'Ucapan terima kasih santun kepada warga nagari',
-      'phonetic': 'ta-ri-mo ka-sih ba-nyak, sa-nak',
-    },
-    {
-      'id': 'phr-4',
-      'category': 'Arah & Navigasi',
-      'minang': 'Kama jalan ka Sarasah Bunta, Uda?',
-      'indo': 'Ke mana arah jalan menuju Air Terjun Sarasah Bunta, Kak?',
-      'context': 'Menanyakan rute pejalan kaki di Lembah Harau',
-      'phonetic': 'ka-ma ja-lan ka sa-ra-sah bun-ta, u-da?',
-    },
-    {
-      'id': 'phr-5',
-      'category': 'Kuliner',
-      'minang': 'Jan padeh bana yo, Da.',
-      'indo': 'Jangan terlalu pedas ya, Kak.',
-      'context': 'Memesan makanan dengan tingkat kepedasan sedang',
-      'phonetic': 'jan pa-deh ba-na yo, da',
-    },
-    {
-      'id': 'phr-6',
-      'category': 'Pasar & Belanja',
-      'minang': 'Buliah kurang saketek, Mak?',
-      'indo': 'Boleh tawar sedikit harganya, Ibu?',
-      'context': 'Tawar-menawar santun di pasar tradisional',
-      'phonetic': 'bu-liah ku-rang sa-ke-tek, mak?',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadCultureData();
+  }
 
-  static const List<Map<String, dynamic>> _culturalEvents = [
-    {
-      'id': 'evt-1',
-      'title': 'Alek Nagari Pacu Jawi (Balap Sapi Sawah Lumpur)',
-      'location': 'Nagari Pariangan & Rambatan, Kab. Tanah Datar',
-      'schedule': 'Sabtu Akhir Pekan (Bergilir antar Nagari)',
-      'badge': 'Tradisi Leluhur',
-      'desc':
-          'Atraksi joki memacu dua ekor sapi di sawah berlumpur sehabis panen, simbol rasa syukur hasil tani nagari.',
-    },
-    {
-      'id': 'evt-2',
-      'title': 'Festival Budaya Hoyak Tabuik Piaman',
-      'location': 'Pantai Gandoriah & Muaro, Kota Pariaman',
-      'schedule': '1–10 Muharram (Agenda Tahunan)',
-      'badge': 'Event Provinsi',
-      'desc':
-          'Upacara kultural melarung replika Tabuik setinggi 12 meter ke laut lepas menjelang matahari terbenam.',
-    },
-    {
-      'id': 'evt-3',
-      'title': 'Hari Pakan (Pasar Tradisional Nagari Minang)',
-      'location': 'Pakan Kamis Tilatang Kamang & Pakan Sinayan',
-      'schedule': 'Setiap Senin & Kamis Pagi (06:00 - 12:00)',
-      'badge': 'Kuliner & UMKM',
-      'desc':
-          'Pertemuan pedagang hasil bumi nagari dengan aneka jajanan tradisional otentik, lamang tapai, dan rendang.',
-    },
-  ];
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
-  void _playPhrase(Map<String, String> phrase) {
-    final id = phrase['id']!;
+  Future<void> _loadCultureData() async {
+    setState(() => _isLoading = true);
+    final phrases = await _repository.getCulturePhrases();
+    final events = await _repository.getCulturalEvents();
+    final attires = _repository.getTraditionalAttires();
+
+    if (!mounted) return;
     setState(() {
-      if (_currentlyPlayingId == id && _isAudioPlaying) {
+      _phrases = phrases;
+      _culturalEvents = events;
+      _attires = attires;
+      _isLoading = false;
+    });
+  }
+
+  void _playPhrase(MinangPhraseModel phrase) {
+    setState(() {
+      if (_currentlyPlayingId == phrase.id && _isAudioPlaying) {
         _isAudioPlaying = false;
         _currentlyPlayingId = null;
+        _playbackProgress = 0.0;
       } else {
-        _currentlyPlayingId = id;
+        _currentlyPlayingId = phrase.id;
         _isAudioPlaying = true;
+        _playbackProgress = 0.2;
       }
     });
 
     if (_isAudioPlaying) {
+      // Simulasi progress audio
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted && _currentlyPlayingId == phrase.id) {
+          setState(() => _playbackProgress = 0.6);
+        }
+      });
+      Future.delayed(const Duration(milliseconds: 1400), () {
+        if (mounted && _currentlyPlayingId == phrase.id) {
+          setState(() => _playbackProgress = 1.0);
+        }
+      });
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        if (mounted && _currentlyPlayingId == phrase.id) {
+          setState(() {
+            _isAudioPlaying = false;
+            _currentlyPlayingId = null;
+            _playbackProgress = 0.0;
+          });
+        }
+      });
+
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -134,11 +115,11 @@ class _AudioCultureScreenState extends State<AudioCultureScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Memutar Audio: "${phrase['minang']}"',
+                      'Memutar Audio: "${phrase.minangText}"',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     Text(
-                      'Lafal: ${phrase['phonetic']}',
+                      'Lafal: ${phrase.phoneticGuide} (${phrase.dialectNote})',
                       style: const TextStyle(fontSize: 11, color: Colors.white70),
                     ),
                   ],
@@ -153,341 +134,630 @@ class _AudioCultureScreenState extends State<AudioCultureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredPhrases = _phrases.where((p) {
-      final matchCat =
-          _selectedCategory == 'Semua' || p['category'] == _selectedCategory;
-      final q = _searchQuery.trim().toLowerCase();
-      final matchQuery = q.isEmpty ||
-          p['minang']!.toLowerCase().contains(q) ||
-          p['indo']!.toLowerCase().contains(q) ||
-          p['context']!.toLowerCase().contains(q);
-      return matchCat && matchQuery;
-    }).toList();
-
     return Scaffold(
       backgroundColor: AppColors.cream100,
       appBar: AppBar(
-        title: const Text('Kamus Saku Audio & Budaya'),
+        title: const Text('Kamus Saku Audio & Budaya Minang'),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: AppColors.green800,
+          indicatorWeight: 3,
+          labelColor: AppColors.green800,
+          unselectedLabelColor: Colors.black54,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          tabs: const [
+            Tab(text: 'Kamus Audio'),
+            Tab(text: 'Kalender Budaya'),
+            Tab(text: 'Pakaian Adat'),
+          ],
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          // BANNER INTRODUKSI
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.green800))
+          : TabBarView(
+              controller: _tabController,
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: AppColors.indigo500.withValues(alpha: 0.12),
-                  child: const Icon(
-                    Icons.record_voice_over_rounded,
-                    color: AppColors.indigo500,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pemandu Bahasa & Adat Minang',
-                        style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.ink900,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Lafal frasa asli dengan logat nagari serta kalender event kebudayaan untuk wisatawan.',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildKamusAudioTab(),
+                _buildKalenderBudayaTab(),
+                _buildPakaianAdatTab(),
               ],
             ),
-          ),
-          const SizedBox(height: 18),
+    );
+  }
 
-          // PENCARIAN FRASA
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-            ),
-            child: TextField(
-              onChanged: (val) => setState(() => _searchQuery = val),
-              decoration: const InputDecoration(
-                hintText: 'Cari frasa Minang atau arti bahasa Indonesia...',
-                hintStyle: TextStyle(fontSize: 13, color: Colors.black38),
-                prefixIcon: Icon(Icons.search, color: AppColors.green800),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  // ===========================================================================
+  // TAB 1: KAMUS SAKU AUDIO MINANG
+  // ===========================================================================
+  Widget _buildKamusAudioTab() {
+    final filteredPhrases = _phrases.where((p) {
+      final matchCat =
+          _selectedCategory == 'Semua' || p.category == _selectedCategory;
+      final q = _searchQuery.trim().toLowerCase();
+      final matchQuery = q.isEmpty ||
+          p.minangText.toLowerCase().contains(q) ||
+          p.indonesianText.toLowerCase().contains(q) ||
+          p.usageContextTip.toLowerCase().contains(q);
+      return matchCat && matchQuery;
+    }).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      children: [
+        // BANNER INTRODUKSI
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 14),
-
-          // FILTER KATEGORI CHIP
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _categories.map((cat) {
-                final isSelected = _selectedCategory == cat;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(cat),
-                    selected: isSelected,
-                    selectedColor: AppColors.green800,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : AppColors.ink900,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 12,
-                    ),
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedCategory = cat);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          // HEADER SECTION KAMUS
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Row(
             children: [
-              const Text(
-                'Kamus Audio Frasa Minang',
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: AppColors.indigo500.withValues(alpha: 0.12),
+                child: const Icon(
+                  Icons.record_voice_over_rounded,
+                  color: AppColors.indigo500,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pemandu Bahasa Minang Asli',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink900,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Lafal frasa otentik dengan prinsip Kato Nan Ampek (Adat Basandi Syarak).',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // PENCARIAN FRASA
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+          ),
+          child: TextField(
+            onChanged: (val) => setState(() => _searchQuery = val),
+            decoration: const InputDecoration(
+              hintText: 'Cari kata Minang atau arti bahasa Indonesia...',
+              hintStyle: TextStyle(fontSize: 13, color: Colors.black38),
+              prefixIcon: Icon(Icons.search, color: AppColors.green800),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // FILTER KATEGORI CHIP
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _phraseCategories.map((cat) {
+              final isSelected = _selectedCategory == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(cat),
+                  selected: isSelected,
+                  selectedColor: AppColors.green800,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.ink900,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 12,
+                  ),
+                  onSelected: (val) {
+                    if (val) setState(() => _selectedCategory = cat);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 18),
+
+        // HEADER SECTION KAMUS
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Expanded(
+              child: Text(
+                'Daftar Frasa Budaya & Pasar',
                 style: TextStyle(
                   fontSize: 15.5,
                   fontWeight: FontWeight.bold,
                   color: AppColors.ink900,
                 ),
               ),
-              Text(
-                '${filteredPhrases.length} frasa',
-                style: const TextStyle(fontSize: 12, color: Colors.black45),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${filteredPhrases.length} frasa',
+              style: const TextStyle(fontSize: 12, color: Colors.black45),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // DAFTAR KARTU AUDIO
+        ...filteredPhrases.map((phrase) {
+          final isPlaying = _currentlyPlayingId == phrase.id && _isAudioPlaying;
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isPlaying ? AppColors.green800 : Colors.black.withValues(alpha: 0.06),
+                width: isPlaying ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isPlaying
+                      ? AppColors.green800.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.02),
+                  blurRadius: isPlaying ? 12 : 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Baris Atas: Kategori & Badges Kato Nan Ampek
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.sage100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        phrase.category,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.green800,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.indigo500.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        phrase.politenessLevel,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.indigo500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Teks Minang & Tombol Putar Audio
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            phrase.minangText,
+                            style: const TextStyle(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.ink900,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Lafal: [ ${phrase.phoneticGuide} ]',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Tombol Putar Interaktif
+                    GestureDetector(
+                      onTap: () => _playPhrase(phrase),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isPlaying ? AppColors.green800 : AppColors.sage100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                          color: isPlaying ? Colors.white : AppColors.green800,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Visual Soundwave Bar jika sedang diputar
+                if (isPlaying) ...[
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: _playbackProgress,
+                      backgroundColor: AppColors.sage100,
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.green800),
+                      minHeight: 4,
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 10),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+
+                // Arti Bahasa Indonesia & Konteks Penggunaan
+                Text(
+                  'Arti: "${phrase.indonesianText}"',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(Icons.lightbulb_outline, size: 12, color: AppColors.orange500),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        phrase.usageContextTip,
+                        style: const TextStyle(fontSize: 11.5, color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // TAB 2: KALENDER BUDAYA & HARI PAKAN NAGARI
+  // ===========================================================================
+  Widget _buildKalenderBudayaTab() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFBF4E8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE89F3C).withValues(alpha: 0.3)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.calendar_month_rounded, color: AppColors.orange500, size: 30),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Kalender Adat & Hari Pakan',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink900,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Hari Pakan adalah hari pasar tradisional bergilir nagari tempat warga menjual kuliner otentik.',
+                      style: TextStyle(fontSize: 12, color: Colors.black87),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 18),
 
-          // DAFTAR KARTU AUDIO
-          ...filteredPhrases.map((p) {
-            final isPlaying = _currentlyPlayingId == p['id'] && _isAudioPlaying;
-
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.only(bottom: 12),
+        ..._culturalEvents.map((evt) => Container(
+              margin: const EdgeInsets.only(bottom: 14),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isPlaying
-                      ? AppColors.pinAudioEmas
-                      : Colors.black.withValues(alpha: 0.05),
-                  width: isPlaying ? 2.0 : 1.0,
-                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
                 boxShadow: [
                   BoxShadow(
-                    color: isPlaying
-                        ? AppColors.pinAudioEmas.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.02),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    offset: const Offset(0, 3),
                   ),
                 ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: isPlaying
-                        ? AppColors.pinAudioEmas
-                        : AppColors.pinAudioEmas.withValues(alpha: 0.15),
-                    child: IconButton(
-                      icon: Icon(
-                        isPlaying ? Icons.stop_rounded : Icons.volume_up_rounded,
-                        color: isPlaying ? Colors.white : AppColors.pinAudioEmas,
-                        size: 22,
-                      ),
-                      onPressed: () => _playPhrase(p),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.cream100,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                p['category']!,
-                                style: const TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.green800,
-                                ),
-                              ),
-                            ),
-                            if (isPlaying) ...[
-                              const SizedBox(width: 8),
-                              const Text(
-                                '• Sedang Memutar',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.pinAudioEmas,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          p['minang']!,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.ink900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          p['indo']!,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.green800,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Konteks: ${p['context']}',
-                          style: const TextStyle(fontSize: 11.5, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 20),
-
-          // KALENDER BUDAYA & EVENT NAGARI
-          const Text(
-            'Kalender Event Budaya & Hari Pakan',
-            style: TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.bold,
-              color: AppColors.ink900,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ..._culturalEvents.map((evt) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.indigo500.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.indigo500.withValues(alpha: 0.12),
+                          color: AppColors.green800.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          evt['badge'] as String,
+                          evt.badge,
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.indigo500,
+                            color: AppColors.green800,
                           ),
                         ),
                       ),
                       Text(
-                        evt['schedule'] as String,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.coral500,
-                          fontWeight: FontWeight.bold,
+                        evt.cityRegency,
+                        style: const TextStyle(fontSize: 11, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    evt.title,
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.ink900,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule, size: 13, color: AppColors.coral500),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          evt.scheduleRule,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.coral500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 13, color: Colors.black54),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          evt.nagariLocation,
+                          style: const TextStyle(fontSize: 12, color: Colors.black54),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    evt['title'] as String,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.ink900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 14, color: Colors.black45),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          evt['location'] as String,
-                          style: const TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    evt['desc'] as String,
-                    style: const TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+                    evt.description,
+                    style: const TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.4),
                   ),
                 ],
               ),
-            );
-          }),
-        ],
-      ),
+            )),
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // TAB 3: KATALOG PAKAIAN ADAT MINANGKABAU (MINGGU 4)
+  // ===========================================================================
+  Widget _buildPakaianAdatTab() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.checkroom_rounded, color: AppColors.indigo500, size: 30),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Katalog Falsafah Pakaian Adat',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink900,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Simbol kebesaran adat Minangkabau: Tengkuluk Tanduk, Saluak Deta, Baju Kurung Basiba & Suntiang.',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        ..._attires.map((attire) => Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Foto Pakaian Adat
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: Image.network(
+                      attire.imageUrl,
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 120,
+                        color: AppColors.sage100,
+                        child: const Center(
+                          child: Icon(Icons.image, color: AppColors.green800, size: 40),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              attire.userType,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.coral500,
+                              ),
+                            ),
+                            Text(
+                              attire.regency,
+                              style: const TextStyle(fontSize: 11, color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          attire.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink900,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          attire.philosophy,
+                          style: const TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.4),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Unsur Pakaian Adat:',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: attire.elements.map((el) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                              decoration: BoxDecoration(
+                                color: AppColors.sage100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                el,
+                                style: const TextStyle(fontSize: 11, color: AppColors.green800, fontWeight: FontWeight.w600),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )),
+      ],
     );
   }
 }

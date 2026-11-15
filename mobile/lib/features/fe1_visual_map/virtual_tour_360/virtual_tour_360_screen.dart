@@ -36,6 +36,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   bool _isAerialMode = true;
   bool _isGyroEnabled = true;
   bool _isSpatialAudioPlaying = false;
+  bool _isVrMode = false;
   double _yawAngle = 20.0;
   double _pitchAngle = -5.0;
 
@@ -316,6 +317,79 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     );
   }
 
+  Widget _buildVrEyeView({required bool isLeft}) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PanoramaViewer(
+          sensorControl:
+              _isGyroEnabled ? SensorControl.orientation : SensorControl.none,
+          animSpeed: 0.2,
+          latitude: _pitchAngle,
+          longitude: _yawAngle,
+          onViewChanged: (lon, lat, tilt) {
+            setState(() {
+              _yawAngle = lon;
+              _pitchAngle = lat;
+            });
+          },
+          hotspots: _currentHotspots.map((hotspot) {
+            final color = _pinColor(hotspot.type);
+            return Hotspot(
+              latitude: hotspot.pitch,
+              longitude: hotspot.yaw,
+              width: 36,
+              height: 36,
+              widget: Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Icon(_pinIcon(hotspot.type), color: Colors.white, size: 16),
+              ),
+            );
+          }).toList(),
+          child: Image.network(
+            _currentPanoramaUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildSimulationCanvas(),
+          ),
+        ),
+        // Reticle Crosshair di tengah layar VR
+        Center(
+          child: Container(
+            width: 14,
+            height: 14,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white70, width: 2),
+            ),
+            child: const Center(
+              child: Icon(Icons.add, size: 10, color: Colors.white70),
+            ),
+          ),
+        ),
+        // Label Mata Kiri / Kanan
+        Positioned(
+          top: 14,
+          left: 14,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              isLeft ? 'LEFT EYE' : 'RIGHT EYE',
+              style: const TextStyle(fontSize: 9, color: Colors.white70, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -336,14 +410,24 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
               ),
             ),
             Text(
-              _isAerialMode
-                  ? 'Mode Drone Udara (150m) · Geser untuk memutar 360°'
-                  : 'Mode Darat (Ground) · Geser untuk memutar 360°',
+              _isVrMode
+                  ? 'Mode VR Stereoscopic (Dual Eye) · Siap Google Cardboard'
+                  : (_isAerialMode
+                      ? 'Mode Drone Udara (150m) · Geser untuk memutar 360°'
+                      : 'Mode Darat (Ground) · Geser untuk memutar 360°'),
               style: const TextStyle(color: Colors.white70, fontSize: 11),
             ),
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: _isVrMode ? 'Keluar Mode VR' : 'Mode VR (Cardboard / Split-Screen)',
+            onPressed: () => setState(() => _isVrMode = !_isVrMode),
+            icon: Icon(
+              Icons.vrpano,
+              color: _isVrMode ? AppColors.pinAudioEmas : Colors.white70,
+            ),
+          ),
           IconButton(
             tooltip: 'Sensor Gyroscope',
             onPressed: () => setState(() => _isGyroEnabled = !_isGyroEnabled),
@@ -354,163 +438,184 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
           ),
         ],
       ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 1. VIEWER PANORAMA 360° SUNGGUHAN (EQUIRECTANGULAR + GYROSCOPE)
-          PanoramaViewer(
-            sensorControl:
-                _isGyroEnabled ? SensorControl.orientation : SensorControl.none,
-            animSpeed: 0.2,
-            latitude: _pitchAngle,
-            longitude: _yawAngle,
-            onViewChanged: (lon, lat, tilt) {
-              setState(() {
-                _yawAngle = lon;
-                _pitchAngle = lat;
-              });
-            },
-            hotspots: _currentHotspots.map((hotspot) {
-              final color = _pinColor(hotspot.type);
-              return Hotspot(
-                latitude: hotspot.pitch,
-                longitude: hotspot.yaw,
-                width: 48,
-                height: 48,
-                widget: GestureDetector(
-                  onTap: () => _showHotspotSheet(hotspot),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                      border: Border.all(color: Colors.white, width: 2.5),
-                    ),
-                    child: Icon(
-                      _pinIcon(hotspot.type),
-                      color: Colors.white,
-                      size: 22,
-                    ),
+      body: _isVrMode
+          ? Row(
+              children: [
+                Expanded(child: _buildVrEyeView(isLeft: true)),
+                Container(
+                  width: 4,
+                  color: Colors.black,
+                  child: const Center(
+                    child: Icon(Icons.circle, size: 6, color: Colors.white38),
                   ),
                 ),
-              );
-            }).toList(),
-            child: Image.network(
-              _currentPanoramaUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildSimulationCanvas(),
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _buildSimulationCanvas(),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
+                Expanded(child: _buildVrEyeView(isLeft: false)),
+              ],
+            )
+          : Stack(
+              fit: StackFit.expand,
+              children: [
+                // 1. VIEWER PANORAMA 360° SUNGGUHAN (EQUIRECTANGULAR + GYROSCOPE)
+                PanoramaViewer(
+                  sensorControl:
+                      _isGyroEnabled ? SensorControl.orientation : SensorControl.none,
+                  animSpeed: 0.2,
+                  latitude: _pitchAngle,
+                  longitude: _yawAngle,
+                  onViewChanged: (lon, lat, tilt) {
+                    setState(() {
+                      _yawAngle = lon;
+                      _pitchAngle = lat;
+                    });
+                  },
+                  hotspots: _currentHotspots.map((hotspot) {
+                    final color = _pinColor(hotspot.type);
+                    return Hotspot(
+                      latitude: hotspot.pitch,
+                      longitude: hotspot.yaw,
+                      width: 48,
+                      height: 48,
+                      widget: GestureDetector(
+                        onTap: () => _showHotspotSheet(hotspot),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.35),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                            border: Border.all(color: Colors.white, width: 2.5),
+                          ),
+                          child: Icon(
+                            _pinIcon(hotspot.type),
+                            color: Colors.white,
+                            size: 22,
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.green500,
+                      ),
+                    );
+                  }).toList(),
+                  child: Image.network(
+                    _currentPanoramaUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildSimulationCanvas(),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildSimulationCanvas(),
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black87,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.green500,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Memuat Panorama 360°...',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            SizedBox(width: 12),
-                            Text(
-                              'Memuat Panorama 360°...',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.5,
-                              ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+
+                // 2. SWITCHER AERIAL-TO-GROUND DI BAGIAN ATAS
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildModeChip(
+                              label: 'Drone Udara',
+                              icon: Icons.flight_takeoff,
+                              selected: _isAerialMode,
+                              onTap: () => setState(() => _isAerialMode = true),
+                            ),
+                            _buildModeChip(
+                              label: 'Titik Darat',
+                              icon: Icons.directions_walk,
+                              selected: !_isAerialMode,
+                              onTap: () => setState(() => _isAerialMode = false),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          // 2. SWITCHER AERIAL-TO-GROUND DI BAGIAN ATAS
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildModeChip(
-                        label: 'Drone Udara',
-                        icon: Icons.flight_takeoff,
-                        selected: _isAerialMode,
-                        onTap: () => setState(() => _isAerialMode = true),
-                      ),
-                      _buildModeChip(
-                        label: 'Titik Darat',
-                        icon: Icons.directions_walk,
-                        selected: !_isAerialMode,
-                        onTap: () => setState(() => _isAerialMode = false),
-                      ),
+                      if (_isSpatialAudioPlaying)
+                        Builder(
+                          builder: (_) {
+                            final pan = (_yawAngle % 360) / 180.0 - 1.0;
+                            final leftPct = ((1.0 - pan) * 50).clamp(10, 90).toInt();
+                            final rightPct = 100 - leftPct;
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.pinAudioEmas,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.graphic_eq, color: Colors.white, size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Spatial [L:$leftPct% R:$rightPct%]',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                     ],
                   ),
                 ),
-                if (_isSpatialAudioPlaying)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.pinAudioEmas,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.graphic_eq, color: Colors.white, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'Audio 360° Aktif',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
 
           // 3. PANEL DAFTAR 4 PIN INTERAKTIF
           Positioned(
@@ -537,14 +642,17 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        '4 Pin Interaktif pada Scene Ini:',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.ink900,
+                      const Expanded(
+                        child: Text(
+                          '4 Pin Interaktif pada Scene Ini:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink900,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '${_yawAngle.toStringAsFixed(0)}° / ${_pitchAngle.toStringAsFixed(0)}°',
                         style: const TextStyle(

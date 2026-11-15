@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/constants/colors.dart';
+import '../data/destination_repository.dart';
 
-/// Layar 03 · Jelajah Peta Interaktif, Cari Searah Rute (Shunlu) & Peta Mikro Kawasan
+/// Layar 03 · Jelajah Peta Interaktif, Cari Searah Rute (Shunlu), Peta Mikro & Kompas Gunung
 /// Pilar 2: Navigasi Cerdas & Algoritma Amap
 class MapExploreShunluScreen extends StatefulWidget {
   const MapExploreShunluScreen({super.key});
@@ -13,11 +14,20 @@ class MapExploreShunluScreen extends StatefulWidget {
 }
 
 class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
+  final DestinationRepository _repository = DestinationRepository();
   bool _isMicroMapMode = false;
   String _selectedShunluFilter = 'RM Padang';
   String _selectedMicroFilter = 'Semua';
   final MapController _mapController = MapController();
   Map<String, dynamic>? _selectedPoi;
+
+  // Geofence GPS Simulation (Pilar 2 — Radius <= 15m)
+  bool _isGeofenceActive = false;
+  bool _isGeofenceAudioPlaying = false;
+  double _userDistanceToSpotMeters = 12.0;
+
+  // Kompas Gunung Bearing Simulation
+  double _compassHeadingDeg = 45.0; // Default menghadap Gunung Marapi
 
   // 1. POI SEARAH RUTE (SHUNLU)
   static const List<Map<String, dynamic>> _shunluPois = [
@@ -228,6 +238,275 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
     }
   }
 
+  void _openMountainCompassSheet() {
+    final mountains = _repository.getMountainLandmarks();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.cream100,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (_, scrollCtrl) => ListView(
+              controller: scrollCtrl,
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Header Kompas Gunung
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.green800.withValues(alpha: 0.12),
+                      child: const Icon(Icons.explore, color: AppColors.green800, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Kompas Visual Landmark Gunung',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.ink900,
+                            ),
+                          ),
+                          Text(
+                            'Pilar 2: Navigasi visual ke puncak gunung ikonik Sumbar',
+                            style: TextStyle(fontSize: 11.5, color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Azimuth Compass Dial Widget
+                Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Dial Outer Ring
+                      Container(
+                        width: 220,
+                        height: 220,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          border: Border.all(color: AppColors.green800, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.green800.withValues(alpha: 0.12),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Kardinal N E S W
+                            const Positioned(
+                              top: 8,
+                              child: Text('N (0°)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 11)),
+                            ),
+                            const Positioned(
+                              right: 8,
+                              child: Text('E (90°)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54, fontSize: 10)),
+                            ),
+                            const Positioned(
+                              bottom: 8,
+                              child: Text('S (180°)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54, fontSize: 10)),
+                            ),
+                            const Positioned(
+                              left: 8,
+                              child: Text('W (270°)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54, fontSize: 10)),
+                            ),
+                            // Lingkaran dalam derajat
+                            Text(
+                              '${_compassHeadingDeg.toStringAsFixed(0)}°',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.ink900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Rotating Compass Needle
+                      Transform.rotate(
+                        angle: (_compassHeadingDeg * 3.1415926535 / 180),
+                        child: Container(
+                          width: 180,
+                          height: 180,
+                          alignment: Alignment.topCenter,
+                          child: const Icon(
+                            Icons.navigation,
+                            color: Colors.red,
+                            size: 32,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Heading Slider (Simulasi putar HP / Gyroscope)
+                Row(
+                  children: [
+                    const Text('Arah HP: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Slider(
+                        value: _compassHeadingDeg,
+                        min: 0,
+                        max: 360,
+                        activeColor: AppColors.green800,
+                        onChanged: (val) {
+                          setSheetState(() => _compassHeadingDeg = val);
+                          setState(() => _compassHeadingDeg = val);
+                        },
+                      ),
+                    ),
+                    Text('${_compassHeadingDeg.toStringAsFixed(0)}°', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Landmark Gunung Terdeteksi:',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.ink900),
+                ),
+                const SizedBox(height: 10),
+
+                ...mountains.map((mtn) {
+                  final diff = (_compassHeadingDeg - mtn.defaultBearingDeg).abs();
+                  final isAligned = diff < 20 || diff > 340;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isAligned ? AppColors.sage100 : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isAligned ? AppColors.green800 : Colors.black.withValues(alpha: 0.06),
+                        width: isAligned ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: isAligned
+                              ? AppColors.green800
+                              : AppColors.orange500.withValues(alpha: 0.12),
+                          child: Icon(
+                            Icons.landscape_rounded,
+                            color: isAligned ? Colors.white : AppColors.orange500,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      mtn.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13.5,
+                                        color: AppColors.ink900,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.06),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '${mtn.elevationMdpl} mdpl',
+                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                mtn.regency,
+                                style: const TextStyle(fontSize: 11, color: Colors.black54),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                mtn.description,
+                                style: const TextStyle(fontSize: 11, color: Colors.black87),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Bearing: ${mtn.defaultBearingDeg.toStringAsFixed(0)}°',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isAligned ? AppColors.green800 : Colors.black54,
+                              ),
+                            ),
+                            if (isAligned)
+                              const Text(
+                                '🎯 SEJAJAR',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.green800),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredShunlu = _shunluPois
@@ -248,6 +527,11 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
           _isMicroMapMode ? 'Peta Mikro Pejalan Kaki' : 'Jelajah Peta & Rute Shunlu',
         ),
         actions: [
+          IconButton(
+            tooltip: 'Kompas Visual Landmark Gunung',
+            icon: const Icon(Icons.explore_outlined, color: AppColors.green800),
+            onPressed: _openMountainCompassSheet,
+          ),
           IconButton(
             tooltip: 'Fokus Ulang Peta',
             icon: const Icon(Icons.my_location, color: AppColors.green800),
@@ -319,6 +603,65 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
               ),
             ),
           ),
+
+          // RADAR GEOFENCE GPS AUDIO (RADIUS <= 15M)
+          if (_isMicroMapMode)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              color: _isGeofenceActive ? const Color(0xFFFBF4E8) : Colors.white,
+              child: Row(
+                children: [
+                  Icon(
+                    _isGeofenceActive ? Icons.spatial_audio_rounded : Icons.radar_rounded,
+                    color: _isGeofenceActive ? AppColors.orange500 : AppColors.green800,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _isGeofenceActive
+                          ? '📍 Radius ${_userDistanceToSpotMeters.toStringAsFixed(0)}m: Narasi Audio ${_isGeofenceAudioPlaying ? 'Diputar 🔊' : 'Dijeda ⏸️'}'
+                          : 'Radar Geofence GPS (≤15m): Deteksi narasi audio otomatis',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: _isGeofenceActive ? AppColors.orange500 : AppColors.ink900,
+                      ),
+                    ),
+                  ),
+                  if (_isGeofenceActive)
+                    IconButton(
+                      icon: Icon(
+                        _isGeofenceAudioPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                        color: AppColors.orange500,
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        setState(() => _isGeofenceAudioPlaying = !_isGeofenceAudioPlaying);
+                      },
+                    ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isGeofenceActive = !_isGeofenceActive;
+                        if (_isGeofenceActive) {
+                          _isGeofenceAudioPlaying = true;
+                          _userDistanceToSpotMeters = 12.0;
+                          _selectedPoi = _microMapPois[1]; // Pondok Saluang
+                          _mapController.move(const LatLng(-0.1025, 100.6725), 17.0);
+                        } else {
+                          _isGeofenceAudioPlaying = false;
+                        }
+                      });
+                    },
+                    child: Text(
+                      _isGeofenceActive ? 'Matikan' : 'Simulasi GPS ≤15m',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // KANVAS PETA INTERAKTIF OPENSTREETMAP (FLUTTER_MAP V8)
           SizedBox(
@@ -678,7 +1021,10 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Row(
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(
@@ -698,8 +1044,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                       ),
                                     ),
                                   ),
-                                  if (poi['hasAudio'] == true) ...[
-                                    const SizedBox(width: 6),
+                                  if (poi['hasAudio'] == true)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
@@ -718,7 +1063,6 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                         ),
                                       ),
                                     ),
-                                  ],
                                 ],
                               ),
                             ],

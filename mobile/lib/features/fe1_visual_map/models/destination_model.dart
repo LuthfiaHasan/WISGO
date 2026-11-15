@@ -256,3 +256,219 @@ class Hotspot360Model {
   }
 }
 
+/// Entri Kamus Saku Audio Bahasa Minang (Pilar 1 — P1.4)
+class MinangPhraseModel {
+  final String id;
+  final String category; // sapaan_adat, tawar_pasar, kuliner_rm, navigasi_darurat
+  final String indonesianText;
+  final String minangText;
+  final String phoneticGuide;
+  final String audioUrl;
+  final String dialectNote; // Dialek Padang / Bukittinggi (Darek) / Pesisir
+  final String usageContextTip;
+  final String politenessLevel; // Kato Mandaki, Kato Mandata, Kato Manurun, Kato Malereang
+
+  const MinangPhraseModel({
+    required this.id,
+    required this.category,
+    required this.indonesianText,
+    required this.minangText,
+    required this.phoneticGuide,
+    this.audioUrl = '',
+    this.dialectNote = 'Umum Minangkabau',
+    this.usageContextTip = '',
+    this.politenessLevel = 'Kato Mandata',
+  });
+
+  factory MinangPhraseModel.fromJson(Map<String, dynamic> json) {
+    return MinangPhraseModel(
+      id: json['id'] as String? ?? '',
+      category: json['category'] as String? ?? 'Umum',
+      indonesianText: json['indonesian_text'] as String? ?? json['indo'] as String? ?? '',
+      minangText: json['minang_text'] as String? ?? json['minang'] as String? ?? '',
+      phoneticGuide: json['phonetic_guide'] as String? ?? json['phonetic'] as String? ?? '',
+      audioUrl: json['audio_url'] as String? ?? '',
+      dialectNote: json['dialect_note'] as String? ?? 'Darek & Pesisir',
+      usageContextTip: json['usage_context_tip'] as String? ?? json['context'] as String? ?? '',
+      politenessLevel: json['politeness_level'] as String? ?? 'Kato Mandata',
+    );
+  }
+}
+
+/// Agenda Kalender Budaya & Hari Pakan Nagari (Pilar 1 — P1.4)
+class CulturalEventModel {
+  final String id;
+  final String title;
+  final String eventType; // Hari Pakan Nagari, Festival Budaya, Tradisi Adat
+  final String nagariLocation;
+  final String cityRegency;
+  final String scheduleRule;
+  final String badge;
+  final String description;
+
+  const CulturalEventModel({
+    required this.id,
+    required this.title,
+    required this.eventType,
+    required this.nagariLocation,
+    required this.cityRegency,
+    required this.scheduleRule,
+    this.badge = 'Agenda Budaya',
+    this.description = '',
+  });
+
+  factory CulturalEventModel.fromJson(Map<String, dynamic> json) {
+    return CulturalEventModel(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      eventType: json['event_type'] as String? ?? 'Festival Budaya',
+      nagariLocation: json['nagari_location'] as String? ?? json['location'] as String? ?? '',
+      cityRegency: json['city_regency'] as String? ?? '',
+      scheduleRule: json['schedule_rule'] as String? ?? json['schedule'] as String? ?? '',
+      badge: json['badge'] as String? ?? 'Tradisi Leluhur',
+      description: json['description'] as String? ?? json['desc'] as String? ?? '',
+    );
+  }
+}
+
+/// Alert Jalur Rawan Bencana Sumatera Barat (Pilar 7 — P7.2)
+class HazardAlertModel {
+  final String id;
+  final String corridorCode;
+  final String location;
+  final String roadSegment;
+  final String cityRegency;
+  final double latitude;
+  final double longitude;
+  final String severity; // Normal, Waspada, Siaga, Awas Tutup Total
+  final String hazardType;
+  final String weatherStatus;
+  final int slopeGradientDeg;
+  final String message;
+  final String detourRoute;
+  final String nearestRescuePost;
+  final String emergencyContact;
+
+  const HazardAlertModel({
+    required this.id,
+    required this.corridorCode,
+    required this.location,
+    required this.roadSegment,
+    this.cityRegency = 'Sumatera Barat',
+    this.latitude = 0.0,
+    this.longitude = 0.0,
+    required this.severity,
+    required this.hazardType,
+    this.weatherStatus = 'Cerah Berawan',
+    this.slopeGradientDeg = 0,
+    required this.message,
+    required this.detourRoute,
+    this.nearestRescuePost = 'Posko BPBD Sumbar',
+    this.emergencyContact = '112 / 115',
+  });
+
+  factory HazardAlertModel.fromJson(Map<String, dynamic> json) {
+    return HazardAlertModel(
+      id: json['id'] as String? ?? '',
+      corridorCode: json['corridor_code'] as String? ?? '',
+      location: json['location'] as String? ?? json['name'] as String? ?? '',
+      roadSegment: json['road_segment'] as String? ?? '',
+      cityRegency: json['city_regency'] as String? ?? 'Sumatera Barat',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      severity: json['severity'] as String? ?? json['status'] as String? ?? 'Normal',
+      hazardType: json['hazard_type'] as String? ?? '',
+      weatherStatus: json['weather_status'] as String? ?? 'Cerah',
+      slopeGradientDeg: (json['slope_gradient_deg'] as num?)?.toInt() ?? 0,
+      message: json['message'] as String? ?? json['desc'] as String? ?? '',
+      detourRoute: json['detour_route'] as String? ?? json['altRoute'] as String? ?? '',
+      nearestRescuePost: json['nearest_rescue_post'] as String? ?? 'Posko Siaga Nagari',
+      emergencyContact: json['emergency_contact'] as String? ?? '115 (SAR Sumbar)',
+    );
+  }
+}
+
+/// Sinyal Darurat SOS GPS (Pilar 7 — P7.2)
+class SOSSignalModel {
+  final String id;
+  final String sosCode;
+  final String touristName;
+  final String phoneNumber;
+  final String emergencyType;
+  final double latitude;
+  final double longitude;
+  final int batteryPercent;
+  final String nearestCorridor;
+  final String status;
+  final String notes;
+
+  const SOSSignalModel({
+    this.id = '',
+    this.sosCode = '',
+    required this.touristName,
+    required this.phoneNumber,
+    required this.emergencyType,
+    required this.latitude,
+    required this.longitude,
+    required this.batteryPercent,
+    this.nearestCorridor = '',
+    this.status = 'Dipancarkan',
+    this.notes = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'tourist_name': touristName,
+    'phone_number': phoneNumber,
+    'emergency_type': emergencyType,
+    'latitude': latitude,
+    'longitude': longitude,
+    'battery_percent': batteryPercent,
+    'nearest_corridor': nearestCorridor,
+    'notes': notes,
+  };
+}
+
+/// Landmark Gunung untuk Kompas Visual (Pilar 2)
+class MountainLandmarkModel {
+  final String name;
+  final int elevationMdpl;
+  final double latitude;
+  final double longitude;
+  final String regency;
+  final double defaultBearingDeg;
+  final String iconCode;
+  final String description;
+
+  const MountainLandmarkModel({
+    required this.name,
+    required this.elevationMdpl,
+    required this.latitude,
+    required this.longitude,
+    required this.regency,
+    required this.defaultBearingDeg,
+    this.iconCode = 'volcano',
+    this.description = '',
+  });
+}
+
+/// Katalog Pakaian Adat Minangkabau (Pilar 1 — Minggu 4)
+class TraditionalAttireModel {
+  final String id;
+  final String name;
+  final String userType; // Bundo Kanduang / Marapulai / Penghulu
+  final String regency;
+  final String philosophy;
+  final String imageUrl;
+  final List<String> elements;
+
+  const TraditionalAttireModel({
+    required this.id,
+    required this.name,
+    required this.userType,
+    required this.regency,
+    required this.philosophy,
+    required this.imageUrl,
+    this.elements = const [],
+  });
+}
+
