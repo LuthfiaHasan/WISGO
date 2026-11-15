@@ -40,18 +40,28 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   double _yawAngle = 20.0;
   double _pitchAngle = -5.0;
 
-  String get _currentPanoramaUrl {
+  Image _buildPanoramaImage() {
     final scenes = _dest.scenes360;
     if (scenes.isNotEmpty) {
       final targetType = _isAerialMode ? 'aerial' : 'ground';
       final matched = scenes.where((s) => s.type == targetType).toList();
-      if (matched.isNotEmpty && matched.first.panoramaUrl.isNotEmpty) {
-        return matched.first.panoramaUrl;
+      if (matched.isNotEmpty &&
+          matched.first.panoramaUrl.isNotEmpty &&
+          matched.first.panoramaUrl.startsWith('http')) {
+        return Image.network(
+          matched.first.panoramaUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Image.asset(
+            'assets/images/panorama_sumbar_default.jpg',
+            fit: BoxFit.cover,
+          ),
+        );
       }
     }
-    return _isAerialMode
-        ? 'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama.jpg'
-        : 'https://raw.githubusercontent.com/yushijinhun/panorama_viewer/master/example/assets/panorama2.jpg';
+    return Image.asset(
+      'assets/images/panorama_sumbar_default.jpg',
+      fit: BoxFit.cover,
+    );
   }
 
   List<Hotspot360Model> get _currentHotspots {
@@ -274,49 +284,6 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     );
   }
 
-  Widget _buildSimulationCanvas() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: _isAerialMode
-              ? [
-                  const Color(0xFF102A43),
-                  const Color(0xFF1C4532),
-                  const Color(0xFF234B24),
-                ]
-              : [
-                  const Color(0xFF1A3626),
-                  const Color(0xFF234B24),
-                  const Color(0xFF2D3748),
-                ],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _isAerialMode ? Icons.flight : Icons.panorama_photosphere,
-              size: 64,
-              color: Colors.white.withValues(alpha: 0.22),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Yaw: ${_yawAngle.toStringAsFixed(0)}° · Pitch: ${_pitchAngle.toStringAsFixed(0)}°',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildVrEyeView({required bool isLeft}) {
     return Stack(
       fit: StackFit.expand,
@@ -350,14 +317,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
               ),
             );
           }).toList(),
-          child: Image.network(
-            _currentPanoramaUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Image.asset(
-              'assets/images/panorama_sumbar_default.jpg',
-              fit: BoxFit.cover,
-            ),
-          ),
+          child: _buildPanoramaImage(),
         ),
         // Reticle Crosshair di tengah layar VR
         Center(
@@ -502,56 +462,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                       ),
                     );
                   }).toList(),
-                  child: Image.network(
-                    _currentPanoramaUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
-                      'assets/images/panorama_sumbar_default.jpg',
-                      fit: BoxFit.cover,
-                    ),
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          _buildSimulationCanvas(),
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black87,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.green500,
-                                    ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Memuat Panorama 360°...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                  child: _buildPanoramaImage(),
                 ),
 
                 // 2. SWITCHER AERIAL-TO-GROUND DI BAGIAN ATAS
