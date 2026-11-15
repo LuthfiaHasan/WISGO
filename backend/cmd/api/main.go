@@ -35,17 +35,25 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
+	db := database.GetDB()
+
 	// Health Check
 	r.GET("/health", func(c *gin.Context) {
+		dbStatus := "connected"
+		if !database.IsConnected() {
+			dbStatus = "offline"
+		}
 		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"app":    "Rancak.in Backend API",
-			"env":    cfg.Environment,
-			"engine": "Gin Web Framework v1.10.0 (Clean Architecture)",
+			"status":   "ok",
+			"app":      "Rancak.in Backend API",
+			"env":      cfg.Environment,
+			"database": dbStatus,
+			"engine":   "Gin Web Framework v1.10.0 (Clean Architecture)",
 		})
 	})
 
 	v1 := r.Group("/api/v1")
+	v1.Use(middleware.DatabaseGuardMiddleware(cfg.Environment))
 
 	// ==========================================
 	// 1. INFRASTRUCTURE & SHARED MIDDLEWARE
@@ -57,7 +65,12 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	// 2. MODUL BE-1 (CORE & SPASIAL RANAH MINANG)
 	// ==========================================
 	// Modul D1: Katalog 20 Destinasi Prioritas, Detail, Tarif, & Offline Bundle v2 (Pilar 2 & 7)
-	destRepo := destination.NewRepository()
+	var destRepo destination.Repository
+	if db != nil && database.IsConnected() {
+		destRepo = destination.NewPostgresRepository(db)
+	} else {
+		destRepo = destination.NewRepository()
+	}
 	destService := destination.NewService(destRepo)
 	destHandler := destination.NewHandler(destService, cache)
 	destHandler.RegisterRoutes(v1)
@@ -96,43 +109,78 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	// 3. MODUL BE-2 (GROUP, ESCROW, ITINERARY, DLL)
 	// ==========================================
 	// Modul B1: Autentikasi OTP & Simpan Tempat Favorit (Pilar 4 & 5)
-	authRepo := auth.NewRepository()
+	var authRepo auth.Repository
+	if db != nil && database.IsConnected() {
+		authRepo = auth.NewPostgresRepository(db)
+	} else {
+		authRepo = auth.NewRepository()
+	}
 	authService := auth.NewService(authRepo)
 	authHandler := auth.NewHandler(authService)
 	authHandler.RegisterRoutes(v1)
 
 	// Modul B2: Mitra Nagari Minang & Filter Level Pedas (Pilar 5)
-	partnerRepo := partner.NewRepository()
+	var partnerRepo partner.Repository
+	if db != nil && database.IsConnected() {
+		partnerRepo = partner.NewPostgresRepository(db)
+	} else {
+		partnerRepo = partner.NewRepository()
+	}
 	partnerService := partner.NewService(partnerRepo)
 	partnerHandler := partner.NewHandler(partnerService)
 	partnerHandler.RegisterRoutes(v1)
 
 	// Modul B3: Rencana Perjalanan 7 Hari — AI & Manual (Pilar 4)
-	itineraryRepo := itinerary.NewRepository()
+	var itineraryRepo itinerary.Repository
+	if db != nil && database.IsConnected() {
+		itineraryRepo = itinerary.NewPostgresRepository(db)
+	} else {
+		itineraryRepo = itinerary.NewRepository()
+	}
 	itineraryService := itinerary.NewService(itineraryRepo)
 	itineraryHandler := itinerary.NewHandler(itineraryService)
 	itineraryHandler.RegisterRoutes(v1)
 
 	// Modul B4: Private Group Room, Live Voting, Split-Bill & Live Radar (Pilar 4)
-	groupRepo := group.NewRepository()
+	var groupRepo group.Repository
+	if db != nil && database.IsConnected() {
+		groupRepo = group.NewPostgresRepository(db)
+	} else {
+		groupRepo = group.NewRepository()
+	}
 	groupService := group.NewService(groupRepo)
 	groupHandler := group.NewHandler(groupService)
 	groupHandler.RegisterRoutes(v1)
 
 	// Modul B5: Quick Booking 360°, Escrow State Machine, Bot WA & E-Ticket QR (Pilar 5)
-	bookingRepo := booking_escrow.NewRepository()
+	var bookingRepo booking_escrow.Repository
+	if db != nil && database.IsConnected() {
+		bookingRepo = booking_escrow.NewPostgresRepository(db)
+	} else {
+		bookingRepo = booking_escrow.NewRepository()
+	}
 	bookingService := booking_escrow.NewService(bookingRepo)
 	bookingHandler := booking_escrow.NewHandler(bookingService)
 	bookingHandler.RegisterRoutes(v1)
 
 	// Modul B6: Komunitas, Hidden Gem, Masking GPS, & Shared Trips (Pilar 6)
-	communityRepo := community.NewRepository()
+	var communityRepo community.Repository
+	if db != nil && database.IsConnected() {
+		communityRepo = community.NewPostgresRepository(db)
+	} else {
+		communityRepo = community.NewRepository()
+	}
 	communityService := community.NewService(communityRepo)
 	communityHandler := community.NewHandler(communityService)
 	communityHandler.RegisterRoutes(v1)
 
 	// Modul B7: Paspor Digital Minang, Anti-Fake GPS & Sertifikat Gubernur (Pilar 6)
-	gamificationRepo := gamification.NewRepository()
+	var gamificationRepo gamification.Repository
+	if db != nil && database.IsConnected() {
+		gamificationRepo = gamification.NewPostgresRepository(db)
+	} else {
+		gamificationRepo = gamification.NewRepository()
+	}
 	gamificationService := gamification.NewService(gamificationRepo)
 	gamificationHandler := gamification.NewHandler(gamificationService)
 	gamificationHandler.RegisterRoutes(v1)
