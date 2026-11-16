@@ -1,0 +1,247 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream-100: #F6F3EC;
+  --green-800: #234B24;
+  --green-500: #1E9E5A;
+  --ink-900: #1B1F1A;
+  --coral-500: #F26B4B;
+  --orange-500: #E85D1A;
+  --indigo-500: #5B6AE8;
+  --sage-100: #E4E9DA;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--cream-100);
+  color: var(--ink-900);
+}
+
+/* Visually hidden helper from modern-web-guidance (forms & sortable-table) */
+.visually-hidden {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Focus-visible accessibility ring */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible,
+.table-wrapper:focus-visible {
+  outline: 3px solid var(--green-800);
+  outline-offset: 2px;
+}
+
+/* Native <dialog> modal scroll containment (dialog guide) */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgba(27, 31, 26, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+/* Tabbed interface styling (tabs guide) */
+[role="tab"] {
+  position: relative;
+}
+
+[role="tab"][aria-selected="true"] {
+  color: var(--green-800);
+}
+
+[role="tab"][aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  border-block-end: 3px solid var(--coral-500);
+}
+
+/* Responsive & Sortable Data Table (responsive-table & sortable-table guides) */
+.table-wrapper {
+  overflow: auto;
+  max-inline-size: 100%;
+  max-block-size: min(740px, 80vh);
+  container-type: inline-size;
+}
+
+.rancak-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  min-inline-size: 980px;
+  --label-2: "Wilayah & Kategori";
+  --label-3: "4 Statistik Keputusan";
+  --label-4: "5 Indikator Medan";
+  --label-5: "Standar Tarif Perda";
+  --label-6: "Edukasi & Adat";
+  --label-7: "Tindakan";
+}
+
+.rancak-table thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+}
+
+.rancak-table thead th:has(> button) {
+  padding: 0;
+}
+
+.rancak-table thead th > button {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rancak-table thead th > button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.rancak-table tbody th {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  background-color: #FFFFFF;
+}
+
+.rancak-table tbody tr:hover th {
+  background-color: #FAF8F3;
+}
+
+@container (width < 640px) {
+  .rancak-table {
+    min-inline-size: 100%;
+  }
+
+  .rancak-table,
+  .rancak-table thead,
+  .rancak-table tbody,
+  .rancak-table tr,
+  .rancak-table th,
+  .rancak-table td {
+    display: block;
+  }
+
+  .rancak-table thead {
+    display: none;
+  }
+
+  .rancak-table tbody tr {
+    margin-block-end: 1rem;
+    border: 1px solid #CFD8BE;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #FFFFFF;
+  }
+
+  .rancak-table tbody th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background: var(--sage-100);
+  }
+
+  .rancak-table td:nth-child(2)::before {
+    content: var(--label-2) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .rancak-table td:nth-child(3)::before {
+    content: var(--label-3) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .rancak-table td:nth-child(4)::before {
+    content: var(--label-4) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .rancak-table td:nth-child(5)::before {
+    content: var(--label-5) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .rancak-table td:nth-child(6)::before {
+    content: var(--label-6) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .rancak-table td:nth-child(7)::before {
+    content: var(--label-7) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Print stylesheet khusus untuk Cetak Plang Smart QR */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #smart-qr-placard-print,
+  #smart-qr-placard-print * {
+    visibility: visible;
+  }
+  #smart-qr-placard-print {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 24px;
+    box-shadow: none !important;
+    background: #F6F3EC !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
