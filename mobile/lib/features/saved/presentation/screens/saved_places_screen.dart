@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
@@ -8,6 +10,13 @@ import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
+import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
+import '../../../fe1_visual_map/destination_detail/destination_detail_screen.dart';
+import '../../../fe1_visual_map/hazard_alert_sos/hazard_sos_screen.dart';
+import '../../../fe1_visual_map/map_explore_shunlu/map_explore_screen.dart';
+import '../../../fe1_visual_map/models/destination_model.dart';
+import '../../../fe1_visual_map/offline_pocket/offline_pocket_screen.dart';
+import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
 import '../../../booking/presentation/widgets/quick_booking_panel.dart';
 import '../../../booking/presentation/widgets/qris_payment_sheet.dart';
 import '../../../group_room/presentation/widgets/live_group_tracking_sheet.dart';
@@ -16,6 +25,70 @@ import '../../../culture/presentation/widgets/culture_and_community_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
 import '../widgets/saved_skeleton_shimmer.dart';
+
+/// Extension untuk menjembatani model FE-2 dengan layar detail FE-1
+extension SavedDestinationModelFe1Bridge on SavedDestinationModel {
+  DestinationModel toFe1Destination() {
+    return DestinationModel(
+      id: id,
+      name: title,
+      category: natureType == 'ALL' ? 'Alam' : natureType,
+      cityRegency: subRegion,
+      description:
+          'Destinasi wisata $title berlokasi di $subRegion, Sumatera Barat. Dikelola resmi dengan transparansi tiket dan fasilitas sesuai regulasi $perdaRef.',
+      latitude: -0.95,
+      longitude: 100.35,
+      coverImage: imageUrl,
+      crowdLevel: 'Sedang',
+      distanceKm:
+          '${distanceKm.toStringAsFixed(distanceKm.truncateToDouble() == distanceKm ? 0 : 1)} km',
+      travelTime: duration,
+      entryFee: 'Rp ${calcRates.tiket}',
+      medanIndicator: MedanIndicatorModel(
+        id: 'medan-$id',
+        destinationId: id,
+        vehicleAccess: 'Mobil OK',
+        trekkingLevel: terrainNote.toLowerCase().contains('jalan kaki') ||
+                terrainNote.toLowerCase().contains('trekking')
+            ? 'Sedang (Jalan Kaki)'
+            : 'Mudah (Datar)',
+        cellularSignal: 'Sinyal Lemah / Siap Luring',
+        facilities: facilities.length > 2
+            ? '${facilities.take(2).join(', ')}, +${facilities.length - 2} lainnya'
+            : (facilities.isNotEmpty ? facilities.join(', ') : 'Ada Toilet & Musala'),
+        guideNeed: 'Bisa Mandiri',
+      ),
+      tips: [
+        LocalTipModel(
+          id: 'tip-$id-1',
+          destinationId: id,
+          content:
+              'Simpan tiket QR digital di perangkat Anda sebelum tiba di lokasi agar tidak terkendala sinyal lemah.',
+          isImportant: true,
+        ),
+        LocalTipModel(
+          id: 'tip-$id-2',
+          destinationId: id,
+          content:
+              'Patuhi tata tertib lokal dan gunakan tarif resmi sesuai $perdaRef.',
+          isImportant: false,
+        ),
+      ],
+      tariffs: tariffs
+          .map((t) => OfficialTariffModel(
+                id: '$id-${t.name}',
+                destinationId: id,
+                itemName: t.name,
+                price: (int.tryParse(t.official.replaceAll(RegExp(r'\D'), '')) ??
+                        10000)
+                    .toDouble(),
+                unit: t.note.isNotEmpty ? t.note : 'per orang/kendaraan',
+                regulationRef: perdaRef,
+              ))
+          .toList(),
+    );
+  }
+}
 
 /// Layar Utama WISGO (1:1 dari `wisgo_interactive_3d_prototype (1).html`):
 /// - Minimal Editorial Status Bar (`09:41 | WISGO SUMBAR | Daring / Tanpa Sinyal`)
@@ -377,36 +450,54 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       filtered.sort((a, b) => b.rating.compareTo(a.rating));
     }
 
-    return Column(
+    return Stack(
       children: [
-        // Sticky Region & Nature Sub-Category Navigator Header
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-          decoration: const BoxDecoration(
-            color: AppColors.cream,
-            border: Border(
-              bottom: BorderSide(color: AppColors.warmBorder),
-            ),
+        CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          slivers: [
+            // Pinned Frosted Glass App Bar Header
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              automaticallyImplyLeading: false,
+              toolbarHeight: 56,
+              titleSpacing: 16,
+              flexibleSpace: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.cream.withValues(alpha: 0.82),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.warmBorder.withValues(alpha: 0.70),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'DIREKTORI WILAYAH & BIAYA RESMI',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 1.3,
+                            letterSpacing: 1.2,
                             color: AppColors.brush,
                           ),
                         ),
@@ -414,7 +505,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Text(
                           'Jelajah Daerah Sumbar',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                             letterSpacing: -0.4,
@@ -424,6 +515,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                   ),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       GestureDetector(
                         onTap: _openQrScannerModal,
@@ -434,6 +526,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.qr_code_scanner_rounded, size: 13, color: AppColors.cream),
                               SizedBox(width: 4),
@@ -472,430 +565,457 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+            ),
 
-              // Quick Trip Planner & Group Room Banner (ITEM 10, 11, 12)
-              GestureDetector(
-                onTap: _openTripPlannerModal,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.forest, AppColors.brush],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.forest.withValues(alpha: 0.18),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.route_rounded, color: AppColors.cream, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Perencana Trip Rombongan',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Durasi hari, estimasi anggaran & tautan grup',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                color: AppColors.sage,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: AppColors.sage,
-                        size: 14,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Quick Access Action Bar: Pantau Rombongan, Paspor Digital, Budaya & Forum Nagari
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+            // Scrollable Header Content (Clean & Streamlined)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    GestureDetector(
-                      onTap: _openLiveGroupTrackingModal,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.sageBorder),
+                    // 1. Search Bar
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.sageBorder.withValues(alpha: 0.8),
                         ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.radar_rounded, size: 13, color: AppColors.forest),
-                            SizedBox(width: 5),
-                            Text(
-                              'Pantau Rombongan',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: _openDigitalPassportModal,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.sageBorder),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.military_tech_rounded, size: 13, color: AppColors.terracotta),
-                            SizedBox(width: 5),
-                            Text(
-                              'Paspor Digital',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () => _openCultureAndCommunityModal(),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.sageBorder),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.auto_awesome_rounded, size: 13, color: AppColors.forest),
-                            SizedBox(width: 5),
-                            Text(
-                              'Budaya & Forum',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ink),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Search Bar (REQUEST 2)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.sageBorder),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: 'Cari wisata, daerah, fasilitas (toilet, umkm)...',
-                    hintStyle: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.muted.withValues(alpha: 0.7),
-                    ),
-                    prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.muted),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? GestureDetector(
-                            onTap: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                            child: const Icon(Icons.close, size: 16, color: AppColors.muted),
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Sort Mode Chips (REQUEST 2: Jarak Terdekat)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildSortChip(
-                      key: 'default',
-                      label: 'Semua',
-                      isSelected: _sortMode == 'default',
-                      onTap: () => setState(() => _sortMode = 'default'),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildSortChip(
-                      key: 'distance',
-                      label: 'Jarak Terdekat (GPS)',
-                      isSelected: _sortMode == 'distance',
-                      onTap: () => setState(() => _sortMode = 'distance'),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildSortChip(
-                      key: 'rating',
-                      label: 'Rating Tertinggi',
-                      isSelected: _sortMode == 'rating',
-                      onTap: () => setState(() => _sortMode = 'rating'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              const Text(
-                'PILIH DAERAH / KABUPATEN-KOTA:',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                  color: AppColors.muted,
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              // Primary Region Navigator Buttons
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _exploreRegions.map((reg) {
-                    final isSelected = _currentExploreRegion == reg['key'];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: GestureDetector(
-                        onTap: () => setState(
-                          () => _currentExploreRegion = reg['key']!,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.ink.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.forest
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.forest
-                                  : AppColors.sageBorder,
-                            ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: 'Cari destinasi, daerah, fasilitas...',
+                          hintStyle: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.muted.withValues(alpha: 0.7),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                reg['title']!,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w800,
+                          prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.muted),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                  child: const Icon(Icons.close, size: 16, color: AppColors.muted),
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 2. Sort Mode Chips (Semua | Jarak Terdekat | Rating Tertinggi)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildSortChip(
+                            key: 'default',
+                            label: 'Semua',
+                            isSelected: _sortMode == 'default',
+                            onTap: () => setState(() => _sortMode = 'default'),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildSortChip(
+                            key: 'distance',
+                            label: 'Jarak Terdekat (GPS)',
+                            isSelected: _sortMode == 'distance',
+                            onTap: () => setState(() => _sortMode = 'distance'),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildSortChip(
+                            key: 'rating',
+                            label: 'Rating Tertinggi',
+                            isSelected: _sortMode == 'rating',
+                            onTap: () => setState(() => _sortMode = 'rating'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 3. Layanan & Fitur Cerdas (Single Elegant Icon Strip)
+                    _buildServicesRow(),
+                    const SizedBox(height: 14),
+
+                    // 4. Primary Region Navigator (Clean Rounded Pills)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _exploreRegions.map((reg) {
+                          final isSelected = _currentExploreRegion == reg['key'];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: GestureDetector(
+                              onTap: () => setState(
+                                () => _currentExploreRegion = reg['key']!,
+                              ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.cream
-                                      : AppColors.ink,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                reg['sub']!,
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: isSelected
-                                      ? AppColors.cream.withValues(alpha: 0.80)
-                                      : AppColors.muted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Secondary Nature / Terrain Sub-Category Navigator
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _exploreTypes.map((type) {
-                    final isSelected = _currentExploreType == type['key'];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: GestureDetector(
-                        onTap: () => setState(
-                          () => _currentExploreType = type['key']!,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.sage
-                                : AppColors.creamSubtle,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            type['label']!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? AppColors.forest
-                                  : AppColors.muted,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Scrollable Destination Feed
-        Expanded(
-          child: Stack(
-            children: [
-              filtered.isEmpty
-                  ? ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.warmBorder),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: () =>
-                                    setState(() => _currentExploreType = 'ALL'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.forest,
-                                  foregroundColor: AppColors.cream,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                      ? AppColors.forest
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.forest
+                                        : AppColors.sageBorder,
                                   ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.forest.withValues(alpha: 0.18),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ]
+                                      : null,
                                 ),
                                 child: Text(
-                                  'Tampilkan Semua Kategori di $_currentExploreRegion',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                                  reg['title']!,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    color: isSelected
+                                        ? AppColors.cream
+                                        : AppColors.ink,
                                   ),
                                 ),
                               ),
-                            ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 5. Nature Sub-Category Navigator (Compact Chips)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _exploreTypes.map((type) {
+                          final isSelected = _currentExploreType == type['key'];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: GestureDetector(
+                              onTap: () => setState(
+                                () => _currentExploreType = type['key']!,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 11,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.sage
+                                      : AppColors.creamSubtle,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Text(
+                                  type['label']!,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    color: isSelected
+                                        ? AppColors.forest
+                                        : AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Scrollable Destination Feed
+            if (filtered.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Belum ada kategori "$_currentExploreType" di wilayah $_currentExploreRegion',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Silakan pilih "Semua Kategori" atau pindah ke daerah lain.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: () =>
+                              setState(() => _currentExploreType = 'ALL'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.forest,
+                            foregroundColor: AppColors.cream,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Tampilkan Semua Kategori di $_currentExploreRegion',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildDestinationCard(
-                            filtered[index],
-                            isSavedContext: false,
-                          ),
-                        );
-                      },
                     ),
-              Positioned(
-                bottom: 16,
-                right: 16,
-                child: FloatingActionButton.extended(
-                  onPressed: _openUsulDestinasiModal,
-                  backgroundColor: AppColors.forest,
-                  foregroundColor: AppColors.cream,
-                  elevation: 4,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text(
-                    'Usul Wisata',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildDestinationCard(
+                          filtered[index],
+                          isSavedContext: false,
+                        ),
+                      );
+                    },
+                    childCount: filtered.length,
                   ),
                 ),
               ),
-            ],
+          ],
+        ),
+
+        // Floating Action Button
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton.extended(
+            onPressed: _openUsulDestinasiModal,
+            backgroundColor: AppColors.forest,
+            foregroundColor: AppColors.cream,
+            elevation: 4,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text(
+              'Usul Wisata',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  // ===========================================================================
+  // NAVIGASI FITUR PINTAR INTEGRASI FE-1 & DETAIL MEDAN (LAYAR 01, 02, 03, 07)
+  // ===========================================================================
+  void _openFe1DetailScreen(SavedDestinationModel place) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DestinationDetailScreen(
+          destination: place.toFe1Destination(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServicesRow() {
+    final services = [
+      {
+        'label': 'Peta Rute',
+        'icon': Icons.alt_route_rounded,
+        'color': AppColors.forest,
+        'bg': const Color(0xFFE8F3EB),
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MapExploreShunluScreen()),
+            ),
+      },
+      {
+        'label': 'Siaga SOS',
+        'icon': Icons.warning_amber_rounded,
+        'color': AppColors.terracotta,
+        'bg': const Color(0xFFFDEEE9),
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HazardSosScreen()),
+            ),
+      },
+      {
+        'label': 'Rencana Trip',
+        'icon': Icons.route_rounded,
+        'color': const Color(0xFF234B24),
+        'bg': const Color(0xFFE8EFE8),
+        'onTap': _openTripPlannerModal,
+      },
+      {
+        'label': 'Kamus Minang',
+        'icon': Icons.record_voice_over_rounded,
+        'color': const Color(0xFF946200),
+        'bg': const Color(0xFFFCF5E5),
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AudioCultureScreen()),
+            ),
+      },
+      {
+        'label': 'Pantau Grup',
+        'icon': Icons.radar_rounded,
+        'color': const Color(0xFF1E5B82),
+        'bg': const Color(0xFFE8F1F8),
+        'onTap': _openLiveGroupTrackingModal,
+      },
+      {
+        'label': 'Paspor Digital',
+        'icon': Icons.military_tech_rounded,
+        'color': const Color(0xFFB85D19),
+        'bg': const Color(0xFFFDF0E6),
+        'onTap': _openDigitalPassportModal,
+      },
+      {
+        'label': 'Budaya & Forum',
+        'icon': Icons.auto_awesome_rounded,
+        'color': const Color(0xFF5A3E85),
+        'bg': const Color(0xFFF3EDFA),
+        'onTap': () => _openCultureAndCommunityModal(),
+      },
+      {
+        'label': 'Tur 360°',
+        'icon': Icons.view_in_ar_rounded,
+        'color': const Color(0xFF1A6B62),
+        'bg': const Color(0xFFE8F7F5),
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const VirtualTour360Screen()),
+            ),
+      },
+      {
+        'label': 'Mode Luring',
+        'icon': Icons.offline_pin_rounded,
+        'color': const Color(0xFF3B6B58),
+        'bg': const Color(0xFFEBF5F0),
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const OfflinePocketScreen()),
+            ),
+      },
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: services.map((item) {
+          final color = item['color'] as Color;
+          final bg = item['bg'] as Color;
+          final icon = item['icon'] as IconData;
+          final label = item['label'] as String;
+          final onTap = item['onTap'] as VoidCallback;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: onTap,
+              child: SizedBox(
+                width: 60,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: bg,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.20),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, size: 20, color: color),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                        height: 1.15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -1414,13 +1534,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.sageBorder),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.warmBorder.withValues(alpha: 0.70)),
         boxShadow: [
           BoxShadow(
             color: AppColors.ink.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1428,154 +1548,149 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Visual Image Header (h-40 = 160px)
-          SizedBox(
-            height: 160,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(color: AppColors.forest),
-                Image.network(
-                  place.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) =>
-                      Container(color: AppColors.forest),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        AppColors.ink.withValues(alpha: 0.88),
-                        AppColors.ink.withValues(alpha: 0.22),
-                        Colors.transparent,
-                      ],
+          // Visual Image Header (Cinematic & Clean) - Ketuk untuk Buka Detail
+          GestureDetector(
+            onTap: () => _openFe1DetailScreen(place),
+            behavior: HitTestBehavior.opaque,
+            child: SizedBox(
+              height: 175,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(color: AppColors.forest),
+                  Image.network(
+                    place.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(color: AppColors.forest),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          AppColors.ink.withValues(alpha: 0.88),
+                          AppColors.ink.withValues(alpha: 0.18),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.55, 1.0],
+                      ),
                     ),
                   ),
-                ),
 
-                // Top Region & Nature Category Badges
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  right: 12,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.cream.withValues(alpha: 0.95),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            place.categoryTag,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.forest,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.forest.withValues(alpha: 0.90),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          place.natureType,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.cream,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Bottom Image Overlay Title & Distance
-                Positioned(
-                  bottom: 10,
-                  left: 12,
-                  right: 12,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        place.title,
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.cream,
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              place.subRegion,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.sage,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  // Top Category Tag & Floating Bookmark Button
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    right: 12,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                             decoration: BoxDecoration(
-                              color: AppColors.brush.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(4),
+                              color: AppColors.cream.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              '${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                              place.categoryTag,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.cream,
+                                color: AppColors.forest,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => _toggleBookmark(place.id),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.30),
+                                width: 1,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                              size: 18,
+                              color: isBookmarked ? Colors.amber : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+
+                  // Bottom Image Overlay: Title & Subregion with Distance
+                  Positioned(
+                    bottom: 12,
+                    left: 14,
+                    right: 14,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          place.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.3,
+                            height: 1.25,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 12, color: AppColors.sage),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                '${place.subRegion} • ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.cream,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // Card Content Body (Clean & User Friendly - NO FEE TABLE ON CARD)
+          // Card Content Body (Clean & Elegant)
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Rating & Distance Row
+                // 1. Rating & Official Entry Fee Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
                         const SizedBox(width: 3),
@@ -1589,10 +1704,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          '(${place.reviewsCount} ulasan)',
+                          '(${place.reviewsCount})',
                           style: const TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.muted,
                           ),
                         ),
@@ -1601,13 +1716,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.sage,
-                        borderRadius: BorderRadius.circular(6),
+                        color: AppColors.creamSubtle,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.sageBorder),
                       ),
                       child: Text(
-                        'Jarak ${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km',
+                        'Tiket: Rp ${place.calcRates.tiket}',
                         style: const TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: AppColors.forest,
                         ),
@@ -1617,71 +1733,78 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // Fasilitas Lingkungan Chips (REQUEST 1)
-                const Text(
-                  'FASILITAS LINGKUNGAN:',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                    color: AppColors.muted,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: place.facilities.map((fac) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.warmBorder),
+                // 2. Fasilitas Lingkungan: Ikon informatif di kartu, judul lengkap di detail
+                Row(
+                  children: [
+                    const Text(
+                      'FASILITAS LINGKUNGAN:',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        color: AppColors.muted,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(_getFacilityIcon(fac), size: 12, color: AppColors.brush),
-                          const SizedBox(width: 4),
-                          Text(
-                            fac,
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.forest,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 10),
-
-                // Terrain & Route Access Info
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 11,
-                      height: 1.4,
-                      color: AppColors.muted,
                     ),
-                    children: [
-                      const TextSpan(
-                        text: 'Info Medan: ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: place.facilities.map((fac) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Tooltip(
+                                message: fac,
+                                preferBelow: false,
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.creamSubtle,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.warmBorder.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    _getFacilityIcon(fac),
+                                    size: 14.5,
+                                    color: AppColors.forest,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
-                      TextSpan(text: place.terrainNote),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 8),
 
-                // Action Buttons: 360 & Denah + Detail & Pesan Tiket + Bookmark
+                // 3. Terrain Note Hint
+                Row(
+                  children: [
+                    const Icon(Icons.terrain_rounded, size: 12, color: AppColors.brush),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        place.terrainNote,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // 4. Two Balanced Primary Action Buttons
                 Row(
                   children: [
                     Expanded(
@@ -1689,10 +1812,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       child: OutlinedButton(
                         onPressed: () => _open360AndDenahModal(place),
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: AppColors.sage,
+                          backgroundColor: AppColors.creamSubtle,
                           foregroundColor: AppColors.forest,
                           side: const BorderSide(color: AppColors.sageBorder),
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -1702,11 +1825,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.threed_rotation_rounded, size: 16),
+                              Icon(Icons.threed_rotation_rounded, size: 15),
                               SizedBox(width: 4),
                               Text(
                                 '360° & Denah',
-                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                               ),
                             ],
                           ),
@@ -1722,37 +1845,25 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           backgroundColor: AppColors.forest,
                           foregroundColor: AppColors.cream,
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Detail & Pesan',
-                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Detail & Pesan',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_rounded, size: 13),
+                            ],
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _toggleBookmark(place.id),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: isBookmarked ? AppColors.sage : Colors.white,
-                        foregroundColor: isBookmarked ? AppColors.forest : AppColors.muted,
-                        side: BorderSide(
-                          color: isBookmarked ? AppColors.forest : AppColors.sageBorder,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Icon(
-                        isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                        size: 18,
                       ),
                     ),
                   ],
@@ -2224,6 +2335,59 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           'Buka bagian bawah Tabel Tarif untuk melapor pungli',
                         );
                       },
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Peta Shunlu & Detour Rute (Layar 03)',
+                      subtitle:
+                          'Navigasi rute Padang - Harau & denah mikro pejalan kaki',
+                      badge: 'Peta OSM',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MapExploreShunluScreen(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Kamus Minang & Audio Panduan Budaya',
+                      subtitle:
+                          'Pelajari frasa Minang autentik, audio playback & kalender acara nagari',
+                      badge: 'Budaya',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AudioCultureScreen(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Peringatan Jalur Rawan Bencana & SOS GPS',
+                      subtitle:
+                          'Pantau status longsor Sitinjau Lauik, Lembah Anai & tombol darurat',
+                      badge: 'Darurat',
+                      isWarning: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HazardSosScreen(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 18, color: AppColors.warmBorder),
+                    _buildProfileMenuTile(
+                      title: 'Manajemen Mode Luring (Pocket Bundle)',
+                      subtitle:
+                          'Unduh paket wisata daerah terpencil tanpa koneksi internet',
+                      badge: 'Luring',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OfflinePocketScreen(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -2921,316 +3085,55 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   }
 
   Widget _build360PanoramaView() {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Stack(
-      children: [
-        // Pan gesture detector over panorama
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onPanUpdate: (details) {
-              setState(() {
-                _yaw += details.delta.dx * 0.45;
-                _pitch = (_pitch - details.delta.dy * 0.45).clamp(-35.0, 35.0);
-              });
-            },
-            child: CustomPaint(
-              painter: _Panorama360Painter(
-                yaw: _yaw,
-                pitch: _pitch,
-                placeTitle: widget.place.title,
-              ),
-            ),
-          ),
-        ),
-
-        // Interactive Hotspot Pins pinned directly onto the 360 scene
-        ..._k360Facilities.map((facility) {
-          double delta = (facility.yaw - _yaw) % 360.0;
-          if (delta > 180.0) delta -= 360.0;
-          if (delta < -180.0) delta += 360.0;
-
-          // Only visible when in field of view (-60 to +60 deg)
-          if (delta.abs() > 60.0) return const SizedBox.shrink();
-
-          final screenX = (screenWidth / 2) + (delta / 60.0) * (screenWidth * 0.42);
-          final screenY = 220.0 + (_pitch * 1.5);
-
-          final isSelected = _selectedFacility360?.category == facility.category;
-
-          return Positioned(
-            top: screenY,
-            left: screenX - 60,
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedFacility360 = facility;
-                  _yaw = facility.yaw;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.90),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? Colors.white : AppColors.sageBorder,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.white : Colors.greenAccent,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Icon(facility.icon, size: 12, color: Colors.white),
-                    const SizedBox(width: 4),
-                    Text(
-                      facility.label,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-
-        // Interactive Badges/Pills on top of 360 scene
-        Positioned(
-          top: 14,
-          left: 14,
-          right: 14,
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 6,
-            children: _k360Facilities.map((facility) {
-              final isSelected = _selectedFacility360?.category == facility.category;
-              return GestureDetector(
-                onTap: () {
+    return SizedBox.expand(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Viewer Panorama 360° Interaktif (3D Equirectangular Sphere + Touch Pan)
+          Positioned.fill(
+            child: ClipRect(
+              child: PanoramaViewer(
+                animSpeed: 0.1,
+                latitude: _pitch,
+                longitude: _yaw,
+                onViewChanged: (lon, lat, tilt) {
                   setState(() {
-                    _selectedFacility360 = facility;
-                    _yaw = facility.yaw;
+                    _yaw = lon;
+                    _pitch = lat;
                   });
                 },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.terracotta : AppColors.ink.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.white30,
-                      width: isSelected ? 1.8 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(facility.icon, size: 12, color: isSelected ? Colors.white : AppColors.sage),
-                      const SizedBox(width: 4),
-                      Text(
-                        facility.label,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          color: isSelected ? Colors.white : AppColors.cream,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: Image.asset(
+                  'assets/images/panorama_sumbar_default.jpg',
+                  fit: BoxFit.cover,
                 ),
-              );
-            }).toList(),
-          ),
-        ),
-
-        // Floating Photo Preview Card when a facility is tapped
-        if (_selectedFacility360 != null)
-          Positioned(
-            bottom: 12,
-            left: 14,
-            right: 14,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Facility Real Photo
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          _selectedFacility360!.imageUrl,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, error, stackTrace) => Container(
-                            width: 80,
-                            height: 80,
-                            color: AppColors.sage,
-                            child: Icon(_selectedFacility360!.icon, color: AppColors.forest, size: 32),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.sage,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    _selectedFacility360!.badge,
-                                    style: const TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.forest,
-                                    ),
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () => setState(() => _selectedFacility360 = null),
-                                  child: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _selectedFacility360!.title,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.ink,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _selectedFacility360!.description,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: AppColors.muted,
-                                height: 1.25,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showMapNavigationSheet(
-                              context,
-                              widget.place,
-                              _selectedFacility360!.category,
-                              widget.onOpenDetail,
-                            );
-                          },
-                          icon: const Icon(Icons.directions_rounded, size: 16),
-                          label: const Text(
-                            'Buka Rute di Peta (Google Maps)',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.forest,
-                            foregroundColor: AppColors.cream,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
             ),
           ),
-        // Floating Quick Booking Button (Requirement 14)
-        if (!_isQuickBookingOpen && _selectedFacility360 == null)
+
+          // 2. Baris Kontrol Atas: Status 360 & Tombol Sensor Gyro Fullscreen FE-1
           Positioned(
-            bottom: 58,
-            left: 20,
-            right: 20,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => setState(() => _isQuickBookingOpen = true),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            top: 12,
+            left: 14,
+            right: 14,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.forest,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    color: AppColors.ink.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white24),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.flash_on_rounded, size: 16, color: AppColors.cream),
-                      SizedBox(width: 6),
+                      Icon(Icons.threed_rotation_rounded, size: 14, color: AppColors.sage),
+                      SizedBox(width: 5),
                       Text(
-                        'Pesan Layanan Cepat 360° (Setengah Layar)',
+                        'Geser 360° Aktif',
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.cream,
                         ),
@@ -3238,51 +3141,332 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                     ],
                   ),
                 ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => VirtualTour360Screen(
+                          destination: widget.place.toFe1Destination(),
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white, width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.screen_rotation_rounded,
+                            size: 14, color: AppColors.cream),
+                        SizedBox(width: 5),
+                        Text(
+                          'Sensor Gyro 360° Penuh',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.cream,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 3. Filter Chips Fasilitas (top: 48)
+          Positioned(
+            top: 48,
+            left: 14,
+            right: 14,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _k360Facilities.map((facility) {
+                  final isSelected = _selectedFacility360?.category == facility.category;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedFacility360 = facility;
+                          _yaw = facility.yaw;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.terracotta
+                              : AppColors.ink.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? Colors.white : Colors.white30,
+                            width: isSelected ? 1.8 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              facility.icon,
+                              size: 12,
+                              color: isSelected ? Colors.white : AppColors.sage,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              facility.label,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: isSelected ? Colors.white : AppColors.cream,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
 
-        // Bottom gesture prompt when no facility is selected and panel closed
-        if (!_isQuickBookingOpen && _selectedFacility360 == null)
-          Positioned(
-            bottom: 18,
-            left: 20,
-            right: 20,
-            child: Center(
+          // 4. Floating Photo Preview Card when a facility is tapped
+          if (_selectedFacility360 != null)
+            Positioned(
+              bottom: 12,
+              left: 14,
+              right: 14,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.ink.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white24),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  'Sentuh & geser layar untuk melihat sekeliling 360°',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.cream,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            _selectedFacility360!.imageUrl,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, error, stackTrace) => Container(
+                              width: 80,
+                              height: 80,
+                              color: AppColors.sage,
+                              child: Icon(_selectedFacility360!.icon, color: AppColors.forest, size: 32),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.sage,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      _selectedFacility360!.badge,
+                                      style: const TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => setState(() => _selectedFacility360 = null),
+                                    child: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _selectedFacility360!.title,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _selectedFacility360!.description,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.muted,
+                                  height: 1.25,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showMapNavigationSheet(
+                                context,
+                                widget.place,
+                                _selectedFacility360!.category,
+                                widget.onOpenDetail,
+                              );
+                            },
+                            icon: const Icon(Icons.directions_rounded, size: 16),
+                            label: const Text(
+                              'Buka Rute di Peta (Google Maps)',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.forest,
+                              foregroundColor: AppColors.cream,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // 5. Floating Quick Booking Button (Requirement 14)
+          if (!_isQuickBookingOpen && _selectedFacility360 == null)
+            Positioned(
+              bottom: 58,
+              left: 20,
+              right: 20,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isQuickBookingOpen = true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.flash_on_rounded, size: 16, color: AppColors.cream),
+                        SizedBox(width: 6),
+                        Text(
+                          'Pesan Layanan Cepat 360° (Setengah Layar)',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.cream,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-        // Quick Booking Sliding Half-Panel over 360 view (Requirement 14 & 15)
-        if (_isQuickBookingOpen)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: QuickBookingPanel(
-              place: widget.place,
-              onClose: () => setState(() => _isQuickBookingOpen = false),
-              onProceedToPayment: (total, items) {
-                _openQrisPayment(total, items);
-              },
+          // 6. Bottom gesture prompt when no facility is selected and panel closed
+          if (!_isQuickBookingOpen && _selectedFacility360 == null)
+            Positioned(
+              bottom: 18,
+              left: 20,
+              right: 20,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Text(
+                    'Sentuh & geser layar untuk melihat sekeliling 360°',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cream,
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-      ],
+
+          // 7. Quick Booking Sliding Half-Panel over 360 view (Requirement 14 & 15)
+          if (_isQuickBookingOpen)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: QuickBookingPanel(
+                place: widget.place,
+                onClose: () => setState(() => _isQuickBookingOpen = false),
+                onProceedToPayment: (total, items) {
+                  _openQrisPayment(total, items);
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -4159,7 +4343,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         Image.network(
                           widget.place.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(color: AppColors.forest),
+                          errorBuilder: (_, __, ___) => Container(color: AppColors.forest),
                         ),
                         Container(
                           decoration: BoxDecoration(
@@ -4356,18 +4540,34 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         runSpacing: 6,
                         children: widget.place.facilities.map((fac) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
                             decoration: BoxDecoration(
                               color: AppColors.cream,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: AppColors.warmBorder),
                             ),
-                            child: Text(
-                              fac,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.forest,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 300),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _getFacilityIcon(fac),
+                                    size: 13,
+                                    color: AppColors.forest,
+                                  ),
+                                  const SizedBox(width: 4.5),
+                                  Flexible(
+                                    child: Text(
+                                      fac,
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -4398,6 +4598,47 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                 ),
                               ),
                               TextSpan(text: widget.place.terrainNote),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DestinationDetailScreen(
+                                destination: widget.place.toFe1Destination(),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.forest,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.terrain_rounded, color: AppColors.cream, size: 15),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Panduan Medan (Layar 02 FE-1)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.cream,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -5196,64 +5437,8 @@ class _BookingCheckoutSheetState extends State<_BookingCheckoutSheet> {
 }
 
 // =============================================================================
-// CUSTOM PAINTERS: PANORAMA 360 & SITE PLAN DENAH
+// CUSTOM PAINTERS: SITE PLAN DENAH
 // =============================================================================
-
-class _Panorama360Painter extends CustomPainter {
-  final double yaw;
-  final double pitch;
-  final String placeTitle;
-
-  _Panorama360Painter({
-    required this.yaw,
-    required this.pitch,
-    required this.placeTitle,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // Sky & Horizon Gradient
-    final skyPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: const [
-          Color(0xFF142618),
-          Color(0xFF2F663E),
-          Color(0xFF8EB897),
-          Color(0xFFDFECE2),
-          Color(0xFF193D22),
-        ],
-        stops: const [0.0, 0.35, 0.6, 0.75, 1.0],
-      ).createShader(Rect.fromLTWH(0, pitch * 2, w, h));
-    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), skyPaint);
-
-    // Stylized rolling mountains shifted by yaw
-    final mountainPaint = Paint()
-      ..color = const Color(0xFF193D22).withValues(alpha: 0.65)
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(0, h);
-    final baseY = h * 0.65 + pitch * 1.5;
-    for (double x = 0; x <= w; x += 15) {
-      final rad = (x + yaw * 2.5) * 0.02;
-      final y = baseY + (30 * (rad).remainder(1.0) * ((rad).toInt() % 2 == 0 ? 1 : -1));
-      path.lineTo(x, y);
-    }
-    path.lineTo(w, h);
-    path.close();
-    canvas.drawPath(path, mountainPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _Panorama360Painter oldDelegate) {
-    return oldDelegate.yaw != yaw || oldDelegate.pitch != pitch;
-  }
-}
 
 class _SitePlanPainter extends CustomPainter {
   @override
@@ -5296,14 +5481,17 @@ class _SitePlanPainter extends CustomPainter {
 IconData _getFacilityIcon(String name) {
   final lower = name.toLowerCase();
   if (lower.contains('parkir')) return Icons.local_parking_rounded;
-  if (lower.contains('toilet') || lower.contains('bilas')) return Icons.wc_rounded;
-  if (lower.contains('kuliner') || lower.contains('warung') || lower.contains('makan')) return Icons.restaurant_rounded;
+  if (lower.contains('toilet') || lower.contains('bilas') || lower.contains('kamar ganti')) return Icons.wc_rounded;
+  if (lower.contains('kuliner') || lower.contains('warung') || lower.contains('makan') || lower.contains('kopi')) return Icons.restaurant_rounded;
   if (lower.contains('musholla') || lower.contains('masjid')) return Icons.mosque_rounded;
-  if (lower.contains('trekking') || lower.contains('jalan')) return Icons.hiking_rounded;
-  if (lower.contains('rakit') || lower.contains('perahu') || lower.contains('danau')) return Icons.directions_boat_rounded;
+  if (lower.contains('trekking') || lower.contains('jalur') || lower.contains('hutan')) return Icons.hiking_rounded;
+  if (lower.contains('rakit') || lower.contains('perahu') || lower.contains('boat') || lower.contains('kapal') || lower.contains('dermaga')) return Icons.directions_boat_rounded;
+  if (lower.contains('pemandian') || lower.contains('air panas') || lower.contains('kolam')) return Icons.hot_tub_rounded;
+  if (lower.contains('gardu') || lower.contains('pandang') || lower.contains('panorama')) return Icons.visibility_rounded;
+  if (lower.contains('gazebo') || lower.contains('lesehan')) return Icons.deck_rounded;
+  if (lower.contains('rumah gadang') || lower.contains('istano') || lower.contains('sejarah') || lower.contains('kuno')) return Icons.account_balance_rounded;
+  if (lower.contains('pemandu') || lower.contains('guide')) return Icons.support_agent_rounded;
   if (lower.contains('foto') || lower.contains('spot')) return Icons.camera_alt_rounded;
   if (lower.contains('camping') || lower.contains('kemah')) return Icons.cabin_rounded;
-  if (lower.contains('sejarah') || lower.contains('istano')) return Icons.account_balance_rounded;
-  if (lower.contains('pemandu') || lower.contains('guide')) return Icons.support_agent_rounded;
   return Icons.check_circle_outline_rounded;
 }

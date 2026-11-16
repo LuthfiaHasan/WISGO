@@ -56,8 +56,8 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 420),
-        pageBuilder: (_, _, _) => const LocationOnboardingScreen(),
-        transitionsBuilder: (_, animation, _, child) {
+        pageBuilder: (_, __, ___) => const LocationOnboardingScreen(),
+        transitionsBuilder: (_, animation, __, child) {
           final curved = CurvedAnimation(
             parent: animation,
             curve: Curves.easeOutCubic,

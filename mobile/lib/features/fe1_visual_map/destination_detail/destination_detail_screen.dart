@@ -2,20 +2,15 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/widgets/crowd_badge.dart';
 import '../../../core/widgets/pill_button.dart';
+import '../../fair_price/data/models/fair_price_tariff_model.dart';
+import '../../fair_price/presentation/widgets/fair_price_barometer_table.dart';
 import '../models/destination_model.dart';
 import '../virtual_tour_360/virtual_tour_360_screen.dart';
 
-/// Layar 02 · Detail Tempat (Minggu 1 Wajib FE-1)
-/// Mencakup:
-/// 1. Hero Destinasi + Tombol PillButton 52px "Jelajah Tur 360°"
-/// 2. Grid 4 Statistik Keputusan (Jarak, Waktu Tempuh, Tingkat Keramaian, Biaya Masuk)
-/// 3. Kartu 5 Indikator Medan (Akses Kendaraan, Trekking, Sinyal, Fasilitas, Pemandu)
-/// 4. Kartu Wajib "Tips Menjaga Tempat Ini" (Latar --sage-100 #E4E9DA)
-/// 5. Slot / Pratinjau Fair-Price Barometer (Titik temu dengan FE-2)
+/// Layar 02 · Detail Tempat (FE-1)
+/// Pilar 1 & 3: 4 Statistik, 5 Indikator Medan, Tips Menjaga Tempat & Fair-Price Barometer (FE-2)
 class DestinationDetailScreen extends StatefulWidget {
   final DestinationModel destination;
-
-  /// Slot opsional agar FE-2 bisa menyuntikkan widget Fair-Price Barometer & Lapor Pungli
   final Widget? fe2FairPriceSlot;
 
   const DestinationDetailScreen({
@@ -31,7 +26,6 @@ class DestinationDetailScreen extends StatefulWidget {
 
 class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   bool _isSavedOffline = false;
-  bool _isFavorite = false;
 
   @override
   Widget build(BuildContext context) {
@@ -51,17 +45,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         title: Text(dest.name),
         actions: [
           IconButton(
-            tooltip: 'Simpan Favorit',
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            onPressed: () => setState(() => _isFavorite = !_isFavorite),
-            icon: Icon(
-              _isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _isFavorite ? AppColors.coral500 : AppColors.ink900,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Simpan Paket Offline (Zero-Signal)',
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            tooltip: _isSavedOffline ? 'Tersimpan Offline' : 'Simpan Offline',
             onPressed: () {
               setState(() => _isSavedOffline = !_isSavedOffline);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -69,8 +53,8 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                   backgroundColor: AppColors.green800,
                   content: Text(
                     _isSavedOffline
-                        ? 'Paket Offline "${dest.name}" berhasil disimpan untuk Mode Zero-Signal.'
-                        : 'Paket Offline dihapus dari penyimpanan lokal.',
+                        ? '${dest.name} berhasil disimpan ke Kantong Offline.'
+                        : '${dest.name} dihapus dari penyimpanan offline.',
                   ),
                 ),
               );
@@ -89,14 +73,18 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. HERO CARD + PRATINJAU 360°
+            // 1. HERO BANNER FOTO ASLI + PRATINJAU 360°
             _buildHeroBanner(context, dest),
             const SizedBox(height: 16),
 
             // TOMBOL UTAMA CTA 52PX: JELAJAH TUR 360°
             PillButton(
-              label: 'Jelajah Tur 360° (Drone & Darat)',
-              icon: Icons.view_in_ar_rounded,
+              text: 'Jelajah Tur 360° (Drone & Darat)',
+              icon: const Icon(
+                Icons.view_in_ar_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -108,7 +96,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             ),
             const SizedBox(height: 24),
 
-            // 2. GRID 4 STATISTIK KEPUTUSAN (Paruh Atas Layar Detail Tempat)
+            // 2. GRID 4 STATISTIK KEPUTUSAN
             const Text(
               '4 Statistik Keputusan',
               style: TextStyle(
@@ -121,7 +109,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             _buildFourStatsGrid(dest),
             const SizedBox(height: 24),
 
-            // 3. KARTU 5 INDIKATOR MEDAN LAPANGAN
+            // 3. KARTU 5 INDIKATOR MEDAN LAPANGAN (PILAR 3)
             const Text(
               'Kesiapan Medan (5 Indikator Lapangan)',
               style: TextStyle(
@@ -134,12 +122,35 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             _buildFiveMedanCard(medan),
             const SizedBox(height: 24),
 
-            // 4. KARTU WAJIB: "TIPS MENJAGA TEMPAT INI" (--sage-100 #E4E9DA)
+            // 4. KARTU WAJIB: "TIPS MENJAGA TEMPAT INI" (#E4E9DA)
             _buildTipsCard(dest.tips),
             const SizedBox(height: 24),
 
-            // 5. SLOT FAIR-PRICE BAROMETER (Integrasi FE-2 / Tarif Resmi Perda)
-            widget.fe2FairPriceSlot ?? _buildFairPriceSection(dest.tariffs),
+            // 5. SLOT FAIR-PRICE BAROMETER (INTEGRASI TABEL RESMI DARI REKAN FE-2)
+            const Text(
+              'Fair-Price Barometer (Tarif Resmi Nagari & Perda)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            widget.fe2FairPriceSlot ??
+                Builder(
+                  builder: (_) {
+                    final matched = kAllSumbarDestinations.firstWhere(
+                      (d) => d.title.toLowerCase().contains(
+                            dest.name.toLowerCase().split(' ').first,
+                          ),
+                      orElse: () => kAllSumbarDestinations[1],
+                    );
+                    return FairPriceBarometerTable(
+                      destinationData: matched,
+                      selectedCategory: 'ALL',
+                    );
+                  },
+                ),
           ],
         ),
       ),
@@ -157,7 +168,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -176,7 +187,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               ),
             ),
 
-          // Gradient Overlay agar kontras teks tetap optimal
+          // Gradient Overlay
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -184,11 +195,11 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFF1A3A1B).withOpacity(
-                      dest.coverImage.isNotEmpty ? 0.75 : 1.0,
+                    const Color(0xFF1A3A1B).withValues(
+                      alpha: dest.coverImage.isNotEmpty ? 0.72 : 1.0,
                     ),
-                    AppColors.green800.withOpacity(
-                      dest.coverImage.isNotEmpty ? 0.90 : 1.0,
+                    AppColors.green800.withValues(
+                      alpha: dest.coverImage.isNotEmpty ? 0.90 : 1.0,
                     ),
                   ],
                 ),
@@ -205,18 +216,13 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: isCategoryCulture
-                            ? AppColors.indigo500
-                            : AppColors.green500,
+                        color: isCategoryCulture ? AppColors.indigo500 : AppColors.green500,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 4,
                           ),
                         ],
@@ -239,15 +245,12 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.25),
+                          color: Colors.white.withValues(alpha: 0.25),
                         ),
                       ),
                       child: const Row(
@@ -313,8 +316,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     );
   }
 
-  /// Grid 4 Statistik sesuai `docs/Desain_System_Token.md` §04:
-  /// 1. Jarak, 2. Waktu Tempuh, 3. Tingkat Keramaian (CrowdBadge), 4. Biaya Masuk
   Widget _buildFourStatsGrid(DestinationModel dest) {
     return GridView.count(
       crossAxisCount: 2,
@@ -349,12 +350,9 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
           ),
         ),
         _buildStatTile(
-          icon: Icons.groups_outlined,
-          label: '3. Tingkat Keramaian',
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: CrowdBadge(level: dest.crowdLevelEnum),
-          ),
+          icon: Icons.people_alt_outlined,
+          label: '3. Keramaian Saat Ini',
+          child: CrowdBadge(level: dest.crowdLevelEnum),
         ),
         _buildStatTile(
           icon: Icons.confirmation_number_outlined,
@@ -381,8 +379,8 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,74 +388,74 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 15, color: AppColors.green800),
+              Icon(icon, size: 14, color: Colors.black54),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           child,
         ],
       ),
     );
   }
 
-  /// Kartu 5 Indikator Medan sesuai `docs/Desain_System_Token.md` §04
   Widget _buildFiveMedanCard(MedanIndicatorModel medan) {
-    final bool isBlankSpot =
-        medan.cellularSignal.toLowerCase().contains('blank');
-
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Column(
         children: [
           _buildMedanRow(
             icon: Icons.directions_car_filled_outlined,
-            title: '1. Akses Kendaraan',
+            title: 'Akses Kendaraan',
             value: medan.vehicleAccess,
+            color: AppColors.green800,
           ),
-          const Divider(height: 20),
+          const Divider(height: 18),
           _buildMedanRow(
-            icon: Icons.hiking_rounded,
-            title: '2. Tingkat Trekking',
+            icon: Icons.nordic_walking_outlined,
+            title: 'Tingkat Trekking',
             value: medan.trekkingLevel,
+            color: medan.trekkingLevel.contains('Ekstrem')
+                ? AppColors.coral500
+                : AppColors.green800,
           ),
-          const Divider(height: 20),
+          const Divider(height: 18),
           _buildMedanRow(
-            icon: isBlankSpot
-                ? Icons.signal_cellular_off_rounded
-                : Icons.signal_cellular_alt_rounded,
-            title: '3. Kekuatan Sinyal',
+            icon: Icons.cell_tower_rounded,
+            title: 'Sinyal Seluler',
             value: medan.cellularSignal,
-            isWarning: isBlankSpot,
+            color: medan.cellularSignal.contains('Blank')
+                ? AppColors.coral500
+                : AppColors.green500,
           ),
-          const Divider(height: 20),
+          const Divider(height: 18),
           _buildMedanRow(
-            icon: Icons.mosque_outlined,
-            title: '4. Fasilitas Dasar',
+            icon: Icons.wc_outlined,
+            title: 'Fasilitas Umum',
             value: medan.facilities,
+            color: AppColors.green800,
           ),
-          const Divider(height: 20),
+          const Divider(height: 18),
           _buildMedanRow(
-            icon: Icons.badge_outlined,
-            title: '5. Kebutuhan Pemandu',
+            icon: Icons.person_pin_circle_outlined,
+            title: 'Kebutuhan Pemandu',
             value: medan.guideNeed,
-            isWarning: medan.guideNeed.toLowerCase().contains('wajib'),
+            color: medan.guideNeed.contains('Wajib')
+                ? AppColors.orange500
+                : AppColors.green800,
           ),
         ],
       ),
@@ -468,45 +466,41 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     required IconData icon,
     required String title,
     required String value,
-    bool isWarning = false,
+    required Color color,
   }) {
-    final Color badgeColor =
-        isWarning ? AppColors.coral500 : AppColors.green800;
-
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: badgeColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: badgeColor, size: 20),
+        CircleAvatar(
+          radius: 16,
+          backgroundColor: color.withValues(alpha: 0.12),
+          child: Icon(icon, size: 16, color: color),
         ),
         const SizedBox(width: 12),
-        Expanded(
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
           child: Text(
             title,
             style: const TextStyle(
               fontSize: 13,
+              fontWeight: FontWeight.w600,
               color: AppColors.ink900,
-              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: badgeColor.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: badgeColor,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: color,
+                height: 1.35,
+              ),
             ),
           ),
         ),
@@ -514,179 +508,59 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     );
   }
 
-  /// Kartu Wajib "Tips Menjaga Tempat Ini" menggunakan token `--sage-100` (`#E4E9DA`)
   Widget _buildTipsCard(List<LocalTipModel> tips) {
-    final displayTips = tips.isNotEmpty
-        ? tips
-        : const [
-            LocalTipModel(
-              id: 'default-tip',
-              destinationId: '',
-              content:
-                  'Hormati adat basandi syarak di kawasan Nagari, bawa kembali sampah plastik, dan jaga keasrian sumber air.',
-              isImportant: true,
-            ),
-          ];
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.sage100,
+        color: AppColors.sage100, // #E4E9DA Sesuai Desain Token
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.green800.withOpacity(0.18)),
+        border: Border.all(color: AppColors.green800.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.eco_rounded, color: AppColors.green800, size: 22),
+              Icon(Icons.eco_rounded, color: AppColors.green800, size: 20),
               SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Tips Menjaga Tempat Ini (Etika Wisata Nagari)',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.green800,
-                  ),
+              Text(
+                'Tips Menjaga Tempat Ini (Wajib)',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.green800,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ...displayTips.map(
-            (tip) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    tip.isImportant
-                        ? Icons.info_outline_rounded
-                        : Icons.check_circle_outline_rounded,
-                    size: 16,
-                    color: AppColors.green800,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      tip.content,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.ink900,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Slot Fair-Price Barometer (Tarif Resmi Perda/Nagari)
-  Widget _buildFairPriceSection(List<OfficialTariffModel> tariffs) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.verified_user_outlined,
-                color: AppColors.green500,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Standar Tarif Resmi Perda / Nagari',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink900,
-                  ),
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.green500.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Anti-Pungli',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.green500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (tariffs.isEmpty)
+          const SizedBox(height: 10),
+          if (tips.isEmpty)
             const Text(
-              'Data tarif resmi Perda sedang disinkronkan.',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
+              'Bawa kembali sampah Anda dan hormati adat istiadat Nagari setempat.',
+              style: TextStyle(fontSize: 13, color: AppColors.ink900, height: 1.4),
             )
           else
-            ...tariffs.map(
-              (t) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            t.itemName,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.ink900,
-                            ),
+            ...tips.map((t) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          t.content,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.ink900,
+                            fontWeight: t.isImportant ? FontWeight.w600 : FontWeight.normal,
+                            height: 1.4,
                           ),
-                          Text(
-                            '${t.unit} · ${t.regulationRef}',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    Text(
-                      t.price == 0
-                          ? 'Gratis'
-                          : 'Rp ${t.price.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.green800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                    ],
+                  ),
+                )),
         ],
       ),
     );

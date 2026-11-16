@@ -82,9 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 380),
-        pageBuilder: (_, _, _) =>
+        pageBuilder: (_, __, ___) =>
             OtpVerificationScreen(phoneNumber: formattedPhone),
-        transitionsBuilder: (_, animation, _, child) {
+        transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
       ),

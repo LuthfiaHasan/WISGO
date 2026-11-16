@@ -1,35 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
-import '../saved/presentation/screens/saved_places_screen.dart';
 import 'audio_guide_culture/audio_culture_screen.dart';
 import 'hazard_alert_sos/hazard_sos_screen.dart';
 import 'home/home_screen.dart';
 import 'map_explore_shunlu/map_explore_screen.dart';
+import 'offline_pocket/offline_pocket_screen.dart';
 
-/// Shell Navigasi Terpadu WISGO (Gabungan FE-1 Visual 360/Peta Shunlu + FE-2 Saved/Barometer)
+/// Shell Navigasi Utama Modul FE-1 (Visual 360°, Peta Shunlu, Budaya, Jalur Rawan & Offline)
 class Fe1MainShell extends StatefulWidget {
-  final int initialIndex;
-  const Fe1MainShell({super.key, this.initialIndex = 0});
+  const Fe1MainShell({super.key});
 
   @override
   State<Fe1MainShell> createState() => _Fe1MainShellState();
 }
 
 class _Fe1MainShellState extends State<Fe1MainShell> {
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-  }
+  int _currentIndex = 0;
 
   static const List<Widget> _pages = [
-    Fe1HomeScreen(),
+    HomeScreen(),
     MapExploreShunluScreen(),
-    SavedPlacesScreen(initialTabIndex: 1),
     AudioCultureScreen(),
     HazardSosScreen(),
+    OfflinePocketScreen(),
   ];
 
   @override
@@ -42,7 +35,7 @@ class _Fe1MainShellState extends State<Fe1MainShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         backgroundColor: Colors.white,
-        indicatorColor: AppColors.green800.withOpacity(0.14),
+        indicatorColor: AppColors.green800.withValues(alpha: 0.14),
         onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
         destinations: const [
           NavigationDestination(
@@ -56,11 +49,6 @@ class _Fe1MainShellState extends State<Fe1MainShell> {
             label: 'Peta Shunlu',
           ),
           NavigationDestination(
-            icon: Icon(Icons.bookmark_outline_rounded),
-            selectedIcon: Icon(Icons.bookmark_rounded, color: AppColors.green800),
-            label: 'Tersimpan',
-          ),
-          NavigationDestination(
             icon: Icon(Icons.record_voice_over_outlined),
             selectedIcon:
                 Icon(Icons.record_voice_over, color: AppColors.green800),
@@ -70,6 +58,11 @@ class _Fe1MainShellState extends State<Fe1MainShell> {
             icon: Icon(Icons.warning_amber_rounded),
             selectedIcon: Icon(Icons.warning_rounded, color: AppColors.coral500),
             label: 'Jalur & SOS',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.offline_pin_outlined),
+            selectedIcon: Icon(Icons.offline_pin, color: AppColors.green800),
+            label: 'Offline',
           ),
         ],
       ),
