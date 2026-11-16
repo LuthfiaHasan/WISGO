@@ -26,6 +26,7 @@ import {
   SosEmergencyTicket,
 } from '../types/contract';
 import { submitPungliReport, submitSosEmergency } from '../services/api';
+import { ImageDropzone } from '../components/ImageDropzone';
 
 interface PublicSmartQRViewProps {
   destination: Destination;
@@ -59,6 +60,7 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
   const [reportCategory, setReportCategory] = useState<PungliCategoryType>('Parkir Liar');
   const [reportAmount, setReportAmount] = useState<number>(20000);
   const [reportDesc, setReportDesc] = useState('');
+  const [reportPhoto, setReportPhoto] = useState<string>('');
   const [submittingReport, setSubmittingReport] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(false);
 
@@ -96,6 +98,7 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
         official_amount: officialAmt,
         description: reportDesc.trim() || 'Laporan pungutan tidak sesuai Perda di lokasi destinasi.',
         photo_url:
+          reportPhoto ||
           'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80',
         lat: destination.latitude,
         lng: destination.longitude,
@@ -539,6 +542,16 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
                       onChange={(e) => setReportDesc(e.target.value)}
                       placeholder="Jelaskan titik pos, ciri-ciri oknum, atau nomor lambung kendaraan/kapal..."
                       className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs text-[#1B1F1A] font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <ImageDropzone
+                      label="Unggah Bukti Foto Karcis / Lokasi (Opsional)"
+                      value={reportPhoto}
+                      onChange={(dataUrl) => setReportPhoto(dataUrl)}
+                      onClear={() => setReportPhoto('')}
+                      helperText="Ambil foto dari kamera atau pilih file galeri HP Anda. Otomatis dikompresi ringan."
                     />
                   </div>
 

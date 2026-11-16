@@ -24,6 +24,7 @@ import {
   MOCK_20_DESTINATIONS,
   toDestinationSlug,
 } from '../data/mockDestinations';
+import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
 const TOKEN_STORAGE_KEY = 'rancakin_admin_jwt';
 const USER_STORAGE_KEY = 'rancakin_admin_user';
@@ -65,11 +66,7 @@ function readStoredDestinations(): Destination[] | null {
 }
 
 export function writeStoredDestinations(destinations: Destination[]): void {
-  try {
-    localStorage.setItem(DESTINATIONS_STORAGE_KEY, JSON.stringify(destinations));
-  } catch {
-    // Ignore storage quota errors
-  }
+  safeSetLocalStorage(DESTINATIONS_STORAGE_KEY, JSON.stringify(destinations));
 }
 
 /**
@@ -675,3 +672,42 @@ export async function triggerWAWebhookSimulation(
   });
   return res.data;
 }
+
+export async function savePartnerWithBridge(
+  partner: Partner,
+  currentList: Partner[]
+): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
+  const exists = currentList.some((p) => p.id === partner.id);
+  const updatedList = exists
+    ? currentList.map((p) => (p.id === partner.id ? partner : p))
+    : [partner, ...currentList];
+
+  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedList));
+
+  try {
+    if (exists) {
+      await apiClient.put(`/partners/${partner.id}`, partner);
+    } else {
+      await apiClient.post('/partners', partner);
+    }
+    return { updatedList, syncedRemote: true };
+  } catch {
+    return { updatedList, syncedRemote: false };
+  }
+}
+
+export async function deletePartnerWithBridge(
+  partnerId: string,
+  currentList: Partner[]
+): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
+  const updatedList = currentList.filter((p) => p.id !== partnerId);
+  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedList));
+
+  try {
+    await apiClient.delete(`/partners/${partnerId}`);
+    return { updatedList, syncedRemote: true };
+  } catch {
+    return { updatedList, syncedRemote: false };
+  }
+}
+

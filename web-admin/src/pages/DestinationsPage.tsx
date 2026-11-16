@@ -32,6 +32,7 @@ import {
   SUMBAR_REGENCIES,
   toDestinationSlug,
 } from '../data/mockDestinations';
+import { ImageDropzone } from '../components/ImageDropzone';
 
 interface DestinationsPageProps {
   destinations: Destination[];
@@ -1484,23 +1485,22 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label
-                        htmlFor="dest-cover"
-                        className="text-xs font-bold text-[#1B1F1A]"
-                      >
-                        Tautan Foto Sampul Utama (URL)
-                      </label>
-                      <input
-                        id="dest-cover"
-                        type="url"
+                      <ImageDropzone
+                        label="Foto Sampul Utama Destinasi"
                         value={editingDest.cover_image}
-                        onChange={(e) =>
+                        onChange={(dataUrl) =>
                           setEditingDest({
                             ...editingDest,
-                            cover_image: e.target.value,
+                            cover_image: dataUrl,
                           })
                         }
-                        className="min-h-[48px] px-4 py-2 rounded-2xl bg-white border border-[#767676] text-xs font-mono"
+                        onClear={() =>
+                          setEditingDest({
+                            ...editingDest,
+                            cover_image: '',
+                          })
+                        }
+                        helperText="Pilih foto sampul berkualitas tinggi dari device. Otomatis dikompresi ringan ke format WebP."
                       />
                       <span className="text-[11px] text-[#4A5248]">
                         Slug Smart QR Otomatis:{' '}

@@ -193,16 +193,44 @@ export type PartnerCategoryType =
   | 'Kuliner Halal'
   | 'Sewa Baju Adat';
 
+export interface EscrowTransaction {
+  id: string;
+  booking_code: string;
+  tourist_name: string;
+  tourist_phone: string;
+  amount: number;
+  fee_currency: 'IDR' | 'MYR';
+  status: 'ESCROW_LOCKED' | 'READY_PAYOUT' | 'REDEEMED';
+  wa_status: 'CONFIRMED' | 'PENDING' | 'REJECTED';
+  service_date: string;
+  created_at: string;
+}
+
 export interface Partner {
   id: string;                        // json:"id"
   name: string;                      // json:"name"
   category: PartnerCategoryType | string; // json:"category"
   whatsapp: string;                  // json:"whatsapp"
-  spicy_level?: number;              // json:"spicy_level,omitempty" (0-5)
+  spicy_level?: number;              // json:"spicy_level,omitempty" (0-5 cabai)
   is_verified: boolean;              // json:"is_verified"
-  standard_fee: number;              // json:"standard_fee"
+  standard_fee: number;              // json:"standard_fee" (IDR)
+  fee_myr_estimate?: number;         // Estimasi konversi Ringgit Malaysia (MYR)
   nagari_name: string;               // json:"nagari_name"
-  destination_id?: string;
+  city_regency?: string;             // 19 Kab/Kota Sumbar
+  owner_name?: string;               // Nama pemilik usaha / pengelola
+  pokdarwis_sk_number?: string;      // Nomor Surat Keputusan verifikasi Pokdarwis/Nagari
+  photo_url?: string;                // Foto profil / produk mitra (unggah device)
+  photo_360_url?: string;            // Foto panorama spot 360 mitra
+  destination_id?: string;           // Keterkaitan dengan destinasi
+  destination_name?: string;
+  scene_id?: string;                 // Keterkaitan dengan scene 360
+  pin_id?: string;                   // ID pin di Studio 360
+  pitch?: number;                    // Koordinat vertikal pin di scene 360
+  yaw?: number;                      // Koordinat horizontal pin di scene 360
+  has_360_pin?: boolean;             // Penanda apakah mitra memiliki pin aktif di tur 360
+  halal_certified?: boolean;         // Sertifikat Halal MUI / Kemenag
+  created_at?: string;
+  ledger?: EscrowTransaction[];      // Riwayat transaksi buku besar escrow
 }
 
 export type PartnerNagari = Partner;

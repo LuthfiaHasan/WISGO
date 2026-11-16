@@ -24,12 +24,14 @@ import {
 import {
   checkBackendHealth,
   deleteDestinationWithBridge,
+  deletePartnerWithBridge,
   fetchDestinationsWithBridge,
   fetchPartnersCatalog,
   getStoredAdminSession,
   logoutAdminJWT,
   resetDestinationsToDefault,
   saveDestinationWithBridge,
+  savePartnerWithBridge,
 } from './services/api';
 import { INITIAL_PARTNERS, MOCK_20_DESTINATIONS } from './data/mockDestinations';
 import { Sidebar, AdminMenuKey } from './components/Sidebar';
@@ -38,6 +40,7 @@ import { DestinationsPage } from './pages/DestinationsPage';
 import { TariffsAndQRPage } from './pages/TariffsAndQRPage';
 import { Studio360Page } from './pages/Studio360Page';
 import { CommandCenterPage } from './pages/CommandCenterPage';
+import { PartnersPage } from './pages/PartnersPage';
 import { PublicSmartQRView } from './pages/PublicSmartQRView';
 import { PublicGroupInviteView } from './pages/PublicGroupInviteView';
 import { SmartQRPlacardModal } from './components/SmartQRPlacardModal';
@@ -69,12 +72,32 @@ export const App: React.FC = () => {
     null
   );
 
+  // Cross-Navigation between Studio 360 & Mitra UMKM Escrow
+  const [studioNavTarget, setStudioNavTarget] = useState<{
+    destId?: string;
+    sceneId?: string;
+    pinId?: string;
+  } | null>(null);
+  const [partnerNavTargetId, setPartnerNavTargetId] = useState<string | null>(
+    null
+  );
+
   const [loading, setLoading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
+  const [toastType, setToastType] = useState<
+    'success' | 'info' | 'warning' | 'error'
+  >('info');
 
-  const showToast = useCallback((msg: string) => {
-    setToastMessage(msg);
-  }, []);
+  const showToast = useCallback(
+    (
+      msg: string,
+      type: 'success' | 'info' | 'warning' | 'error' = 'info'
+    ) => {
+      setToastMessage(msg);
+      setToastType(type);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!toastMessage) return;
@@ -149,6 +172,40 @@ export const App: React.FC = () => {
       setSelectedTariffDestId(res.updatedList[0].id);
     }
     showToast(message);
+  };
+
+  const handleSavePartner = async (partner: Partner) => {
+    const res = await savePartnerWithBridge(partner, partners);
+    setPartners(res.updatedList);
+  };
+
+  const handleDeletePartner = async (partnerId: string) => {
+    const res = await deletePartnerWithBridge(partnerId, partners);
+    setPartners(res.updatedList);
+  };
+
+  const handleNavigateToStudio360 = (
+    destId: string,
+    sceneId: string,
+    pinId: string
+  ) => {
+    setStudioNavTarget({ destId, sceneId, pinId });
+    setActiveMenu('cms_360');
+    showToast(
+      'Membuka Studio Virtual 360° dan menyorot titik pin booking mitra.',
+      'info'
+    );
+  };
+
+  const handleNavigateToPartner = (partnerId?: string) => {
+    if (partnerId) {
+      setPartnerNavTargetId(partnerId);
+    }
+    setActiveMenu('wa_simulator');
+    showToast(
+      'Membuka modul Monitoring Mitra UMKM & Buku Besar Escrow.',
+      'info'
+    );
   };
 
   const handleOpenTariffManager = (destId: string) => {
@@ -289,6 +346,10 @@ export const App: React.FC = () => {
               destinations={destinations}
               onUpdateDestinations={setDestinations}
               showToast={showToast}
+              initialDestId={studioNavTarget?.destId}
+              initialSceneId={studioNavTarget?.sceneId}
+              initialHighlightPinId={studioNavTarget?.pinId}
+              onNavigateToPartner={handleNavigateToPartner}
             />
           </div>
         )}
@@ -306,62 +367,18 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* 5. Monitoring Mitra & Escrow */}
+        {/* 5. Monitoring Mitra & Escrow (Manajemen Lengkap & Integrasi 360°) */}
         {activeMenu === 'wa_simulator' && (
-          <div className="p-6 lg:p-8 space-y-6">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E4E9DA] text-[#234B24] text-xs font-bold">
-                  <Store className="w-3.5 h-3.5 text-[#1E9E5A]" aria-hidden="true" />
-                  <span>DIREKTORI MITRA UMKM NAGARI &amp; REKENING BERSAMA</span>
-                </div>
-                <h1 className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#1B1F1A]">
-                  Monitoring 5 Kategori Mitra Nagari &amp; Escrow
-                </h1>
-                <p className="text-sm text-[#4A5248]">
-                  Daftar mitra terverifikasi Pokdarwis dan Nagari yang terhubung
-                  dengan layanan konfirmasi WhatsApp dan pencairan QR E-Ticket.
-                </p>
-              </div>
-            </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {partners.map((ptr) => (
-                <div
-                  key={ptr.id}
-                  className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24]">
-                        {ptr.category}
-                      </span>
-                      {ptr.is_verified && (
-                        <span className="text-[11px] font-bold text-[#1E9E5A] flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                          Terverifikasi Nagari
-                        </span>
-                      )}
-                    </div>
-                    <h2 className="mt-2.5 text-base font-extrabold text-[#1B1F1A]">
-                      {ptr.name}
-                    </h2>
-                    <p className="text-xs text-[#4A5248] mt-0.5">
-                      {ptr.nagari_name}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-[#E4E9DA] flex items-center justify-between text-xs">
-                    <span className="text-[#4A5248]">
-                      WhatsApp: <strong>+{ptr.whatsapp}</strong>
-                    </span>
-                    <span className="font-extrabold text-[#234B24]">
-                      Rp {ptr.standard_fee.toLocaleString('id-ID')}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="p-6 lg:p-8">
+            <PartnersPage
+              partners={partners}
+              destinations={destinations}
+              onSavePartner={handleSavePartner}
+              onDeletePartner={handleDeletePartner}
+              onNavigateToStudio360={handleNavigateToStudio360}
+              initialSelectedPartnerId={partnerNavTargetId || undefined}
+              showToast={showToast}
+            />
           </div>
         )}
 
