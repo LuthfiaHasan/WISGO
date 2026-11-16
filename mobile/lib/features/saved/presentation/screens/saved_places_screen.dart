@@ -2873,7 +2873,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     },
     {
       'label': 'Peta Rute',
-      'icon': Icons.alt_route_rounded,
+      'icon': Icons.map_outlined,
       'activeIcon': Icons.map_rounded,
     },
     {
