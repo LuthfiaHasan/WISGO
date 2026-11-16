@@ -5,6 +5,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/network/api_config.dart';
+import '../../../../core/services/api_service.dart';
+import '../../data/destination_adapter.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../../fair_price/presentation/widgets/fair_price_barometer_table.dart';
@@ -120,6 +124,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   late int _activeTabIndex;
   late bool _isOfflineMode;
 
+  // Supabase Live Destinations State (Sinkronisasi Cloud & Fallback Luring)
+  List<SavedDestinationModel> _destinations = List<SavedDestinationModel>.from(kAllSumbarDestinations);
+  bool _isLoadingApi = false;
+
   // View 0: Explore Region, Nature Type, Search & Sort
   String _currentExploreRegion = 'ALL';
   String _currentExploreType = 'ALL';
@@ -191,11 +199,144 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     _activeTabIndex = widget.initialTabIndex;
     _isOfflineMode = widget.initialOfflineMode;
     _savedIds = List<String>.from(kDefaultSavedIds);
-    if (widget.initialLoading) {
+    _savedViewState = 'shimmer';
+    _fetchDestinationsAndSaved();
+  }
+
+  /// Sinkronisasi 20 Destinasi & Saved Places dari Supabase Cloud via ApiService
+  Future<void> _fetchDestinationsAndSaved() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingApi = true;
       _savedViewState = 'shimmer';
+    });
+
+    try {
+      final res = await ApiService.getDestinations();
+      if (res.isSuccess && res.data is List && (res.data as List).isNotEmpty) {
+        final rawList = res.data as List;
+        final converted = <SavedDestinationModel>[];
+        for (int i = 0; i < rawList.length; i++) {
+          if (rawList[i] is Map<String, dynamic>) {
+            converted.add(DestinationAdapter.fromJson(rawList[i] as Map<String, dynamic>, index: i));
+          }
+        }
+        if (mounted && converted.isNotEmpty) {
+          setState(() {
+            _destinations = converted;
+            _isOfflineMode = false;
+            _savedViewState = 'loaded';
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isOfflineMode = true;
+            _savedViewState = 'loaded';
+          });
+        }
+      }
+
+      // Ambil saved places jika token autentikasi tersedia
+      if (ApiConfig.isAuthenticated) {
+        final savedRes = await ApiService.getSavedPlaces();
+        if (savedRes.isSuccess && savedRes.data is List) {
+          final ids = (savedRes.data as List)
+              .map((e) => (e['destination_id'] ?? e['id'] ?? '').toString())
+              .where((id) => id.isNotEmpty)
+              .toList();
+          if (ids.isNotEmpty && mounted) {
+            setState(() => _savedIds = ids);
+          }
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isOfflineMode = true;
+          _savedViewState = 'loaded';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingApi = false);
+      }
     }
   }
 
+  /// Dialog Masuk Pintar ketika pengguna belum login mengetuk tombol bookmark
+  void _showLoginRequiredDialog(String destId) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: AppColors.cream,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.bookmark_add_rounded, color: AppColors.forest, size: 24),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Simpan ke Akun Anda',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Untuk menyinkronkan destinasi favorit ke Cloud Supabase, Anda perlu masuk ke akun WISGO.',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.muted,
+              height: 1.4,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogCtx);
+                // Demo Quick Sign-In
+                ApiConfig.setAuthToken('wisgo-demo-jwt-tourist-01');
+                _showAppToast('Masuk dengan Akun Demo Wisatawan');
+                _toggleBookmark(destId);
+              },
+              child: const Text(
+                'Masuk Akun Demo',
+                style: TextStyle(
+                  color: AppColors.forest,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogCtx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.forest,
+                foregroundColor: AppColors.cream,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text(
+                'Login WhatsApp',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _showAppToast(String message) {
     if (!mounted) return;
@@ -235,9 +376,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  void _toggleBookmark(String id) {
+  void _toggleBookmark(String id) async {
+    if (!ApiConfig.isAuthenticated) {
+      _showLoginRequiredDialog(id);
+      return;
+    }
+
+    final isCurrentlySaved = _savedIds.contains(id);
+
     setState(() {
-      if (_savedIds.contains(id)) {
+      if (isCurrentlySaved) {
         _savedIds.remove(id);
         if (_savedIds.isEmpty && _activeTabIndex == 1) {
           _savedViewState = 'empty';
@@ -248,9 +396,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         if (_savedViewState == 'empty') {
           _savedViewState = 'loaded';
         }
-        _showAppToast('Disimpan ke memori perangkat (Tersimpan)');
+        _showAppToast('Tersimpan di akun Cloud Anda');
       }
     });
+
+    // Sinkronkan ke API Backend Supabase secara background
+    try {
+      if (!isCurrentlySaved) {
+        await ApiService.savePlace(id);
+      } else {
+        await ApiService.removeSavedPlace(id);
+      }
+    } catch (_) {
+      // Fallback offline aman
+    }
   }
 
   void _restoreDefaultBookmarks() {
@@ -282,7 +441,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             // Global Static Offline Notification Banner (Item 6)
             if (_isOfflineMode)
               OfflineBanner(
-                onRetry: () => setState(() => _isOfflineMode = false),
+                onRetry: _fetchDestinationsAndSaved,
               ),
 
             // Active Main View (4 Tabs: Beranda, Peta Rute, Tarif Resmi, Profil)
@@ -338,7 +497,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   Widget _buildExploreView() {
-    var filtered = kAllSumbarDestinations.where((item) {
+    var filtered = _destinations.where((item) {
       final regMatch = _currentExploreRegion == 'ALL' ||
           item.region == _currentExploreRegion;
       final typeMatch = _currentExploreType == 'ALL' ||
@@ -363,11 +522,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
     return Stack(
       children: [
-        CustomScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          slivers: [
+        RefreshIndicator(
+          onRefresh: _fetchDestinationsAndSaved,
+          color: AppColors.forest,
+          backgroundColor: AppColors.cream,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
             // Pinned Frosted Glass App Bar Header
             SliverAppBar(
               pinned: true,
@@ -808,6 +971,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
           ],
         ),
+      ),
 
         // Floating Action Button
         Positioned(
@@ -1193,7 +1357,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final savedPlaces = kAllSumbarDestinations
+            final savedPlaces = _destinations
                 .where((d) => _savedIds.contains(d.id))
                 .toList();
 
@@ -1508,7 +1672,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // VIEW 2: ITEM 7 — KOMPONEN TABEL FAIR-PRICE BAROMETER (VERTIKAL)
   // ===========================================================================
   Widget _buildBarometerView() {
-    final activeDest = kAllSumbarDestinations[_activeBarometerDestIdx];
+    final activeDest = _destinations.isNotEmpty && _activeBarometerDestIdx < _destinations.length
+        ? _destinations[_activeBarometerDestIdx]
+        : (_destinations.isNotEmpty ? _destinations.first : kAllSumbarDestinations.first);
 
     return Column(
       children: [
@@ -1578,12 +1744,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
               const SizedBox(height: 10),
 
-              // Destination Selector Pills (All 8 Destinations)
+              // Destination Selector Pills (Live Supabase Destinations)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: List.generate(kAllSumbarDestinations.length, (idx) {
-                    final d = kAllSumbarDestinations[idx];
+                  children: List.generate(_destinations.length, (idx) {
+                    final d = _destinations[idx];
                     final isSelected = idx == _activeBarometerDestIdx;
                     return Padding(
                       padding: const EdgeInsets.only(right: 6),

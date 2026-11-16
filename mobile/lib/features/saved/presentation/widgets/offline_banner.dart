@@ -47,13 +47,16 @@ class OfflineBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Text(
-                      'MODE TANPA KONEKSI INTERNET',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                        color: AppColors.ink,
+                    const Flexible(
+                      child: Text(
+                        'MODE TANPA KONEKSI INTERNET',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: AppColors.ink,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
