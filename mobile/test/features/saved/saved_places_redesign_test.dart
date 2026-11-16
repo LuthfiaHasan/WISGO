@@ -21,7 +21,7 @@ void main() {
     expect(find.text('Jelajah Daerah Sumbar'), findsOneWidget);
     expect(find.text('FASILITAS LINGKUNGAN:'), findsWidgets);
     expect(find.text('360° & Denah'), findsWidgets);
-    expect(find.text('Detail & Pesan'), findsWidgets);
+    expect(find.text('Detail'), findsWidgets);
 
     // Initial card must NOT have the fee list directly visible
     expect(find.text('RINCIAN BIAYA RESMI (VERTIKAL)'), findsNothing);
@@ -40,8 +40,8 @@ void main() {
     await tester.tap(find.text('Jarak Terdekat (GPS)'));
     await tester.pumpAndSettle();
 
-    // 4. Tap 'Detail & Pesan' on Lembah Harau to open detail modal
-    final detailButtonFinder = find.widgetWithText(ElevatedButton, 'Detail & Pesan').first;
+    // 4. Tap 'Detail' on Lembah Harau to open detail modal
+    final detailButtonFinder = find.widgetWithText(ElevatedButton, 'Detail').first;
     await tester.ensureVisible(detailButtonFinder);
     await tester.pumpAndSettle();
     await tester.tap(detailButtonFinder);

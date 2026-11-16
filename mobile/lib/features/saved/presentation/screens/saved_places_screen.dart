@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:panorama_viewer/panorama_viewer.dart';
@@ -24,7 +27,6 @@ import '../../../passport/presentation/widgets/digital_passport_sheet.dart';
 import '../../../culture/presentation/widgets/culture_and_community_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
-import '../widgets/saved_skeleton_shimmer.dart';
 
 /// Extension untuk menjembatani model FE-2 dengan layar detail FE-1
 extension SavedDestinationModelFe1Bridge on SavedDestinationModel {
@@ -128,7 +130,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // View 1: Saved Places State
   late List<String> _savedIds;
   String _savedViewState = 'loaded'; // 'loaded' | 'shimmer' | 'empty'
-  String _selectedSavedRegionFilter = 'ALL';
 
   // View 2: Barometer State
   int _activeBarometerDestIdx = 2; // Default Lembah Harau
@@ -170,13 +171,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     {'key': 'Nagari & Hutan Terpencil', 'label': 'Nagari & Hutan Terpencil'},
   ];
 
-  static const List<Map<String, String>> _savedRegionChips = [
-    {'key': 'ALL', 'label': 'Semua Daerah'},
-    {'key': 'Padang', 'label': 'Padang'},
-    {'key': 'Payakumbuh & 50 Kota', 'label': 'Payakumbuh & 50 Kota'},
-    {'key': 'Bukittinggi & Agam', 'label': 'Bukittinggi'},
-    {'key': 'Daerah Terpencil', 'label': 'Daerah Terpencil'},
-  ];
 
   static const List<Map<String, String>> _barometerCategories = [
     {'key': 'ALL', 'label': 'Semua Biaya'},
@@ -202,11 +196,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     }
   }
 
-  List<SavedDestinationModel> get _savedDestinationsList {
-    return kAllSumbarDestinations
-        .where((d) => _savedIds.contains(d.id))
-        .toList();
-  }
 
   void _showAppToast(String message) {
     if (!mounted) return;
@@ -267,7 +256,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   void _restoreDefaultBookmarks() {
     setState(() {
       _savedIds = List<String>.from(kDefaultSavedIds);
-      _selectedSavedRegionFilter = 'ALL';
       _savedViewState = 'shimmer';
     });
     Future.delayed(const Duration(milliseconds: 600), () {
@@ -291,22 +279,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 1. Minimal Editorial Status Bar
-            _buildEditorialStatusBar(),
-
-            // 2. Global Static Offline Notification Banner (Item 6)
+            // Global Static Offline Notification Banner (Item 6)
             if (_isOfflineMode)
               OfflineBanner(
                 onRetry: () => setState(() => _isOfflineMode = false),
               ),
 
-            // 3. Active Main View (4 Tabs: Daerah, Tersimpan, Tarif Resmi, Profil)
+            // Active Main View (4 Tabs: Beranda, Peta Rute, Tarif Resmi, Profil)
             Expanded(
               child: IndexedStack(
                 index: _activeTabIndex,
                 children: [
                   _buildExploreView(),
-                  _buildSavedView(),
+                  _buildPetaRuteView(),
                   _buildBarometerView(),
                   _buildProfileView(),
                 ],
@@ -316,80 +301,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         ),
       ),
       bottomNavigationBar: _buildClean4ButtonBottomNavigationBar(),
-    );
-  }
-
-  /// Minimal Editorial Status Bar (`09:41 | WISGO SUMBAR | Daring / Tanpa Sinyal`)
-  Widget _buildEditorialStatusBar() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
-      decoration: BoxDecoration(
-        color: AppColors.cream,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.warmBorder.withValues(alpha: 0.70),
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            '09:41',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
-            ),
-          ),
-          const Text(
-            'WISGO SUMBAR',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.8,
-              color: AppColors.forest,
-            ),
-          ),
-          GestureDetector(
-            onTap: () => setState(() => _isOfflineMode = !_isOfflineMode),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.creamSubtle,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.warmBorder),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: _isOfflineMode
-                          ? AppColors.terracotta
-                          : AppColors.brush,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    _isOfflineMode ? 'Tanpa Sinyal' : 'Daring',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _isOfflineMode
-                          ? AppColors.terracotta
-                          : AppColors.brush,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -465,7 +376,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               backgroundColor: Colors.transparent,
               surfaceTintColor: Colors.transparent,
               automaticallyImplyLeading: false,
-              toolbarHeight: 56,
+              toolbarHeight: 64,
               titleSpacing: 16,
               flexibleSpace: ClipRect(
                 child: BackdropFilter(
@@ -484,84 +395,147 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
               ),
               title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'DIREKTORI WILAYAH & BIAYA RESMI',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                            color: AppColors.brush,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
+                        const Text(
                           'Jelajah Daerah Sumbar',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                             letterSpacing: -0.4,
                           ),
                         ),
+                        const SizedBox(height: 3),
+                        GestureDetector(
+                          onTap: () => setState(() => _isOfflineMode = !_isOfflineMode),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _isOfflineMode ? const Color(0xFFFDEEE9) : const Color(0xFFE8F3EB),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _isOfflineMode ? AppColors.terracotta.withValues(alpha: 0.5) : AppColors.forest.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: _isOfflineMode ? AppColors.terracotta : AppColors.brush,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _isOfflineMode ? 'Luring' : 'Online',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: _isOfflineMode ? AppColors.terracotta : AppColors.forest,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        onTap: _openQrScannerModal,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.forest,
-                            borderRadius: BorderRadius.circular(20),
+
+                  // 1. SCAN QR (DIPERBESAR BIAR NAMPAK!)
+                  GestureDetector(
+                    onTap: _openQrScannerModal,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: AppColors.forest,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.forest.withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.qr_code_scanner_rounded, size: 13, color: AppColors.cream),
-                              SizedBox(width: 4),
-                              Text(
-                                'Scan QR',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.cream,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.sage,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${filtered.length} Destinasi',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.forest,
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.qr_code_scanner_rounded, size: 17, color: AppColors.cream),
+                          SizedBox(width: 4),
+                          Text(
+                            'Scan QR',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.cream,
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // 2. Siaga SOS
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HazardSosScreen()),
+                    ),
+                    child: Container(
+                      width: 33,
+                      height: 33,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDEEE9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.terracotta.withValues(alpha: 0.45)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.sos_rounded, size: 18, color: AppColors.terracotta),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+
+                  // 3. Disimpan (Icon Simpan)
+                  GestureDetector(
+                    onTap: _openSavedPlacesModal,
+                    child: Container(
+                      width: 33,
+                      height: 33,
+                      decoration: BoxDecoration(
+                        color: AppColors.creamSubtle,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.warmBorder),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.bookmark_rounded, size: 18, color: AppColors.forest),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+
+                  // 4. Kalender Budaya (Icon Kalender)
+                  GestureDetector(
+                    onTap: _openKalenderBudayaModal,
+                    child: Container(
+                      width: 33,
+                      height: 33,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3EDFA),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF5A3E85).withValues(alpha: 0.35)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF5A3E85)),
+                    ),
                   ),
                 ],
               ),
@@ -651,11 +625,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-
-                    // 3. Layanan & Fitur Cerdas (Single Elegant Icon Strip)
-                    _buildServicesRow(),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
 
                     // 4. Primary Region Navigator (Clean Rounded Pills)
                     SingleChildScrollView(
@@ -862,177 +832,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // ===========================================================================
   // NAVIGASI FITUR PINTAR INTEGRASI FE-1 & DETAIL MEDAN (LAYAR 01, 02, 03, 07)
   // ===========================================================================
-  void _openFe1DetailScreen(SavedDestinationModel place) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => DestinationDetailScreen(
-          destination: place.toFe1Destination(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServicesRow() {
-    final services = [
-      {
-        'label': 'Peta Rute',
-        'icon': Icons.alt_route_rounded,
-        'color': AppColors.forest,
-        'bg': const Color(0xFFE8F3EB),
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MapExploreShunluScreen()),
-            ),
-      },
-      {
-        'label': 'Siaga SOS',
-        'icon': Icons.warning_amber_rounded,
-        'color': AppColors.terracotta,
-        'bg': const Color(0xFFFDEEE9),
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const HazardSosScreen()),
-            ),
-      },
-      {
-        'label': 'Rencana Trip',
-        'icon': Icons.route_rounded,
-        'color': const Color(0xFF234B24),
-        'bg': const Color(0xFFE8EFE8),
-        'onTap': _openTripPlannerModal,
-      },
-      {
-        'label': 'Kamus Minang',
-        'icon': Icons.record_voice_over_rounded,
-        'color': const Color(0xFF946200),
-        'bg': const Color(0xFFFCF5E5),
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AudioCultureScreen()),
-            ),
-      },
-      {
-        'label': 'Pantau Grup',
-        'icon': Icons.radar_rounded,
-        'color': const Color(0xFF1E5B82),
-        'bg': const Color(0xFFE8F1F8),
-        'onTap': _openLiveGroupTrackingModal,
-      },
-      {
-        'label': 'Paspor Digital',
-        'icon': Icons.military_tech_rounded,
-        'color': const Color(0xFFB85D19),
-        'bg': const Color(0xFFFDF0E6),
-        'onTap': _openDigitalPassportModal,
-      },
-      {
-        'label': 'Budaya & Forum',
-        'icon': Icons.auto_awesome_rounded,
-        'color': const Color(0xFF5A3E85),
-        'bg': const Color(0xFFF3EDFA),
-        'onTap': () => _openCultureAndCommunityModal(),
-      },
-      {
-        'label': 'Tur 360°',
-        'icon': Icons.view_in_ar_rounded,
-        'color': const Color(0xFF1A6B62),
-        'bg': const Color(0xFFE8F7F5),
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const VirtualTour360Screen()),
-            ),
-      },
-      {
-        'label': 'Mode Luring',
-        'icon': Icons.offline_pin_rounded,
-        'color': const Color(0xFF3B6B58),
-        'bg': const Color(0xFFEBF5F0),
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const OfflinePocketScreen()),
-            ),
-      },
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: services.map((item) {
-          final color = item['color'] as Color;
-          final bg = item['bg'] as Color;
-          final icon = item['icon'] as IconData;
-          final label = item['label'] as String;
-          final onTap = item['onTap'] as VoidCallback;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: onTap,
-              child: SizedBox(
-                width: 60,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: bg,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: color.withValues(alpha: 0.20),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(icon, size: 20, color: color),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                        height: 1.15,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   // ===========================================================================
-  // VIEW 1: LAYAR 04 — DESTINASI TERSIMPAN + SKELETON SHIMMER + EMPTY STATE
+  // VIEW 1: TAB PETA RUTE (NAVIGASI, RENCANA TRIP & PANTAU ROMBONGAN)
   // ===========================================================================
-  Widget _buildSavedView() {
-    final savedPlaces = _savedDestinationsList;
-    final filteredSaved = _selectedSavedRegionFilter == 'ALL'
-        ? savedPlaces
-        : savedPlaces
-            .where((p) => p.region == _selectedSavedRegionFilter)
-            .toList();
-
+  Widget _buildPetaRuteView() {
     return Column(
       children: [
-        // Screen Header + Clean State Controls
+        // Top Sticky Header
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -1042,234 +848,335 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               bottom: BorderSide(color: AppColors.warmBorder),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'LAYAR 04 • MEMORI PERANGKAT',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.3,
-                            color: AppColors.brush,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Destinasi Tersimpan',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink,
-                            letterSpacing: -0.4,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'NAVIGASI & KOLABORASI TRIP',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
+                      color: AppColors.brush,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.sage,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_savedIds.length} Lokasi',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.forest,
-                      ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Peta Rute & Rombongan',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                      letterSpacing: -0.4,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-
-              // Clean In-Screen State Switcher (Segmented Control)
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.creamSubtle,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.warmBorder),
+                  color: AppColors.sage,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.sageBorder),
                 ),
-                child: Row(
+                child: const Text(
+                  'GPS Aktif',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.forest,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Scrollable Body
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 30),
+            children: [
+              // 1. Feature Card: Rencana Trip Otomatis (Smart Trip Planner)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF193D22), Color(0xFF2F663E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF193D22).withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _buildStateSwitchButton(
-                        label: 'Daftar (${_savedIds.length})',
-                        isActive: _savedViewState == 'loaded',
-                        onTap: () {
-                          if (_savedIds.isEmpty) {
-                            _savedIds = List<String>.from(kDefaultSavedIds);
-                          }
-                          setState(() => _savedViewState = 'loaded');
-                        },
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.20),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.auto_awesome_rounded, size: 13, color: AppColors.cream),
+                              SizedBox(width: 4),
+                              Text(
+                                'Layar 06 • Smart Trip Planner',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.cream,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.alt_route_rounded, color: AppColors.sage, size: 22),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Rencana Perjalanan Otomatis 1–7 Hari',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: _buildStateSwitchButton(
-                        label: 'Efek Memuat',
-                        isActive: _savedViewState == 'shimmer',
-                        onTap: () =>
-                            setState(() => _savedViewState = 'shimmer'),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Susun jadwal liburan otomatis berdasarkan durasi hari, estimasi anggaran per orang, dan minat wisata rombongan (Alam, Kuliner, Adat).',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.white.withValues(alpha: 0.85),
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: _buildStateSwitchButton(
-                        label: 'Kosong',
-                        isActive: _savedViewState == 'empty',
-                        onTap: () => setState(() => _savedViewState = 'empty'),
+                    const SizedBox(height: 14),
+                    ElevatedButton.icon(
+                      onPressed: _openTripPlannerModal,
+                      icon: const Icon(Icons.calendar_today_rounded, size: 15),
+                      label: const Text(
+                        'Buat / Buka Rencana Trip Rombongan',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: _buildStateSwitchButton(
-                        label: _isOfflineMode ? 'Luring: Aktif' : 'Luring: Mati',
-                        isActive: _isOfflineMode,
-                        activeColor: AppColors.terracotta,
-                        onTap: () =>
-                            setState(() => _isOfflineMode = !_isOfflineMode),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cream,
+                        foregroundColor: AppColors.forest,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 14),
 
-              // Region Navigator Bar inside Saved Places (only when loaded)
-              if (_savedViewState == 'loaded') ...[
-                const SizedBox(height: 10),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _savedRegionChips.map((chip) {
-                      final isSelected =
-                          _selectedSavedRegionFilter == chip['key'];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: GestureDetector(
-                          onTap: () => setState(
-                            () => _selectedSavedRegionFilter = chip['key']!,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.forest
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.forest
-                                    : AppColors.sageBorder,
-                              ),
-                            ),
-                            child: Text(
-                              chip['label']!,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
-                                color: isSelected
-                                    ? AppColors.cream
-                                    : AppColors.muted,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+              // 2. Feature Card: Pantau Lokasi Rombongan (Live GPS Tracker)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.sageBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.ink.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ],
-            ],
-          ),
-        ),
-
-        // Scrollable Body of Layar 04
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            children: [
-              if (_savedViewState == 'shimmer')
-                const SavedSkeletonShimmer(itemCount: 2)
-              else if (_savedViewState == 'empty' || savedPlaces.isEmpty)
-                SavedEmptyState(
-                  onRestoreDefaultPressed: _restoreDefaultBookmarks,
-                  onOpenExplorePressed: () =>
-                      setState(() => _activeTabIndex = 0),
-                )
-              else if (filteredSaved.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.warmBorder),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Belum ada destinasi tersimpan untuk wilayah $_selectedSavedRegionFilter',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () => setState(
-                          () => _selectedSavedRegionFilter = 'ALL',
-                        ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: AppColors.sage,
-                          foregroundColor: AppColors.forest,
-                          shape: RoundedRectangleBorder(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F1F8),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                        ),
-                        child: const Text(
-                          'Tampilkan Semua Daerah Tersimpan',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.radar_rounded, size: 13, color: Color(0xFF1E5B82)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Live GPS Tracker • Rombongan',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1E5B82),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                ...filteredSaved.map(
-                  (place) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildDestinationCard(
-                      place,
-                      isSavedContext: true,
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Pantau Lokasi Anggota Rombongan',
+                      style: TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Radar posisi real-time 4 anggota tim, status baterai smartphone %, jarak meter ke ketua, titik kumpul (meeting point), dan alarm darurat panggil rombongan.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.muted,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _openLiveGroupTrackingModal,
+                            icon: const Icon(Icons.radar_rounded, size: 16),
+                            label: const Text(
+                              'Buka Radar Pantau Tim',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1E5B82),
+                              side: const BorderSide(color: Color(0xFF1E5B82)),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _openGroupRoomModal,
+                            icon: const Icon(Icons.share_rounded, size: 15),
+                            label: const Text(
+                              'Grup WhatsApp',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF25D366),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
+              const SizedBox(height: 14),
+
+              // 3. Peta Navigasi Jalur Wisata (Shunlu GPS)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.sage.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.sageBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'PETA RUTE WISATA SUMATERA BARAT',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                        Icon(Icons.map_rounded, size: 18, color: AppColors.forest),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Navigasi Rute & Jalur Singgah Terdekat',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Peta visual interaktif jalur penghubung antar-destinasi di Padang, Bukittinggi, Payakumbuh, Pesisir Selatan, dan Tanah Datar.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.muted,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MapExploreShunluScreen()),
+                      ),
+                      icon: const Icon(Icons.near_me_rounded, size: 16),
+                      label: const Text(
+                        'Buka Peta Rute & Titik Singgah (Shunlu)',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.forest,
+                        foregroundColor: AppColors.cream,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -1277,32 +1184,323 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  Widget _buildStateSwitchButton({
-    required String label,
-    required bool isActive,
-    required VoidCallback onTap,
-    Color activeColor = AppColors.forest,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
-        decoration: BoxDecoration(
-          color: isActive ? activeColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-            color: isActive ? AppColors.cream : AppColors.muted,
+  // Modal: Destinasi Tersimpan (Dibuka lewat icon simpan di header Beranda)
+  void _openSavedPlacesModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final savedPlaces = kAllSumbarDestinations
+                .where((d) => _savedIds.contains(d.id))
+                .toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 10, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmBorder,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'MEMORI PERANGKAT (LURING)',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.1,
+                                color: AppColors.brush,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Destinasi Tersimpan (${savedPlaces.length})',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ],
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(ctx),
+                          child: const Icon(Icons.close_rounded, size: 22, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppColors.warmBorder),
+                  Expanded(
+                    child: savedPlaces.isEmpty
+                        ? SavedEmptyState(
+                            onRestoreDefaultPressed: () {
+                              _restoreDefaultBookmarks();
+                              setModalState(() {});
+                            },
+                            onOpenExplorePressed: () => Navigator.pop(ctx),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: savedPlaces.length,
+                            itemBuilder: (context, idx) {
+                              final place = savedPlaces[idx];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 14),
+                                child: _buildDestinationCard(place, isSavedContext: true),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Modal: Kalender Acara & Festival Budaya Minang (Dibuka lewat icon kalender di header Beranda)
+  void _openKalenderBudayaModal() {
+    final events = [
+      {
+        'title': 'Festival Pasa Harau 2026',
+        'date': '18 – 20 Desember 2026',
+        'location': 'Lembah Harau, Kab. Lima Puluh Kota',
+        'desc': 'Pagelaran akbar seni adat, randai tradisional, musik saluang, & kuliner nagari di bawah tebing granit.',
+        'badge': 'Festival Adat Resmi',
+      },
+      {
+        'title': 'Pacu Jawi Tradisional Luhak Nan Tuo',
+        'date': 'Setiap Sabtu (Pukul 09:00 WIB)',
+        'location': 'Kec. Pariangan, Kab. Tanah Datar',
+        'desc': 'Balapan sepasang sapi di sawah basah berlumpur khas Minangkabau sebagai perayaan syukur panen padi nagari.',
+        'badge': 'Warisan Budaya',
+      },
+      {
+        'title': 'Festival Pesona Danau Maninjau',
+        'date': '24 – 26 Desember 2026',
+        'location': 'Kelok 44 & Tepian Danau, Agam',
+        'desc': 'Kejuaraan paralayang internasional dari puncak Lawang, pameran kriya perak, & santap rinuak segar.',
+        'badge': 'Agenda Tahunan',
+      },
+      {
+        'title': 'Pesta Budaya Tabuik Pariaman',
+        'date': '10 Muharram (Puncak Hoyak Tabuik)',
+        'location': 'Pantai Gandoriah, Kota Pariaman',
+        'desc': 'Prosesi kultural pengusungan Tabuik raksasa nan megah hingga pembuangan ke laut diiringi tambua tasa membahana.',
+        'badge': 'Karnaval Akbar',
+      },
+      {
+        'title': 'Batagak Panghulu & Alek Nagari',
+        'date': 'Jadwal Adat Nagari',
+        'location': 'Balai Adat Koto Gadang',
+        'desc': 'Upacara sakral pengangkatan Datuak Datuak pemangku adat suku Minangkabau dengan jamuan bajamba adat.',
+        'badge': 'Hukum Adat',
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-        ),
-      ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 10, bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.warmBorder,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'WARISAN & PERAYAAN NAGARI',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                            color: Color(0xFF5A3E85),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Kalender Acara Budaya Minang',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: const Icon(Icons.close_rounded, size: 22, color: AppColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: AppColors.warmBorder),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: events.length,
+                  itemBuilder: (context, idx) {
+                    final ev = events[idx];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.sageBorder),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.ink.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3EDFA),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  ev['badge'] as String,
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF5A3E85),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.muted),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    ev['date'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.forest,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            ev['title'] as String,
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_rounded, size: 12, color: AppColors.brush),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  ev['location'] as String,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            ev['desc'] as String,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.muted,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _openCultureAndCommunityModal();
+                    },
+                    icon: const Icon(Icons.forum_outlined, size: 16),
+                    label: const Text('Buka Diskusi Budaya & Forum Nagari'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5A3E85),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1550,7 +1748,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         children: [
           // Visual Image Header (Cinematic & Clean) - Ketuk untuk Buka Detail
           GestureDetector(
-            onTap: () => _openFe1DetailScreen(place),
+            onTap: () => _openDestinationDetailModal(place),
             behavior: HitTestBehavior.opaque,
             child: SizedBox(
               height: 175,
@@ -1852,16 +2050,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                         child: const FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Detail & Pesan',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_rounded, size: 13),
-                            ],
+                          child: Text(
+                            'Detail',
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
                           ),
                         ),
                       ),
@@ -2260,6 +2451,117 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
               const SizedBox(height: 14),
 
+              // 1.5. PASPOR DIGITAL MINANG (Verifikasi Jarak GPS & Stempel Nagari)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2E1C0C), Color(0xFF5C3818)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2E1C0C).withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC89242).withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFC89242), width: 1),
+                          ),
+                          child: const Text(
+                            'PILAR 6 • PASPOR DIGITAL MINANG',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                              color: Color(0xFFE5C07B),
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.military_tech_rounded, color: Color(0xFFE5C07B), size: 22),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Paspor Digital & Lencana Kunjungan',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Kumpulkan stempel resmi nagari setelah koordinat GPS perangkat Anda terverifikasi di kawasan wisata (< 500m geofence).',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFD4C5B9),
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Progress bar
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Progres Penjelajah: 4 / 8 Nagari',
+                          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFFE5C07B)),
+                        ),
+                        Text(
+                          '50%',
+                          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    const ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                      child: LinearProgressIndicator(
+                        value: 0.50,
+                        backgroundColor: Colors.white24,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFC89242)),
+                        minHeight: 5,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    ElevatedButton.icon(
+                      onPressed: _openDigitalPassportModal,
+                      icon: const Icon(Icons.verified_rounded, size: 16),
+                      label: const Text(
+                        'Buka Paspor Digital (Stempel & GPS)',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC89242),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
               // 2. Menu Fitur & Aktivitas Wisatawan (Vertikal)
               Container(
                 padding: const EdgeInsets.all(16),
@@ -2565,19 +2867,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // ===========================================================================
   static const List<Map<String, dynamic>> _navItems = [
     {
-      'label': 'Daerah',
+      'label': 'Beranda',
       'icon': Icons.home_outlined,
       'activeIcon': Icons.home_rounded,
     },
     {
-      'label': 'Tersimpan',
-      'icon': Icons.credit_card_outlined,
-      'activeIcon': Icons.credit_card_rounded,
+      'label': 'Peta Rute',
+      'icon': Icons.alt_route_rounded,
+      'activeIcon': Icons.map_rounded,
     },
     {
       'label': 'Tarif Resmi',
-      'icon': Icons.account_balance_wallet_outlined,
-      'activeIcon': Icons.account_balance_wallet_rounded,
+      'icon': Icons.receipt_long_outlined,
+      'activeIcon': Icons.receipt_long_rounded,
     },
     {
       'label': 'Profil',
@@ -2914,8 +3216,54 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   String _selectedDenahType = 'UMKM';
   _Facility360Data? _selectedFacility360;
   bool _isQuickBookingOpen = false;
+  bool _isPlayingVoiceOver = false;
+  bool _isNarrationExpanded = false;
+  double _voiceOverProgress = 0.0;
+  Timer? _voiceOverTimer;
   double _yaw = 0.0;
   double _pitch = 0.0;
+
+  @override
+  void dispose() {
+    _voiceOverTimer?.cancel();
+    super.dispose();
+  }
+
+  void _toggleVoiceOver() {
+    setState(() {
+      _isPlayingVoiceOver = !_isPlayingVoiceOver;
+      if (_isPlayingVoiceOver) {
+        _voiceOverTimer?.cancel();
+        _voiceOverTimer = Timer.periodic(const Duration(milliseconds: 200), (t) {
+          if (!mounted) return;
+          setState(() {
+            _voiceOverProgress += 0.015;
+            if (_voiceOverProgress >= 1.0) {
+              _voiceOverProgress = 0.0;
+              _isPlayingVoiceOver = false;
+              t.cancel();
+            }
+          });
+        });
+      } else {
+        _voiceOverTimer?.cancel();
+      }
+    });
+  }
+
+  String _getHistoricalNarration(SavedDestinationModel place) {
+    if (place.title.toLowerCase().contains('harau')) {
+      return 'Lembah Harau merupakan lembah cadas subur di Kabupaten Lima Puluh Kota yang dikelilingi tebing batuan granit terjal setinggi 100 hingga 500 meter. Penelitian geologis membuktikan lembah ini jutaan tahun lalu merupakan dasar lautan purba yang terangkat ke permukaan bumi. Dalam sejarah lisan Minangkabau, lembah ini menjadi saksi bermukimnya suku-suku awal Luhak Limopuluah dan menjadi benteng alam pertahanan nagari yang tak tertembus.';
+    } else if (place.title.toLowerCase().contains('lubuk hitam') || place.title.toLowerCase().contains('cindakir')) {
+      return 'Air Terjun Lubuk Hitam (Cindakir) memiliki formasi langka tiga tingkatan air terjun alami di kawasan hutan lindung Bungus Teluk Kabung. Berdasarkan penuturan tetua adat nagari, kolam alami pada tingkatan ketiga konon merupakan tempat pemandian dan meditasi para pemuka adat sebelum menempuh jalur maritim pesisir barat Sumatera pada abad ke-16.';
+    } else if (place.title.toLowerCase().contains('sianok')) {
+      return 'Ngarai Sianok adalah lembah patahan curam sepanjang 15 kilometer dengan dinding vertikal hingga 120 meter yang terbentuk dari pergerakan lempeng tektonik sesar Semangko. Dalam sejarah perjuangan masyarakat Bukittinggi, ngarai ini menjadi jalur persembunyian rahasia dan penghubung peradaban nagari Koto Gadang yang melegenda dengan kerajinan perak dan tokoh-tokoh pergerakan nasional.';
+    } else if (place.title.toLowerCase().contains('singkarak')) {
+      return 'Danau Singkarak terbentang luas di antara Kabupaten Solok dan Tanah Datar, menjadi habitat alami ikan bilih yang merupakan spesies endemik satu-satunya di dunia. Danau tektonik ini menyimpan sejarah jalur perdagangan tradisional garam dan rempah-rempah dari pedalaman Minangkabau menuju pesisir Selat Malaka sejak masa kerajaan Melayu Dharmasraya.';
+    } else {
+      return '${place.title} di wilayah ${place.subRegion} merupakan salah satu warisan alam dan peradaban nagari bersejarah di Sumatera Barat. Tempat ini menyimpan cerita turun-temurun masyarakat lokal mengenai kearifan menjaga hutan adat, kelestarian sumber mata air pegunungan, serta falsafah Minangkabau "Alam Takambang Jadi Guru".';
+    }
+  }
 
   void _openQrisPayment(int totalAmount, List<Map<String, dynamic>> items) {
     showModalBottomSheet(
@@ -3085,29 +3433,69 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   }
 
   Widget _build360PanoramaView() {
+    final bool useFallback360 = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+
     return SizedBox.expand(
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Viewer Panorama 360° Interaktif (3D Equirectangular Sphere + Touch Pan)
+          // 1. Viewer Panorama 360° Interaktif (Native 3D Sphere on Mobile/Web + Touch Pan, Resilient Fallback on Desktop)
           Positioned.fill(
-            child: ClipRect(
-              child: PanoramaViewer(
-                animSpeed: 0.1,
-                latitude: _pitch,
-                longitude: _yaw,
-                onViewChanged: (lon, lat, tilt) {
-                  setState(() {
-                    _yaw = lon;
-                    _pitch = lat;
-                  });
-                },
-                child: Image.asset(
-                  'assets/images/panorama_sumbar_default.jpg',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+            child: useFallback360
+                ? _buildDesktopPanoramaFallback()
+                : ClipRect(
+                    child: PanoramaViewer(
+                      animSpeed: 0.1,
+                      latitude: _pitch,
+                      longitude: _yaw,
+                      onViewChanged: (lon, lat, tilt) {
+                        setState(() {
+                          _yaw = lon;
+                          _pitch = lat;
+                        });
+                      },
+                      hotspots: _k360Facilities.map((facility) {
+                        final isSelected = _selectedFacility360?.category == facility.category;
+                        return Hotspot(
+                          latitude: -10.0,
+                          longitude: facility.yaw,
+                          width: isSelected ? 44 : 36,
+                          height: isSelected ? 44 : 36,
+                          widget: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedFacility360 = facility;
+                                _yaw = facility.yaw;
+                              });
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.terracotta : AppColors.forest,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: isSelected ? 2.5 : 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.40),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(facility.icon, size: isSelected ? 20 : 16, color: Colors.white),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      child: Image.asset(
+                        'assets/images/panorama_sumbar_default.jpg',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
           ),
 
           // 2. Baris Kontrol Atas: Status 360 & Tombol Sensor Gyro Fullscreen FE-1
@@ -3244,6 +3632,153 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                     ),
                   );
                 }).toList(),
+              ),
+            ),
+          ),
+
+          // 3.5. Floating AI Voice Over Historical Storytelling Bar (Sejalan dengan 360°)
+          Positioned(
+            top: 86,
+            left: 14,
+            right: 14,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.ink.withValues(alpha: 0.90),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _isPlayingVoiceOver ? Colors.amber : Colors.white24,
+                  width: _isPlayingVoiceOver ? 1.5 : 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.40),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _toggleVoiceOver,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: _isPlayingVoiceOver ? AppColors.terracotta : AppColors.forest,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            _isPlayingVoiceOver ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  _isPlayingVoiceOver ? 'MEMUTAR SUARA AI SEJARAH' : 'AUDIO NARASI AI SEJARAH',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.6,
+                                    color: _isPlayingVoiceOver ? Colors.amber : AppColors.sage,
+                                  ),
+                                ),
+                                if (_isPlayingVoiceOver) ...[
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.graphic_eq_rounded, size: 14, color: Colors.amber),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              'Sejarah ${widget.place.title}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() => _isNarrationExpanded = !_isNarrationExpanded),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _isNarrationExpanded ? 'Tutup' : 'Teks',
+                                style: const TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Icon(
+                                _isNarrationExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isPlayingVoiceOver) ...[
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: _voiceOverProgress,
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                        minHeight: 3,
+                      ),
+                    ),
+                  ],
+                  if (_isNarrationExpanded) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _getHistoricalNarration(widget.place),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: AppColors.cream,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -3467,6 +4002,132 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDesktopPanoramaFallback() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        final double alignX = (_yaw % 360 - 180) / 180.0;
+
+        return GestureDetector(
+          onPanUpdate: (details) {
+            setState(() {
+              _yaw += details.delta.dx * 0.45;
+              _pitch = (_pitch - details.delta.dy * 0.25).clamp(-45.0, 45.0);
+            });
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Panorama 360 photo background that pans horizontally with drag
+              Positioned.fill(
+                child: Container(
+                  color: AppColors.ink,
+                  child: Image.asset(
+                    'assets/images/panorama_sumbar_default.jpg',
+                    fit: BoxFit.cover,
+                    alignment: Alignment(alignX, (_pitch / 45.0).clamp(-1.0, 1.0)),
+                    errorBuilder: (ctx, err, stack) => Image.network(
+                      widget.place.imageUrl,
+                      fit: BoxFit.cover,
+                      alignment: Alignment(alignX, 0),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Ambient gradient
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.55),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.70),
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Interactive 360 Hotspot Pins pinned onto the view
+              ..._k360Facilities.map((facility) {
+                double diff = (facility.yaw - _yaw) % 360;
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+
+                if (diff.abs() > 65) return const SizedBox.shrink();
+
+                final double posX = (w / 2) + (diff / 65.0) * (w / 2 * 0.85);
+                final double posY = (h * 0.52) + (_pitch * 1.5);
+                final isSelected = _selectedFacility360?.category == facility.category;
+
+                return Positioned(
+                  left: posX - (isSelected ? 26 : 20),
+                  top: posY - (isSelected ? 26 : 20),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedFacility360 = facility;
+                        _yaw = facility.yaw;
+                      });
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: EdgeInsets.all(isSelected ? 9 : 7),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppColors.terracotta : AppColors.forest,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: isSelected ? 2.5 : 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.50),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Icon(facility.icon, size: isSelected ? 22 : 16, color: Colors.white),
+                        ),
+                        const SizedBox(height: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.white30, width: 0.5),
+                          ),
+                          child: Text(
+                            facility.label,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? Colors.amber : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 
