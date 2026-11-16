@@ -5090,15 +5090,14 @@ class _DestinationDetailSheet extends StatefulWidget {
 }
 
 class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
-  int _visitors = 2;
-  int _motor = 0;
-  int _mobil = 1;
   late bool _bookmarked;
+  late List<UserReview> _reviews;
 
   @override
   void initState() {
     super.initState();
     _bookmarked = widget.isBookmarked;
+    _reviews = List<UserReview>.from(widget.place.reviews);
   }
 
   String _formatRupiah(int num) {
@@ -5108,15 +5107,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final total = (_visitors * widget.place.calcRates.tiket) +
-        (_motor * widget.place.calcRates.motor) +
-        (_mobil * widget.place.calcRates.mobil);
-
-    final parts = <String>[];
-    if (_visitors > 0) parts.add('$_visitors Tiket');
-    if (_motor > 0) parts.add('$_motor Motor');
-    if (_mobil > 0) parts.add('$_mobil Mobil');
-    final breakdown = parts.isNotEmpty ? parts.join(' + ') : '1 Tiket Masuk';
+    final baseTicketPrice = widget.place.calcRates.tiket;
 
     return Container(
       height: screenHeight * 0.92,
@@ -5540,7 +5531,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                 ),
                 const SizedBox(height: 14),
 
-                // 2. Ulasan Wisatawan Terverifikasi (REQUEST 1)
+                // 2. Ulasan Wisatawan Terverifikasi (Dengan Bukti Foto & Lokasi Real GPS)
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -5553,37 +5544,63 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Flexible(
-                            child: Text(
-                              'ULASAN WISATAWAN TERVERIFIKASI',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.6,
-                                color: AppColors.forest,
-                              ),
+                        children: [
+                          const Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ULASAN WISATAWAN TERVERIFIKASI',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.6,
+                                    color: AppColors.forest,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Bukti Foto Asli & Koordinat GPS',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Pengalaman Nyata',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.muted,
+                          ElevatedButton.icon(
+                            onPressed: _openAddReviewSheet,
+                            icon: const Icon(Icons.add_a_photo_rounded, size: 13),
+                            label: const Text(
+                              '+ Tulis Ulasan',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.forest,
+                              foregroundColor: AppColors.cream,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              elevation: 0,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      ...List.generate(widget.place.reviews.length, (idx) {
-                        final rev = widget.place.reviews[idx];
+                      const SizedBox(height: 12),
+                      ...List.generate(_reviews.length, (idx) {
+                        final rev = _reviews[idx];
                         return Container(
-                          padding: EdgeInsets.only(top: idx > 0 ? 10 : 0),
-                          margin: EdgeInsets.only(top: idx > 0 ? 10 : 0),
+                          padding: EdgeInsets.only(top: idx > 0 ? 12 : 0),
+                          margin: EdgeInsets.only(top: idx > 0 ? 12 : 0),
                           decoration: idx > 0
                               ? const BoxDecoration(
                                   border: Border(
@@ -5601,8 +5618,8 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     child: Row(
                                       children: [
                                         Container(
-                                          width: 24,
-                                          height: 24,
+                                          width: 26,
+                                          height: 26,
                                           decoration: const BoxDecoration(
                                             color: AppColors.forest,
                                             shape: BoxShape.circle,
@@ -5611,7 +5628,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                           child: Text(
                                             rev.author.isNotEmpty ? rev.author.substring(0, 1) : 'U',
                                             style: const TextStyle(
-                                              fontSize: 10,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w800,
                                               color: AppColors.cream,
                                             ),
@@ -5627,7 +5644,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 1,
                                                 style: const TextStyle(
-                                                  fontSize: 11.5,
+                                                  fontSize: 12,
                                                   fontWeight: FontWeight.w700,
                                                   color: AppColors.ink,
                                                 ),
@@ -5649,28 +5666,121 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    '★ ${rev.rating.toInt()}.0',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.amber,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF3D6),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '★ ${rev.rating.toStringAsFixed(1)}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFFB45309),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 6),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 32),
-                                child: Text(
-                                  '"${rev.comment}"',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    height: 1.4,
-                                    color: AppColors.muted,
+                              if (rev.realLocation != null && rev.realLocation!.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDFECE2),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppColors.sageBorder),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.location_on_rounded, size: 11, color: AppColors.forest),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          rev.realLocation!,
+                                          style: const TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.forest,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              ],
+                              const SizedBox(height: 6),
+                              Text(
+                                '"${rev.comment}"',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  height: 1.4,
+                                  color: AppColors.muted,
+                                ),
                               ),
+                              if (rev.photoUrl != null && rev.photoUrl!.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                GestureDetector(
+                                  onTap: () => _openImagePreview(
+                                    rev.photoUrl!,
+                                    rev.author,
+                                    rev.realLocation ?? 'Lokasi Terverifikasi',
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Stack(
+                                      alignment: Alignment.bottomLeft,
+                                      children: [
+                                        Image.network(
+                                          rev.photoUrl!,
+                                          height: 120,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Container(
+                                            height: 80,
+                                            width: double.infinity,
+                                            color: AppColors.creamSubtle,
+                                            alignment: Alignment.center,
+                                            child: const Icon(Icons.image_not_supported_rounded, color: AppColors.muted),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.bottomCenter,
+                                              end: Alignment.topCenter,
+                                              colors: [
+                                                Colors.black.withValues(alpha: 0.75),
+                                                Colors.transparent,
+                                              ],
+                                            ),
+                                          ),
+                                          width: double.infinity,
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.photo_camera_rounded, size: 11, color: Color(0xFFE5C07B)),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Bukti Foto Asli di Lokasi • Ketuk Perbesar',
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         );
@@ -5679,7 +5789,6 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                   ),
                 ),
                 const SizedBox(height: 14),
-
                 // 3. Rincian Biaya Resmi Sesuai Perda (REQUEST 1 & 4)
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -5811,66 +5920,11 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
-
-                // 4. Simulasi Hitung Tiket & Parkir
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.sageBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'SIMULASI HITUNG TIKET & PARKIR',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.6,
-                          color: AppColors.forest,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Tiket Pengunjung
-                      _buildCalcStepperRow(
-                        label: 'Tiket Pengunjung',
-                        rateText: '${_formatRupiah(widget.place.calcRates.tiket)} / orang',
-                        value: _visitors,
-                        onDecrement: () => setState(() => _visitors = (_visitors - 1).clamp(0, 99)),
-                        onIncrement: () => setState(() => _visitors++),
-                      ),
-                      const Divider(color: AppColors.warmBorder, height: 16),
-
-                      // Parkir Motor
-                      _buildCalcStepperRow(
-                        label: 'Parkir Motor (Roda 2)',
-                        rateText: '${_formatRupiah(widget.place.calcRates.motor)} / unit',
-                        value: _motor,
-                        onDecrement: () => setState(() => _motor = (_motor - 1).clamp(0, 99)),
-                        onIncrement: () => setState(() => _motor++),
-                      ),
-                      const Divider(color: AppColors.warmBorder, height: 16),
-
-                      // Parkir Mobil
-                      _buildCalcStepperRow(
-                        label: 'Parkir Mobil (Roda 4)',
-                        rateText: '${_formatRupiah(widget.place.calcRates.mobil)} / unit',
-                        value: _mobil,
-                        onDecrement: () => setState(() => _mobil = (_mobil - 1).clamp(0, 99)),
-                        onIncrement: () => setState(() => _mobil++),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                              ],
             ),
           ),
 
-          // Sticky Bottom Action Bar with Total & Pesan Tiket Button (REQUEST 4)
+          // Sticky Bottom Action Bar with Official Ticket Price & Pesan Tiket Button
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             decoration: BoxDecoration(
@@ -5891,7 +5945,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Total Biaya Resmi',
+                      'Tiket Masuk Resmi',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -5899,7 +5953,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                       ),
                     ),
                     Text(
-                      _formatRupiah(total),
+                      _formatRupiah(baseTicketPrice),
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -5911,7 +5965,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => widget.onCheckout(total, breakdown),
+                    onPressed: () => widget.onCheckout(baseTicketPrice, '1 Tiket Masuk Resmi'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.forest,
                       foregroundColor: AppColors.cream,
@@ -5938,94 +5992,564 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
     );
   }
 
-  Widget _buildCalcStepperRow({
-    required String label,
-    required String rateText,
-    required int value,
-    required VoidCallback onDecrement,
-    required VoidCallback onIncrement,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
+  void _openImagePreview(String url, String author, String location) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.forest,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 260,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 200,
+                      color: Colors.black26,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.image, color: Colors.white, size: 48),
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.verified_rounded, size: 14, color: Color(0xFFE5C07B)),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Bukti Foto Asli • $author',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.cream),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      location,
+                      style: TextStyle(fontSize: 10.5, color: AppColors.sage.withValues(alpha: 0.9)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openAddReviewSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => _AddReviewModal(
+        destination: widget.place,
+        onReviewSubmitted: (newReview) {
+          setState(() {
+            _reviews.insert(0, newReview);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.forest,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              content: const Row(
+                children: [
+                  Icon(Icons.verified_rounded, color: Color(0xFFE5C07B), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ulasan dengan bukti foto & koordinat GPS berhasil diterbitkan!',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.cream),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AddReviewModal extends StatefulWidget {
+  final SavedDestinationModel destination;
+  final ValueChanged<UserReview> onReviewSubmitted;
+
+  const _AddReviewModal({
+    required this.destination,
+    required this.onReviewSubmitted,
+  });
+
+  @override
+  State<_AddReviewModal> createState() => _AddReviewModalState();
+}
+
+class _AddReviewModalState extends State<_AddReviewModal> {
+  int _rating = 5;
+  late String _photoUrl;
+  final _commentController = TextEditingController();
+
+  late final List<Map<String, String>> _samplePhotos;
+
+  @override
+  void initState() {
+    super.initState();
+    _photoUrl = widget.destination.imageUrl;
+    _samplePhotos = [
+      {
+        'label': 'Spot Utama',
+        'url': widget.destination.imageUrl,
+      },
+      {
+        'label': 'Pemandangan Alam',
+        'url': 'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?auto=format&fit=crop&w=600&q=80',
+      },
+      {
+        'label': 'Pos & Loket Resmi',
+        'url': 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?auto=format&fit=crop&w=600&q=80',
+      },
+    ];
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  String _getRatingText(int stars) {
+    switch (stars) {
+      case 5:
+        return '⭐⭐⭐⭐⭐ Sangat Memuaskan (5.0)';
+      case 4:
+        return '⭐⭐⭐⭐ Bagus & Tertib (4.0)';
+      case 3:
+        return '⭐⭐⭐ Cukup Baik (3.0)';
+      case 2:
+        return '⭐⭐ Kurang Memuaskan (2.0)';
+      default:
+        return '⭐ Perlu Perbaikan (1.0)';
+    }
+  }
+
+  void _submitReview() {
+    final comment = _commentController.text.trim();
+    if (comment.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan tulis ulasan atau pengalaman Anda terlebih dahulu.'),
+          backgroundColor: AppColors.terracotta,
+        ),
+      );
+      return;
+    }
+
+    final newReview = UserReview(
+      author: 'Ahmad Fauzi',
+      rating: _rating.toDouble(),
+      date: 'Baru saja',
+      comment: comment,
+      photoUrl: _photoUrl,
+      realLocation: 'GPS Terverifikasi (${widget.destination.subRegion}) • Real-time',
+      isGpsVerified: true,
+    );
+
+    Navigator.pop(context);
+    widget.onReviewSubmitted(newReview);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 18,
+        right: 18,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-              ),
-            ),
-            Text(
-              rateText,
-              style: const TextStyle(
-                fontSize: 10.5,
-                color: AppColors.muted,
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: onDecrement,
+            Center(
               child: Container(
-                width: 28,
-                height: 28,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.cream,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.warmBorder),
+                  color: AppColors.warmBorder,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                alignment: Alignment.center,
-                child: const Text(
-                  '-',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TULIS ULASAN WISATAWAN',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          color: AppColors.brush,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Ulasan Nyata & Bukti Foto',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.creamSubtle,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.close_rounded, size: 16, color: AppColors.ink),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // 1. Lokasi Real GPS Geofence Box
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDFECE2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.sageBorder),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: const BoxDecoration(
+                      color: AppColors.forest,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.gps_fixed_rounded, color: AppColors.cream, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Lokasi Real GPS Terdeteksi',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                        Text(
+                          '${widget.destination.title} (${widget.destination.subRegion}) • Radius < 150m',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'Terverifikasi',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.cream,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 14),
+
+            // 2. Rating Bintang
+            const Text(
+              'PENILAIAN RATING:',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.warmBorder),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final starIndex = index + 1;
+                      return GestureDetector(
+                        onTap: () => setState(() => _rating = starIndex),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Icon(
+                            starIndex <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                            size: 32,
+                            color: starIndex <= _rating ? Colors.amber : AppColors.warmBorder,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _getRatingText(_rating),
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // 3. Bukti Foto Asli di Lokasi
+            const Text(
+              'BUKTI FOTO KUNJUNGAN DI LOKASI:',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.warmBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Stack(
+                      alignment: Alignment.bottomLeft,
+                      children: [
+                        Image.network(
+                          _photoUrl,
+                          height: 130,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 100,
+                            color: AppColors.creamSubtle,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.image, color: AppColors.muted),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [Colors.black.withValues(alpha: 0.75), Colors.transparent],
+                            ),
+                          ),
+                          width: double.infinity,
+                          child: const Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFFE5C07B)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Bukti Foto Terlampir & Siap Diverifikasi',
+                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Pilih contoh bukti foto nyata di lokasi:',
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.muted),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    children: _samplePhotos.map((sample) {
+                      final isSelected = _photoUrl == sample['url'];
+                      return ChoiceChip(
+                        label: Text(sample['label']!),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) setState(() => _photoUrl = sample['url']!);
+                        },
+                        selectedColor: AppColors.forest,
+                        labelStyle: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? AppColors.cream : AppColors.ink,
+                        ),
+                        backgroundColor: AppColors.creamSubtle,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: isSelected ? AppColors.forest : AppColors.warmBorder),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // 4. Input Ulasan & Catatan Pengalaman
+            const Text(
+              'PENGALAMAN & KONDISI NYATA DI LOKASI:',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _commentController,
+              maxLines: 3,
+              style: const TextStyle(fontSize: 12, color: AppColors.ink),
+              decoration: InputDecoration(
+                hintText: 'Tulis pengalaman Anda (kebersihan fasilitas, kesesuaian tiket perda, keindahan spot)...',
+                hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.warmBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.warmBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.forest, width: 1.5),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                'Tarif resmi sesuai Perda',
+                'Fasilitas bersih & rapi',
+                'Pemandangan sangat indah',
+                'Parkir aman & tertib',
+              ].map((chipText) {
+                return GestureDetector(
+                  onTap: () {
+                    final cur = _commentController.text;
+                    _commentController.text = cur.isEmpty ? chipText : '$cur. $chipText';
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.sage,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.sageBorder),
+                    ),
+                    child: Text(
+                      '+ $chipText',
+                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.forest),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // 5. Tombol Kirim Ulasan
             SizedBox(
-              width: 32,
-              child: Text(
-                '$value',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _submitReview,
+                icon: const Icon(Icons.send_rounded, size: 16),
+                label: const Text(
+                  'Kirim Ulasan Terverifikasi',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                 ),
-              ),
-            ),
-            GestureDetector(
-              onTap: onIncrement,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.forest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  '+',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.cream,
-                  ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.forest,
+                  foregroundColor: AppColors.cream,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }

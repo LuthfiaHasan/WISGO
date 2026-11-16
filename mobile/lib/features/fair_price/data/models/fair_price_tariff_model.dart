@@ -53,12 +53,18 @@ class UserReview {
   final double rating;
   final String date;
   final String comment;
+  final String? photoUrl;
+  final String? realLocation;
+  final bool isGpsVerified;
 
   const UserReview({
     required this.author,
     required this.rating,
     required this.date,
     required this.comment,
+    this.photoUrl,
+    this.realLocation,
+    this.isGpsVerified = true,
   });
 }
 
@@ -171,6 +177,10 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
         date: '2 hari lalu',
         comment:
             'Air terjun 3 tingkat sangat asri dan sejuk. Parkir motor resmi 5 ribu aman dijaga warga pemuda setempat.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.9982, 100.4321 • Spot Tingkat 2 (< 100m)',
+        isGpsVerified: true,
       ),
       UserReview(
         author: 'Nurul Aisyah',
@@ -178,6 +188,10 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
         date: '1 minggu lalu',
         comment:
             'Warung UMKM dekat pos 1 menyajikan goreng pisang dan kopi hangat dengan harga wajar tanpa getok.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.9985, 100.4325 • Pos Retribusi 1',
+        isGpsVerified: true,
       ),
       UserReview(
         author: 'Fajar Pratama',
@@ -185,6 +199,10 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
         date: '2 minggu lalu',
         comment:
             'Tersedia toilet dan bilas air bersih setelah bermain air. Sangat membantu melihat denah lokasi sebelum naik.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.9980, 100.4318 • Gazebo Bilas Air',
+        isGpsVerified: true,
       ),
     ],
     denahPoints: [

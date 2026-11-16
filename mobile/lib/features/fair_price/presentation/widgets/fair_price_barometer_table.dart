@@ -25,9 +25,7 @@ class FairPriceBarometerTable extends StatefulWidget {
 }
 
 class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
-  int _visitors = 2;
-  int _motor = 0;
-  int _mobil = 1;
+
 
   static const List<Map<String, String>> _groups = [
     {'key': 'TIKET', 'title': '1. Tiket Masuk & Retribusi Kawasan'},
@@ -35,25 +33,7 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
     {'key': 'FASILITAS', 'title': '3. Sewa Fasilitas, Pemandu & Lokal'},
   ];
 
-  String _formatRupiah(int number) {
-    final formatted = number.toString().replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => '.',
-    );
-    return 'Rp $formatted';
-  }
 
-  void _adjustCalc(String field, int delta) {
-    setState(() {
-      if (field == 'visitors') {
-        _visitors = (_visitors + delta).clamp(0, 99);
-      } else if (field == 'motor') {
-        _motor = (_motor + delta).clamp(0, 99);
-      } else if (field == 'mobil') {
-        _mobil = (_mobil + delta).clamp(0, 99);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,17 +42,7 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
         ? _groups
         : _groups.where((g) => g['key'] == widget.selectedCategory).toList();
 
-    final totalCost = (_visitors * dest.calcRates.tiket) +
-        (_motor * dest.calcRates.motor) +
-        (_mobil * dest.calcRates.mobil);
 
-    final parts = <String>[];
-    if (_visitors > 0) parts.add('$_visitors Tiket');
-    if (_motor > 0) parts.add('$_motor Motor');
-    if (_mobil > 0) parts.add('$_mobil Mobil');
-    final breakdownText = parts.isNotEmpty
-        ? parts.join(' + ')
-        : 'Pilih jumlah pengunjung/kendaraan';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,154 +355,6 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
           );
         }),
 
-        // 3. Interactive Vertical Calculator (Simulasi Biaya ke Bawah)
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.sageBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.only(bottom: 10),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: AppColors.warmBorder),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Kalkulator Simulasi Biaya Resmi',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Susunan estimasi ke bawah sesuai jumlah rombongan & kendaraan',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.sage,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: const Text(
-                        'Otomatis',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.forest,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Baris 1: Pengunjung
-              _buildStepperRow(
-                title: 'Tiket Masuk Pengunjung',
-                rateLabel: '${_formatRupiah(dest.calcRates.tiket)} / orang',
-                value: _visitors,
-                onDecrement: () => _adjustCalc('visitors', -1),
-                onIncrement: () => _adjustCalc('visitors', 1),
-              ),
-              const Divider(height: 1, color: AppColors.warmBorder),
-
-              // Baris 2: Parkir Motor
-              _buildStepperRow(
-                title: 'Retribusi Parkir Motor (Roda 2)',
-                rateLabel: '${_formatRupiah(dest.calcRates.motor)} / unit',
-                value: _motor,
-                onDecrement: () => _adjustCalc('motor', -1),
-                onIncrement: () => _adjustCalc('motor', 1),
-              ),
-              const Divider(height: 1, color: AppColors.warmBorder),
-
-              // Baris 3: Parkir Mobil
-              _buildStepperRow(
-                title: 'Retribusi Parkir Mobil (Roda 4)',
-                rateLabel: '${_formatRupiah(dest.calcRates.mobil)} / unit',
-                value: _mobil,
-                onDecrement: () => _adjustCalc('mobil', -1),
-                onIncrement: () => _adjustCalc('mobil', 1),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Total Official Calculation Box
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.forest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Total Biaya Resmi Seharusnya',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.sage,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            breakdownText,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.sage.withValues(alpha: 0.80),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      _formatRupiah(totalCost),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.cream,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 14),
-
         // 4. Tombol Lapor Ketidaksesuaian Tarif / Pungli (Sesuai Jobdesk Pilar 3)
         Container(
           padding: const EdgeInsets.all(16),
@@ -703,100 +525,4 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
     );
   }
 
-  Widget _buildStepperRow({
-    required String title,
-    required String rateLabel,
-    required int value,
-    required VoidCallback onDecrement,
-    required VoidCallback onIncrement,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  rateLabel,
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: AppColors.muted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            children: [
-              GestureDetector(
-                onTap: onDecrement,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.cream,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.sageBorder),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    '-',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 28,
-                child: Text(
-                  '$value',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: onIncrement,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.forest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    '+',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.cream,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
