@@ -349,6 +349,7 @@ type PartnerNagari struct {
 	SpicyLevel  int     `json:"spicy_level,omitempty"` // Khusus kuliner (0-5)
 	IsVerified  bool    `json:"is_verified"`
 	StandardFee float64 `json:"standard_fee"`
+	Unit        string  `json:"unit,omitempty"`        // malam/kamar, hari, orang, porsi, set
 	NagariName  string  `json:"nagari_name"`
 }
 
@@ -427,6 +428,8 @@ type AutoItineraryRequest struct {
 	DurationDays int      `json:"duration_days"` // 1 - 7 hari
 	ArrivalPoint string   `json:"arrival_point"` // "BIM" atau "Darat"
 	TravelerType string   `json:"traveler_type"` // "family", "backpacker", "culinary", "open_trip"
+	PeopleCount  int      `json:"people_count,omitempty"` // Jumlah orang rombongan
+	BudgetLevel  string   `json:"budget_level,omitempty"` // "hemat", "sedang", "sultan"
 	Preferences  []string `json:"preferences,omitempty"`
 }
 
