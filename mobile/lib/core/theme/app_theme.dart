@@ -28,7 +28,63 @@ class AppTheme {
           fontWeight: FontWeight.bold,
         ),
       ),
+      // Universal Button Hover Effects, Transitions & Cursor Feedback
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ButtonStyle(
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          elevation: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) return 1.0;
+            if (states.contains(WidgetState.hovered)) return 6.0;
+            return 2.0;
+          }),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return Colors.white.withValues(alpha: 0.12);
+            }
+            if (states.contains(WidgetState.pressed)) {
+              return Colors.black.withValues(alpha: 0.15);
+            }
+            return null;
+          }),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return const Color(0xFF193D22).withValues(alpha: 0.08);
+            }
+            return null;
+          }),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return const Color(0xFF193D22).withValues(alpha: 0.08);
+            }
+            return null;
+          }),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return const Color(0xFF193D22).withValues(alpha: 0.10);
+            }
+            return null;
+          }),
+        ),
+      ),
     );
   }
 }
-
