@@ -670,7 +670,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '*** LUNAS VIA ESCROW - ANTI PUNGLI ***\nTunjukkan struk ini pada petugas loket resmi nagari',
+                      '*** LUNAS VIA ESCROW RESMI ***\nTunjukkan struk ini pada petugas loket resmi nagari',
                       style: TextStyle(fontSize: 8.5, color: AppColors.brush, height: 1.3),
                       textAlign: TextAlign.center,
                     ),

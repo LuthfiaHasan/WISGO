@@ -13,12 +13,10 @@ import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
-import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
 import '../../../fe1_visual_map/destination_detail/destination_detail_screen.dart';
 import '../../../fe1_visual_map/hazard_alert_sos/hazard_sos_screen.dart';
 import '../../../fe1_visual_map/map_explore_shunlu/map_explore_screen.dart';
 import '../../../fe1_visual_map/models/destination_model.dart';
-import '../../../fe1_visual_map/offline_pocket/offline_pocket_screen.dart';
 import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
 import '../../../booking/presentation/widgets/quick_booking_panel.dart';
 import '../../../booking/presentation/widgets/qris_payment_sheet.dart';
@@ -1611,7 +1609,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       border: Border.all(color: AppColors.sageBorder),
                     ),
                     child: const Text(
-                      'Anti-Pungli',
+                      'Tarif Resmi Perda',
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
@@ -1723,6 +1721,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
             children: [
+              _buildPaidOrdersSection(),
+              const SizedBox(height: 14),
               FairPriceBarometerTable(
                 destinationData: activeDest,
                 selectedCategory: _activeBarometerCategory,
@@ -2822,303 +2822,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
               const SizedBox(height: 14),
 
-              // 1.8. RIWAYAT PEMESANAN & STRUK RESMI (Bisa Dibuka Kapan Saja & Cetak)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sageBorder),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'TRANSAKSI RESMI & ANTI-PUNGLI',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.8,
-                                color: AppColors.forest,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Riwayat Pemesanan & Struk',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.sage,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            ' Struk',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.forest,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Struk resmi terlindungi Rekening Escrow Nagari. Anda dapat membuka kembali dan mencetak struk kapan saja.',
-                      style: TextStyle(fontSize: 11, color: AppColors.muted, height: 1.35),
-                    ),
-                    const SizedBox(height: 12),
-                    ...kPaidReceiptsHistory.map((receipt) {
-                      final title = receipt['destinationTitle']?.toString() ?? 'Wisata Sumbar';
-                      final date = receipt['date']?.toString() ?? 'Hari ini';
-                      final total = receipt['totalAmount'] as int? ?? 0;
-                      final txId = receipt['transactionId']?.toString() ?? '';
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.creamSubtle,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.warmBorder),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    title,
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.ink,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFDFECE2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'LUNAS',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.forest,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '$date • $txId',
-                              style: const TextStyle(fontSize: 10, color: AppColors.muted),
-                            ),
-                            const Divider(height: 14, color: AppColors.warmBorder),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Rp ${_formatRupiah(total)}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.forest,
-                                  ),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: () => _openReceiptDetailModal(receipt),
-                                  icon: const Icon(Icons.receipt_long_rounded, size: 14),
-                                  label: const Text(
-                                    'Buka Struk & Print',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.forest,
-                                    foregroundColor: AppColors.cream,
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    elevation: 0,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // 2. Menu Fitur & Aktivitas Wisatawan (Vertikal)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sageBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'AKTIVITAS & FITUR WISATAWAN',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: AppColors.forest,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildProfileMenuTile(
-                      title: 'Daftar Wisata Tersimpan (Layar 04)',
-                      subtitle:
-                          'Lihat ${_savedIds.length} bookmark wisata, efek shimmer, & mode luring',
-                      badge: 'Buka',
-                      onTap: () => setState(() => _activeTabIndex = 1),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Tabel Fair-Price Barometer (Pilar 3)',
-                      subtitle:
-                          'Cek tarif resmi tiket, parkir motor/mobil, & kalkulator biaya',
-                      badge: 'Perda',
-                      onTap: () => setState(() => _activeTabIndex = 2),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Simulasi Mode Tanpa Sinyal (Offline Banner)',
-                      subtitle: _isOfflineMode
-                          ? 'Banner notifikasi statis luring sedang ditampilkan di atas'
-                          : 'Ketuk untuk menyalakan banner notifikasi tanpa internet',
-                      badge: _isOfflineMode ? 'Aktif' : 'Uji',
-                      isWarning: _isOfflineMode,
-                      onTap: () {
-                        setState(() => _isOfflineMode = !_isOfflineMode);
-                        _showAppToast(
-                          _isOfflineMode
-                              ? 'Mode Tanpa Sinyal diaktifkan'
-                              : 'Kembali ke mode Daring',
-                        );
-                      },
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Paspor Digital Minang & Lencana Nagari',
-                      subtitle:
-                          '3 dari 10 stempel kunjungan nagari telah terkumpul',
-                      badge: '3/10',
-                      onTap: () => _showAppToast(
-                        'Paspor Digital Minang: 3 Lencana Nagari aktif',
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Riwayat Laporan Ketidaksesuaian Tarif / Pungli',
-                      subtitle:
-                          'Pantau status laporan ke Dinas Pariwisata & Dishub',
-                      badge: 'Aman',
-                      onTap: () {
-                        setState(() => _activeTabIndex = 2);
-                        _showAppToast(
-                          'Buka bagian bawah Tabel Tarif untuk melapor pungli',
-                        );
-                      },
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Peta Shunlu & Detour Rute (Layar 03)',
-                      subtitle:
-                          'Navigasi rute Padang - Harau & denah mikro pejalan kaki',
-                      badge: 'Peta OSM',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MapExploreShunluScreen(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Kamus Minang & Audio Panduan Budaya',
-                      subtitle:
-                          'Pelajari frasa Minang autentik, audio playback & kalender acara nagari',
-                      badge: 'Budaya',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AudioCultureScreen(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Peringatan Jalur Rawan Bencana & SOS GPS',
-                      subtitle:
-                          'Pantau status longsor Sitinjau Lauik, Lembah Anai & tombol darurat',
-                      badge: 'Darurat',
-                      isWarning: true,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HazardSosScreen(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Manajemen Mode Luring (Pocket Bundle)',
-                      subtitle:
-                          'Unduh paket wisata daerah terpencil tanpa koneksi internet',
-                      badge: 'Luring',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const OfflinePocketScreen(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
               // 3. Pengaturan Akun & Tombol Keluar (Ke Alur Awal Jobdesk 1-4)
               Container(
                 padding: const EdgeInsets.all(16),
@@ -3226,59 +2929,162 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  Widget _buildProfileMenuTile({
-    required String title,
-    required String subtitle,
-    required String badge,
-    required VoidCallback onTap,
-    bool isWarning = false,
-  }) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildPaidOrdersSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.sageBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TRANSAKSI & PEMESANAN RESMI',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: AppColors.forest,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.muted,
-                    height: 1.35,
+                  SizedBox(height: 2),
+                  Text(
+                    'Riwayat Pemesanan & Struk',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isWarning ? AppColors.coralTint : AppColors.sage,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              badge,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w800,
-                color: isWarning ? AppColors.terracotta : AppColors.forest,
+                ],
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.sage,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${kPaidReceiptsHistory.length} Struk',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.forest,
+                  ),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 4),
+          const Text(
+            'Struk resmi terlindungi Rekening Escrow Nagari. Anda dapat membuka kembali dan mencetak struk kapan saja.',
+            style: TextStyle(fontSize: 11, color: AppColors.muted, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          ...kPaidReceiptsHistory.map((receipt) {
+            final title = receipt['destinationTitle']?.toString() ?? 'Wisata Sumbar';
+            final date = receipt['date']?.toString() ?? 'Hari ini';
+            final total = receipt['totalAmount'] as int? ?? 0;
+            final txId = receipt['transactionId']?.toString() ?? '';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.creamSubtle,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.warmBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDFECE2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'LUNAS',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$date • $txId',
+                    style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                  ),
+                  const Divider(height: 14, color: AppColors.warmBorder),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Rp ${_formatRupiah(total)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.forest,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _openReceiptDetailModal(receipt),
+                        icon: const Icon(Icons.receipt_long_rounded, size: 14),
+                        label: const Text(
+                          'Buka Struk & Print',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.forest,
+                          foregroundColor: AppColors.cream,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          elevation: 0,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -6271,7 +6077,7 @@ class _BookingCheckoutSheetState extends State<_BookingCheckoutSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'PEMESANAN RESMI & ANTI-PUNGLI',
+                    'PEMESANAN RESMI',
                     style: TextStyle(
                       fontSize: 9.5,
                       fontWeight: FontWeight.w800,
@@ -6999,7 +6805,7 @@ class _ReceiptDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Karcis ini sah menurut Perda Prov. Sumbar No. 4 Tahun 2024 tentang Retribusi Wisata Alam Nagari. Anti-Pungli terjamin.',
+                        'Karcis ini sah menurut Perda Prov. Sumbar No. 4 Tahun 2024 tentang Retribusi Wisata Alam Nagari. Transaksi resmi terjamin.',
                         style: TextStyle(fontSize: 8.5, color: AppColors.brush, height: 1.3),
                         textAlign: TextAlign.center,
                       ),
