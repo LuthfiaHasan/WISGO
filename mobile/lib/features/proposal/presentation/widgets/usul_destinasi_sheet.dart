@@ -16,6 +16,7 @@ class UsulDestinasiSheet extends StatefulWidget {
 class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _feeController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
   String _selectedRegion = 'Kab. Lima Puluh Kota';
   String _selectedCategory = 'Air Terjun';
   bool _photoAttached = false;
@@ -34,6 +35,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
   void dispose() {
     _nameController.dispose();
     _feeController.dispose();
+    _descController.dispose();
     super.dispose();
   }
 
@@ -202,6 +204,65 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                         controller: _feeController,
                         decoration: InputDecoration(
                           hintText: 'Contoh: Rp 5.000 / orang (Pengelola Pokdarwis)',
+                          hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                          filled: true,
+                          fillColor: AppColors.cream,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.sageBorder),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Deskripsi & Cerita Sejarah (Untuk Voice Over AI)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.record_voice_over_rounded, size: 14, color: AppColors.forest),
+                              SizedBox(width: 4),
+                              Text(
+                                'DESKRIPSI & NARASI SEJARAH (VOICE OVER AI):',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _descController.text =
+                                    'Sarasah Murai merupakan air terjun bertingkat tujuh yang tersembunyi di kawasan hutan adat Harau. Dahulu riam airnya menjadi tempat berkumpul dan bersarangnya burung murai batu endemik Minangkabau. Airnya yang jernih bersumber dari pegunungan Bukit Barisan, menghadirkan kesegaran alami serta kearifan falsafah "Alam Takambang Jadi Guru".';
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.sage,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'Isi Contoh Narasi',
+                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.forest),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Deskripsi ini akan dinarasikan otomatis oleh Pemandu Suara AI saat wisatawan menikmati panorama Tur 360°.',
+                        style: TextStyle(fontSize: 9.5, color: AppColors.muted, height: 1.3),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _descController,
+                        maxLines: 4,
+                        minLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Tuliskan sejarah, legenda, atau daya tarik nagari untuk diceritakan oleh Voice Over AI tur 360°...',
                           hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
                           filled: true,
                           fillColor: AppColors.cream,
