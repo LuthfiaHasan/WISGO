@@ -355,9 +355,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
@@ -376,8 +378,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildExploreView() {
     var filtered = kAllSumbarDestinations.where((item) {
@@ -1973,7 +1976,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // 2. Fasilitas Lingkungan: Ikon informatif di kartu, judul lengkap di detail
+                // 2. Fasilitas Lingkungan: Ikon informatif di kartu, hover & detail lengkap
                 Row(
                   children: [
                     const Text(
@@ -1994,23 +1997,52 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(right: 6),
                               child: Tooltip(
-                                message: fac,
+                                message: '$fac (Ketuk untuk rincian standar fasilitas)',
                                 preferBelow: false,
-                                child: Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.creamSubtle,
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: InkWell(
+                                    onTap: () => _openFacilityDetailSheet(fac, place),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: AppColors.warmBorder.withValues(alpha: 0.8),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 180),
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.creamSubtle,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: AppColors.warmBorder.withValues(alpha: 0.9),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _getFacilityIcon(fac),
+                                            size: 13,
+                                            color: AppColors.forest,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            fac,
+                                            style: const TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.ink,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 2),
+                                          const Text(
+                                            'ⓘ',
+                                            style: TextStyle(
+                                              fontSize: 8.5,
+                                              color: AppColors.brush,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    _getFacilityIcon(fac),
-                                    size: 14.5,
-                                    color: AppColors.forest,
                                   ),
                                 ),
                               ),
@@ -2309,6 +2341,180 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _ReceiptDetailSheet(receipt: receipt),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 13: DETAIL FASILITAS LINGKUNGAN KAWASAN (DENGAN HOVER & DETAIL)
+  // ===========================================================================
+  void _openFacilityDetailSheet(String facName, SavedDestinationModel place) {
+    String detailText;
+    final lower = facName.toLowerCase();
+    if (lower.contains('parkir')) {
+      detailText = 'Kantong parkir resmi terkelola rapi oleh Pokdarwis nagari. Tarif resmi Perda No. 4/2024: Motor Rp 3.000 / Mobil Rp 5.000. Dilarang meminta pungutan tambahan di luar karcis resmi.';
+    } else if (lower.contains('toilet') || lower.contains('bilas')) {
+      detailText = 'Fasilitas sanitasi bersih berstandar CHSE dengan pasokan air alami pegunungan yang jernih dan mengalir lancar. Retribusi pemeliharaan Rp 2.000.';
+    } else if (lower.contains('kuliner') || lower.contains('warung')) {
+      detailText = 'Deretan kedai lokal warga nagari binaan yang menyajikan kopi kawa daun khas Luhak Nan Tuo, teh talua, dan aneka kuliner tradisional dengan daftar harga pasti.';
+    } else if (lower.contains('musholla') || lower.contains('masjid')) {
+      detailText = 'Musala bersih dengan karpet nyaman, perlengkapan salat (mukena & sarung), serta tempat wudu dengan air mata air pegunungan yang sejuk.';
+    } else if (lower.contains('foto') || lower.contains('spot')) {
+      detailText = 'Spot foto panorama alami berupa dek kayu dan jembatan bambu dengan latar lanskap alam yang memukau dan berpagar aman.';
+    } else if (lower.contains('guide') || lower.contains('pemandu')) {
+      detailText = 'Pemandu lokal terlatih dari pemuda nagari yang siap mendampingi trekking jalur alami serta menceritakan sejarah dan kearifan tambo adat Minang.';
+    } else {
+      detailText = 'Fasilitas resmi kawasan yang terawat dan dikelola bersama Pokdarwis nagari sesuai regulasi Perda Prov. Sumbar No. 4/2024.';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.forest,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(_getFacilityIcon(facName), size: 20, color: AppColors.cream),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'INFORMASI FASILITAS LINGKUNGAN',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            facName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.sageBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Kawasan Wisata:', style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.sage,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('Terverifikasi Perda', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.forest)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      place.title,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                    ),
+                    const Divider(height: 16, color: AppColors.warmBorder),
+                    const Text('Keterangan & Standar Layanan:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest)),
+                    const SizedBox(height: 4),
+                    Text(
+                      detailText,
+                      style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.ink),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.sage,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.shield_rounded, size: 16, color: AppColors.forest),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Seluruh fasilitas resmi diawasi Dispar & Satgas Nagari untuk menjamin kenyamanan bebas pungli.',
+                        style: TextStyle(fontSize: 9.5, color: AppColors.forest, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Pahami & Tutup', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
