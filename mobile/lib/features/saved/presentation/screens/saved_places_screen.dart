@@ -99,6 +99,33 @@ extension SavedDestinationModelFe1Bridge on SavedDestinationModel {
 /// - View 1: Layar 04 Destinasi Tersimpan (`Daftar`, `Efek Memuat`, `Kosong`, `Luring` + Filter Wilayah + Kartu Bergambar & Biaya Vertikal)
 /// - View 2: Pilar 3 Rincian Biaya Resmi & Kalkulator Simulasi Vertikal
 /// - Clean 4-Button Bottom Navigation Bar (`Daerah`, `Tersimpan`, `Tarif Resmi`, `Alur Awal`)
+final List<Map<String, dynamic>> kPaidReceiptsHistory = [
+  {
+    'transactionId': 'WG-ESCROW-20261116-89241',
+    'destinationTitle': 'Air Terjun Lubuk Hitam (Cindakir) 3 Tingkat',
+    'totalAmount': 25000,
+    'orderItems': [
+      {'name': 'Karcis Masuk Wisatawan (Perda No. 4)', 'qty': 2, 'total': 20000},
+      {'name': 'Retribusi Parkir Resmi Roda Dua', 'qty': 1, 'total': 5000},
+    ],
+    'paymentMethod': 'QRIS Dinamis (BCA/GoPay)',
+    'date': '16 Nov 2026 • 13:45 WIB',
+    'status': 'LUNAS (ESCROW TERVERIFIKASI)',
+  },
+  {
+    'transactionId': 'WG-ESCROW-20261115-44109',
+    'destinationTitle': 'Lembah Harau & Tebing Kelok 9',
+    'totalAmount': 40000,
+    'orderItems': [
+      {'name': 'Karcis Masuk Lembah Harau', 'qty': 2, 'total': 30000},
+      {'name': 'Retribusi Parkir Resmi Roda Empat', 'qty': 1, 'total': 10000},
+    ],
+    'paymentMethod': 'QRIS Dinamis',
+    'date': '15 Nov 2026 • 10:15 WIB',
+    'status': 'LUNAS (ESCROW TERVERIFIKASI)',
+  },
+];
+
 class SavedPlacesScreen extends StatefulWidget {
   final bool initialOfflineMode;
   final bool initialLoading;
@@ -196,6 +223,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     }
   }
 
+
+    String _formatRupiah(int val) {
+    final s = val.toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = s.length - 1; i >= 0; i--) {
+      buffer.write(s[i]);
+      count++;
+      if (count == 3 && i != 0) {
+        buffer.write('.');
+        count = 0;
+      }
+    }
+    return buffer.toString().split('').reversed.join('');
+  }
 
   void _showAppToast(String message) {
     if (!mounted) return;
@@ -2258,6 +2300,18 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
+  // ===========================================================================
+  // MODAL 12: DETAIL STRUK PEMBAYARAN RESMI & CETAK / PRINT STRUK
+  // ===========================================================================
+  void _openReceiptDetailModal(Map<String, dynamic> receipt) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ReceiptDetailSheet(receipt: receipt),
+    );
+  }
+
   // VIEW 3: PROFIL WISATAWAN & PENGATURAN AKUN
   // ===========================================================================
   Widget _buildProfileView() {
@@ -2556,6 +2610,168 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // 1.8. RIWAYAT PEMESANAN & STRUK RESMI (Bisa Dibuka Kapan Saja & Cetak)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.sageBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'TRANSAKSI RESMI & ANTI-PUNGLI',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                                color: AppColors.forest,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Riwayat Pemesanan & Struk',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.sage,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            ' Struk',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Struk resmi terlindungi Rekening Escrow Nagari. Anda dapat membuka kembali dan mencetak struk kapan saja.',
+                      style: TextStyle(fontSize: 11, color: AppColors.muted, height: 1.35),
+                    ),
+                    const SizedBox(height: 12),
+                    ...kPaidReceiptsHistory.map((receipt) {
+                      final title = receipt['destinationTitle']?.toString() ?? 'Wisata Sumbar';
+                      final date = receipt['date']?.toString() ?? 'Hari ini';
+                      final total = receipt['totalAmount'] as int? ?? 0;
+                      final txId = receipt['transactionId']?.toString() ?? '';
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.creamSubtle,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.warmBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.ink,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDFECE2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'LUNAS',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.forest,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$date • $txId',
+                              style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                            ),
+                            const Divider(height: 14, color: AppColors.warmBorder),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Rp ${_formatRupiah(total)}',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.forest,
+                                  ),
+                                ),
+                                ElevatedButton.icon(
+                                  onPressed: () => _openReceiptDetailModal(receipt),
+                                  icon: const Icon(Icons.receipt_long_rounded, size: 14),
+                                  label: const Text(
+                                    'Buka Struk & Print',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.forest,
+                                    foregroundColor: AppColors.cream,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    elevation: 0,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -3277,10 +3493,13 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
         onPaymentSuccess: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Pembayaran Sukses! Layanan Resmi Terkonfirmasi.'),
+              content: Text('Pembayaran Sukses! Layanan Resmi Terkonfirmasi & Struk Tersimpan di Profil.'),
               backgroundColor: AppColors.forest,
             ),
           );
+        },
+        onReceiptGenerated: (receipt) {
+          kPaidReceiptsHistory.insert(0, receipt);
         },
       ),
     );
@@ -6155,4 +6374,473 @@ IconData _getFacilityIcon(String name) {
   if (lower.contains('foto') || lower.contains('spot')) return Icons.camera_alt_rounded;
   if (lower.contains('camping') || lower.contains('kemah')) return Icons.cabin_rounded;
   return Icons.check_circle_outline_rounded;
+}
+
+
+// =============================================================================
+// MODAL SHEET: STRUK RESMI PEMBAYARAN & CETAK / PRINT STRUK
+// =============================================================================
+class _ReceiptDetailSheet extends StatelessWidget {
+  final Map<String, dynamic> receipt;
+
+  const _ReceiptDetailSheet({required this.receipt});
+
+  String _formatNumber(int val) {
+    final s = val.toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = s.length - 1; i >= 0; i--) {
+      buffer.write(s[i]);
+      count++;
+      if (count == 3 && i != 0) {
+        buffer.write('.');
+        count = 0;
+      }
+    }
+    return buffer.toString().split('').reversed.join('');
+  }
+
+  void _showPrintSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.print_rounded, color: AppColors.forest, size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        'Cetak Struk Resmi Wisgo',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _buildPrintTile(
+                icon: Icons.bluetooth_audio_rounded,
+                title: 'Printer Kasir Bluetooth (Thermal POS 58mm/80mm)',
+                subtitle: 'Koneksikan ke printer thermal petugas loket',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showFeedback(context, 'Mengirim perintah cetak ke Printer Thermal Bluetooth... Selesai dicetak!');
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildPrintTile(
+                icon: Icons.picture_as_pdf_rounded,
+                title: 'Simpan / Cetak Berkas PDF Resmi',
+                subtitle: 'Unduh berkas PDF struk resmi ber-QR Code Perda',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showFeedback(context, 'Dokumen PDF Struk Resmi berhasil dibuat & siap dicetak.');
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildPrintTile(
+                icon: Icons.share_rounded,
+                title: 'Kirim Struk Digital via WhatsApp',
+                subtitle: 'Bagikan bukti pembayaran resmi ke rombongan',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showFeedback(context, 'Tautan struk digital siap dikirim via WhatsApp.');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPrintTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.warmBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.sage,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 20, color: AppColors.forest),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.ink)),
+                  Text(subtitle, style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: AppColors.muted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFeedback(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(msg, style: const TextStyle(fontSize: 11.5))),
+          ],
+        ),
+        backgroundColor: AppColors.forest,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final txId = receipt['transactionId']?.toString() ?? 'WG-ESCROW-000000';
+    final dest = receipt['destinationTitle']?.toString() ?? 'Kawasan Wisata Sumbar';
+    final date = receipt['date']?.toString() ?? 'Hari ini';
+    final method = receipt['paymentMethod']?.toString() ?? 'QRIS Dinamis';
+    final total = receipt['totalAmount'] as int? ?? 0;
+    final items = receipt['orderItems'] as List<dynamic>? ?? [];
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.90,
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Column(
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: AppColors.warmBorder,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'STRUK RESMI & BUKTI BAYAR ESCROW',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: AppColors.brush,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Detail Struk Pembayaran',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.creamSubtle,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.warmBorder),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.close_rounded, size: 18, color: AppColors.ink),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView(
+              children: [
+                // Paper receipt container
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.sageBorder),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Header Dispar
+                      const Text(
+                        'PEMERINTAH PROVINSI SUMATERA BARAT',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.brush, letterSpacing: 0.8),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'DINAS PARIWISATA • TIKET RESMI WISGO ESCROW',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.forest),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDFECE2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle_rounded, size: 14, color: AppColors.forest),
+                            SizedBox(width: 5),
+                            Text(
+                              'LUNAS & TERVERIFIKASI RESMI',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 20, color: AppColors.warmBorder),
+                      // Meta details
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('No. Transaksi', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          Text(txId, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Waktu Bayar', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          Text(date, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Kanal Pembayaran', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          Text(method, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Destinasi', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              dest,
+                              textAlign: TextAlign.end,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 20, color: AppColors.warmBorder),
+                      // Itemized breakdown
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'RINCIAN ITEM LAYANAN RESMI (${items.length} Layanan):',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.brush, letterSpacing: 0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...items.map((it) {
+                        final m = it is Map ? it : {};
+                        final name = m['name']?.toString() ?? 'Item Wisata';
+                        final qty = m['qty']?.toString() ?? '1';
+                        final itTot = m['total'] as int? ?? 0;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '$name (x$qty)',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.ink),
+                                ),
+                              ),
+                              Text(
+                                'Rp ${_formatNumber(itTot)}',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const Divider(height: 16, color: AppColors.warmBorder),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'TOTAL DIBAYAR (LUNAS):',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
+                          ),
+                          Text(
+                            'Rp ${_formatNumber(total)}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.forest),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // QR Code barcode simulator for entry gate
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.creamSubtle,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.sageBorder),
+                        ),
+                        child: Column(
+                          children: [
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.qr_code_2_rounded, size: 40, color: AppColors.forest),
+                                SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('KODE AKSES GERBANG MASUK', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.forest)),
+                                    Text('Pindai di Pos Karcis / Loket Resmi', style: TextStyle(fontSize: 9, color: AppColors.muted)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'VERIFIKASI: $txId',
+                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: AppColors.brush),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Karcis ini sah menurut Perda Prov. Sumbar No. 4 Tahun 2024 tentang Retribusi Wisata Alam Nagari. Anti-Pungli terjamin.',
+                        style: TextStyle(fontSize: 8.5, color: AppColors.brush, height: 1.3),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Cetak / Print Struk button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showPrintSheet(context),
+                    icon: const Icon(Icons.print_rounded, size: 18),
+                    label: const Text(
+                      'Cetak / Print Struk Resmi',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF193D22),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.forest,
+                      side: const BorderSide(color: AppColors.forest, width: 1.2),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Tutup Struk', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

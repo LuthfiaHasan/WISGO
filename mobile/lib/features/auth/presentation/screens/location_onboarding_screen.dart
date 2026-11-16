@@ -3,11 +3,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../widgets/animated_3d_route_scene.dart';
 import 'login_screen.dart';
 
-/// Layar 2: Izin Akses Lokasi 3D Interaktif.
-/// - Bagian Atas: "Langkah 1 dari 2" + tombol "Lewati"
-/// - Panggung 3D Rumah Gadang Interaktif (Dapat digeser 360°)
-/// - Penjelasan Izin Lokasi & 3 Ringkasan Manfaat Bersih (Tanpa Ikon Dekoratif Berlebih)
-/// - Tombol Utama: "Izinkan Akses Lokasi"
 class LocationOnboardingScreen extends StatefulWidget {
   const LocationOnboardingScreen({super.key});
 
