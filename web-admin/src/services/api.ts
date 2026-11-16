@@ -3,11 +3,24 @@ import {
   AdminAuthCredentials,
   AdminAuthResponse,
   Destination,
+  GroupRoomPreview,
+  HazardSeverity,
+  HazardZoneAlert,
+  HotspotPin,
+  PanoramaScene,
   Partner,
+  PungliReport,
+  PungliStatus,
+  SosEmergencyStatus,
+  SosEmergencyTicket,
   WAWebhookResponse,
 } from '../types/contract';
 import {
+  INITIAL_GROUP_ROOMS,
+  INITIAL_HAZARD_ALERTS,
   INITIAL_PARTNERS,
+  INITIAL_PUNGLI_REPORTS,
+  INITIAL_SOS_TICKETS,
   MOCK_20_DESTINATIONS,
   toDestinationSlug,
 } from '../data/mockDestinations';
@@ -16,6 +29,10 @@ const TOKEN_STORAGE_KEY = 'rancakin_admin_jwt';
 const USER_STORAGE_KEY = 'rancakin_admin_user';
 const DESTINATIONS_STORAGE_KEY = 'rancakin_dispar_destinations_v2';
 const PARTNERS_STORAGE_KEY = 'rancakin_dispar_partners_v2';
+const PUNGLI_STORAGE_KEY = 'rancakin_dispar_pungli_v2';
+const SOS_STORAGE_KEY = 'rancakin_dispar_sos_v2';
+const HAZARD_STORAGE_KEY = 'rancakin_dispar_hazard_v2';
+const GROUPS_STORAGE_KEY = 'rancakin_dispar_groups_v2';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -74,7 +91,7 @@ export async function checkBackendHealth(): Promise<{
 }
 
 /**
- * Otentikasi Portal Eksekutif Dispar / Satgas Saber Pungli (JWT Auth)
+ * Otentikasi Administrator Utama — Pusat Komando Terpadu Rancak.in (Single Admin JWT Auth)
  */
 export async function loginAdminJWT(
   credentials: AdminAuthCredentials
@@ -88,34 +105,29 @@ export async function loginAdminJWT(
     );
   }
 
-  const isSatgas =
-    emailLower.includes('satgas') || credentials.role === 'satgas_pungli';
   const jwtToken =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
     btoa(
       JSON.stringify({
-        sub: isSatgas ? 'usr-satgas-01' : 'usr-dispar-01',
+        sub: 'usr-admin-komando-01',
         email: emailLower,
-        role: isSatgas ? 'satgas_pungli' : 'admin_dispar',
+        role: 'admin_utama',
         iat: Math.floor(Date.now() / 1000),
       })
     ) +
-    '.rancakin-sumbar-sig-2026';
+    '.rancakin-komando-sig-2026';
 
   const authResponse: AdminAuthResponse = {
     token: jwtToken,
-    expires_at: new Date(Date.now() + 8 * 3600 * 1000).toISOString(),
+    expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
     user: {
-      id: isSatgas ? 'usr-satgas-01' : 'usr-dispar-01',
+      id: 'usr-admin-komando-01',
       phone_number: '6281166002026',
-      full_name: isSatgas
-        ? 'Komandan Satgas Saber Pungli Sumbar'
-        : 'Kepala Dinas Pariwisata Prov. Sumatera Barat',
-      role: isSatgas ? 'satgas_pungli' : 'admin_dispar',
+      full_name: 'Administrator Utama — Pusat Komando Terpadu',
+      role: 'admin_utama',
       email: emailLower,
-      agency: isSatgas
-        ? 'Satgas Saber Pungli Pariwisata Sumatera Barat'
-        : 'Dinas Pariwisata Provinsi Sumatera Barat',
+      agency:
+        'Pusat Komando Terpadu Rancak.in (Dispar Sumbar • Penindakan Pungli • Siaga SAR)',
       created_at: new Date().toISOString(),
     },
   };
@@ -188,6 +200,7 @@ export async function fetchDestinationsWithBridge(): Promise<{
           } as Destination['medan_indicator'],
           tariffs: apiDest.tariffs || existing?.tariffs || [],
           tips: apiDest.tips || existing?.tips || [],
+          scenes_360: apiDest.scenes_360 || existing?.scenes_360 || [],
         });
       }
 
@@ -266,9 +279,364 @@ export function resetDestinationsToDefault(): Destination[] {
   return MOCK_20_DESTINATIONS;
 }
 
-/**
- * Ambil katalog 5 kategori Mitra UMKM Nagari dengan persistensi localStorage
- */
+// ============================================================================
+// CMS STUDIO VIRTUAL 360° (FS1-M2-02)
+// ============================================================================
+
+export async function saveDestinationScene(
+  destId: string,
+  scene: PanoramaScene,
+  destinationsList: Destination[]
+): Promise<Destination[]> {
+  const updated = destinationsList.map((dest) => {
+    if (dest.id !== destId) return dest;
+    const currentScenes = dest.scenes_360 || [];
+    const exists = currentScenes.some((s) => s.id === scene.id);
+    const updatedScenes = exists
+      ? currentScenes.map((s) => (s.id === scene.id ? scene : s))
+      : [...currentScenes, scene];
+    return {
+      ...dest,
+      scenes_360: updatedScenes,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  writeStoredDestinations(updated);
+  return updated;
+}
+
+export async function deleteDestinationScene(
+  destId: string,
+  sceneId: string,
+  destinationsList: Destination[]
+): Promise<Destination[]> {
+  const updated = destinationsList.map((dest) => {
+    if (dest.id !== destId) return dest;
+    const currentScenes = dest.scenes_360 || [];
+    return {
+      ...dest,
+      scenes_360: currentScenes.filter((s) => s.id !== sceneId),
+      updated_at: new Date().toISOString(),
+    };
+  });
+  writeStoredDestinations(updated);
+  return updated;
+}
+
+export async function saveSceneHotspot(
+  destId: string,
+  sceneId: string,
+  hotspot: HotspotPin,
+  destinationsList: Destination[]
+): Promise<Destination[]> {
+  const updated = destinationsList.map((dest) => {
+    if (dest.id !== destId) return dest;
+    const currentScenes = dest.scenes_360 || [];
+    const updatedScenes = currentScenes.map((scene) => {
+      if (scene.id !== sceneId) return scene;
+      const currentHotspots = scene.hotspots || [];
+      const exists = currentHotspots.some((h) => h.id === hotspot.id);
+      const updatedHotspots = exists
+        ? currentHotspots.map((h) => (h.id === hotspot.id ? hotspot : h))
+        : [...currentHotspots, hotspot];
+      return {
+        ...scene,
+        hotspots: updatedHotspots,
+      };
+    });
+    return {
+      ...dest,
+      scenes_360: updatedScenes,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  writeStoredDestinations(updated);
+  return updated;
+}
+
+export async function deleteSceneHotspot(
+  destId: string,
+  sceneId: string,
+  hotspotId: string,
+  destinationsList: Destination[]
+): Promise<Destination[]> {
+  const updated = destinationsList.map((dest) => {
+    if (dest.id !== destId) return dest;
+    const currentScenes = dest.scenes_360 || [];
+    const updatedScenes = currentScenes.map((scene) => {
+      if (scene.id !== sceneId) return scene;
+      const currentHotspots = scene.hotspots || [];
+      return {
+        ...scene,
+        hotspots: currentHotspots.filter((h) => h.id !== hotspotId),
+      };
+    });
+    return {
+      ...dest,
+      scenes_360: updatedScenes,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  writeStoredDestinations(updated);
+  return updated;
+}
+
+// ============================================================================
+// PUSAT KOMANDO TERPADU: PENINDAKAN PUNGLI & SIAGA SOS TIM SAR (FS1-M2-03)
+// ============================================================================
+
+export async function fetchPungliReports(): Promise<PungliReport[]> {
+  try {
+    const raw = localStorage.getItem(PUNGLI_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    // Remote bridge fallback
+    const res = await apiClient.get<PungliReport[]>('/reports/pungli').catch(() => null);
+    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+      localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch {
+    // Fallback to initial
+  }
+  localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(INITIAL_PUNGLI_REPORTS));
+  return INITIAL_PUNGLI_REPORTS;
+}
+
+export async function updatePungliReportStatus(
+  reportId: string,
+  status: PungliStatus,
+  adminNotes?: string
+): Promise<PungliReport[]> {
+  const current = await fetchPungliReports();
+  const updated = current.map((r) => {
+    if (r.id !== reportId) return r;
+    return {
+      ...r,
+      status,
+      admin_notes: adminNotes !== undefined ? adminNotes : r.admin_notes,
+    };
+  });
+  localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(updated));
+
+  try {
+    await apiClient.put(`/reports/pungli/${reportId}/status`, {
+      status,
+      admin_notes: adminNotes,
+    });
+  } catch {
+    // Offline mode
+  }
+  return updated;
+}
+
+export async function submitPungliReport(
+  reportData: Omit<PungliReport, 'id' | 'created_at'>
+): Promise<PungliReport> {
+  const newReport: PungliReport = {
+    ...reportData,
+    id: `rep-${Date.now().toString(36)}`,
+    created_at: new Date().toISOString(),
+  };
+
+  const current = await fetchPungliReports();
+  const updated = [newReport, ...current];
+  localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(updated));
+
+  try {
+    await apiClient.post('/reports/pungli', newReport);
+  } catch {
+    // Offline mode
+  }
+  return newReport;
+}
+
+export async function fetchSosTickets(): Promise<SosEmergencyTicket[]> {
+  try {
+    const raw = localStorage.getItem(SOS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    const res = await apiClient.get<SosEmergencyTicket[]>('/sos/tickets').catch(() => null);
+    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+      localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch {
+    // Fallback
+  }
+  localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(INITIAL_SOS_TICKETS));
+  return INITIAL_SOS_TICKETS;
+}
+
+export async function updateSosTicketStatus(
+  ticketId: string,
+  status: SosEmergencyStatus,
+  sarUnitAssigned?: string
+): Promise<SosEmergencyTicket[]> {
+  const current = await fetchSosTickets();
+  const updated = current.map((t) => {
+    if (t.id !== ticketId) return t;
+    return {
+      ...t,
+      status,
+      sar_unit_assigned: sarUnitAssigned || t.sar_unit_assigned,
+    };
+  });
+  localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(updated));
+
+  try {
+    await apiClient.put(`/sos/tickets/${ticketId}/status`, {
+      status,
+      sar_unit_assigned: sarUnitAssigned,
+    });
+  } catch {
+    // Offline mode
+  }
+  return updated;
+}
+
+export async function submitSosEmergency(
+  data: Omit<SosEmergencyTicket, 'id' | 'created_at'>
+): Promise<SosEmergencyTicket> {
+  const newTicket: SosEmergencyTicket = {
+    ...data,
+    id: `sos-${Date.now().toString(36)}`,
+    created_at: new Date().toISOString(),
+  };
+
+  const current = await fetchSosTickets();
+  const updated = [newTicket, ...current];
+  localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(updated));
+
+  try {
+    await apiClient.post('/sos/trigger', newTicket);
+  } catch {
+    // Offline mode
+  }
+  return newTicket;
+}
+
+export async function fetchHazardAlerts(): Promise<HazardZoneAlert[]> {
+  try {
+    const raw = localStorage.getItem(HAZARD_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    const res = await apiClient.get<HazardZoneAlert[]>('/hazards').catch(() => null);
+    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+      localStorage.setItem(HAZARD_STORAGE_KEY, JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch {
+    // Fallback
+  }
+  localStorage.setItem(HAZARD_STORAGE_KEY, JSON.stringify(INITIAL_HAZARD_ALERTS));
+  return INITIAL_HAZARD_ALERTS;
+}
+
+export async function updateHazardAlert(
+  alertId: string,
+  severity: HazardSeverity,
+  message: string,
+  detourRoute: string
+): Promise<HazardZoneAlert[]> {
+  const current = await fetchHazardAlerts();
+  const updated = current.map((h) => {
+    if (h.id !== alertId) return h;
+    return {
+      ...h,
+      severity,
+      message,
+      detour_route: detourRoute,
+      updated_at: new Date().toISOString(),
+    };
+  });
+  localStorage.setItem(HAZARD_STORAGE_KEY, JSON.stringify(updated));
+
+  try {
+    await apiClient.put(`/hazards/${alertId}`, {
+      severity,
+      message,
+      detour_route: detourRoute,
+    });
+  } catch {
+    // Offline mode
+  }
+  return updated;
+}
+
+// ============================================================================
+// WEB GROUP INVITE & PRIVATE ROOM (FS1-M2-04)
+// ============================================================================
+
+export async function fetchGroupRoom(
+  groupCode: string
+): Promise<GroupRoomPreview | null> {
+  const code = groupCode.trim().toUpperCase();
+  try {
+    const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
+    const groups: Record<string, GroupRoomPreview> = raw
+      ? JSON.parse(raw)
+      : INITIAL_GROUP_ROOMS;
+
+    if (groups[code]) return groups[code];
+
+    const res = await apiClient
+      .get<GroupRoomPreview>(`/groups/${code}`)
+      .catch(() => null);
+    if (res?.data) {
+      groups[code] = res.data;
+      localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
+      return res.data;
+    }
+
+    if (INITIAL_GROUP_ROOMS[code]) return INITIAL_GROUP_ROOMS[code];
+    return null;
+  } catch {
+    return INITIAL_GROUP_ROOMS[code] || null;
+  }
+}
+
+export async function voteGroupItem(
+  groupCode: string,
+  itemId: string
+): Promise<GroupRoomPreview | null> {
+  const code = groupCode.trim().toUpperCase();
+  const current = await fetchGroupRoom(code);
+  if (!current) return null;
+
+  const updatedVoting = current.voting_items.map((item) => {
+    if (item.id !== itemId) return item;
+    return {
+      ...item,
+      votes_count: item.votes_count + 1,
+    };
+  });
+
+  const updatedGroup: GroupRoomPreview = {
+    ...current,
+    voting_items: updatedVoting,
+  };
+
+  const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
+  const groups: Record<string, GroupRoomPreview> = raw
+    ? JSON.parse(raw)
+    : { ...INITIAL_GROUP_ROOMS };
+  groups[code] = updatedGroup;
+  localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
+
+  return updatedGroup;
+}
+
+// ============================================================================
+// MITRA UMKM NAGARI & ESCROW
+// ============================================================================
+
 export async function fetchPartnersCatalog(): Promise<Partner[]> {
   try {
     const raw = localStorage.getItem(PARTNERS_STORAGE_KEY);
@@ -299,9 +667,6 @@ export async function fetchPartnersCatalog(): Promise<Partner[]> {
   }
 }
 
-/**
- * Simulasi Webhook Bot WA Mitra (1 Terima / 0 Tolak)
- */
 export async function triggerWAWebhookSimulation(
   action: '1' | '0'
 ): Promise<WAWebhookResponse> {

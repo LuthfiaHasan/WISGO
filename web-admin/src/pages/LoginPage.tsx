@@ -9,6 +9,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Building2,
+  Radio,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
 import { loginAdminJWT } from '../services/api';
@@ -22,11 +23,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
   backendOnline,
 }) => {
-  const [email, setEmail] = useState('kadispar@sumbarprov.go.id');
-  const [password, setPassword] = useState('RancakMinang2026');
-  const [role, setRole] = useState<'admin_dispar' | 'satgas_pungli'>(
-    'admin_dispar'
-  );
+  const [email, setEmail] = useState('admin.komando@sumbarprov.go.id');
+  const [password, setPassword] = useState('KomandoRancak2026');
   const [showPassword, setShowPassword] = useState(false);
 
   const [emailTouched, setEmailTouched] = useState(false);
@@ -42,7 +40,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const validateEmailField = (val: string): string => {
     if (!val.trim()) return 'Alamat email kedinasan wajib diisi.';
     if (!val.includes('@') || !val.includes('.')) {
-      return 'Masukkan format email kedinasan yang valid (contoh: kadispar@sumbarprov.go.id).';
+      return 'Masukkan format email kedinasan yang valid (contoh: admin.komando@sumbarprov.go.id).';
     }
     return '';
   };
@@ -53,14 +51,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     return '';
   };
 
-  const handleQuickAuthorityAccess = async (
-    targetEmail: string,
-    targetPass: string,
-    targetRole: 'admin_dispar' | 'satgas_pungli'
-  ) => {
+  const handleQuickAuthorityAccess = async () => {
+    const targetEmail = 'admin.komando@sumbarprov.go.id';
+    const targetPass = 'KomandoRancak2026';
     setEmail(targetEmail);
     setPassword(targetPass);
-    setRole(targetRole);
     setEmailError('');
     setPasswordError('');
     setFormError('');
@@ -69,12 +64,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const session = await loginAdminJWT({
         email: targetEmail,
         password: targetPass,
-        role: targetRole,
+        role: 'admin_utama',
       });
       onLoginSuccess(session);
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : 'Gagal masuk ke portal eksekutif.'
+        err instanceof Error ? err.message : 'Gagal masuk ke Pusat Komando Terpadu.'
       );
     } finally {
       setSubmitting(false);
@@ -101,11 +96,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     setSubmitting(true);
     try {
-      const session = await loginAdminJWT({ email, password, role });
+      const session = await loginAdminJWT({
+        email,
+        password,
+        role: 'admin_utama',
+      });
       onLoginSuccess(session);
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : 'Gagal masuk ke portal eksekutif.'
+        err instanceof Error ? err.message : 'Gagal masuk ke Pusat Komando Terpadu.'
       );
     } finally {
       setSubmitting(false);
@@ -123,13 +122,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           <h1 className="mt-6 text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
-            Sistem Kendali Ekosistem Wisata Pintar Rancak.in
+            Pusat Komando Terpadu Rancak.in
           </h1>
           <p className="mt-4 text-sm lg:text-base text-[#E4E9DA]/90 leading-relaxed">
-            Portal manajemen terpadu untuk pengelolaan direktori destinasi
-            unggulan, pemetaan 5 indikator kesiapan medan lapangan, penetapan
-            standar tarif resmi Perda, Plang Smart QR, serta pengawasan Satgas
-            Saber Pungli di 19 Kabupaten/Kota Sumatera Barat.
+            Portal otoritas terpadu Dinas Pariwisata Provinsi Sumatera Barat:
+            Manajemen Destinasi &amp; 5 Indikator Medan, Standar Tarif Resmi Perda &amp; Smart QR,
+            Studio Virtual 360°, Penindakan Aduan Pungli Satgas Saber Pungli, serta Koordinasi Siaga Darurat SOS Tim SAR di 19 Kabupaten/Kota.
           </p>
         </div>
 
@@ -137,13 +135,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <div className="p-4 rounded-2xl bg-black/20 border border-white/10">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#A7F3D0]">
               <ShieldCheck className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
-              <span>Tata Kelola Terintegrasi 19 Kabupaten/Kota</span>
+              <span>Otoritas Komando Tunggal Terintegrasi</span>
             </div>
             <p className="mt-1.5 text-xs text-[#E4E9DA]/90 leading-relaxed">
-              Seluruh perubahan informasi kesiapan medan, regulasi tarif resmi
-              Perda/Nagari, dan pengumuman kawasan blank spot tersinkronisasi
-              langsung dengan layanan informasi wisatawan dan Plang Smart QR di
-              lapangan.
+              Seluruh kendali destinasi, tarif resmi Perda, tur virtual 360°,
+              laporan pelanggaran pungli dari wisatawan, dan sinyal darurat SOS terpusat
+              di bawah kendali Administrator Utama dengan enkripsi sesi resmi.
             </p>
           </div>
 
@@ -167,8 +164,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </div>
 
         <p className="text-xs text-[#E4E9DA]/75">
-          &copy; 2026 Dinas Pariwisata Provinsi Sumatera Barat · Portal
-          Administrasi Resmi Rancak.in
+          &copy; 2026 Dinas Pariwisata Provinsi Sumatera Barat · Portal Pusat Komando Resmi Rancak.in
         </p>
       </section>
 
@@ -184,49 +180,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 id="login-heading"
                 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]"
               >
-                Otentikasi Pejabat &amp; Operator
+                Otentikasi Administrator Utama
               </h2>
               <p className="text-xs text-[#4A5248] mt-0.5">
-                Masuk menggunakan akun kedinasan resmi Pemerintah Provinsi
-                Sumatera Barat
+                Pusat Komando Terpadu Dispar, Penindakan Pungli &amp; Siaga SAR Sumbar
               </p>
             </div>
           </div>
 
-          {/* Akses Cepat Otoritas */}
+          {/* Akses Cepat Otoritas Tunggal */}
           <div className="mb-6 p-4 rounded-2xl bg-[#E4E9DA]/65 border border-[#CFD8BE]">
             <div className="flex items-center gap-2 text-xs font-bold text-[#234B24] mb-2.5">
               <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>Akses Cepat Otoritas (Mode Pengujian Internal)</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() =>
-                  handleQuickAuthorityAccess(
-                    'kadispar@sumbarprov.go.id',
-                    'RancakMinang2026',
-                    'admin_dispar'
-                  )
-                }
-                className="min-h-[44px] text-xs font-bold px-3.5 py-2 rounded-xl bg-[#234B24] text-[#F6F3EC] hover:bg-[#1B3B1C] transition shadow-sm text-center"
-              >
-                Masuk sebagai Kadispar Sumbar
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleQuickAuthorityAccess(
-                    'satgas.pungli@sumbarprov.go.id',
-                    'SaberPungli2026',
-                    'satgas_pungli'
-                  )
-                }
-                className="min-h-[44px] text-xs font-bold px-3.5 py-2 rounded-xl bg-[#F26B4B] text-white hover:bg-[#D95637] transition shadow-sm text-center"
-              >
-                Masuk sebagai Satgas Saber Pungli
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={handleQuickAuthorityAccess}
+              className="w-full min-h-[48px] text-xs font-bold px-4 py-2.5 rounded-xl bg-[#234B24] text-[#F6F3EC] hover:bg-[#1B3B1C] transition shadow-sm flex items-center justify-center gap-2 text-center"
+            >
+              <Radio className="w-4 h-4 text-[#A7F3D0] shrink-0" aria-hidden="true" />
+              <span>Masuk sebagai Administrator Utama (Pusat Komando Dispar, Penindakan Pungli &amp; Siaga SAR)</span>
+            </button>
           </div>
 
           <form
@@ -236,49 +212,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             onSubmit={handleSubmit}
             noValidate
           >
-            {/* Pilihan Unit Otoritas */}
-            <fieldset className="mb-5 p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]">
-              <legend className="text-xs font-bold text-[#1B1F1A] px-1.5">
-                Unit Kerja / Otoritas Penugasan <span aria-hidden="true">*</span>
-              </legend>
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-center gap-2.5">
-                  <input
-                    type="radio"
-                    id="role-dispar"
-                    name="role"
-                    value="admin_dispar"
-                    checked={role === 'admin_dispar'}
-                    onChange={() => setRole('admin_dispar')}
-                    className="w-4 h-4 accent-[#234B24]"
-                  />
-                  <label
-                    htmlFor="role-dispar"
-                    className="text-xs font-semibold text-[#1B1F1A] cursor-pointer"
-                  >
-                    Dinas Pariwisata Prov. Sumbar
-                  </label>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <input
-                    type="radio"
-                    id="role-satgas"
-                    name="role"
-                    value="satgas_pungli"
-                    checked={role === 'satgas_pungli'}
-                    onChange={() => setRole('satgas_pungli')}
-                    className="w-4 h-4 accent-[#234B24]"
-                  />
-                  <label
-                    htmlFor="role-satgas"
-                    className="text-xs font-semibold text-[#1B1F1A] cursor-pointer"
-                  >
-                    Satgas Saber Pungli Pariwisata
-                  </label>
-                </div>
-              </div>
-            </fieldset>
-
             {/* Input Email Dinas */}
             <div className="mb-5 flex flex-col items-start gap-1.5">
               <label
@@ -317,7 +250,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 className="w-full min-h-[48px] px-4 py-2.5 rounded-2xl bg-[#F6F3EC] border border-[#767676] text-base text-[#1B1F1A] font-medium"
               />
               <span id="email-help" className="text-[11px] text-[#4A5248]">
-                Gunakan email resmi berdomain @sumbarprov.go.id
+                Akun resmi Administrator Utama berdomain @sumbarprov.go.id
               </span>
               {emailError && (
                 <p
@@ -393,7 +326,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     setPasswordError(validatePasswordField(password));
                   }
                 }}
-                onInput={() => setPasswordTouched(true)}
+                onInput={() => setEmailTouched(true)}
                 autoComplete="current-password"
                 minLength={6}
                 enterKeyHint="done"
@@ -408,7 +341,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 id="password-constraints"
                 className="text-[11px] text-[#4A5248]"
               >
-                Minimal 6 karakter. Sesi diamankan dengan enkripsi Bearer Token.
+                Minimal 6 karakter. Sesi terpusat dilindungi enkripsi JWT Bearer Token.
               </span>
               {passwordError && (
                 <p
@@ -449,8 +382,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <Lock className="w-4 h-4" aria-hidden="true" />
               <span>
                 {submitting
-                  ? 'Memverifikasi Kredensial Otoritas...'
-                  : 'Masuk ke Portal Eksekutif Dispar'}
+                  ? 'Mengotentikasi Administrator Utama...'
+                  : 'Masuk sebagai Administrator Utama'}
               </span>
             </button>
           </form>

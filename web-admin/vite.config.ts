@@ -10,12 +10,21 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            // Silently handle connection error when Go backend is not running
+          });
+        },
       },
       '/health': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            // Silently handle connection error when Go backend is not running
+          });
+        },
       },
     },
   },
 });
-

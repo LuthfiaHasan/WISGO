@@ -1,4 +1,11 @@
-import { Destination, Partner } from '../types/contract';
+import {
+  Destination,
+  GroupRoomPreview,
+  HazardZoneAlert,
+  Partner,
+  PungliReport,
+  SosEmergencyTicket,
+} from '../types/contract';
 
 export const SUMBAR_REGENCIES = [
   'Semua Kab/Kota',
@@ -142,6 +149,92 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
         is_important: false,
       },
     ],
+    scenes_360: [
+      {
+        id: 'scene-harau-aerial',
+        destination_id: 'dest-001',
+        title: 'Tinjauan Udara Aerial Tebing Sarasah Bunta (150m)',
+        type: 'aerial',
+        panorama_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80',
+        initial_pitch: 5,
+        initial_yaw: 0,
+        ambient_audio_url: 'https://cdn.rancak.in/audio/ambient_nature_harau.mp3',
+        hotspots: [
+          {
+            id: 'pin-harau-01',
+            scene_id: 'scene-harau-aerial',
+            category: 'info_adat',
+            title: 'Formasi Batuan Granit & Cagar Alam Geopark Harau',
+            description: 'Tebing granit vertikal setinggi hingga 500m yang terbentuk dari patahan lempeng bumi purba berjuta tahun lalu.',
+            pitch: 12,
+            yaw: -35,
+          },
+          {
+            id: 'pin-harau-02',
+            scene_id: 'scene-harau-aerial',
+            category: 'navigasi',
+            title: 'Turun ke Pelataran Bawah Air Terjun Sarasah Bunta',
+            description: 'Pindah pandangan ke pelataran bawah air terjun.',
+            pitch: -24,
+            yaw: 15,
+            target_scene_id: 'scene-harau-ground',
+          },
+          {
+            id: 'pin-harau-03',
+            scene_id: 'scene-harau-aerial',
+            category: 'audio_budaya',
+            title: 'Alunan Saluang Minang Tradisional Lembah Harau',
+            description: 'Dengarkan tiupan saluang bambu Minangkabau di tengah gema tebing cagar alam.',
+            pitch: 8,
+            yaw: 78,
+            audio_url: 'https://cdn.rancak.in/audio/saluang_harau.mp3',
+          },
+          {
+            id: 'pin-harau-04',
+            scene_id: 'scene-harau-aerial',
+            category: 'mitra_umkm',
+            title: 'Pondok Kopi & Kuliner Khas Pokdarwis Sarasah',
+            description: 'Kopi kawa daun hangat & pisang kapik bakar khas nagari.',
+            pitch: -18,
+            yaw: -88,
+            partner_id: 'ptr-01',
+            partner_name: 'Pondok Kawa Pokdarwis Sarasah',
+            partner_fee: 15000,
+          },
+        ],
+      },
+      {
+        id: 'scene-harau-ground',
+        destination_id: 'dest-001',
+        title: 'Pelataran Air Terjun Sarasah Bunta (Ground Level)',
+        type: 'ground',
+        panorama_url: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1920&q=80',
+        initial_pitch: 0,
+        initial_yaw: 0,
+        ambient_audio_url: 'https://cdn.rancak.in/audio/waterfall_harau.mp3',
+        hotspots: [
+          {
+            id: 'pin-harau-05',
+            scene_id: 'scene-harau-ground',
+            category: 'navigasi',
+            title: 'Kembali ke Pandangan Udara Drone (150m)',
+            description: 'Beralih ke tinjauan lanskap aerial seluruh lembah.',
+            pitch: 42,
+            yaw: 0,
+            target_scene_id: 'scene-harau-aerial',
+          },
+          {
+            id: 'pin-harau-06',
+            scene_id: 'scene-harau-ground',
+            category: 'info_adat',
+            title: 'Prasasti Belanda & Legenda Aka Barayun',
+            description: 'Jejak sejarah prasasti Belanda 1926 dan mitos akar gantung penolak bala leluhur.',
+            pitch: 5,
+            yaw: 42,
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'dest-002',
@@ -220,6 +313,60 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
         content:
           'Pastikan memilih Bendi bernomor lambung resmi Dinas Pariwisata dan gunakan kantong parkir Gedung Pasar Atas.',
         is_important: true,
+      },
+    ],
+    scenes_360: [
+      {
+        id: 'scene-jamgadang-pelataran',
+        destination_id: 'dest-002',
+        title: 'Pelataran Utama Monumen Jam Gadang',
+        type: 'ground',
+        panorama_url: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1920&q=80',
+        initial_pitch: 15,
+        initial_yaw: 0,
+        ambient_audio_url: 'https://cdn.rancak.in/audio/ambient_city_bukittinggi.mp3',
+        hotspots: [
+          {
+            id: 'pin-jg-01',
+            scene_id: 'scene-jamgadang-pelataran',
+            category: 'info_adat',
+            title: 'Sejarah Mesin Jam Gadang & Keunikan Angka IIII',
+            description: 'Mesin jam mekanik legendaris Vortmann Recklinghausen 1892 yang hanya ada dua di dunia (satu lagi di Big Ben London). Angka 4 ditulis IIII sesuai tradisi arsitektur Eropa klasik.',
+            pitch: 28,
+            yaw: 0,
+          },
+          {
+            id: 'pin-jg-02',
+            scene_id: 'scene-jamgadang-pelataran',
+            category: 'audio_budaya',
+            title: 'Dentingan Lonceng Jam Gadang & Kisah Perjuangan Bukittinggi',
+            description: 'Dengarkan gema dentang lonceng jam bersejarah yang mengiringi masa PDRI (Pemerintah Darurat Republik Indonesia).',
+            pitch: -5,
+            yaw: 72,
+            audio_url: 'https://cdn.rancak.in/audio/bell_jamgadang.mp3',
+          },
+          {
+            id: 'pin-jg-03',
+            scene_id: 'scene-jamgadang-pelataran',
+            category: 'navigasi',
+            title: 'Akses ke Pertokoan & Sentra Souvenir Pasar Atas',
+            description: 'Langkah kaki menuju pusat kerajinan songket, mukena bordir, dan keripik sanjai.',
+            pitch: -12,
+            yaw: -105,
+          },
+          {
+            id: 'pin-jg-04',
+            scene_id: 'scene-jamgadang-pelataran',
+            category: 'mitra_umkm',
+            title: 'Galeri Busana Adat Suntiang Bundo Jam Gadang',
+            description: 'Sewa baju adat Minang lengkap untuk foto kenangan di pelataran jam.',
+            pitch: -16,
+            yaw: 135,
+            partner_id: 'ptr-05',
+            partner_name: 'Suntiang Bundo Jam Gadang',
+            partner_fee: 50000,
+          },
+        ],
       },
     ],
   },
@@ -1366,3 +1513,218 @@ export const INITIAL_PARTNERS: Partner[] = [
     destination_id: 'dest-003',
   },
 ];
+
+// ============================================================================
+// DATA AWAL TIKET ADUAN PUNGLI & PELANGGARAN TARIF (FS1-M2-03)
+// ============================================================================
+export const INITIAL_PUNGLI_REPORTS: PungliReport[] = [
+  {
+    id: 'rep-001',
+    destination_id: 'dest-002',
+    destination_name: 'Jam Gadang & Pasar Atas',
+    kab_kota: 'Kota Bukittinggi',
+    reporter_name: 'Rahmat Hidayat (Wisatawan Asal Pekanbaru)',
+    reporter_phone: '081267891234',
+    category: 'Parkir Liar',
+    reported_amount: 25000,
+    official_amount: 5000,
+    description:
+      'Diminta tarif parkir mobil sebesar Rp 25.000 tanpa karcis resmi Perwako Bukittinggi di area samping bioskop lama Jam Gadang. Juru parkir tidak berseragam rompi resmi.',
+    photo_url:
+      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80',
+    lat: -0.3052,
+    lng: 100.3695,
+    status: 'Laporan Baru',
+    created_at: '2026-11-16T09:15:00Z',
+  },
+  {
+    id: 'rep-002',
+    destination_id: 'dest-005',
+    destination_name: 'Kawasan Wisata Bahari Mandeh',
+    kab_kota: 'Kab. Pesisir Selatan',
+    reporter_name: 'Siti Nurhaliza (Wisatawan Asal Padang)',
+    reporter_phone: '085274129988',
+    category: 'Pemaksaan Pemandu/Kapal',
+    reported_amount: 950000,
+    official_amount: 650000,
+    description:
+      'Penyewa kapal di dermaga Carocok Tarusan mematok harga sewa sepihak Rp 950.000 (resmi Perda Rp 650.000) dan mengancam wisatawan tidak akan dilayani jika tidak menggunakan jasanya.',
+    photo_url:
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
+    lat: -1.2185,
+    lng: 100.4192,
+    status: 'Sedang Diverifikasi',
+    admin_notes:
+      'Petugas lapangan Dispar Pessel sedang mengonfirmasi nomor lambung kapal pengangkut ke Ketua Asosiasi Kapal Mandeh.',
+    created_at: '2026-11-15T14:30:00Z',
+  },
+  {
+    id: 'rep-003',
+    destination_id: 'dest-008',
+    destination_name: 'Pantai Air Manis & Batu Malin Kundang',
+    kab_kota: 'Kota Padang',
+    reporter_name: 'Budi Santoso',
+    reporter_phone: '081399881122',
+    category: 'Tiket Di Atas Perda',
+    reported_amount: 20000,
+    official_amount: 10000,
+    description:
+      'Pintu masuk samping pos barat memungut karcis ganda tidak berporporasi Dinas Pendapatan Daerah Padang seharga Rp 20.000 per orang.',
+    photo_url:
+      'https://images.unsplash.com/photo-1509233725247-49e657c54213?auto=format&fit=crop&w=600&q=80',
+    lat: -0.9912,
+    lng: 100.3541,
+    status: 'Ditindaklanjuti Lapangan',
+    admin_notes:
+      'Regu Satgas Saber Pungli gabungan Polresta Padang dan Satpol PP telah menertibkan oknum di pos barat dan menyita 3 bendel karcis tak resmi.',
+    created_at: '2026-11-14T11:00:00Z',
+  },
+  {
+    id: 'rep-004',
+    destination_id: 'dest-001',
+    destination_name: 'Lembah Harau & Sarasah Bunta',
+    kab_kota: 'Kab. Lima Puluh Kota',
+    reporter_name: 'Dedi Kurniawan',
+    reporter_phone: '081234567890',
+    category: 'Fasilitas Rusak',
+    reported_amount: 0,
+    official_amount: 0,
+    description:
+      'Papan petunjuk jalan evakuasi longsor dan fasilitas toilet di dekat area Sarasah Murai pintu 2 rusak parah dan pintu terkunci.',
+    photo_url:
+      'https://images.unsplash.com/photo-1584467735871-8e85353a8413?auto=format&fit=crop&w=600&q=80',
+    lat: -0.1045,
+    lng: 100.675,
+    status: 'Selesai',
+    admin_notes:
+      'Dinas Pariwisata Kab. 50 Kota bersama Pokdarwis telah memperbaiki fasilitas toilet dan mengganti plang evakuasi baru berstandar SNI.',
+    created_at: '2026-11-13T16:20:00Z',
+  },
+];
+
+// ============================================================================
+// DATA AWAL TIKET DARURAT SOS GPS WISATAWAN (FS1-M2-03)
+// ============================================================================
+export const INITIAL_SOS_TICKETS: SosEmergencyTicket[] = [
+  {
+    id: 'sos-001',
+    tourist_name: 'Ahmad Fauzi & Rombongan (4 Orang)',
+    tourist_phone: '081377884411',
+    destination_name: 'Air Terjun Nyarai & Hutan Gamaran',
+    kab_kota: 'Kab. Padang Pariaman',
+    lat: -0.6382,
+    lng: 100.3129,
+    battery_level: 28,
+    signal_status: 'Satelit Mesh (Zero-Signal Seluler)',
+    medical_notes:
+      '1 anggota rombongan mengalami dislokasi pergelangan kaki kanan saat melintasi jalur bebatuan basah Lubuk Nyarai. Butuh tandu darurat & pertolongan medis pertama.',
+    status: 'Tim SAR Dikerahkan',
+    sar_unit_assigned:
+      'Pos SAR Basarnas Padang Pariaman & Pokdarwis Salibutan (5 Personil)',
+    created_at: '2026-11-16T11:45:00Z',
+  },
+  {
+    id: 'sos-002',
+    tourist_name: 'Hendra Wijaya',
+    tourist_phone: '082166550099',
+    destination_name: 'Geopark Silokek & Ngalau Cigak',
+    kab_kota: 'Kab. Sijunjung',
+    lat: -0.7188,
+    lng: 100.9921,
+    battery_level: 18,
+    signal_status: 'Sinyal Lemah 2G',
+    medical_notes:
+      'Tersesat di jalur tebing bebatuan karst akibat kabut tebal hujan sore. Perbekalan air habis, kondisi fisik lemas.',
+    status: 'Sinyal SOS Masuk',
+    sar_unit_assigned: 'BPBD Kabupaten Sijunjung & Relawan PMI',
+    created_at: '2026-11-16T12:30:00Z',
+  },
+];
+
+// ============================================================================
+// DATA AWAL STATUS PERINGATAN JALUR RAWAN (HAZARD ZONE ALERTS)
+// ============================================================================
+export const INITIAL_HAZARD_ALERTS: HazardZoneAlert[] = [
+  {
+    id: 'haz-001',
+    location: 'Jalur Ekstrem Sitinjau Lauik (Padang - Solok)',
+    severity: 'Waspada Bencana',
+    message:
+      'Hujan intensitas tinggi memicu potensi longsoran tanah tebing di tikungan panorama 1 & 2. Truk berat dihimbau berhati-hati dan jaga jarak aman.',
+    detour_route:
+      'Jalur Alternatif: Padang - Padang Panjang - Singkarak - Solok (bagi kendaraan kecil).',
+    updated_at: '2026-11-16T10:00:00Z',
+  },
+  {
+    id: 'haz-002',
+    location: 'Jalur Lembah Anai (Padang - Bukittinggi)',
+    severity: 'Aman Terkendali',
+    message:
+      'Debit air terjun normal, perkuatan tebing jalan dan jembatan darurat berfungsi baik. Lalu lintas lancar dua arah.',
+    detour_route: 'Jalur Utama Beroperasi Normal.',
+    updated_at: '2026-11-16T08:30:00Z',
+  },
+  {
+    id: 'haz-003',
+    location: 'Flyover & Kelok 9 (Payakumbuh - Riau)',
+    severity: 'Aman Terkendali',
+    message:
+      'Arus lalu lintas lancar terkendali. Wisatawan dilarang parkir sembarangan di badan jembatan layang.',
+    detour_route: 'Jalur Utama Beroperasi Normal.',
+    updated_at: '2026-11-16T07:00:00Z',
+  },
+  {
+    id: 'haz-004',
+    location: 'Jalur Malalak (Sicincin - Balingka)',
+    severity: 'Buka-Tutup Jalur',
+    message:
+      'Pembersihan material sisa longsoran skala kecil di KM 18 sedang berlangsung oleh Dinas BMCKTR Sumbar. Sistem buka-tutup bergantian diterapkan.',
+    detour_route:
+      'Disarankan menggunakan jalur utama Padang Panjang - Koto Baru.',
+    updated_at: '2026-11-16T11:15:00Z',
+  },
+];
+
+// ============================================================================
+// DATA AWAL GRUP INVITE / WEB GROUP ROOM PREVIEW (FS1-M2-04)
+// ============================================================================
+export const INITIAL_GROUP_ROOMS: Record<string, GroupRoomPreview> = {
+  'RANCAK-MINANG-88': {
+    group_code: 'RANCAK-MINANG-88',
+    group_name: 'Eksplorasi Ranah Minang 7 Hari (Keluarga Besar Bahar)',
+    leader_name: 'Farhan Bahar (Ketua Rombongan)',
+    trip_dates: '20 - 27 Desember 2026',
+    member_count: 6,
+    destinations_summary: [
+      'Lembah Harau & Sarasah Bunta',
+      'Jam Gadang & Pasar Atas',
+      'Istano Basa Pagaruyung',
+      'Kawasan Wisata Bahari Mandeh',
+      'Danau Maninjau & Kelok 44',
+    ],
+    voting_items: [
+      {
+        id: 'vote-01',
+        title: 'Trekking Sarasah Harau vs Gowes Danau Singkarak',
+        category: 'Aktivitas Alam',
+        votes_count: 5,
+        is_winner: true,
+      },
+      {
+        id: 'vote-02',
+        title: 'Homestay Rumah Gadang Koto Gadang vs Hotel Pusat Bukittinggi',
+        category: 'Akomodasi',
+        votes_count: 4,
+        is_winner: true,
+      },
+      {
+        id: 'vote-03',
+        title: 'Island Hopping Mandeh vs Snorkeling Teluk Sikakap Mentawai',
+        category: 'Bahari',
+        votes_count: 6,
+        is_winner: true,
+      },
+    ],
+  },
+};
+

@@ -1,6 +1,7 @@
 // ============================================================================
 // KONTRAK JSON & INTERFACE TYPESCRIPT RESMI RANCAK.IN SUMATERA BARAT
 // Sinkron dengan backend/internal/models/models.go, be1_core & be2_group
+// Arsitektur: Single Admin (Pusat Komando Terpadu Dispar • Pungli • Siaga SAR)
 // ============================================================================
 
 export type CrowdLevel = 'Sepi' | 'Sedang' | 'Ramai';
@@ -99,26 +100,44 @@ export interface OfficialTariff {
 }
 
 /**
- * Hotspot360 pin interaktif 4 jenis pada kanvas 360
- * Sinkron dengan models.Hotspot360
+ * 4 Kategori Pin Hotspot Kanvas 360°
  */
-export interface Hotspot360 {
-  id: string;
-  scene_id: string;
-  type: 'navigasi' | 'audio' | 'fasilitas' | 'mitra';
-  pitch: number;
-  yaw: number;
-  title: string;
-  target_ref?: string;
-  audio_url?: string;
-  description?: string;
-}
+export type HotspotPinCategory =
+  | 'info_adat'      // Pin Info Adat/Sejarah (Emas/Kuning)
+  | 'navigasi'       // Pin Navigasi Pindah Scene (Biru)
+  | 'audio_budaya'   // Pin Spatial Audio/Narasi (Ungu/Indigo)
+  | 'mitra_umkm';    // Pin Katalog/Booking Mitra UMKM (Oranye)
 
 /**
- * Scene360 representasi scene tur imersif aerial & ground
+ * HotspotPin / Hotspot360 pada Kanvas 360°
+ * Mendukung koordinat visual pitch (-90 s.d. 90) dan yaw (-180 s.d. 180)
+ */
+export interface HotspotPin {
+  id: string;
+  scene_id: string;
+  category: HotspotPinCategory;
+  title: string;
+  description?: string;
+  pitch: number; // Sudut vertikal (-90 s.d. 90 derajat atau persen posisi visual)
+  yaw: number;   // Sudut horizontal (-180 s.d. 180 derajat atau persen posisi visual)
+  target_scene_id?: string; // Untuk pin navigasi pindah scene
+  audio_url?: string;        // Untuk pin audio budaya / narasi Minang
+  partner_id?: string;       // Untuk pin mitra UMKM
+  partner_name?: string;
+  partner_fee?: number;
+
+  // Backwards compatibility
+  type?: 'navigasi' | 'audio' | 'fasilitas' | 'mitra';
+  target_ref?: string;
+}
+
+export type Hotspot360 = HotspotPin;
+
+/**
+ * PanoramaScene / Scene360 representasi scene tur imersif aerial & ground
  * Sinkron dengan models.Scene360
  */
-export interface Scene360 {
+export interface PanoramaScene {
   id: string;
   destination_id: string;
   title: string;
@@ -126,8 +145,11 @@ export interface Scene360 {
   panorama_url: string;
   initial_pitch: number;
   initial_yaw: number;
-  hotspots?: Hotspot360[];
+  ambient_audio_url?: string;
+  hotspots?: HotspotPin[];
 }
+
+export type Scene360 = PanoramaScene;
 
 /**
  * Destination merepresentasikan destinasi wisata di Sumatera Barat
@@ -157,7 +179,7 @@ export interface Destination {
   medan_indicator?: MedanIndicator;  // json:"medan_indicator,omitempty"
   tips?: DestinationTip[];           // json:"tips,omitempty"
   tariffs?: OfficialTariff[];        // json:"tariffs,omitempty"
-  scenes_360?: Scene360[];           // json:"scenes_360,omitempty"
+  scenes_360?: PanoramaScene[];      // json:"scenes_360,omitempty"
 }
 
 /**
@@ -185,27 +207,48 @@ export interface Partner {
 
 export type PartnerNagari = Partner;
 
-// --- Kontrak Tambahan BE-1 & BE-2 ---
+// ============================================================================
+// PUSAT KOMANDO TERPADU: PENINDAKAN PUNGLI & SIAGA SOS TIM SAR (FS1-M2-03)
+// ============================================================================
 
-export interface ShunluSearchResponse {
-  query: string;
-  detour_time_min: number;
-  detour_distance: string;
-  recommended: string;
-}
+export type PungliCategoryType =
+  | 'Parkir Liar'
+  | 'Tiket Di Atas Perda'
+  | 'Pemaksaan Pemandu/Kapal'
+  | 'Fasilitas Rusak';
 
-export type PungliStatus = 'Masuk' | 'Diverifikasi' | 'Ditindaklanjuti' | 'Selesai';
+export type PungliStatus =
+  | 'Laporan Baru'
+  | 'Sedang Diverifikasi'
+  | 'Ditindaklanjuti Lapangan'
+  | 'Selesai';
 
+/**
+ * PungliReport tiket laporan aduan pungli / pelanggaran tarif dari wisatawan
+ * Sinkron dengan models.PungliReport
+ */
 export interface PungliReport {
   id: string;
   destination_id: string;
+  destination_name: string;
+  kab_kota: string;
   reporter_name: string;
-  photo_evidence: string;
-  latitude: number;
-  longitude: number;
+  reporter_phone: string;
+  category: PungliCategoryType;
+  reported_amount: number;       // Nominal yang dipungut oknum (IDR)
+  official_amount: number;       // Nominal resmi sesuai Perda (IDR)
   description: string;
+  photo_url: string;             // Bukti foto karcis / bukti lokasi
+  lat: number;
+  lng: number;
   status: PungliStatus;
+  admin_notes?: string;          // Catatan tindakan resmi dari Admin
   created_at: string;
+
+  // Backwards compatibility
+  photo_evidence?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface PungliReportResponse {
@@ -214,27 +257,90 @@ export interface PungliReportResponse {
   message: string;
 }
 
-export interface HazardAlert {
+export type SosEmergencyStatus =
+  | 'Sinyal SOS Masuk'
+  | 'Tim SAR Dikerahkan'
+  | 'Evakuasi Berjalan'
+  | 'Penanganan Selesai';
+
+/**
+ * SosEmergencyTicket tiket sinyal darurat SOS GPS dari wisatawan di lapangan
+ */
+export interface SosEmergencyTicket {
+  id: string;
+  tourist_name: string;
+  tourist_phone: string;
+  destination_name: string;
+  kab_kota: string;
+  lat: number;
+  lng: number;
+  battery_level: number;        // Sisa baterai HP wisatawan (1-100%)
+  signal_status: string;        // Status koneksi (4G / Zero-Signal / Satelit Mesh)
+  medical_notes: string;        // Catatan medis/kondisi (misal: terkilir, tersesat kabut, butuh tandu)
+  status: SosEmergencyStatus;
+  sar_unit_assigned?: string;   // Unit SAR/BPBD/Pokdarwis yang ditugaskan
+  created_at: string;
+}
+
+export type HazardSeverity =
+  | 'Aman Terkendali'
+  | 'Waspada Bencana'
+  | 'Buka-Tutup Jalur'
+  | 'Tutup Total';
+
+/**
+ * HazardZoneAlert alert jalur ekstrem rawan bencana (Sitinjau Lauik, Lembah Anai, Kelok 9)
+ * Sinkron dengan models.HazardAlert
+ */
+export interface HazardZoneAlert {
   id: string;
   location: string;
-  severity: 'Siaga' | 'Waspada' | 'Awas' | 'Tutup Total';
+  severity: HazardSeverity;
   message: string;
   detour_route: string;
   updated_at: string;
 }
 
+export type HazardAlert = HazardZoneAlert;
+
+// ============================================================================
+// WEB GROUP INVITE & PRIVATE GROUP ROOM (FS1-M2-04)
+// ============================================================================
+
+export interface GroupVotingItem {
+  id: string;
+  title: string;
+  category: string;
+  votes_count: number;
+  is_winner?: boolean;
+}
+
+export interface GroupRoomPreview {
+  group_code: string;
+  group_name: string;
+  leader_name: string;
+  trip_dates: string;
+  member_count: number;
+  destinations_summary: string[];
+  voting_items: GroupVotingItem[];
+}
+
+// ============================================================================
+// AUTENTIKASI SINGLE ADMIN & LAINNYA
+// ============================================================================
+
 export interface User {
   id: string;
   phone_number: string;
   full_name: string;
-  role: 'tourist' | 'partner' | 'admin_dispar' | 'satgas_pungli';
+  role: 'admin_utama' | 'admin_dispar' | 'satgas_pungli' | 'tourist' | 'partner';
   created_at: string;
 }
 
 export interface AdminAuthCredentials {
   email: string;
   password: string;
-  role?: 'admin_dispar' | 'satgas_pungli';
+  role?: string;
 }
 
 export interface AdminAuthResponse {
@@ -249,14 +355,6 @@ export interface AdminAuthResponse {
 export interface OTPRequestResponse {
   status: string;
   message: string;
-}
-
-export interface GroupRoom {
-  id: string;
-  room_code: string;
-  title: string;
-  leader_id?: string;
-  created_at?: string;
 }
 
 export interface WAWebhookResponse {
