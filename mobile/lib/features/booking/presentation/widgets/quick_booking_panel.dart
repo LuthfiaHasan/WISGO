@@ -308,7 +308,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Pemesanan Cepat 360°',
+                          'Informasi Biaya & Layanan Resmi',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
@@ -316,7 +316,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                           ),
                         ),
                         Text(
-                          'Katalog 5 Kategori Resmi Pokdarwis',
+                          'Katalog 5 Kategori Pokdarwis • Tanya Vendor Langsung',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -518,9 +518,9 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                       ),
                     ),
                     Text(
-                      'Rp ${_formatNumber(_totalAmount)}',
+                      'Estimasi Rp ${_formatNumber(_totalAmount)}',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w900,
                         color: AppColors.forest,
                       ),
@@ -545,9 +545,9 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                             widget.onProceedToPayment(_totalAmount, items);
                           }
                         : null,
-                    icon: const Icon(Icons.qr_code_rounded, size: 16),
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
                     label: const Text(
-                      'Bayar QRIS / E-Wallet',
+                      'Tanya Vendor via WhatsApp',
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w800,
