@@ -18,7 +18,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 1. Initial card must show title and facilities chips
-    expect(find.text('Jelajah Daerah Sumbar'), findsOneWidget);
+    expect(find.text('Jelajah 10 Destinasi Wisata Sumbar'), findsOneWidget);
     expect(find.text('FASILITAS LINGKUNGAN:'), findsWidgets);
     expect(find.text('360° & Denah'), findsWidgets);
     expect(find.text('Detail'), findsWidgets);
@@ -50,21 +50,21 @@ void main() {
     // Check if the modal title is visible
     expect(find.text('DETAIL & TIKET'), findsOneWidget);
 
-    // Sticky Booking Button (REQUEST 4)
-    expect(find.text('Pesan Tiket & Parkir Resmi'), findsOneWidget);
+    // Sticky Booking Button directs to WhatsApp Vendor
+    expect(find.text('Pesan via WhatsApp Vendor'), findsOneWidget);
 
     // Facilities section is visible in modal
     expect(find.text('LINGKUP FASILITAS KAWASAN WISATA'), findsOneWidget);
 
     // Scroll down to see Reviews & Fees
-    await tester.drag(find.byType(ListView).last, const Offset(0, -400));
+    await tester.drag(find.byType(ListView).last, const Offset(0, -600));
     await tester.pumpAndSettle();
 
     // - Verified Reviews (REQUEST 1)
     expect(find.text('ULASAN WISATAWAN TERVERIFIKASI'), findsOneWidget);
 
     // Scroll down further to see Fees
-    await tester.drag(find.byType(ListView).last, const Offset(0, -300));
+    await tester.drag(find.byType(ListView).last, const Offset(0, -400));
     await tester.pumpAndSettle();
 
     // - Official Perda Fees (REQUEST 1 & 4)
