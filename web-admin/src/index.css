@@ -244,13 +244,15 @@ dialog::backdrop {
   }
 }
 
-/* Print stylesheet khusus untuk Cetak Plang Smart QR */
+/* Print stylesheet khusus untuk Cetak Plang Smart QR & Laporan Eksekutif Dispar */
 @media print {
   body * {
     visibility: hidden;
   }
   #smart-qr-placard-print,
-  #smart-qr-placard-print * {
+  #smart-qr-placard-print *,
+  #executive-report-print,
+  #executive-report-print * {
     visibility: visible;
   }
   #smart-qr-placard-print {
@@ -262,6 +264,19 @@ dialog::backdrop {
     padding: 24px;
     box-shadow: none !important;
     background: #F6F3EC !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #executive-report-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px 32px;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

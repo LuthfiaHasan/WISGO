@@ -269,3 +269,49 @@ Berdasarkan diagram resmi **UML Use Case WISGO** pada aktor **Admin Dispar** (`a
 | **13** | **Input kamus audio minang & budaya** | Langsung | [MinangDictionarySubTab.tsx](file:///d:/WISGO/web-admin/src/components/MinangDictionarySubTab.tsx) di [DestinationsPage.tsx](file:///d:/WISGO/web-admin/src/pages/DestinationsPage.tsx) | Pengelolaan frasa Minangkabau (Minang, Indonesia, Inggris, cara baca/lafal, konteks adat), unggah rekaman audio suara asli `.mp3` dari device lokal, dan pemutar audio bawaan. |
 | **14** | **Pantau open trip** | Langsung | [OpenTripsSubTab.tsx](file:///d:/WISGO/web-admin/src/components/OpenTripsSubTab.tsx) di [PartnersPage.tsx](file:///d:/WISGO/web-admin/src/pages/PartnersPage.tsx) | Pengawasan rombongan cari barengan wisatawan: monitoring kuota peserta, rute destinasi, Pokdarwis penanggung jawab, estimasi split-bill (IDR & MYR), serta tombol Verifikasi Trip Resmi / Tangguhkan Trip. |
 | **15** | **Buat tantangan** | `<<include>> Tentukan reward`<br/>Terhubung ke **Notifikasi** & **Tantangan Menaklukkan Destinasi** | [ChallengesRewardsSubTab.tsx](file:///d:/WISGO/web-admin/src/components/ChallengesRewardsSubTab.tsx) di [ExecutiveAnalyticsPage.tsx](file:///d:/WISGO/web-admin/src/pages/ExecutiveAnalyticsPage.tsx) | **Buat Tantangan:** Pembuatan quest penjelajahan destinasi (e.g. *Ekspedisi 5 Medan Ekstrem Minang*, *Jejak Pusaka Rumah Gadang*), multi-select destinasi target, dan validasi radius check-in GPS (&le; 200m).<br/>**Tentukan Reward (`<<include>>`):** Konfigurasi hadiah resmi (Sertifikat Digital Gubernur Sumbar, Lencana Emas/Perak Paspor, Voucher Homestay Nagari, dan Poin Gaode Ranking).<br/>**Notifikasi:** Penyiaran Push Notifikasi tantangan baru (`TANTANGAN_BARU`) secara langsung ke ribuan wisatawan penjelajah. |
+
+---
+
+## 11. Perombakan Total Halaman Dasbor Manajemen Kunjungan & Analitik Eksekutif Dispar
+
+Menindaklanjuti instruksi untuk merombak total halaman [ExecutiveAnalyticsPage.tsx](file:///d:/WISGO/web-admin/src/pages/ExecutiveAnalyticsPage.tsx) menjadi **"Dasbor Manajemen Kunjungan & Analitik"** yang komprehensif bagi jajaran eksekutif Dinas Pariwisata Provinsi Sumatera Barat (bebas metrik Escrow/Uang), telah diimplementasikan arsitektur visual berbasis Grid/Kartu modern:
+
+### A. 4 Kartu Metrik Makro Kunjungan (Header Atas, Selalu Tampil)
+1. **Total Wisatawan Terlacak:** `148.920 Wisatawan` (`+14.2% MoM`) berbasis data check-in fisik Smart QR (validasi GPS &le; 200m) dan sinyal aplikasi (88% Domestik, 12% Wisman).
+2. **Total Rombongan / Open Trip Aktif:** `342 Rombongan` (1.840 Wisatawan) terdaftar pada jadwal *Auto-Itinerary* rombongan via Group Invite (18 grup berangkat hari ini).
+3. **Total Interaksi WA Mitra (Leads):** `12.580 Klik Leads WA` (`+22.8% Naik`) yang diteruskan langsung ke WhatsApp pemilik Homestay, Pemandu Pokdarwis, Kuliner, dan Sewa Kapal (P2P 100%).
+4. **Indeks Keamanan Lapangan:** `94.8% Zona Hijau Tertib` (19 dari 20 destinasi unggulan berstatus bebas pungli dan kesiagaan tanggap darurat SAR terkendali).
+
+### B. Tab 1: Heatmap Kepadatan & Prediksi Kunjungan (Spasial & Waktu)
+1. **Grafik Garis Prediksi Lonjakan (*Predictive Analytics*)**:
+   - Visualisasi SVG interaktif 7 hari ke depan berbasis kalkulasi agregasi jadwal *Auto-Itinerary* rombongan wisatawan.
+   - Peringatan dini lonjakan ambang batas siaga (>110 grup) di hari Sabtu & Minggu (puncak 142 rombongan / 4.400 turis).
+   - Panel Rekomendasi Cerdas Dispar: peringatan dini otomatis untuk mengerahkan personel Saber Pungli di pos parkir Harau & Jam Gadang serta koordinasi rekayasa jalur Kelok 9.
+2. **Peta/Grid Status Saat Ini (19 Kabupaten/Kota)**:
+   - Filter pencarian dan pemilih status kepadatan (Hijau = Sepi, Kuning = Sedang, Koral/Merah = Ramai/Overload).
+   - Kartu wilayah informatif: kode wilayah, kunjungan mingguan, destinasi teratas, rasio wisatawan domestik vs wisman (MYR/SGD), dan akumulasi leads WA.
+
+### C. Tab 2: Interaksi Mitra UMKM & Performa Destinasi (Gaode Ranking)
+1. **Grafik Batang Interaksi WA (Leads P2P)**:
+   - Peringkat 8 destinasi penyumbang leads terbesar ke mitra nagari dipimpin oleh Desa Terindah Pariangan (2.450 klik), Lembah Harau (2.180 klik), dan Danau Maninjau (1.840 klik).
+   - Rincian proporsi 5 kategori mitra nagari: Homestay 38%, Pemandu Pokdarwis 32%, Kuliner 18%, Kapal 8%, dan Busana Adat 4%.
+2. **Tabel Top 5 Gaode Ranking**:
+   - Tabel evaluasi kepuasan wisatawan berperingkat medali emas, perak, perunggu (#1 Desa Pariangan 96.8, #2 Lembah Harau 94.5, #3 Istano Pagaruyung 92.4, #4 Bahari Mandeh 91.0, #5 Danau Maninjau 89.7).
+   - Kolom indikator: Bebas Pungli, Durasi Singgah (Dwell Time), Views 360°, Disimpan ke Itinerary, dan tren pergerakan peringkat.
+
+### D. Tab 3: Rekapitulasi Insiden (Pungli & Darurat)
+1. **Donut Chart SVG Komposisi Aduan**:
+   - Proporsi 54 aduan bulan ini: Parkir Liar (42.6% / 23 tiket), Tiket Di Luar Perda (27.8% / 15 tiket), Fasilitas Rusak (18.5% / 10 tiket), dan Panggilan Darurat SOS SAR (11.1% / 6 tiket).
+2. **Rasio Penyelesaian (Resolution Rate & SLA)**:
+   - Tingkat Penyelesaian: **92.6% Selesai Ditindak** (50 dari 54 laporan tuntas dengan BAP).
+   - Rata-rata Waktu Tanggap (SLA): **18 Menit** (jauh di bawah batas toleransi Dispar < 30 menit).
+   - Tabel 4 Log Aksi Cepat Terakhir Satgas Saber Pungli dan Armada SAR.
+
+### E. Tab 4: Ekspor Laporan Komprehensif (PDF & CSV)
+1. **Penerbitan Dokumen Resmi Ber-Kop Dispar Sumbar**:
+   - Kop Surat Resmi: *Pemerintah Provinsi Sumatera Barat - Dinas Pariwisata - Ekosistem Wisata Pintar (WISGO)*.
+   - Nomor Registrasi Surat Resmi: `556/412/DISPAR-SUMBAR/XI/2026`.
+   - Pratinjau dokumen langsung di layar + stylesheet cetak `@media print` terisolasi (`#executive-report-print`) yang menghasilkan dokumen cetak 1 lembar rapi tanpa elemen navigasi admin.
+   - Dilengkapi Lembar Pengesahan, stempel cap dinas digital, dan tanda tangan resmi Kepala Dinas Pariwisata Prov. Sumbar (Drs. H. Luhur Budianda, S.Y., M.Si).
+2. **Unduh Berkas Mentah CSV**:
+   - Tombol ekspor CSV berparameter rentang waktu (*Bulan Ini*, *Kuartal IV*, *Tahun Berjalan*) memuat data komprehensif 19 Kab/Kota.
