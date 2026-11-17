@@ -45,7 +45,7 @@ class PassportBadge {
 /// Tantangan Menaklukkan Destinasi (Input Admin)
 /// -> Scan QR dengan metode check-in GPS (<500m)
 /// -> Koleksi Stempel & Lencana di Paspor Digital
-/// -> Gacha ranking
+/// -> Geode ranking (Papan Peringkat Spasial Wisatawan)
 /// -> Full 10/10: Terbuka Sertifikat Digital & Notifikasi Reward dari Admin Dispar
 class DigitalPassportSheet extends StatefulWidget {
   final String currentDestination;
@@ -63,8 +63,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
   // 10 Destinasi Resmi Tantangan Input Admin Dispar
   late List<PassportBadge> _badges;
   bool _isCheckingGps = false;
-  bool _isRollingGacha = false;
-  String? _gachaResultRank;
+  bool _isRecalculatingGeode = false;
 
   @override
   void initState() {
@@ -207,86 +206,263 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
     });
   }
 
-  void _rollGachaRanking() {
-    setState(() => _isRollingGacha = true);
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        final titles = [
-          'Rank #1: Pendekar Penjelajah Luhak Nan Tuo (Peringkat Teratas)',
-          'Rank #2: Pengelana Ranah Bundo (Top 1% Wisatawan Sumbar)',
-          'Rank #3: Penakluk 10 Gerbang Wisata Minang',
-        ];
-        titles.shuffle();
-        setState(() {
-          _isRollingGacha = false;
-          _gachaResultRank = titles.first;
-        });
-
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.cream,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
-              children: [
-                Icon(Icons.casino_rounded, color: Color(0xFFC89242), size: 26),
-                SizedBox(width: 8),
-                Text(
-                  'Gacha Ranking Penjelajah',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink),
-                ),
-              ],
+  void _openGeodeRankingModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: const BoxDecoration(
+              color: AppColors.cream,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
+            padding: const EdgeInsets.all(20),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Hasil kocok ranking berdasarkan akumulasi stempel check-in GPS:',
-                  style: TextStyle(fontSize: 12, color: AppColors.muted),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.leaderboard_rounded, color: AppColors.forest, size: 24),
+                        SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'GEODE RANKING PENJELAJAH',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.forest, letterSpacing: 0.8),
+                            ),
+                            Text(
+                              'Peringkat Spasial Wisatawan Minang',
+                              style: TextStyle(fontSize: 10, color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 6),
+
+                // User's Geode Status Card
                 Container(
-                  width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFC89242), width: 1.5),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.forest, Color(0xFF142618)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.military_tech_rounded, color: Color(0xFFC89242), size: 36),
-                      const SizedBox(height: 6),
-                      Text(
-                        _gachaResultRank ?? '',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.ink,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('POSISI ANDA SAAT INI', style: TextStyle(fontSize: 9.5, color: AppColors.sage, fontWeight: FontWeight.w800)),
+                              Text('Peringkat #3 Se-Sumbar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC89242),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Colors.white)),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Poin Geodo: +500 XP • Status: Penjelajah Elit',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(
+                            children: [
+                              Text('${_unlockedCount * 250 + 250} GP', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFFE2B755))),
+                              const Text('Skor Geode', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                            ],
+                          ),
+                          Container(width: 1, height: 24, color: Colors.white24),
+                          Column(
+                            children: [
+                              Text('$_unlockedCount/10', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white)),
+                              const Text('Ditaklukkan', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                            ],
+                          ),
+                          Container(width: 1, height: 24, color: Colors.white24),
+                          Column(
+                            children: [
+                              Text('${(_unlockedCount * 46.5).toStringAsFixed(1)} km', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white)),
+                              const Text('Jarak Geodesik', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                            ],
+                          ),
+                        ],
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Button: Rekalkulasi Geode Ranking
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isRecalculatingGeode
+                        ? null
+                        : () {
+                            final messenger = ScaffoldMessenger.of(context);
+                            setSheetState(() => _isRecalculatingGeode = true);
+                            Future.delayed(const Duration(milliseconds: 900), () {
+                              if (mounted) {
+                                setSheetState(() => _isRecalculatingGeode = false);
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('✓ Rekalkulasi Geode Ranking Berhasil! Data titik spasial GPS terbaru telah disinkronkan oleh Admin Dispar.'),
+                                    backgroundColor: AppColors.forest,
+                                  ),
+                                );
+                              }
+                            });
+                          },
+                    icon: _isRecalculatingGeode
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.sync_rounded, size: 16, color: AppColors.forest),
+                    label: Text(
+                      _isRecalculatingGeode ? 'Merekalkulasi Skor Geode Spasial...' : 'Rekalkulasi Geode Ranking Saya',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.forest),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                const Text(
+                  'LEADERBOARD PENJELAJAH SPASIAL (TOP 5):',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
+                ),
+                const SizedBox(height: 8),
+
+                // Leaderboard List
+                Expanded(
+                  child: ListView(
+                    children: [
+                      _buildLeaderboardItem(1, 'Rangkayo Sutan', '10/10 Destinasi', '520.4 km', '2.950 GP', 'Diamond', true),
+                      _buildLeaderboardItem(2, 'Pendekar Marapulai', '10/10 Destinasi', '498.1 km', '2.750 GP', 'Diamond', false),
+                      _buildLeaderboardItem(3, 'Anda (Wisatawan Teladan)', '$_unlockedCount/10 Destinasi', '${(_unlockedCount * 46.5).toStringAsFixed(1)} km', '${_unlockedCount * 250 + 250} GP', 'Platinum', false, isMe: true),
+                      _buildLeaderboardItem(4, 'Bundo Penjelajah', '8/10 Destinasi', '412.0 km', '2.200 GP', 'Gold', false),
+                      _buildLeaderboardItem(5, 'Petualang Singkarak', '7/10 Destinasi', '385.5 km', '1.950 GP', 'Gold', false),
                     ],
                   ),
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Tutup', style: TextStyle(color: AppColors.forest, fontWeight: FontWeight.bold)),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardItem(int rank, String name, String dest, String dist, String score, String tier, bool isLeader, {bool isMe = false}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isMe ? const Color(0xFFFBF4E4) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isMe ? const Color(0xFFC89242) : AppColors.sageBorder,
+          width: isMe ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: rank == 1
+                  ? const Color(0xFFE2B755)
+                  : rank == 2
+                      ? const Color(0xFFB0B7BD)
+                      : rank == 3
+                          ? const Color(0xFFCD7F32)
+                          : AppColors.cream,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '#$rank',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w900,
+                color: rank <= 3 ? Colors.white : AppColors.ink,
               ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
+                          color: isMe ? const Color(0xFF8C5C1E) : AppColors.ink,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isMe) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC89242),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('Saya', style: TextStyle(fontSize: 8.5, color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ],
+                ),
+                Text('$dest • $dist', style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(score, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppColors.forest)),
+              Text('Tier $tier', style: const TextStyle(fontSize: 8.5, color: AppColors.muted)),
             ],
           ),
-        );
-      }
-    });
+        ],
+      ),
+    );
   }
 
   void _showRewardFromAdminNotification() {
@@ -678,18 +854,16 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                 ),
                 const SizedBox(height: 14),
 
-                // Action Buttons: Gacha Ranking & GPS Check-in
+                // Action Buttons: Geode Ranking & GPS Check-in
                 Row(
                   children: [
-                    // Gacha Ranking Button
+                    // Geode Ranking Button
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _isRollingGacha ? null : _rollGachaRanking,
-                        icon: _isRollingGacha
-                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.casino_rounded, size: 16, color: Color(0xFFC89242)),
+                        onPressed: _openGeodeRankingModal,
+                        icon: const Icon(Icons.leaderboard_rounded, size: 16, color: Color(0xFFC89242)),
                         label: const Text(
-                          'Gacha Ranking',
+                          'Geode Ranking',
                           style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFFC89242)),
                         ),
                         style: OutlinedButton.styleFrom(

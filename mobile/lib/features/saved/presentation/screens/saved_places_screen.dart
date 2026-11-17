@@ -2988,12 +2988,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  void _openGachaRankinModal([SavedDestinationModel? dest]) {
+  void _openGeodeRankingModal([SavedDestinationModel? dest]) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _GachaRankinModal(dest: dest),
+      builder: (ctx) => _GeodeRankingModal(dest: dest),
     );
   }
 
@@ -3480,14 +3480,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => _openGachaRankinModal(),
-                            icon: const Icon(Icons.stars_rounded, size: 16),
+                            onPressed: () => _openGeodeRankingModal(),
+                            icon: const Icon(Icons.leaderboard_rounded, size: 16),
                             label: const Text(
-                              'Gacha Rankin',
+                              'Geode Ranking',
                               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFD97706),
+                              backgroundColor: const Color(0xFFC89242),
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -5903,13 +5903,13 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                 ),
                 const SizedBox(height: 10),
 
-                // Gacha Rankin Banner in Detail
+                // Geode Ranking Banner in Detail
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3D6),
+                    color: const Color(0xFFFBF4E4),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFD97706)),
+                    border: Border.all(color: const Color(0xFFC89242)),
                   ),
                   child: Row(
                     children: [
@@ -5917,10 +5917,10 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD97706),
+                          color: const Color(0xFFC89242),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.stars_rounded, color: Colors.white, size: 20),
+                        child: const Icon(Icons.leaderboard_rounded, color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
@@ -5928,11 +5928,11 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Gacha Rankin & Check-in GPS',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                              'Geode Ranking & Papan Peringkat Spasial',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8C5C1E)),
                             ),
                             Text(
-                              'Klaim voucher kuliner & diskon tiket resmi',
+                              'Pantau posisi penjelajah & skor geospasial Minang',
                               style: TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
                             ),
                           ],
@@ -5944,17 +5944,17 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
-                            builder: (ctx) => _GachaRankinModal(dest: widget.place),
+                            builder: (ctx) => _GeodeRankingModal(dest: widget.place),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFB45309),
+                          backgroundColor: const Color(0xFF193D22),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           elevation: 0,
                         ),
-                        child: const Text('Buka', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                        child: const Text('Buka', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -7180,88 +7180,51 @@ IconData _getFacilityIcon(String name) {
 
 
 // =============================================================================
-// MODAL GACHA RANKIN & CHECK-IN GPS (MINANG GAMIFIED REWARDS)
+// MODAL GEODE RANKING & PAPAN PERINGKAT SPASIAL (ITEM USE CASE DIAGRAM)
 // =============================================================================
-class _GachaRankinModal extends StatefulWidget {
+class _GeodeRankingModal extends StatefulWidget {
   final SavedDestinationModel? dest;
-  const _GachaRankinModal({this.dest});
+  const _GeodeRankingModal({this.dest});
 
   @override
-  State<_GachaRankinModal> createState() => _GachaRankinModalState();
+  State<_GeodeRankingModal> createState() => _GeodeRankingModalState();
 }
 
-class _GachaRankinModalState extends State<_GachaRankinModal> {
+class _GeodeRankingModalState extends State<_GeodeRankingModal> {
   bool _isGpsCheckedIn = false;
-  bool _isSpinning = false;
-  String? _wonReward;
-  String? _rewardCode;
+  bool _isRecalculating = false;
+  int _userGeodeScore = 2500;
+  double _userGeodeDistanceKm = 465.4;
 
-  final List<Map<String, String>> _rewards = const [
-    {
-      'name': 'Voucher Rendang Asli Payakumbuh 20%',
-      'code': 'MINANG-RENDANG-20',
-      'icon': '🍲',
-      'desc': 'Potongan 20% pembelian oleh-oleh rendang basah & rendang paru di gerai mitra Pokdarwis.',
-    },
-    {
-      'name': 'Bebas Retribusi Parkir Pokdarwis 1x',
-      'code': 'PARKIR-NAGARI-FREE',
-      'icon': '🅿️',
-      'desc': 'Gratis parkir motor/mobil 1 kali di seluruh destinasi binaan nagari Sumbar.',
-    },
-    {
-      'name': 'Stempel Emas Paspor Digital Sumbar',
-      'code': 'GOLD-BADGE-2026',
-      'icon': '🌟',
-      'desc': '+100 XP Paspor Digital dan lencana kebanggaan Penjelajah Ranah Minang.',
-    },
-    {
-      'name': 'Kupon Gratis Minuman Kawa Daun Batang Tabik',
-      'code': 'KAWA-DAUN-FREE',
-      'icon': '☕',
-      'desc': 'Gratis 1 cangkir batuang seduhan Kawa Daun hangat khas lereng Gunung Sago.',
-    },
-    {
-      'name': 'Diskon Sewa Pakaian Adat Minang Rp 15.000',
-      'code': 'ADAT-MINANG-15K',
-      'icon': '👘',
-      'desc': 'Diskon sewa pakaian Bundo Kanduang atau Marapulai di area wisata budaya.',
-    },
-  ];
-
-  void _verifyGps() {
+  void _verifyGpsCheckin() {
     setState(() {
       _isGpsCheckedIn = true;
+      _userGeodeScore += 250;
+      _userGeodeDistanceKm += 18.5;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('📍 Koordinat GPS Terverifikasi! Anda berada dalam geofence kawasan wisata Sumbar (Akurasi 8m).'),
+        content: Text('📍 Koordinat Geospasial Terverifikasi (<500m)! Skor Geode bertambah +250 GP.'),
         backgroundColor: Color(0xFF193D22),
         duration: Duration(seconds: 2),
       ),
     );
   }
 
-  void _spinGacha() {
-    if (!_isGpsCheckedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Harap lakukan Check-in GPS terlebih dahulu untuk membuka Rankin Hadiah!'),
-          backgroundColor: Color(0xFFB45309),
-        ),
-      );
-      return;
-    }
-    setState(() {
-      _isSpinning = true;
-    });
+  void _recalculateGeodeRanking() {
+    setState(() => _isRecalculating = true);
     Future.delayed(const Duration(milliseconds: 900), () {
-      final selected = (_rewards..shuffle()).first;
-      setState(() {
-        _isSpinning = false;
-        _wonReward = selected['name'];
-        _rewardCode = selected['code'];
-      });
+      if (mounted) {
+        setState(() {
+          _isRecalculating = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Rekalkulasi Geode Ranking Berhasil! Seluruh data titik spasial GPS telah disinkronkan oleh Admin Dispar.'),
+            backgroundColor: Color(0xFF193D22),
+          ),
+        );
+      }
     });
   }
 
@@ -7270,13 +7233,13 @@ class _GachaRankinModalState extends State<_GachaRankinModal> {
     final destName = widget.dest?.title ?? 'Kawasan Wisata Sumatera Barat';
 
     return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: const BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
@@ -7297,11 +7260,11 @@ class _GachaRankinModalState extends State<_GachaRankinModal> {
                 height: 44,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFD97706), Color(0xFFB45309)],
+                    colors: [Color(0xFFC89242), Color(0xFF8C5C1E)],
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.stars_rounded, color: Colors.white, size: 26),
+                child: const Icon(Icons.leaderboard_rounded, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -7309,149 +7272,274 @@ class _GachaRankinModalState extends State<_GachaRankinModal> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Gacha Rankin & Check-in GPS',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
+                      'Geode Ranking Penjelajah',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF142618)),
                     ),
                     Text(
-                      'Klaim hadiah & oleh-oleh khas Minang dari keranjang Rankin',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF5A6B5D)),
+                      'Papan Peringkat Spasial • Direkalkulasi oleh Admin Dispar',
+                      style: TextStyle(fontSize: 10.5, color: Color(0xFF5A6B5D)),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // GPS Proximity Check-in Box
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _isGpsCheckedIn ? const Color(0xFFF0FDF4) : const Color(0xFFFEF3D6),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _isGpsCheckedIn ? const Color(0xFF22C55E) : const Color(0xFFD97706),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded, color: AppColors.muted),
               ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _isGpsCheckedIn ? Icons.check_circle_rounded : Icons.my_location_rounded,
-                  color: _isGpsCheckedIn ? const Color(0xFF15803D) : const Color(0xFFB45309),
-                  size: 24,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isGpsCheckedIn ? 'Lokasi GPS Terverifikasi' : 'Check-in Lokasi Diperlukan',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: _isGpsCheckedIn ? const Color(0xFF15803D) : const Color(0xFFB45309),
-                        ),
-                      ),
-                      Text(
-                        _isGpsCheckedIn
-                            ? 'Koordinat aktif di $destName'
-                            : 'Verifikasi keberadaan Anda di kawasan wisata',
-                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF5A6B5D)),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!_isGpsCheckedIn)
-                  ElevatedButton(
-                    onPressed: _verifyGps,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFB45309),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Check-in', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                  ),
-              ],
-            ),
+            ],
           ),
           const SizedBox(height: 14),
 
-          // Prize Display or Rankin Box
-          if (_wonReward != null) ...[
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF9C3),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFCA8A04)),
+          // User Geode Status Card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF193D22), Color(0xFF142618)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Column(
-                children: [
-                  const Text('🎉 SELAMAT! ANDA MENDAPATKAN:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF854D0E))),
-                  const SizedBox(height: 6),
-                  Text(
-                    _wonReward!,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF713F12)),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFCA8A04)),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF193D22).withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('POSISI RANKING ANDA', style: TextStyle(fontSize: 9.5, color: AppColors.sage, fontWeight: FontWeight.w800)),
+                        Text('Peringkat #3 Se-Sumbar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                      ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC89242),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Colors.white)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Text('$_userGeodeScore GP', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFFE2B755))),
+                        const Text('Skor Geode', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                      ],
+                    ),
+                    Container(width: 1, height: 24, color: Colors.white24),
+                    Column(
+                      children: [
+                        Text('${_userGeodeDistanceKm.toStringAsFixed(1)} km', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
+                        const Text('Jarak Geodesik', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                      ],
+                    ),
+                    Container(width: 1, height: 24, color: Colors.white24),
+                    Column(
+                      children: [
+                        Text(_isGpsCheckedIn ? '10/10' : '9/10', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
+                        const Text('Tertaklukkan', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Tombol Rekalkulasi Geode Ranking
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isRecalculating ? null : _recalculateGeodeRanking,
+              icon: _isRecalculating
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.sync_rounded, size: 16, color: Color(0xFF193D22)),
+              label: Text(
+                _isRecalculating ? 'Merekalkulasi Peringkat Geospasial...' : 'Rekalkulasi Geode Ranking Saya',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF193D22)),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF193D22)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // GPS Proximity Check-in Box (jika dibuka pada destinasi tertentu)
+          if (widget.dest != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _isGpsCheckedIn ? const Color(0xFFF0FDF4) : const Color(0xFFFEF3D6),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _isGpsCheckedIn ? const Color(0xFF22C55E) : const Color(0xFFD97706),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _isGpsCheckedIn ? Icons.check_circle_rounded : Icons.my_location_rounded,
+                    color: _isGpsCheckedIn ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Kode: ${_rewardCode ?? ""}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF142618), letterSpacing: 1),
+                          _isGpsCheckedIn ? 'Koordinat Spasial Terverifikasi' : 'Check-in Geospasial di Kawasan',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: _isGpsCheckedIn ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            if (_rewardCode != null) {
-                              Clipboard.setData(ClipboardData(text: _rewardCode!));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Kode voucher disalin!')),
-                              );
-                            }
-                          },
-                          child: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF854D0E)),
+                        Text(
+                          _isGpsCheckedIn
+                              ? 'Stempel check-in di $destName (+250 GP)'
+                              : 'Berada di $destName (< 500m geofence)',
+                          style: const TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
                         ),
                       ],
                     ),
                   ),
+                  if (!_isGpsCheckedIn)
+                    ElevatedButton(
+                      onPressed: _verifyGpsCheckin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF193D22),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Check-in', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    ),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
           ],
 
-          // Gacha Spin Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isSpinning ? null : _spinGacha,
-              icon: _isSpinning
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.casino_rounded, size: 20),
-              label: Text(
-                _isSpinning ? 'Mengocok Keranjang Rankin...' : 'Buka Keranjang Rankin Minang',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF193D22),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 2,
+          const Text(
+            'PAPAN PERINGKAT SPASIAL (TOP 5):',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
+          ),
+          const SizedBox(height: 8),
+
+          // Leaderboard List
+          Expanded(
+            child: ListView(
+              children: [
+                _buildRankRow(1, 'Rangkayo Sutan', '10/10 Destinasi', '520.4 km', '2.950 GP', 'Diamond', false),
+                _buildRankRow(2, 'Pendekar Marapulai', '10/10 Destinasi', '498.1 km', '2.750 GP', 'Diamond', false),
+                _buildRankRow(3, 'Anda (Wisatawan Teladan)', _isGpsCheckedIn ? '10/10 Destinasi' : '9/10 Destinasi', '${_userGeodeDistanceKm.toStringAsFixed(1)} km', '$_userGeodeScore GP', 'Platinum', true),
+                _buildRankRow(4, 'Bundo Penjelajah', '8/10 Destinasi', '412.0 km', '2.200 GP', 'Gold', false),
+                _buildRankRow(5, 'Petualang Singkarak', '7/10 Destinasi', '385.5 km', '1.950 GP', 'Gold', false),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRankRow(int rank, String name, String dest, String dist, String score, String tier, bool isMe) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isMe ? const Color(0xFFFBF4E4) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isMe ? const Color(0xFFC89242) : AppColors.sageBorder,
+          width: isMe ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: rank == 1
+                  ? const Color(0xFFE2B755)
+                  : rank == 2
+                      ? const Color(0xFFB0B7BD)
+                      : rank == 3
+                          ? const Color(0xFFCD7F32)
+                          : AppColors.cream,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '#$rank',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w900,
+                color: rank <= 3 ? Colors.white : AppColors.ink,
               ),
             ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
+                          color: isMe ? const Color(0xFF8C5C1E) : AppColors.ink,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isMe) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC89242),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('Saya', style: TextStyle(fontSize: 8.5, color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ],
+                ),
+                Text('$dest • $dist', style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(score, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF193D22))),
+              Text('Tier $tier', style: const TextStyle(fontSize: 8.5, color: AppColors.muted)),
+            ],
           ),
         ],
       ),
