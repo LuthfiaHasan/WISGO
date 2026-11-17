@@ -17,12 +17,10 @@ import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
-import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
 import '../../../fe1_visual_map/destination_detail/destination_detail_screen.dart';
 import '../../../fe1_visual_map/hazard_alert_sos/hazard_sos_screen.dart';
 import '../../../fe1_visual_map/map_explore_shunlu/map_explore_screen.dart';
 import '../../../fe1_visual_map/models/destination_model.dart';
-import '../../../fe1_visual_map/offline_pocket/offline_pocket_screen.dart';
 import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
 import '../../../booking/presentation/widgets/quick_booking_panel.dart';
 import '../../../booking/presentation/widgets/qris_payment_sheet.dart';
@@ -103,6 +101,33 @@ extension SavedDestinationModelFe1Bridge on SavedDestinationModel {
 /// - View 1: Layar 04 Destinasi Tersimpan (`Daftar`, `Efek Memuat`, `Kosong`, `Luring` + Filter Wilayah + Kartu Bergambar & Biaya Vertikal)
 /// - View 2: Pilar 3 Rincian Biaya Resmi & Kalkulator Simulasi Vertikal
 /// - Clean 4-Button Bottom Navigation Bar (`Daerah`, `Tersimpan`, `Tarif Resmi`, `Alur Awal`)
+final List<Map<String, dynamic>> kPaidReceiptsHistory = [
+  {
+    'transactionId': 'WG-ESCROW-20261116-89241',
+    'destinationTitle': 'Air Terjun Lubuk Hitam (Cindakir) 3 Tingkat',
+    'totalAmount': 25000,
+    'orderItems': [
+      {'name': 'Karcis Masuk Wisatawan (Perda No. 4)', 'qty': 2, 'total': 20000},
+      {'name': 'Retribusi Parkir Resmi Roda Dua', 'qty': 1, 'total': 5000},
+    ],
+    'paymentMethod': 'QRIS Dinamis (BCA/GoPay)',
+    'date': '16 Nov 2026 • 13:45 WIB',
+    'status': 'LUNAS (ESCROW TERVERIFIKASI)',
+  },
+  {
+    'transactionId': 'WG-ESCROW-20261115-44109',
+    'destinationTitle': 'Lembah Harau & Tebing Kelok 9',
+    'totalAmount': 40000,
+    'orderItems': [
+      {'name': 'Karcis Masuk Lembah Harau', 'qty': 2, 'total': 30000},
+      {'name': 'Retribusi Parkir Resmi Roda Empat', 'qty': 1, 'total': 10000},
+    ],
+    'paymentMethod': 'QRIS Dinamis',
+    'date': '15 Nov 2026 • 10:15 WIB',
+    'status': 'LUNAS (ESCROW TERVERIFIKASI)',
+  },
+];
+
 class SavedPlacesScreen extends StatefulWidget {
   final bool initialOfflineMode;
   final bool initialLoading;
@@ -338,6 +363,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
+    String _formatRupiah(int val) {
+    final s = val.toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = s.length - 1; i >= 0; i--) {
+      buffer.write(s[i]);
+      count++;
+      if (count == 3 && i != 0) {
+        buffer.write('.');
+        count = 0;
+      }
+    }
+    return buffer.toString().split('').reversed.join('');
+  }
+
   void _showAppToast(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -472,9 +512,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
@@ -493,8 +535,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildExploreView() {
     var filtered = _destinations.where((item) {
@@ -1732,7 +1775,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       border: Border.all(color: AppColors.sageBorder),
                     ),
                     child: const Text(
-                      'Anti-Pungli',
+                      'Tarif Resmi Perda',
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
@@ -1844,6 +1887,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
             children: [
+              _buildPaidOrdersSection(),
+              const SizedBox(height: 14),
               FairPriceBarometerTable(
                 destinationData: activeDest,
                 selectedCategory: _activeBarometerCategory,
@@ -2097,7 +2142,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                // 2. Fasilitas Lingkungan: Ikon informatif di kartu, judul lengkap di detail
+                // 2. Fasilitas Lingkungan: Ikon informatif di kartu, hover & detail lengkap
                 Row(
                   children: [
                     const Text(
@@ -2118,23 +2163,52 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(right: 6),
                               child: Tooltip(
-                                message: fac,
+                                message: '$fac (Ketuk untuk rincian standar fasilitas)',
                                 preferBelow: false,
-                                child: Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.creamSubtle,
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: InkWell(
+                                    onTap: () => _openFacilityDetailSheet(fac, place),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: AppColors.warmBorder.withValues(alpha: 0.8),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 180),
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.creamSubtle,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: AppColors.warmBorder.withValues(alpha: 0.9),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _getFacilityIcon(fac),
+                                            size: 13,
+                                            color: AppColors.forest,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            fac,
+                                            style: const TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.ink,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 2),
+                                          const Text(
+                                            'ⓘ',
+                                            style: TextStyle(
+                                              fontSize: 8.5,
+                                              color: AppColors.brush,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    _getFacilityIcon(fac),
-                                    size: 14.5,
-                                    color: AppColors.forest,
                                   ),
                                 ),
                               ),
@@ -2421,6 +2495,192 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       builder: (ctx) => CultureAndCommunitySheet(
         destinationTitle: destTitle ?? 'Air Terjun Lubuk Hitam (Cindakir) 3 Tingkat',
       ),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 12: DETAIL STRUK PEMBAYARAN RESMI & CETAK / PRINT STRUK
+  // ===========================================================================
+  void _openReceiptDetailModal(Map<String, dynamic> receipt) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ReceiptDetailSheet(receipt: receipt),
+    );
+  }
+
+  // ===========================================================================
+  // MODAL 13: DETAIL FASILITAS LINGKUNGAN KAWASAN (DENGAN HOVER & DETAIL)
+  // ===========================================================================
+  void _openFacilityDetailSheet(String facName, SavedDestinationModel place) {
+    String detailText;
+    final lower = facName.toLowerCase();
+    if (lower.contains('parkir')) {
+      detailText = 'Kantong parkir resmi terkelola rapi oleh Pokdarwis nagari. Tarif resmi Perda No. 4/2024: Motor Rp 3.000 / Mobil Rp 5.000. Dilarang meminta pungutan tambahan di luar karcis resmi.';
+    } else if (lower.contains('toilet') || lower.contains('bilas')) {
+      detailText = 'Fasilitas sanitasi bersih berstandar CHSE dengan pasokan air alami pegunungan yang jernih dan mengalir lancar. Retribusi pemeliharaan Rp 2.000.';
+    } else if (lower.contains('kuliner') || lower.contains('warung')) {
+      detailText = 'Deretan kedai lokal warga nagari binaan yang menyajikan kopi kawa daun khas Luhak Nan Tuo, teh talua, dan aneka kuliner tradisional dengan daftar harga pasti.';
+    } else if (lower.contains('musholla') || lower.contains('masjid')) {
+      detailText = 'Musala bersih dengan karpet nyaman, perlengkapan salat (mukena & sarung), serta tempat wudu dengan air mata air pegunungan yang sejuk.';
+    } else if (lower.contains('foto') || lower.contains('spot')) {
+      detailText = 'Spot foto panorama alami berupa dek kayu dan jembatan bambu dengan latar lanskap alam yang memukau dan berpagar aman.';
+    } else if (lower.contains('guide') || lower.contains('pemandu')) {
+      detailText = 'Pemandu lokal terlatih dari pemuda nagari yang siap mendampingi trekking jalur alami serta menceritakan sejarah dan kearifan tambo adat Minang.';
+    } else {
+      detailText = 'Fasilitas resmi kawasan yang terawat dan dikelola bersama Pokdarwis nagari sesuai regulasi Perda Prov. Sumbar No. 4/2024.';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.forest,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(_getFacilityIcon(facName), size: 20, color: AppColors.cream),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'INFORMASI FASILITAS LINGKUNGAN',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            facName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.sageBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Kawasan Wisata:', style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.sage,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('Terverifikasi Perda', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.forest)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      place.title,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                    ),
+                    const Divider(height: 16, color: AppColors.warmBorder),
+                    const Text('Keterangan & Standar Layanan:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest)),
+                    const SizedBox(height: 4),
+                    Text(
+                      detailText,
+                      style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.ink),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.sage,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.shield_rounded, size: 16, color: AppColors.forest),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Seluruh fasilitas resmi diawasi Dispar & Satgas Nagari untuk menjamin kenyamanan bebas pungli.',
+                        style: TextStyle(fontSize: 9.5, color: AppColors.forest, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Pahami & Tutup', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -2728,141 +2988,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
               const SizedBox(height: 14),
 
-              // 2. Menu Fitur & Aktivitas Wisatawan (Vertikal)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sageBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'AKTIVITAS & FITUR WISATAWAN',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: AppColors.forest,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildProfileMenuTile(
-                      title: 'Daftar Wisata Tersimpan (Layar 04)',
-                      subtitle:
-                          'Lihat ${_savedIds.length} bookmark wisata, efek shimmer, & mode luring',
-                      badge: 'Buka',
-                      onTap: () => setState(() => _activeTabIndex = 1),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Tabel Fair-Price Barometer (Pilar 3)',
-                      subtitle:
-                          'Cek tarif resmi tiket, parkir motor/mobil, & kalkulator biaya',
-                      badge: 'Perda',
-                      onTap: () => setState(() => _activeTabIndex = 2),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Simulasi Mode Tanpa Sinyal (Offline Banner)',
-                      subtitle: _isOfflineMode
-                          ? 'Banner notifikasi statis luring sedang ditampilkan di atas'
-                          : 'Ketuk untuk menyalakan banner notifikasi tanpa internet',
-                      badge: _isOfflineMode ? 'Aktif' : 'Uji',
-                      isWarning: _isOfflineMode,
-                      onTap: () {
-                        setState(() => _isOfflineMode = !_isOfflineMode);
-                        _showAppToast(
-                          _isOfflineMode
-                              ? 'Mode Tanpa Sinyal diaktifkan'
-                              : 'Kembali ke mode Daring',
-                        );
-                      },
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Paspor Digital Minang & Lencana Nagari',
-                      subtitle:
-                          '3 dari 10 stempel kunjungan nagari telah terkumpul',
-                      badge: '3/10',
-                      onTap: () => _showAppToast(
-                        'Paspor Digital Minang: 3 Lencana Nagari aktif',
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Riwayat Laporan Ketidaksesuaian Tarif / Pungli',
-                      subtitle:
-                          'Pantau status laporan ke Dinas Pariwisata & Dishub',
-                      badge: 'Aman',
-                      onTap: () {
-                        setState(() => _activeTabIndex = 2);
-                        _showAppToast(
-                          'Buka bagian bawah Tabel Tarif untuk melapor pungli',
-                        );
-                      },
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Peta Shunlu & Detour Rute (Layar 03)',
-                      subtitle:
-                          'Navigasi rute Padang - Harau & denah mikro pejalan kaki',
-                      badge: 'Peta OSM',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MapExploreShunluScreen(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Kamus Minang & Audio Panduan Budaya',
-                      subtitle:
-                          'Pelajari frasa Minang autentik, audio playback & kalender acara nagari',
-                      badge: 'Budaya',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AudioCultureScreen(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Peringatan Jalur Rawan Bencana & SOS GPS',
-                      subtitle:
-                          'Pantau status longsor Sitinjau Lauik, Lembah Anai & tombol darurat',
-                      badge: 'Darurat',
-                      isWarning: true,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HazardSosScreen(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 18, color: AppColors.warmBorder),
-                    _buildProfileMenuTile(
-                      title: 'Manajemen Mode Luring (Pocket Bundle)',
-                      subtitle:
-                          'Unduh paket wisata daerah terpencil tanpa koneksi internet',
-                      badge: 'Luring',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const OfflinePocketScreen(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
               // 3. Pengaturan Akun & Tombol Keluar (Ke Alur Awal Jobdesk 1-4)
               Container(
                 padding: const EdgeInsets.all(16),
@@ -2970,59 +3095,162 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  Widget _buildProfileMenuTile({
-    required String title,
-    required String subtitle,
-    required String badge,
-    required VoidCallback onTap,
-    bool isWarning = false,
-  }) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildPaidOrdersSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.sageBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TRANSAKSI & PEMESANAN RESMI',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: AppColors.forest,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.muted,
-                    height: 1.35,
+                  SizedBox(height: 2),
+                  Text(
+                    'Riwayat Pemesanan & Struk',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isWarning ? AppColors.coralTint : AppColors.sage,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              badge,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w800,
-                color: isWarning ? AppColors.terracotta : AppColors.forest,
+                ],
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.sage,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${kPaidReceiptsHistory.length} Struk',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.forest,
+                  ),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 4),
+          const Text(
+            'Struk resmi terlindungi Rekening Escrow Nagari. Anda dapat membuka kembali dan mencetak struk kapan saja.',
+            style: TextStyle(fontSize: 11, color: AppColors.muted, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          ...kPaidReceiptsHistory.map((receipt) {
+            final title = receipt['destinationTitle']?.toString() ?? 'Wisata Sumbar';
+            final date = receipt['date']?.toString() ?? 'Hari ini';
+            final total = receipt['totalAmount'] as int? ?? 0;
+            final txId = receipt['transactionId']?.toString() ?? '';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.creamSubtle,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.warmBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDFECE2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'LUNAS',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$date • $txId',
+                    style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                  ),
+                  const Divider(height: 14, color: AppColors.warmBorder),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Rp ${_formatRupiah(total)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.forest,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _openReceiptDetailModal(receipt),
+                        icon: const Icon(Icons.receipt_long_rounded, size: 14),
+                        label: const Text(
+                          'Buka Struk & Print',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.forest,
+                          foregroundColor: AppColors.cream,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          elevation: 0,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -3443,10 +3671,13 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
         onPaymentSuccess: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Pembayaran Sukses! Layanan Resmi Terkonfirmasi.'),
+              content: Text('Pembayaran Sukses! Layanan Resmi Terkonfirmasi & Struk Tersimpan di Profil.'),
               backgroundColor: AppColors.forest,
             ),
           );
+        },
+        onReceiptGenerated: (receipt) {
+          kPaidReceiptsHistory.insert(0, receipt);
         },
       ),
     );
@@ -5025,15 +5256,14 @@ class _DestinationDetailSheet extends StatefulWidget {
 }
 
 class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
-  int _visitors = 2;
-  int _motor = 0;
-  int _mobil = 1;
   late bool _bookmarked;
+  late List<UserReview> _reviews;
 
   @override
   void initState() {
     super.initState();
     _bookmarked = widget.isBookmarked;
+    _reviews = List<UserReview>.from(widget.place.reviews);
   }
 
   String _formatRupiah(int num) {
@@ -5043,15 +5273,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final total = (_visitors * widget.place.calcRates.tiket) +
-        (_motor * widget.place.calcRates.motor) +
-        (_mobil * widget.place.calcRates.mobil);
-
-    final parts = <String>[];
-    if (_visitors > 0) parts.add('$_visitors Tiket');
-    if (_motor > 0) parts.add('$_motor Motor');
-    if (_mobil > 0) parts.add('$_mobil Mobil');
-    final breakdown = parts.isNotEmpty ? parts.join(' + ') : '1 Tiket Masuk';
+    final baseTicketPrice = widget.place.calcRates.tiket;
 
     return Container(
       height: screenHeight * 0.92,
@@ -5475,7 +5697,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                 ),
                 const SizedBox(height: 14),
 
-                // 2. Ulasan Wisatawan Terverifikasi (REQUEST 1)
+                // 2. Ulasan Wisatawan Terverifikasi (Dengan Bukti Foto & Lokasi Real GPS)
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -5488,37 +5710,63 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Flexible(
-                            child: Text(
-                              'ULASAN WISATAWAN TERVERIFIKASI',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.6,
-                                color: AppColors.forest,
-                              ),
+                        children: [
+                          const Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ULASAN WISATAWAN TERVERIFIKASI',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.6,
+                                    color: AppColors.forest,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Bukti Foto Asli & Koordinat GPS',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Pengalaman Nyata',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.muted,
+                          ElevatedButton.icon(
+                            onPressed: _openAddReviewSheet,
+                            icon: const Icon(Icons.add_a_photo_rounded, size: 13),
+                            label: const Text(
+                              '+ Tulis Ulasan',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.forest,
+                              foregroundColor: AppColors.cream,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              elevation: 0,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      ...List.generate(widget.place.reviews.length, (idx) {
-                        final rev = widget.place.reviews[idx];
+                      const SizedBox(height: 12),
+                      ...List.generate(_reviews.length, (idx) {
+                        final rev = _reviews[idx];
                         return Container(
-                          padding: EdgeInsets.only(top: idx > 0 ? 10 : 0),
-                          margin: EdgeInsets.only(top: idx > 0 ? 10 : 0),
+                          padding: EdgeInsets.only(top: idx > 0 ? 12 : 0),
+                          margin: EdgeInsets.only(top: idx > 0 ? 12 : 0),
                           decoration: idx > 0
                               ? const BoxDecoration(
                                   border: Border(
@@ -5536,8 +5784,8 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     child: Row(
                                       children: [
                                         Container(
-                                          width: 24,
-                                          height: 24,
+                                          width: 26,
+                                          height: 26,
                                           decoration: const BoxDecoration(
                                             color: AppColors.forest,
                                             shape: BoxShape.circle,
@@ -5546,7 +5794,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                           child: Text(
                                             rev.author.isNotEmpty ? rev.author.substring(0, 1) : 'U',
                                             style: const TextStyle(
-                                              fontSize: 10,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w800,
                                               color: AppColors.cream,
                                             ),
@@ -5562,7 +5810,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 1,
                                                 style: const TextStyle(
-                                                  fontSize: 11.5,
+                                                  fontSize: 12,
                                                   fontWeight: FontWeight.w700,
                                                   color: AppColors.ink,
                                                 ),
@@ -5584,28 +5832,121 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    '★ ${rev.rating.toInt()}.0',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.amber,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF3D6),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '★ ${rev.rating.toStringAsFixed(1)}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFFB45309),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 6),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 32),
-                                child: Text(
-                                  '"${rev.comment}"',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    height: 1.4,
-                                    color: AppColors.muted,
+                              if (rev.realLocation != null && rev.realLocation!.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDFECE2),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppColors.sageBorder),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.location_on_rounded, size: 11, color: AppColors.forest),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          rev.realLocation!,
+                                          style: const TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.forest,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              ],
+                              const SizedBox(height: 6),
+                              Text(
+                                '"${rev.comment}"',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  height: 1.4,
+                                  color: AppColors.muted,
+                                ),
                               ),
+                              if (rev.photoUrl != null && rev.photoUrl!.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                GestureDetector(
+                                  onTap: () => _openImagePreview(
+                                    rev.photoUrl!,
+                                    rev.author,
+                                    rev.realLocation ?? 'Lokasi Terverifikasi',
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Stack(
+                                      alignment: Alignment.bottomLeft,
+                                      children: [
+                                        Image.network(
+                                          rev.photoUrl!,
+                                          height: 120,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Container(
+                                            height: 80,
+                                            width: double.infinity,
+                                            color: AppColors.creamSubtle,
+                                            alignment: Alignment.center,
+                                            child: const Icon(Icons.image_not_supported_rounded, color: AppColors.muted),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.bottomCenter,
+                                              end: Alignment.topCenter,
+                                              colors: [
+                                                Colors.black.withValues(alpha: 0.75),
+                                                Colors.transparent,
+                                              ],
+                                            ),
+                                          ),
+                                          width: double.infinity,
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.photo_camera_rounded, size: 11, color: Color(0xFFE5C07B)),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Bukti Foto Asli di Lokasi • Ketuk Perbesar',
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         );
@@ -5614,7 +5955,6 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                   ),
                 ),
                 const SizedBox(height: 14),
-
                 // 3. Rincian Biaya Resmi Sesuai Perda (REQUEST 1 & 4)
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -5746,66 +6086,11 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
-
-                // 4. Simulasi Hitung Tiket & Parkir
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.sageBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'SIMULASI HITUNG TIKET & PARKIR',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.6,
-                          color: AppColors.forest,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Tiket Pengunjung
-                      _buildCalcStepperRow(
-                        label: 'Tiket Pengunjung',
-                        rateText: '${_formatRupiah(widget.place.calcRates.tiket)} / orang',
-                        value: _visitors,
-                        onDecrement: () => setState(() => _visitors = (_visitors - 1).clamp(0, 99)),
-                        onIncrement: () => setState(() => _visitors++),
-                      ),
-                      const Divider(color: AppColors.warmBorder, height: 16),
-
-                      // Parkir Motor
-                      _buildCalcStepperRow(
-                        label: 'Parkir Motor (Roda 2)',
-                        rateText: '${_formatRupiah(widget.place.calcRates.motor)} / unit',
-                        value: _motor,
-                        onDecrement: () => setState(() => _motor = (_motor - 1).clamp(0, 99)),
-                        onIncrement: () => setState(() => _motor++),
-                      ),
-                      const Divider(color: AppColors.warmBorder, height: 16),
-
-                      // Parkir Mobil
-                      _buildCalcStepperRow(
-                        label: 'Parkir Mobil (Roda 4)',
-                        rateText: '${_formatRupiah(widget.place.calcRates.mobil)} / unit',
-                        value: _mobil,
-                        onDecrement: () => setState(() => _mobil = (_mobil - 1).clamp(0, 99)),
-                        onIncrement: () => setState(() => _mobil++),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                              ],
             ),
           ),
 
-          // Sticky Bottom Action Bar with Total & Pesan Tiket Button (REQUEST 4)
+          // Sticky Bottom Action Bar with Official Ticket Price & Pesan Tiket Button
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             decoration: BoxDecoration(
@@ -5826,7 +6111,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Total Biaya Resmi',
+                      'Tiket Masuk Resmi',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -5834,7 +6119,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                       ),
                     ),
                     Text(
-                      _formatRupiah(total),
+                      _formatRupiah(baseTicketPrice),
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -5846,7 +6131,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => widget.onCheckout(total, breakdown),
+                    onPressed: () => widget.onCheckout(baseTicketPrice, '1 Tiket Masuk Resmi'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.forest,
                       foregroundColor: AppColors.cream,
@@ -5873,94 +6158,564 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
     );
   }
 
-  Widget _buildCalcStepperRow({
-    required String label,
-    required String rateText,
-    required int value,
-    required VoidCallback onDecrement,
-    required VoidCallback onIncrement,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
+  void _openImagePreview(String url, String author, String location) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.forest,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 260,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 200,
+                      color: Colors.black26,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.image, color: Colors.white, size: 48),
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.verified_rounded, size: 14, color: Color(0xFFE5C07B)),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Bukti Foto Asli • $author',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.cream),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      location,
+                      style: TextStyle(fontSize: 10.5, color: AppColors.sage.withValues(alpha: 0.9)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openAddReviewSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => _AddReviewModal(
+        destination: widget.place,
+        onReviewSubmitted: (newReview) {
+          setState(() {
+            _reviews.insert(0, newReview);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.forest,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              content: const Row(
+                children: [
+                  Icon(Icons.verified_rounded, color: Color(0xFFE5C07B), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ulasan dengan bukti foto & koordinat GPS berhasil diterbitkan!',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.cream),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AddReviewModal extends StatefulWidget {
+  final SavedDestinationModel destination;
+  final ValueChanged<UserReview> onReviewSubmitted;
+
+  const _AddReviewModal({
+    required this.destination,
+    required this.onReviewSubmitted,
+  });
+
+  @override
+  State<_AddReviewModal> createState() => _AddReviewModalState();
+}
+
+class _AddReviewModalState extends State<_AddReviewModal> {
+  int _rating = 5;
+  late String _photoUrl;
+  final _commentController = TextEditingController();
+
+  late final List<Map<String, String>> _samplePhotos;
+
+  @override
+  void initState() {
+    super.initState();
+    _photoUrl = widget.destination.imageUrl;
+    _samplePhotos = [
+      {
+        'label': 'Spot Utama',
+        'url': widget.destination.imageUrl,
+      },
+      {
+        'label': 'Pemandangan Alam',
+        'url': 'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?auto=format&fit=crop&w=600&q=80',
+      },
+      {
+        'label': 'Pos & Loket Resmi',
+        'url': 'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?auto=format&fit=crop&w=600&q=80',
+      },
+    ];
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  String _getRatingText(int stars) {
+    switch (stars) {
+      case 5:
+        return '⭐⭐⭐⭐⭐ Sangat Memuaskan (5.0)';
+      case 4:
+        return '⭐⭐⭐⭐ Bagus & Tertib (4.0)';
+      case 3:
+        return '⭐⭐⭐ Cukup Baik (3.0)';
+      case 2:
+        return '⭐⭐ Kurang Memuaskan (2.0)';
+      default:
+        return '⭐ Perlu Perbaikan (1.0)';
+    }
+  }
+
+  void _submitReview() {
+    final comment = _commentController.text.trim();
+    if (comment.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan tulis ulasan atau pengalaman Anda terlebih dahulu.'),
+          backgroundColor: AppColors.terracotta,
+        ),
+      );
+      return;
+    }
+
+    final newReview = UserReview(
+      author: 'Ahmad Fauzi',
+      rating: _rating.toDouble(),
+      date: 'Baru saja',
+      comment: comment,
+      photoUrl: _photoUrl,
+      realLocation: 'GPS Terverifikasi (${widget.destination.subRegion}) • Real-time',
+      isGpsVerified: true,
+    );
+
+    Navigator.pop(context);
+    widget.onReviewSubmitted(newReview);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 18,
+        right: 18,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-              ),
-            ),
-            Text(
-              rateText,
-              style: const TextStyle(
-                fontSize: 10.5,
-                color: AppColors.muted,
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: onDecrement,
+            Center(
               child: Container(
-                width: 28,
-                height: 28,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.cream,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.warmBorder),
+                  color: AppColors.warmBorder,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                alignment: Alignment.center,
-                child: const Text(
-                  '-',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TULIS ULASAN WISATAWAN',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          color: AppColors.brush,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Ulasan Nyata & Bukti Foto',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.creamSubtle,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.close_rounded, size: 16, color: AppColors.ink),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // 1. Lokasi Real GPS Geofence Box
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDFECE2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.sageBorder),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: const BoxDecoration(
+                      color: AppColors.forest,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.gps_fixed_rounded, color: AppColors.cream, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Lokasi Real GPS Terdeteksi',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                        Text(
+                          '${widget.destination.title} (${widget.destination.subRegion}) • Radius < 150m',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'Terverifikasi',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.cream,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 14),
+
+            // 2. Rating Bintang
+            const Text(
+              'PENILAIAN RATING:',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.warmBorder),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final starIndex = index + 1;
+                      return GestureDetector(
+                        onTap: () => setState(() => _rating = starIndex),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Icon(
+                            starIndex <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                            size: 32,
+                            color: starIndex <= _rating ? Colors.amber : AppColors.warmBorder,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _getRatingText(_rating),
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // 3. Bukti Foto Asli di Lokasi
+            const Text(
+              'BUKTI FOTO KUNJUNGAN DI LOKASI:',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.warmBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Stack(
+                      alignment: Alignment.bottomLeft,
+                      children: [
+                        Image.network(
+                          _photoUrl,
+                          height: 130,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 100,
+                            color: AppColors.creamSubtle,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.image, color: AppColors.muted),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [Colors.black.withValues(alpha: 0.75), Colors.transparent],
+                            ),
+                          ),
+                          width: double.infinity,
+                          child: const Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFFE5C07B)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Bukti Foto Terlampir & Siap Diverifikasi',
+                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Pilih contoh bukti foto nyata di lokasi:',
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.muted),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    children: _samplePhotos.map((sample) {
+                      final isSelected = _photoUrl == sample['url'];
+                      return ChoiceChip(
+                        label: Text(sample['label']!),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) setState(() => _photoUrl = sample['url']!);
+                        },
+                        selectedColor: AppColors.forest,
+                        labelStyle: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? AppColors.cream : AppColors.ink,
+                        ),
+                        backgroundColor: AppColors.creamSubtle,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: isSelected ? AppColors.forest : AppColors.warmBorder),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // 4. Input Ulasan & Catatan Pengalaman
+            const Text(
+              'PENGALAMAN & KONDISI NYATA DI LOKASI:',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _commentController,
+              maxLines: 3,
+              style: const TextStyle(fontSize: 12, color: AppColors.ink),
+              decoration: InputDecoration(
+                hintText: 'Tulis pengalaman Anda (kebersihan fasilitas, kesesuaian tiket perda, keindahan spot)...',
+                hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.warmBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.warmBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.forest, width: 1.5),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                'Tarif resmi sesuai Perda',
+                'Fasilitas bersih & rapi',
+                'Pemandangan sangat indah',
+                'Parkir aman & tertib',
+              ].map((chipText) {
+                return GestureDetector(
+                  onTap: () {
+                    final cur = _commentController.text;
+                    _commentController.text = cur.isEmpty ? chipText : '$cur. $chipText';
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.sage,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.sageBorder),
+                    ),
+                    child: Text(
+                      '+ $chipText',
+                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.forest),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // 5. Tombol Kirim Ulasan
             SizedBox(
-              width: 32,
-              child: Text(
-                '$value',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _submitReview,
+                icon: const Icon(Icons.send_rounded, size: 16),
+                label: const Text(
+                  'Kirim Ulasan Terverifikasi',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                 ),
-              ),
-            ),
-            GestureDetector(
-              onTap: onIncrement,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.forest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  '+',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.cream,
-                  ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.forest,
+                  foregroundColor: AppColors.cream,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -6012,7 +6767,7 @@ class _BookingCheckoutSheetState extends State<_BookingCheckoutSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'PEMESANAN RESMI & ANTI-PUNGLI',
+                    'PEMESANAN RESMI',
                     style: TextStyle(
                       fontSize: 9.5,
                       fontWeight: FontWeight.w800,
@@ -6321,4 +7076,473 @@ IconData _getFacilityIcon(String name) {
   if (lower.contains('foto') || lower.contains('spot')) return Icons.camera_alt_rounded;
   if (lower.contains('camping') || lower.contains('kemah')) return Icons.cabin_rounded;
   return Icons.check_circle_outline_rounded;
+}
+
+
+// =============================================================================
+// MODAL SHEET: STRUK RESMI PEMBAYARAN & CETAK / PRINT STRUK
+// =============================================================================
+class _ReceiptDetailSheet extends StatelessWidget {
+  final Map<String, dynamic> receipt;
+
+  const _ReceiptDetailSheet({required this.receipt});
+
+  String _formatNumber(int val) {
+    final s = val.toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = s.length - 1; i >= 0; i--) {
+      buffer.write(s[i]);
+      count++;
+      if (count == 3 && i != 0) {
+        buffer.write('.');
+        count = 0;
+      }
+    }
+    return buffer.toString().split('').reversed.join('');
+  }
+
+  void _showPrintSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.print_rounded, color: AppColors.forest, size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        'Cetak Struk Resmi Wisgo',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _buildPrintTile(
+                icon: Icons.bluetooth_audio_rounded,
+                title: 'Printer Kasir Bluetooth (Thermal POS 58mm/80mm)',
+                subtitle: 'Koneksikan ke printer thermal petugas loket',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showFeedback(context, 'Mengirim perintah cetak ke Printer Thermal Bluetooth... Selesai dicetak!');
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildPrintTile(
+                icon: Icons.picture_as_pdf_rounded,
+                title: 'Simpan / Cetak Berkas PDF Resmi',
+                subtitle: 'Unduh berkas PDF struk resmi ber-QR Code Perda',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showFeedback(context, 'Dokumen PDF Struk Resmi berhasil dibuat & siap dicetak.');
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildPrintTile(
+                icon: Icons.share_rounded,
+                title: 'Kirim Struk Digital via WhatsApp',
+                subtitle: 'Bagikan bukti pembayaran resmi ke rombongan',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showFeedback(context, 'Tautan struk digital siap dikirim via WhatsApp.');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPrintTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.warmBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.sage,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 20, color: AppColors.forest),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.ink)),
+                  Text(subtitle, style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: AppColors.muted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFeedback(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(msg, style: const TextStyle(fontSize: 11.5))),
+          ],
+        ),
+        backgroundColor: AppColors.forest,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final txId = receipt['transactionId']?.toString() ?? 'WG-ESCROW-000000';
+    final dest = receipt['destinationTitle']?.toString() ?? 'Kawasan Wisata Sumbar';
+    final date = receipt['date']?.toString() ?? 'Hari ini';
+    final method = receipt['paymentMethod']?.toString() ?? 'QRIS Dinamis';
+    final total = receipt['totalAmount'] as int? ?? 0;
+    final items = receipt['orderItems'] as List<dynamic>? ?? [];
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.90,
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: Column(
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: AppColors.warmBorder,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'STRUK RESMI & BUKTI BAYAR ESCROW',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: AppColors.brush,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Detail Struk Pembayaran',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.creamSubtle,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.warmBorder),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.close_rounded, size: 18, color: AppColors.ink),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView(
+              children: [
+                // Paper receipt container
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.sageBorder),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Header Dispar
+                      const Text(
+                        'PEMERINTAH PROVINSI SUMATERA BARAT',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.brush, letterSpacing: 0.8),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'DINAS PARIWISATA • TIKET RESMI WISGO ESCROW',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.forest),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDFECE2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle_rounded, size: 14, color: AppColors.forest),
+                            SizedBox(width: 5),
+                            Text(
+                              'LUNAS & TERVERIFIKASI RESMI',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 20, color: AppColors.warmBorder),
+                      // Meta details
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('No. Transaksi', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          Text(txId, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Waktu Bayar', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          Text(date, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Kanal Pembayaran', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          Text(method, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Destinasi', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              dest,
+                              textAlign: TextAlign.end,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 20, color: AppColors.warmBorder),
+                      // Itemized breakdown
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'RINCIAN ITEM LAYANAN RESMI (${items.length} Layanan):',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.brush, letterSpacing: 0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...items.map((it) {
+                        final m = it is Map ? it : {};
+                        final name = m['name']?.toString() ?? 'Item Wisata';
+                        final qty = m['qty']?.toString() ?? '1';
+                        final itTot = m['total'] as int? ?? 0;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '$name (x$qty)',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.ink),
+                                ),
+                              ),
+                              Text(
+                                'Rp ${_formatNumber(itTot)}',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const Divider(height: 16, color: AppColors.warmBorder),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'TOTAL DIBAYAR (LUNAS):',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
+                          ),
+                          Text(
+                            'Rp ${_formatNumber(total)}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.forest),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // QR Code barcode simulator for entry gate
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.creamSubtle,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.sageBorder),
+                        ),
+                        child: Column(
+                          children: [
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.qr_code_2_rounded, size: 40, color: AppColors.forest),
+                                SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('KODE AKSES GERBANG MASUK', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.forest)),
+                                    Text('Pindai di Pos Karcis / Loket Resmi', style: TextStyle(fontSize: 9, color: AppColors.muted)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'VERIFIKASI: $txId',
+                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: AppColors.brush),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Karcis ini sah menurut Perda Prov. Sumbar No. 4 Tahun 2024 tentang Retribusi Wisata Alam Nagari. Transaksi resmi terjamin.',
+                        style: TextStyle(fontSize: 8.5, color: AppColors.brush, height: 1.3),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Cetak / Print Struk button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showPrintSheet(context),
+                    icon: const Icon(Icons.print_rounded, size: 18),
+                    label: const Text(
+                      'Cetak / Print Struk Resmi',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF193D22),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.forest,
+                      side: const BorderSide(color: AppColors.forest, width: 1.2),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Tutup Struk', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
