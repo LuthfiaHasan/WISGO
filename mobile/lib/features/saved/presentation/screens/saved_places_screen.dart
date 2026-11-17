@@ -417,8 +417,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       children: [
                         const Text(
                           'Jelajah 10 Destinasi Wisata Sumbar',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 17,
+                            fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
                             letterSpacing: -0.4,
@@ -428,7 +430,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         GestureDetector(
                           onTap: () => setState(() => _isOfflineMode = !_isOfflineMode),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                             decoration: BoxDecoration(
                               color: _isOfflineMode ? const Color(0xFFFDEEE9) : const Color(0xFFE8F3EB),
                               borderRadius: BorderRadius.circular(20),
@@ -436,27 +438,30 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 color: _isOfflineMode ? AppColors.terracotta.withValues(alpha: 0.5) : AppColors.forest.withValues(alpha: 0.5),
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: _isOfflineMode ? AppColors.terracotta : AppColors.brush,
-                                    shape: BoxShape.circle,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 5,
+                                    height: 5,
+                                    decoration: BoxDecoration(
+                                      color: _isOfflineMode ? AppColors.terracotta : AppColors.brush,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _isOfflineMode ? 'Luring' : 'Online',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: _isOfflineMode ? AppColors.terracotta : AppColors.forest,
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    _isOfflineMode ? 'Luring' : 'Online',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: _isOfflineMode ? AppColors.terracotta : AppColors.forest,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -464,36 +469,39 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                   ),
 
-                  // 1. SCAN QR (DIPERBESAR BIAR NAMPAK!)
-                  GestureDetector(
-                    onTap: _openQrScannerModal,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: AppColors.forest,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.forest.withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.qr_code_scanner_rounded, size: 17, color: AppColors.cream),
-                          SizedBox(width: 4),
-                          Text(
-                            'Scan QR',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.cream,
+                  // 1. SCAN CHECK-IN TIBA DI LOKASI (TANTANGAN MENAKLUKKAN DESTINASI)
+                  Tooltip(
+                    message: 'Scan Check-in Tiba di Lokasi (Tantangan 10 Destinasi)',
+                    child: GestureDetector(
+                      onTap: _openQrScannerModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.forest,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.forest.withValues(alpha: 0.25),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.verified_rounded, size: 15, color: AppColors.cream),
+                            SizedBox(width: 3),
+                            Text(
+                              'Check-in',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.cream,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
