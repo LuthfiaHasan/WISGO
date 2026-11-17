@@ -40,6 +40,7 @@ import {
   updatePungliReportStatus,
   updateSosTicketStatus,
 } from '../services/api';
+import { EmergencyContactsManager } from '../components/EmergencyContactsManager';
 
 interface CommandCenterPageProps {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -60,6 +61,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
 
   // Active Tab: 3 Operational Panels
   const [activeTab, setActiveTab] = useState<'pungli' | 'sos' | 'hazard'>('pungli');
+  const [sosSubView, setSosSubView] = useState<'view_reports' | 'input_contacts'>('view_reports');
 
   // Data States
   const [pungliReports, setPungliReports] = useState<PungliReport[]>([]);
@@ -357,7 +359,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                 }`}
               >
                 <LifeBuoy className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-                <span>Siaga Darurat SOS &amp; SAR</span>
+                <span>Nomor Darurat &amp; Siaga SOS SAR</span>
                 {activeSosCount > 0 && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse">
                     {activeSosCount} Sinyal
@@ -652,11 +654,53 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* TAB 2: SIAGA DARURAT SOS GPS & KOORDINASI TIM SAR                   */}
+      {/* TAB 2: NOMOR DARURAT & SIAGA SOS SAR (INPUT & LIHAT LAPORAN)         */}
       {/* ==================================================================== */}
       {activeTab === 'sos' && (
         <div className="space-y-6">
-          {/* Alert Peringatan Siaga SAR Aktif */}
+          {/* Sub-View Switcher: Lihat Laporan vs Input Nomor Darurat */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-white border border-[#CFD8BE] shadow-xs">
+            <button
+              type="button"
+              onClick={() => setSosSubView('view_reports')}
+              className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                sosSubView === 'view_reports'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'text-[#4A5248] hover:text-[#1B1F1A] hover:bg-[#F6F3EC]'
+              }`}
+            >
+              <LifeBuoy className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+              <span>Lihat Laporan Sinyal Darurat SOS</span>
+              <span
+                className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                  sosSubView === 'view_reports'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[#234B24]/10 text-[#234B24]'
+                }`}
+              >
+                {sosTickets.length} Tiket
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSosSubView('input_contacts')}
+              className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                sosSubView === 'input_contacts'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'text-[#4A5248] hover:text-[#1B1F1A] hover:bg-[#F6F3EC]'
+              }`}
+            >
+              <Phone className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
+              <span>Input &amp; Kelola Direktori Nomor Darurat</span>
+            </button>
+          </div>
+
+          {sosSubView === 'input_contacts' ? (
+            <EmergencyContactsManager showToast={showToast} />
+          ) : (
+            <>
+              {/* Alert Peringatan Siaga SAR Aktif */}
           {activeSosCount > 0 ? (
             <div className="p-5 rounded-[24px] bg-[#F26B4B]/15 border-2 border-[#F26B4B] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
@@ -825,6 +869,8 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               })}
             </div>
           </div>
+            </>
+          )}
         </div>
       )}
 

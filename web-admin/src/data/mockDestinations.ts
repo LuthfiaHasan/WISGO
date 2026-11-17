@@ -3,6 +3,7 @@ import {
   CultureCalendarEvent,
   Destination,
   DigitalPassportMetrics,
+  EmergencyContactNumber,
   GaodeRankingItem,
   GroupRoomPreview,
   HazardZoneAlert,
@@ -13,6 +14,8 @@ import {
   RegencyHeatmapData,
   SosEmergencyTicket,
   SystemBenchmarkMetrics,
+  SystemNotification,
+  TouristChallenge,
 } from '../types/contract';
 
 export const SUMBAR_REGENCIES = [
@@ -2845,6 +2848,270 @@ export const INITIAL_SYSTEM_BENCHMARK: SystemBenchmarkMetrics = {
     },
   ],
 };
+
+// ============================================================================
+// DATA AWAL NOMOR DARURAT SIAGA WISATA SUMBAR (USE CASE: NOMOR DARURAT - INPUT)
+// ============================================================================
+export const INITIAL_EMERGENCY_CONTACTS: EmergencyContactNumber[] = [
+  {
+    id: 'emg-01',
+    agency_name: 'Kantor Pencarian & Pertolongan (SAR Kelas A Padang / Basarnas)',
+    call_number: '115',
+    category: 'SAR & Basarnas',
+    city_regency: 'Provinsi Sumatera Barat',
+    address: 'Jl. By Pass KM 25, Batipuh Panjang, Koto Tangah, Kota Padang',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Hotline siaga darurat evakuasi laut, gunung, dan medan ekstrem se-Sumatera Barat.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+  {
+    id: 'emg-02',
+    agency_name: 'Pusdalops BPBD Provinsi Sumatera Barat',
+    call_number: '(0751) 7058705',
+    category: 'BPBD & Kebencanaan',
+    city_regency: 'Provinsi Sumatera Barat',
+    address: 'Jl. Jenderal Sudirman No. 47, Padang Barat, Kota Padang',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Pusat komando tanggap darurat bencana alam, longsor jalur wisata, dan banjir bandang.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+  {
+    id: 'emg-03',
+    agency_name: 'Layanan Polisi Presisi Polda Sumatera Barat',
+    call_number: '110',
+    category: 'Kepolisian',
+    city_regency: 'Provinsi Sumatera Barat',
+    address: 'Jl. Jenderal Sudirman No. 55, Padang',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Layanan cepat penanganan keamanan, pungutan liar, ketertiban umum, dan pengawalan darurat.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+  {
+    id: 'emg-04',
+    agency_name: 'Instalasi Gawat Darurat (IGD) & Ambulans RSUP Dr. M. Djamil',
+    call_number: '118',
+    category: 'Medis & Ambulans',
+    city_regency: 'Kota Padang',
+    address: 'Jl. Perintis Kemerdekaan, Sawahan Tim., Kec. Padang Tim., Kota Padang',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Pusat rujukan medis trauma darurat tertinggi di Sumatera Barat dengan unit ambulans reaksi cepat.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+  {
+    id: 'emg-05',
+    agency_name: 'Posko Siaga Darurat Jalur Ekstrem Sitinjau Lauik',
+    call_number: '0811-6677-889',
+    category: 'Posko Jalur Rawan',
+    city_regency: 'Kota Padang - Kab. Solok',
+    address: 'Pos Pantau Panorama 1 Sitinjau Lauik, Lubuk Kilangan',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Unit siaga derek darurat, penanganan rem blong, dan mitigasi longsor jalur lintas Padang - Solok.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+  {
+    id: 'emg-06',
+    agency_name: 'Posko Terpadu Kesiapsiagaan Jalur Kelok 9 & Harau',
+    call_number: '0812-7500-9900',
+    category: 'Posko Jalur Rawan',
+    city_regency: 'Kab. Lima Puluh Kota',
+    address: 'Flyover Kelok 9 KM 143, Sarilamak',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Pos siaga lalu lintas, patroli tebing batu Harau, dan ambulans siaga Pokdarwis Limapuluh Kota.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+  {
+    id: 'emg-07',
+    agency_name: 'Dinas Pemadam Kebakaran & Penyelamatan Kota Padang',
+    call_number: '113',
+    category: 'Pemadam Kebakaran',
+    city_regency: 'Kota Padang',
+    address: 'Jl. Bagindo Aziz Chan No. 1, Aie Pacah, Padang',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Penanganan kebakaran, evakuasi binatang buas, dan penyelamatan teknis medan terjal.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+  {
+    id: 'emg-08',
+    agency_name: 'Pos SAR Basarnas Kepulauan Mentawai (Sipora & Siberut)',
+    call_number: '0812-7000-115',
+    category: 'SAR & Basarnas',
+    city_regency: 'Kab. Kepulauan Mentawai',
+    address: 'Dermaga Tuapejat, Sipora Utara, Kepulauan Mentawai',
+    is_24_hours: true,
+    is_active: true,
+    description: 'Penyelamatan darurat bahari, kecelakaan kapal selancar (*surfing*), dan gelombang tinggi Samudera Hindia.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
+];
+
+// ============================================================================
+// DATA AWAL TANTANGAN & REWARD WISATAWAN (USE CASE: BUAT TANTANGAN & TENTUKAN REWARD)
+// ============================================================================
+export const INITIAL_TOURIST_CHALLENGES: TouristChallenge[] = [
+  {
+    id: 'chl-01',
+    title: 'Ekspedisi 5 Medan Ekstrem Minangkabau',
+    slug: 'ekspedisi-5-medan-ekstrem',
+    category: 'Penakluk Medan Ekstrem',
+    description:
+      'Tuntaskan penjelajahan di 5 destinasi dengan medan terjal & blank spot terverifikasi. Wisatawan wajib check-in via Scan Smart QR fisik dengan validasi GPS radius ≤ 200 meter.',
+    target_destination_ids: ['dest-01', 'dest-04', 'dest-07', 'dest-10', 'dest-14'],
+    target_destinations_count: 5,
+    min_gps_checkin_radius_meters: 200,
+    duration_days: 30,
+    reward: {
+      id: 'rwd-01',
+      reward_type: 'Sertifikat Digital Gubernur',
+      title: 'Sertifikat Digital Resmi Gubernur Sumbar "Penakluk 5 Medan Minangkabau"',
+      description:
+        'Sertifikat bernomor registrasi resmi Dispar Prov. Sumbar bertanda tangan digital Gubernur + 1.000 Poin Gaode Ranking + Badge Emas Paspor Digital.',
+      points_reward: 1000,
+      certificate_template: 'CERT-GUB-SUMBAR-MEDAN-EKSTREM',
+    },
+    participant_count: 1420,
+    completion_count: 388,
+    status: 'Aktif Disiarkan',
+    created_at: '2026-11-10T08:00:00Z',
+    updated_at: '2026-11-17T09:00:00Z',
+  },
+  {
+    id: 'chl-02',
+    title: 'Jejak Pusaka Adat & Rumah Gadang Megah',
+    slug: 'jejak-pusaka-adat-rumah-gadang',
+    category: 'Jejak Adat & Budaya',
+    description:
+      'Kunjungi 4 pusat cagar budaya dan istana adat Minangkabau, buka wawasan arsitektur Rumah Gadang, dan dengarkan narasi audio budaya 360°.',
+    target_destination_ids: ['dest-03', 'dest-06', 'dest-11', 'dest-18'],
+    target_destinations_count: 4,
+    min_gps_checkin_radius_meters: 200,
+    duration_days: 21,
+    reward: {
+      id: 'rwd-02',
+      reward_type: 'Voucher Homestay Nagari',
+      title: 'Voucher Potongan 20% Homestay Nagari + Lencana Budayawan Minang',
+      description:
+        'Voucher menginap di Homestay Rumah Gadang binaan Pokdarwis + Lencana Budayawan Kehormatan di Paspor Digital + 600 Poin Gaode.',
+      points_reward: 600,
+      voucher_partner: 'ptr-01',
+      certificate_template: 'CERT-DISPAR-BUDAYAWAN-MINANG',
+    },
+    participant_count: 980,
+    completion_count: 412,
+    status: 'Aktif Disiarkan',
+    created_at: '2026-11-12T10:00:00Z',
+    updated_at: '2026-11-17T09:00:00Z',
+  },
+  {
+    id: 'chl-03',
+    title: 'Safari Geopark & Pesona Danau Ranah Minang',
+    slug: 'safari-geopark-danau-minang',
+    category: 'Eksplorasi Danau & Geopark',
+    description:
+      'Jelajahi keajaiban kaldera dan tebing bebatuan dunia di Ngarai Sianok, Danau Singkarak, Danau Maninjau, dan Danau Kembar Alahan Panjang.',
+    target_destination_ids: ['dest-02', 'dest-05', 'dest-08', 'dest-16'],
+    target_destinations_count: 4,
+    min_gps_checkin_radius_meters: 200,
+    duration_days: 14,
+    reward: {
+      id: 'rwd-03',
+      reward_type: 'Lencana Emas Paspor',
+      title: 'Lencana Emas "Geopark Master of West Sumatra" & 750 Poin Gaode',
+      description:
+        'Penghargaan resmi kelulusan eksplorasi geopark bertaraf UNESCO + Prioritas reservasi trip Pokdarwis.',
+      points_reward: 750,
+      certificate_template: 'CERT-GEOPARK-MASTER',
+    },
+    participant_count: 650,
+    completion_count: 195,
+    status: 'Aktif Disiarkan',
+    created_at: '2026-11-14T07:30:00Z',
+    updated_at: '2026-11-17T09:00:00Z',
+  },
+  {
+    id: 'chl-04',
+    title: 'Jelajah Rasa Kuliner Halal & Kawa Daun Nagari',
+    slug: 'jelajah-rasa-kuliner-halal',
+    category: 'Pecinta Kuliner Nagari',
+    description:
+      'Cicipi kelezatan kuliner autentik nagari mulai dari Rendang Payakumbuh, Kawa Daun Tabek Patah, hingga Itiak Lado Mudo Ngarai Sianok langsung di kedai UMKM terverifikasi.',
+    target_destination_ids: ['dest-01', 'dest-02', 'dest-03'],
+    target_destinations_count: 3,
+    min_gps_checkin_radius_meters: 200,
+    duration_days: 10,
+    reward: {
+      id: 'rwd-04',
+      reward_type: 'Poin Gaode Ranking',
+      title: 'Gelar "Duta Gastronomi Halal Sumbar" + 500 Poin Gaode',
+      description:
+        'Lencana Duta Kuliner Halal Minangkabau + Merchandise apron resmi Dinas Pariwisata Prov. Sumbar.',
+      points_reward: 500,
+      certificate_template: 'CERT-GASTRONOMI-MINANG',
+    },
+    participant_count: 820,
+    completion_count: 530,
+    status: 'Aktif Disiarkan',
+    created_at: '2026-11-15T09:15:00Z',
+    updated_at: '2026-11-17T09:00:00Z',
+  },
+];
+
+// ============================================================================
+// DATA AWAL RIWAYAT SIARAN NOTIFIKASI KE WISATAWAN (USE CASE: NOTIFIKASI)
+// ============================================================================
+export const INITIAL_SYSTEM_NOTIFICATIONS: SystemNotification[] = [
+  {
+    id: 'notif-01',
+    title: 'Tantangan Baru: Ekspedisi 5 Medan Ekstrem Minangkabau',
+    message:
+      'Gubernur Sumatera Barat membuka tantangan resmi berhadiah Sertifikat Digital & 1.000 Poin Gaode! Kunjungi 5 destinasi ekstrem dan scan QR fisik dengan GPS.',
+    type: 'TANTANGAN_BARU',
+    target: 'Semua Wisatawan',
+    ref_id: 'chl-01',
+    broadcasted_at: '2026-11-17T08:30:00Z',
+    is_delivered: true,
+  },
+  {
+    id: 'notif-02',
+    title: 'Festival Budaya: Pacu Jawi Alek Nagari Tanah Datar Dimulai!',
+    message:
+      'Saksikan atraksi lumpur spektakuler Pacu Jawi di Nagari Pariangan. Cek jadwal dan lokasi lengkap di Kalender Budaya WISGO.',
+    type: 'EVENT_BUDAYA',
+    target: 'Semua Wisatawan',
+    ref_id: 'evt-01',
+    broadcasted_at: '2026-11-16T14:00:00Z',
+    is_delivered: true,
+  },
+  {
+    id: 'notif-03',
+    title: 'Peringatan Cuaca: Waspada Longsor Sitinjau Lauik',
+    message:
+      'Hujan lebat di kawasan Sitinjau Lauik. Jalur diberlakukan buka-tutup sementara. Wisatawan diimbau menggunakan rute alternatif via Padang Panjang.',
+    type: 'ALERT_JALUR',
+    target: 'Wisatawan di Lokasi',
+    ref_id: 'haz-001',
+    broadcasted_at: '2026-11-16T10:15:00Z',
+    is_delivered: true,
+  },
+  {
+    id: 'notif-04',
+    title: 'Tempat Wisata Komunitas Disetujui: Air Terjun Sarasah Barasok',
+    message:
+      'Usulan tempat wisata baru dari komunitas telah diverifikasi oleh Dinas Pariwisata Sumbar dengan proteksi pemandu lokal Pokdarwis.',
+    type: 'INPUT_WISATA_DISETUJUI',
+    target: 'Semua Wisatawan',
+    ref_id: 'sub-01',
+    broadcasted_at: '2026-11-15T16:45:00Z',
+    is_delivered: true,
+  },
+];
+
 
 
 

@@ -15,6 +15,7 @@ import {
   X,
   Filter,
   Eye,
+  Send,
 } from 'lucide-react';
 import {
   CultureCalendarEvent,
@@ -23,6 +24,7 @@ import {
 } from '../types/contract';
 import { SUMBAR_REGENCIES } from '../data/mockDestinations';
 import {
+  broadcastSystemNotification,
   deleteCultureEvent,
   fetchCultureEvents,
   saveCultureEvent,
@@ -438,6 +440,24 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
                     ID: <strong>{evt.id}</strong>
                   </span>
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        broadcastSystemNotification({
+                          title: `Festival Budaya: ${evt.title}`,
+                          message: `Saksikan ${evt.title} di ${evt.location} (${evt.city_regency}) pada ${evt.start_date}. Cek rincian di Kalender Budaya WISGO.`,
+                          type: 'EVENT_BUDAYA',
+                          target: 'Semua Wisatawan',
+                          ref_id: evt.id,
+                        });
+                        showToast(`Notifikasi siaran festival "${evt.title}" berhasil dikirim ke wisatawan!`, 'success');
+                      }}
+                      className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1 shadow-xs transition"
+                      title="Siarkan Notifikasi Event ke Wisatawan (Use Case: Notifikasi)"
+                    >
+                      <Send className="w-3 h-3 text-[#F26B4B]" />
+                      <span>Siarkan</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(evt)}

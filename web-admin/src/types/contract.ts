@@ -602,4 +602,93 @@ export interface SystemBenchmarkMetrics {
   benchmark_history: BenchmarkRunResult[];
 }
 
+// ============================================================================
+// USE CASE ADMIN DISPAR: NOMOR DARURAT (INPUT & LIHAT LAPORAN)
+// ============================================================================
+
+export type EmergencyCategoryType =
+  | 'SAR & Basarnas'
+  | 'BPBD & Kebencanaan'
+  | 'Kepolisian'
+  | 'Medis & Ambulans'
+  | 'Pemadam Kebakaran'
+  | 'Posko Jalur Rawan';
+
+export interface EmergencyContactNumber {
+  id: string;
+  agency_name: string;        // Nama Instansi (misal: "Basarnas Padang (Kantor SAR Kelas A)")
+  call_number: string;        // Nomor Panggilan (misal: "115" / "(0751) 484555")
+  category: EmergencyCategoryType;
+  city_regency: string;       // Wilayah (misal: "Provinsi Sumatera Barat" / "Kota Padang" / "Kab. Agam")
+  address?: string;           // Alamat posko/kantor
+  is_24_hours: boolean;       // Siaga 24 Jam
+  is_active: boolean;         // Aktif disiarkan ke wisatawan
+  description?: string;       // Catatan operasional
+  updated_at: string;
+}
+
+// ============================================================================
+// USE CASE ADMIN DISPAR: BUAT TANTANGAN & TENTUKAN REWARD (GAMIFIKASI PASPOR)
+// ============================================================================
+
+export type ChallengeCategoryType =
+  | 'Penakluk Medan Ekstrem'
+  | 'Jejak Adat & Budaya'
+  | 'Pecinta Kuliner Nagari'
+  | 'Eksplorasi Danau & Geopark';
+
+export type ChallengeRewardType =
+  | 'Sertifikat Digital Gubernur'
+  | 'Lencana Emas Paspor'
+  | 'Voucher Homestay Nagari'
+  | 'Poin Gaode Ranking';
+
+export interface ChallengeReward {
+  id: string;
+  reward_type: ChallengeRewardType;
+  title: string;              // misal: "Sertifikat Digital Resmi Gubernur Sumbar + Voucher Homestay 20%"
+  description: string;
+  points_reward: number;      // Poin Gaode Ranking wisatawan
+  voucher_partner?: string;   // Voucher diskon mitra nagari (jika ada)
+  certificate_template?: string; // ID template sertifikat
+}
+
+export interface TouristChallenge {
+  id: string;
+  title: string;              // misal: "Jelajah 5 Medan Ekstrem Minangkabau"
+  slug: string;
+  category: ChallengeCategoryType;
+  description: string;
+  target_destination_ids: string[]; // Destinasi yang wajib dikunjungi (misal: Harau, Sitinjau, Ngarai, Singkarak)
+  target_destinations_count: number;
+  min_gps_checkin_radius_meters: number; // default: 200 meter
+  duration_days: number;       // Batas waktu pengerjaan (misal 14 hari)
+  reward: ChallengeReward;     // <<include>> Tentukan reward
+  participant_count: number;   // Jumlah wisatawan yang mengikuti tantangan
+  completion_count: number;    // Jumlah wisatawan yang telah menuntaskan
+  status: 'Aktif Disiarkan' | 'Segera Hadir' | 'Selesai';
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================================================
+// USE CASE ADMIN DISPAR: SIARAN NOTIFIKASI SISTEM (BROADCAST KE WISATAWAN)
+// ============================================================================
+
+export type NotificationTargetType =
+  | 'Semua Wisatawan'
+  | 'Wisatawan di Lokasi'
+  | 'Mitra Pokdarwis Nagari';
+
+export interface SystemNotification {
+  id: string;
+  title: string;              // Judul Notifikasi
+  message: string;            // Pesan siaran
+  type: 'TANTANGAN_BARU' | 'EVENT_BUDAYA' | 'INPUT_WISATA_DISETUJUI' | 'ALERT_JALUR';
+  target: NotificationTargetType;
+  ref_id?: string;            // ID Event / Tantangan / Usulan
+  broadcasted_at: string;
+  is_delivered: boolean;
+}
+
 

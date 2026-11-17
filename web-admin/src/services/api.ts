@@ -7,6 +7,7 @@ import {
   CultureCalendarEvent,
   Destination,
   DigitalPassportMetrics,
+  EmergencyContactNumber,
   EscrowTransaction,
   GaodeRankingItem,
   GaodeWeightConfig,
@@ -25,12 +26,15 @@ import {
   SosEmergencyStatus,
   SosEmergencyTicket,
   SystemBenchmarkMetrics,
+  SystemNotification,
+  TouristChallenge,
   WAWebhookResponse,
 } from '../types/contract';
 import {
   INITIAL_COMMUNITY_SUBMISSIONS,
   INITIAL_CULTURE_EVENTS,
   INITIAL_DIGITAL_PASSPORT_METRICS,
+  INITIAL_EMERGENCY_CONTACTS,
   INITIAL_GAODE_RANKINGS,
   INITIAL_GROUP_ROOMS,
   INITIAL_HAZARD_ALERTS,
@@ -41,6 +45,8 @@ import {
   INITIAL_REGENCY_HEATMAP,
   INITIAL_SOS_TICKETS,
   INITIAL_SYSTEM_BENCHMARK,
+  INITIAL_SYSTEM_NOTIFICATIONS,
+  INITIAL_TOURIST_CHALLENGES,
   MOCK_20_DESTINATIONS,
   toDestinationSlug,
 } from '../data/mockDestinations';
@@ -48,6 +54,9 @@ import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
 const TOKEN_STORAGE_KEY = 'wisgo_admin_jwt';
 const USER_STORAGE_KEY = 'wisgo_admin_user';
+const EMERGENCY_CONTACTS_KEY = 'wisgo_emergency_contacts';
+const CHALLENGES_STORAGE_KEY = 'wisgo_tourist_challenges';
+const NOTIFICATIONS_STORAGE_KEY = 'wisgo_system_notifications';
 const DESTINATIONS_STORAGE_KEY = 'wisgo_dispar_destinations_v2';
 const PARTNERS_STORAGE_KEY = 'wisgo_dispar_partners_v2';
 const PUNGLI_STORAGE_KEY = 'wisgo_dispar_pungli_v2';
@@ -1196,6 +1205,110 @@ export async function runSystemBenchmark(concurrency: number = 20): Promise<Syst
   safeSetLocalStorage(BENCHMARK_STORAGE_KEY, JSON.stringify(updated));
   return updated;
 }
+
+// ============================================================================
+// USE CASE ADMIN DISPAR: NOMOR DARURAT (INPUT & LIHAT LAPORAN)
+// ============================================================================
+
+export async function fetchEmergencyContacts(): Promise<EmergencyContactNumber[]> {
+  try {
+    const raw = localStorage.getItem(EMERGENCY_CONTACTS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // fallback
+  }
+  safeSetLocalStorage(EMERGENCY_CONTACTS_KEY, JSON.stringify(INITIAL_EMERGENCY_CONTACTS));
+  return INITIAL_EMERGENCY_CONTACTS;
+}
+
+export async function saveEmergencyContact(contact: EmergencyContactNumber): Promise<EmergencyContactNumber[]> {
+  const current = await fetchEmergencyContacts();
+  const exists = current.some((c) => c.id === contact.id);
+  const updated = exists
+    ? current.map((c) => (c.id === contact.id ? { ...contact, updated_at: new Date().toISOString() } : c))
+    : [{ ...contact, updated_at: new Date().toISOString() }, ...current];
+  safeSetLocalStorage(EMERGENCY_CONTACTS_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+export async function deleteEmergencyContact(id: string): Promise<EmergencyContactNumber[]> {
+  const current = await fetchEmergencyContacts();
+  const updated = current.filter((c) => c.id !== id);
+  safeSetLocalStorage(EMERGENCY_CONTACTS_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+// ============================================================================
+// USE CASE ADMIN DISPAR: BUAT TANTANGAN & TENTUKAN REWARD
+// ============================================================================
+
+export async function fetchTouristChallenges(): Promise<TouristChallenge[]> {
+  try {
+    const raw = localStorage.getItem(CHALLENGES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // fallback
+  }
+  safeSetLocalStorage(CHALLENGES_STORAGE_KEY, JSON.stringify(INITIAL_TOURIST_CHALLENGES));
+  return INITIAL_TOURIST_CHALLENGES;
+}
+
+export async function saveTouristChallenge(challenge: TouristChallenge): Promise<TouristChallenge[]> {
+  const current = await fetchTouristChallenges();
+  const exists = current.some((c) => c.id === challenge.id);
+  const updated = exists
+    ? current.map((c) => (c.id === challenge.id ? { ...challenge, updated_at: new Date().toISOString() } : c))
+    : [{ ...challenge, updated_at: new Date().toISOString() }, ...current];
+  safeSetLocalStorage(CHALLENGES_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+export async function deleteTouristChallenge(id: string): Promise<TouristChallenge[]> {
+  const current = await fetchTouristChallenges();
+  const updated = current.filter((c) => c.id !== id);
+  safeSetLocalStorage(CHALLENGES_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+// ============================================================================
+// USE CASE ADMIN DISPAR: SIARAN NOTIFIKASI SISTEM KE WISATAWAN
+// ============================================================================
+
+export async function fetchSystemNotifications(): Promise<SystemNotification[]> {
+  try {
+    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // fallback
+  }
+  safeSetLocalStorage(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(INITIAL_SYSTEM_NOTIFICATIONS));
+  return INITIAL_SYSTEM_NOTIFICATIONS;
+}
+
+export async function broadcastSystemNotification(
+  notif: Omit<SystemNotification, 'id' | 'broadcasted_at' | 'is_delivered'>
+): Promise<{ notifications: SystemNotification[]; newlyBroadcasted: SystemNotification }> {
+  const current = await fetchSystemNotifications();
+  const newNotif: SystemNotification = {
+    ...notif,
+    id: `notif-${Date.now().toString(36)}`,
+    broadcasted_at: new Date().toISOString(),
+    is_delivered: true,
+  };
+  const updated = [newNotif, ...current];
+  safeSetLocalStorage(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updated));
+  return { notifications: updated, newlyBroadcasted: newNotif };
+}
+
 
 
 

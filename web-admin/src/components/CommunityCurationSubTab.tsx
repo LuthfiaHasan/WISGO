@@ -12,6 +12,8 @@ import {
   Sparkles,
   ShieldCheck,
   AlertTriangle,
+  Bell,
+  Send,
 } from 'lucide-react';
 import {
   CommunityHiddenGemSubmission,
@@ -20,6 +22,7 @@ import {
 import {
   fetchCommunitySubmissions,
   updateCommunitySubmission,
+  broadcastSystemNotification,
 } from '../services/api';
 
 interface CommunityCurationSubTabProps {
@@ -61,14 +64,47 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
         reviewer_notes: notes || (status === 'APPROVED' ? 'Disetujui oleh Administrator Utama Dispar.' : 'Ditolak karena belum memenuhi standar keselamatan.'),
       });
       setSubmissions(updated);
+
+      if (status === 'APPROVED') {
+        const approvedSub = submissions.find((s) => s.id === id);
+        if (approvedSub) {
+          try {
+            await broadcastSystemNotification({
+              title: `Destinasi Komunitas Baru: ${approvedSub.title}`,
+              message: `Usulan dari Pokdarwis ${approvedSub.pokdarwis_name} (${approvedSub.city_regency}) resmi disetujui & terbit di direktori wisata Sumbar!`,
+              type: 'INPUT_WISATA_DISETUJUI',
+              target: 'Semua Wisatawan',
+              ref_id: approvedSub.id,
+            });
+          } catch (notifErr) {
+            console.error('Failed to broadcast notification:', notifErr);
+          }
+        }
+      }
+
       showToast(
         status === 'APPROVED'
-          ? 'Usulan tempat wisata disetujui dan diterbitkan ke direktori!'
+          ? 'Usulan tempat wisata disetujui, diterbitkan & disiarkan ke wisatawan!'
           : 'Usulan tempat wisata ditolak.',
         status === 'APPROVED' ? 'success' : 'info'
       );
     } catch {
       showToast('Gagal memperbarui status usulan.', 'error');
+    }
+  };
+
+  const handleBroadcastSubmission = async (sub: CommunityHiddenGemSubmission) => {
+    try {
+      await broadcastSystemNotification({
+        title: `Rekomendasi Hidden Gem: ${sub.title}`,
+        message: `Jelajahi keindahan tersembunyi di ${sub.city_regency} yang telah diverifikasi Dinas Pariwisata Sumbar bersama Pokdarwis ${sub.pokdarwis_name}!`,
+        type: 'INPUT_WISATA_DISETUJUI',
+        target: 'Semua Wisatawan',
+        ref_id: sub.id,
+      });
+      showToast(`Notifikasi usulan "${sub.title}" berhasil disiarkan ke seluruh wisatawan!`, 'success');
+    } catch {
+      showToast('Gagal menyiarkan notifikasi tempat wisata.', 'error');
     }
   };
 
@@ -323,8 +359,19 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
                       )}
                     </button>
 
-                    {/* Tombol Setujui / Tolak */}
-                    <div className="flex items-center gap-2">
+                    {/* Tombol Setujui / Tolak / Siarkan */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {sub.status === 'APPROVED' && (
+                        <button
+                          type="button"
+                          onClick={() => handleBroadcastSubmission(sub)}
+                          className="min-h-[40px] px-3.5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B1F1A] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+                          title="Siarkan Notifikasi ke Semua Wisatawan"
+                        >
+                          <Bell className="w-3.5 h-3.5" />
+                          <span>Siarkan Notifikasi</span>
+                        </button>
+                      )}
                       {sub.status !== 'APPROVED' && (
                         <button
                           type="button"

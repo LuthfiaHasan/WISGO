@@ -36,8 +36,9 @@ import {
   updateCommunitySubmission,
 } from '../services/api';
 import { SystemHealthBenchmarkSubTab } from '../components/SystemHealthBenchmarkSubTab';
+import { ChallengesRewardsSubTab } from '../components/ChallengesRewardsSubTab';
 
-export type AnalyticsSubTab = 'intel_heatmap' | 'system_benchmark';
+export type AnalyticsSubTab = 'intel_heatmap' | 'system_benchmark' | 'challenges_rewards';
 
 interface ExecutiveAnalyticsPageProps {
   destinations: Destination[];
@@ -297,6 +298,19 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1E9E5A] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#1E9E5A]"></span>
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('challenges_rewards')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSubTab === 'challenges_rewards'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              }`}
+            >
+              <Award className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+              <span>Buat Tantangan &amp; Reward</span>
             </button>
           </div>
         </div>
@@ -723,6 +737,10 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
       {activeSubTab === 'system_benchmark' && (
         <SystemHealthBenchmarkSubTab showToast={showToast} />
+      )}
+
+      {activeSubTab === 'challenges_rewards' && (
+        <ChallengesRewardsSubTab destinations={destinations} showToast={showToast} />
       )}
 
       {/* Kolom Tanda Tangan Cetak PDF (Hanya Tampil Saat Print) */}
