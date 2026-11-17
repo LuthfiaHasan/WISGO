@@ -173,7 +173,35 @@ Untuk mempertahankan tata letak navigasi Sidebar agar tetap ramping (1 layar, ta
 
 ---
 
-## 7. Status Pengujian & Kesiapan Rilis
+## 7. Pemolesan UI/UX Tingkat Lanjut (Pixel-Perfect Refinements)
+
+Sebagai pemenuhan standar visual production-grade pada tampilan layar Web Admin WISGO:
+
+1. **Resolusi Teks Tab Aktif yang Hilang**:
+   - Diperbaiki spesifisitas selektor `[role="tab"][aria-selected="true"]` pada `index.css` yang sebelumnya menimpa warna teks tombol menjadi hijau tua di atas background hijau tua.
+   - Seluruh tab navigasi modal di `DestinationsPage.tsx` kini menggunakan kelas `bg-[#234B24] !text-white font-semibold shadow-sm` saat aktif dan `bg-white !text-[#234B24] hover:bg-[#234B24]/5 border border-[#234B24]/15` saat tidak aktif.
+   - Ditambahkan nomor langkah (badge bulat `1`, `2`, `3`, `4`) di samping label Bagian A, B, C, D sebagai Stepper navigasi modern.
+
+2. **Perbaikan Bilah Filter & Tombol "Ramai" Utuh 100%**:
+   - Struktur bilah pencarian & filter diubah menjadi layout flex-wrap responsif yang lega (`flex flex-col lg:flex-row lg:items-end gap-3.5`).
+   - Setiap tombol keramaian (*Semua*, *Sepi*, *Sedang*, *Ramai*) diberi `shrink-0 whitespace-nowrap px-3.5 py-2` sehingga kata "Ramai" tampil utuh tanpa terpotong.
+   - Checkbox "Zona Blank Spot" diberi wadah `shrink-0 whitespace-nowrap` yang berdiri mandiri tanpa mendesak tombol keramaian.
+
+3. **Pembersihan Tanda Plus Ganda & Penataan Header Halaman**:
+   - Dihilangkan karakter `+` manual pada seluruh teks tombol yang telah memiliki ikon `<Plus />` (`Tambah Destinasi Baru`, `Tambah Mitra Nagari Baru`, `Tambah Scene 360° Baru`, `Tambah Frasa Baru`, `Jadwalkan Festival`).
+   - Tombol aksi di sisi kanan header halaman ditata rapi secara horizontal (`flex flex-wrap items-center gap-2.5 shrink-0`) dengan ketinggian seragam (48px).
+
+4. **Kompaktifikasi 4 Kartu Statistik (1 Baris 4 Kolom)**:
+   - Deretan 4 kartu metrik di seluruh halaman utama (`DestinationsPage`, `CommandCenterPage`, `PartnersPage`, `ExecutiveAnalyticsPage`) diubah menjadi `grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4` dengan padding ringkas `p-4 sm:p-5 rounded-2xl flex flex-col justify-between`.
+   - Menghemat ruang vertikal layar sehingga tabel data utama langsung terlihat di paruh atas layar (*above the fold*).
+
+5. **Scrollbar Halus Transparan pada Sidebar & Tipografi Menu**:
+   - Ditambahkan styling `.sidebar-scroll` di `index.css` (`width: 5px; thumb: rgba(255,255,255,0.2) rounded-full`) sehingga batang scrollbar putih kasar hilang sepenuhnya.
+   - Tipografi item menu Sidebar disempurnakan dengan `text-[13.5px] font-semibold leading-snug truncate`, subjudul `text-[11px] leading-tight truncate`, dan pengurangan jarak vertikal antar item (`space-y-1`) agar seluruh menu muat pas dalam 1 layar laptop.
+
+---
+
+## 8. Status Pengujian & Kesiapan Rilis
 
 - **Pemeriksaan Tipe TypeScript (`tsc --noEmit`):** `Exit Code 0` (0 error, 100% lulus kompilasi tipe ketat).
 - **Pengujian Bundel Produksi (`vite build`):** `Exit Code 0` (1.564 modul berhasil dibundel optimal).

@@ -347,7 +347,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
             className="min-h-[46px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-2 shadow-sm transition"
           >
             <Plus className="w-4 h-4 text-[#F26B4B]" />
-            <span>+ Jadwalkan Festival</span>
+            <span>Jadwalkan Festival</span>
           </button>
         </div>
       </div>

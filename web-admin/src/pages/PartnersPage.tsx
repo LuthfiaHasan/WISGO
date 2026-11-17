@@ -317,8 +317,8 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                 onClick={handleOpenCreate}
                 className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
               >
-                <Plus className="w-4 h-4" aria-hidden="true" />
-                <span>+ Tambah Mitra Nagari Baru</span>
+                <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+                <span>Tambah Mitra Nagari Baru</span>
               </button>
             )}
           </div>
@@ -379,10 +379,10 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
       {activeSubTab === 'partners_directory' && (
         <>
           {/* 4 Kartu KPI Statistik Mitra & Escrow */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#4A5248]">Mitra Terverifikasi</span>
-          <div className="mt-2 text-3xl font-extrabold text-[#234B24]">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
             {totalVerified}
           </div>
           <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
@@ -390,7 +390,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#C2410C]">Dana Escrow Tertahan</span>
           <div className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#D95637]">
             Rp {totalEscrowLocked.toLocaleString('id-ID')}
@@ -400,7 +400,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#166534]">Dana Cair ke Nagari</span>
           <div className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#16A34A]">
             Rp {totalEscrowPayout.toLocaleString('id-ID')}
@@ -410,9 +410,9 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#1D4ED8]">Terhubung Tur 360°</span>
-          <div className="mt-2 text-3xl font-extrabold text-[#1D4ED8]">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1D4ED8]">
             {totalWith360} Mitra
           </div>
           <p className="text-[11px] text-[#4A5248] mt-1">

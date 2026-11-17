@@ -302,13 +302,13 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {activeSubTab === 'intel_heatmap' && (
         <>
           {/* 4 Ringkasan Metrik Makro */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Total Kunjungan Mingguan</span>
             <Users className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-3xl font-extrabold text-[#234B24]">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
             {totalWeeklyVisitors.toLocaleString('id-ID')}
           </div>
           <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
@@ -316,12 +316,12 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Perputaran Escrow Nagari</span>
             <DollarSign className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#234B24]">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
             Rp {(totalEscrowCirculation / 1000000).toFixed(0)} Jt
           </div>
           <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
@@ -329,12 +329,12 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Wisatawan Check-in Anti-Fake</span>
             <ShieldCheck className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-3xl font-extrabold text-[#1E9E5A]">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1E9E5A]">
             {passportMetrics?.total_gps_checkins_verified.toLocaleString('id-ID') || '8.420'}
           </div>
           <p className="text-[11px] text-[#4A5248] mt-1">
@@ -342,12 +342,12 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Sertifikat Digital Gubernur</span>
             <Award className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
           </div>
-          <div className="mt-2 text-3xl font-extrabold text-[#F26B4B]">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F26B4B]">
             {passportMetrics?.total_governor_certificates_issued.toLocaleString('id-ID') || '3.150'}
           </div>
           <p className="text-[11px] text-[#4A5248] mt-1">

@@ -502,7 +502,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={onRefresh}
@@ -522,10 +522,10 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               <button
                 type="button"
                 onClick={handleOpenNewModal}
-                className="h-[52px] px-6 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-sm flex items-center gap-2 shadow-sm transition"
+                className="h-[48px] px-5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-sm flex items-center gap-2 shadow-sm transition"
               >
                 <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-                <span>+ Tambah Destinasi Baru</span>
+                <span>Tambah Destinasi Baru</span>
               </button>
             )}
           </div>
@@ -603,15 +603,15 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             aria-label="Ringkasan Statistik Destinasi Sumatera Barat"
             className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
           >
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E4E9DA] shadow-sm flex flex-col justify-between">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Destinasi Terdaftar
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#234B24]">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[#234B24]">
               {stats.total}
             </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#1E9E5A]/15 text-[#1E9E5A]">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#1E9E5A]/15 text-[#1E9E5A]">
               Terverifikasi Dispar
             </span>
           </div>
@@ -620,15 +620,15 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E4E9DA] shadow-sm flex flex-col justify-between">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Kawasan Blank Spot (Zero-Signal)
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#F26B4B]">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[#F26B4B]">
               {stats.blankSpots}
             </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
               Paket Offline Aktif
             </span>
           </div>
@@ -637,15 +637,15 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E4E9DA] shadow-sm flex flex-col justify-between">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Komponen Tarif Resmi Perda
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#1B1F1A]">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
               {stats.totalTariffItems}
             </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#E85D1A]/15 text-[#E85D1A]">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E85D1A]/15 text-[#E85D1A]">
               Fair-Price Barometer
             </span>
           </div>
@@ -654,15 +654,15 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-[#E4E9DA] p-5 rounded-3xl border border-[#CFD8BE] shadow-sm">
+        <div className="bg-[#E4E9DA] p-4 sm:p-5 rounded-2xl border border-[#CFD8BE] shadow-sm flex flex-col justify-between">
           <div className="text-xs font-bold uppercase tracking-wider text-[#234B24]">
             Pemetaan Kesiapan Medan
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#234B24]">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[#234B24]">
               5 Indikator
             </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#234B24] text-[#F6F3EC]">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#234B24] text-[#F6F3EC]">
               Standar Lapangan
             </span>
           </div>
@@ -675,16 +675,16 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
       {/* Bilah Pencarian dan Filter (<search> dari modern-web-guidance: forms) */}
       <search
         aria-label="Pencarian dan Penyaringan Direktori Destinasi"
-        className="bg-white p-5 lg:p-6 rounded-3xl border border-[#E4E9DA] shadow-sm"
+        className="bg-white p-5 lg:p-6 rounded-2xl border border-[#E4E9DA] shadow-sm"
       >
         <form
           method="get"
           action="/destinations"
           onSubmit={(e) => e.preventDefault()}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end"
+          className="flex flex-col lg:flex-row lg:items-end gap-3.5"
         >
-          {/* Pencarian Kata Kunci */}
-          <div className="lg:col-span-4 flex flex-col items-start gap-1.5">
+          {/* Kolom 1: Input Pencarian (flex-1 min-w-[240px]) */}
+          <div className="flex-1 min-w-[240px] flex flex-col items-start gap-1.5">
             <label
               htmlFor="search-destination"
               className="text-xs font-bold text-[#1B1F1A]"
@@ -706,13 +706,13 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                 autoCorrect="off"
                 autoCapitalize="none"
                 spellCheck={false}
-                className="w-full min-h-[48px] pl-10 pr-4 py-2.5 rounded-2xl bg-[#F6F3EC] border border-[#767676] text-sm text-[#1B1F1A] font-medium"
+                className="w-full min-h-[48px] pl-10 pr-4 py-2.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] text-sm text-[#1B1F1A] font-medium"
               />
             </div>
           </div>
 
-          {/* Filter Kabupaten / Kota */}
-          <div className="lg:col-span-3 flex flex-col items-start gap-1.5">
+          {/* Kolom 2: Dropdown Wilayah Kab/Kota (w-full sm:w-56 shrink-0) */}
+          <div className="w-full sm:w-56 shrink-0 flex flex-col items-start gap-1.5">
             <label
               htmlFor="filter-regency"
               className="text-xs font-bold text-[#1B1F1A]"
@@ -724,7 +724,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               name="city_regency"
               value={selectedRegency}
               onChange={(e) => setSelectedRegency(e.target.value)}
-              className="w-full min-h-[48px] px-4 py-2.5 rounded-2xl bg-[#F6F3EC] border border-[#767676] text-sm text-[#1B1F1A] font-semibold"
+              className="w-full min-h-[48px] px-4 py-2.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] text-sm text-[#1B1F1A] font-semibold"
             >
               {SUMBAR_REGENCIES.map((reg) => (
                 <option key={reg} value={reg}>
@@ -734,18 +734,18 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             </select>
           </div>
 
-          {/* Filter Tingkat Keramaian */}
-          <div className="lg:col-span-3 flex flex-col items-start gap-1.5">
+          {/* Kolom 3: Segmented control Keramaian (Semua, Sepi, Sedang, Ramai) dengan shrink-0 whitespace-nowrap px-3.5 py-2 */}
+          <div className="shrink-0 flex flex-col items-start gap-1.5">
             <span className="text-xs font-bold text-[#1B1F1A]">
               Tingkat Keramaian Kunjungan
             </span>
-            <div className="w-full flex items-center gap-1 bg-[#F6F3EC] p-1 rounded-2xl border border-[#CFD8BE] min-h-[48px]">
+            <div className="flex items-center gap-1 bg-[#F6F3EC] p-1 rounded-2xl border border-[#CFD8BE] min-h-[48px]">
               {(['Semua', 'Sepi', 'Sedang', 'Ramai'] as const).map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
                   onClick={() => setSelectedCrowd(lvl)}
-                  className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition min-h-[40px] ${
+                  className={`shrink-0 whitespace-nowrap py-2 px-3.5 rounded-xl text-xs font-bold transition min-h-[40px] ${
                     selectedCrowd === lvl
                       ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
                       : 'text-[#1B1F1A] hover:bg-[#E4E9DA]/60'
@@ -757,11 +757,11 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             </div>
           </div>
 
-          {/* Filter Khusus Blank Spot */}
-          <div className="lg:col-span-2 flex items-center">
+          {/* Kolom 4: Toggle/Checkbox Zona Blank Spot (shrink-0 whitespace-nowrap) */}
+          <div className="shrink-0 flex items-center">
             <label
               htmlFor="filter-blankspot"
-              className={`w-full min-h-[48px] px-3.5 py-2 rounded-2xl border text-xs font-bold flex items-center gap-2 cursor-pointer transition ${
+              className={`min-h-[48px] px-4 py-2 rounded-2xl border text-xs font-bold flex items-center gap-2 cursor-pointer transition shrink-0 whitespace-nowrap ${
                 onlyBlankSpot
                   ? 'bg-[#F26B4B]/15 border-[#F26B4B] text-[#D95637]'
                   : 'bg-[#F6F3EC] border-[#CFD8BE] text-[#1B1F1A]'
@@ -774,7 +774,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                 onChange={(e) => setOnlyBlankSpot(e.target.checked)}
                 className="w-4 h-4 accent-[#F26B4B]"
               />
-              <span>Zona Blank Spot</span>
+              <span className="whitespace-nowrap">Zona Blank Spot</span>
             </label>
           </div>
         </form>
@@ -1246,19 +1246,23 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                   [
                     {
                       key: 'A',
-                      title: 'Bagian A: Profil & 4 Statistik',
+                      step: '1',
+                      title: 'Profil & 4 Statistik',
                     },
                     {
                       key: 'B',
-                      title: 'Bagian B: 5 Indikator Medan',
+                      step: '2',
+                      title: '5 Indikator Medan',
                     },
                     {
                       key: 'C',
-                      title: 'Bagian C: Edukasi & Adat',
+                      step: '3',
+                      title: 'Edukasi & Adat',
                     },
                     {
                       key: 'D',
-                      title: 'Bagian D: Foto & Media Lokal',
+                      step: '4',
+                      title: 'Foto & Media Lokal',
                     },
                   ] as const
                 ).map((tab) => {
@@ -1271,13 +1275,22 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                       role="tab"
                       aria-selected={selected}
                       onClick={() => setEditorTab(tab.key)}
-                      className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center text-center ${
+                      className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 text-center ${
                         selected
-                          ? 'bg-[#234B24] text-white shadow-xs'
-                          : 'bg-white text-[#234B24] border border-[#CFD8BE] hover:bg-[#E4E9DA]'
+                          ? 'bg-[#234B24] !text-white font-semibold shadow-sm'
+                          : 'bg-white !text-[#234B24] hover:bg-[#234B24]/5 border border-[#234B24]/15'
                       }`}
                     >
-                      {tab.title}
+                      <span
+                        className={`w-5 h-5 rounded-full text-[11px] font-extrabold flex items-center justify-center shrink-0 ${
+                          selected
+                            ? 'bg-white !text-[#234B24]'
+                            : 'bg-[#234B24]/10 !text-[#234B24]'
+                        }`}
+                      >
+                        {tab.step}
+                      </span>
+                      <span className="truncate">Bagian {tab.key}: {tab.title}</span>
                     </button>
                   );
                 })}

@@ -727,7 +727,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
               className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
             >
               <Plus className="w-4 h-4" />
-              <span>+ Tambah Scene 360° Baru</span>
+              <span>Tambah Scene 360° Baru</span>
             </button>
           </div>
         </div>
@@ -1107,7 +1107,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                 className="min-h-[36px] px-3 py-1 rounded-lg bg-[#F26B4B] hover:bg-[#D95637] text-white font-bold text-xs flex items-center gap-1 shadow-xs"
               >
                 <Crosshair className="w-3.5 h-3.5" />
-                <span>+ Tempel Pin</span>
+                <span>Tempel Pin</span>
               </button>
             </div>
 

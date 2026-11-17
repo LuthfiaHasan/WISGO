@@ -396,13 +396,13 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       {activeTab === 'pungli' && (
         <div className="space-y-6">
           {/* 4 Kartu KPI Ringkasan Aduan */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#D95637]">Laporan Baru</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#F26B4B] animate-ping" />
               </div>
-              <div className="mt-3 text-3xl font-extrabold text-[#1B1F1A]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
                 {countBaru}
               </div>
               <p className="mt-1 text-[11px] text-[#4A5248]">
@@ -410,11 +410,11 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </p>
             </div>
 
-            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
               <span className="text-xs font-bold text-[#854D0E]">
                 Sedang Diverifikasi
               </span>
-              <div className="mt-3 text-3xl font-extrabold text-[#1B1F1A]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
                 {countVerif}
               </div>
               <p className="mt-1 text-[11px] text-[#4A5248]">
@@ -422,11 +422,11 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </p>
             </div>
 
-            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
               <span className="text-xs font-bold text-[#1E40AF]">
                 Ditindaklanjuti Lapangan
               </span>
-              <div className="mt-3 text-3xl font-extrabold text-[#1B1F1A]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
                 {countTindak}
               </div>
               <p className="mt-1 text-[11px] text-[#4A5248]">
@@ -434,11 +434,11 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </p>
             </div>
 
-            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
               <span className="text-xs font-bold text-[#166534]">
                 Selesai Ditertibkan
               </span>
-              <div className="mt-3 text-3xl font-extrabold text-[#1B1F1A]">
+              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
                 {countSelesai}
               </div>
               <p className="mt-1 text-[11px] text-[#4A5248]">
