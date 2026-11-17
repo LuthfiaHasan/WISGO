@@ -87,6 +87,7 @@ export const App: React.FC = () => {
   // Layar Demo Terpadu (Split-Screen Showcase)
   const [isShowcaseMode, setIsShowcaseMode] = useState<boolean>(false);
   const [showcaseRightTab, setShowcaseRightTab] = useState<'wa' | 'qr'>('wa');
+  const [analyticsSubTab, setAnalyticsSubTab] = useState<'intel_heatmap' | 'system_benchmark'>('intel_heatmap');
 
   const [loading, setLoading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
@@ -288,6 +289,7 @@ export const App: React.FC = () => {
             onDeleteDestination={handleDeleteDestination}
             onOpenTariffManager={handleOpenTariffManager}
             onOpenSmartQRModal={(dest) => setSmartQRModalDest(dest)}
+            showToast={showToast}
           />
         );
       case 'tariffs_qr':
@@ -357,6 +359,7 @@ export const App: React.FC = () => {
               destinations={destinations}
               partners={partners}
               showToast={showToast}
+              initialSubTab={analyticsSubTab}
             />
           </div>
         );
@@ -369,7 +372,12 @@ export const App: React.FC = () => {
     <div className="min-h-screen bg-[#F6F3EC] text-[#1B1F1A] flex flex-col lg:flex-row">
       <Sidebar
         activeMenu={activeMenu}
-        onSelectMenu={setActiveMenu}
+        onSelectMenu={(menu) => {
+          setActiveMenu(menu);
+          if (menu === 'dispar_analytics') {
+            setAnalyticsSubTab('intel_heatmap');
+          }
+        }}
         session={session}
         backendOnline={backendOnline}
         totalDestinations={destinations.length}
@@ -383,6 +391,10 @@ export const App: React.FC = () => {
         }}
         onOpenGroupInvite={() => {
           setPublicPreviewMode('group');
+        }}
+        onOpenSystemBenchmark={() => {
+          setActiveMenu('dispar_analytics');
+          setAnalyticsSubTab('system_benchmark');
         }}
         isShowcaseMode={isShowcaseMode}
         onToggleShowcaseMode={() => setIsShowcaseMode((prev) => !prev)}

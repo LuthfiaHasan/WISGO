@@ -130,4 +130,51 @@ Sebagai tindak lanjut penyempurnaan keterbacaan dan kenyamanan operasional admin
      - **Baris Atas**: Ikon institusi, judul halaman tunggal yang lega tanpa melipat ke banyak baris, badge status kesiagaan, dan deskripsi tugas operasional.
      - **Baris Bawah**: Dipisahkan oleh garis batas halus `border-t border-[#234B24]/10 pt-4` khusus memuat tombol switcher tab, filter dropdown, dan tombol aksi (ekspor CSV/PDF, tambah mitra/scene).
 
-Seluruh revisi telah lulus kompilasi TypeScript dan siap diuji langsung di `http://localhost:3000/`.
+---
+
+## 6. Implementasi Fitur Lanjutan Use Case Dispar Sumbar Berbasis Sub-Tab Modular
+
+Untuk mempertahankan tata letak navigasi Sidebar agar tetap ramping (1 layar, tanpa scroll vertikal yang memanjang) sekaligus memperluas kapabilitas pengawasan Dinas Pariwisata, telah diimplementasikan 4 modul use case lanjutan menggunakan sistem **Sub-Tabs internal** yang rapi:
+
+### A. Sub-Tabs di Halaman "Manajemen Destinasi & Medan" (`DestinationsPage.tsx`)
+1. **Tab 1: Direktori Destinasi & 5 Medan**: Tabel CRUD 20 destinasi unggulan dengan 4 statistik keputusan, filter 19 Kab/Kota, modal 4 bagian (A/B/C/D), dan aksi cetak plang Smart QR.
+2. **Tab 2: Kamus Saku Audio Minang (`MinangDictionarySubTab.tsx`)**:
+   - Direktori frasa Minang - Indonesia - Inggris untuk wisatawan.
+   - 6 Kategori percakapan: Sapaan & Sopan Santun, Kuliner & Rumah Makan, Belanja & Tawar Menawar, Transportasi & Arah, Istilah Budaya & Adat, serta Kedaruratan & Bantuan.
+   - Fitur unggah file rekaman suara asli `.mp3` dari device lokal, pemutar suara audio player terintegrasi, serta fallback sintetis suara browser.
+3. **Tab 3: Kalender Budaya Sumbar (`CultureCalendarSubTab.tsx`)**:
+   - Jadwal festival budaya, alek nagari, dan event pariwisata di 19 Kab/Kota (e.g. Festival Pacu Jawi, Tabuik Pariaman, Tour de Singkarak, Pacu Itiak, Festival Pesona Mentawai).
+   - CRUD modal lengkap dengan upload poster festival beresolusi tinggi dari device lokal.
+4. **Tab 4: Rekalkulasi Gaode Ranking (`GaodeRankingSubTab.tsx`)**:
+   - Algoritma pemeringkatan destinasi wisata berdasarkan 4 pilar bobot: Kepuasan Ulasan Wisatawan, Durasi Kunjungan (*Dwell Time*), Bebas Pungli & Ketertiban Tarif, serta Indeks Kesiapan Medan & Aksesibilitas.
+   - 4 Slider interaktif penyesuaian bobot dengan normalisasi otomatis 100%.
+   - Tombol **"Rekalkulasi Gaode Ranking Sekarang"** yang menjalankan kalkulasi real-time dan memperbarui tabel peringkat serta indikator tren.
+
+### B. Sub-Tabs di Halaman "Monitoring Mitra & Escrow" (`PartnersPage.tsx`)
+1. **Tab 1: Direktori 5 Mitra UMKM & 360°**: Manajemen 5 kategori mitra nagari, buku besar mutasi Escrow (tertahan vs cair), dan penautan 2-arah ke Hotspot Pin Studio 360°.
+2. **Tab 2: Pantau Open Trip Wisatawan (`OpenTripsSubTab.tsx`)**:
+   - Meja pengawasan open trip / cari barengan rombongan wisatawan.
+   - Pemantauan kode trip, ketua rombongan / Pokdarwis, rute destinasi, progres kuota peserta, estimasi *split-bill* dalam IDR dan Ringgit Malaysia (MYR).
+   - Tombol verifikasi kelayakan trip (*Verifikasi Trip Resmi*) dan penangguhan (*Tangguhkan Trip*).
+3. **Tab 3: Verifikasi Input Tempat Wisata Komunitas (`CommunityCurationSubTab.tsx`)**:
+   - Meja kurasi usulan tempat wisata / *hidden gem* dari komunitas dan wisatawan.
+   - Tombol moderasi resmi: **Setujui** (terbit dengan proteksi koordinat) vs **Tolak**.
+   - Sakelar **"Masking Lokasi Sensitif"** untuk melindungi koordinat GPS tempat sakral adat atau ekosistem alam rentan.
+
+### C. Sub-Tabs di Halaman "Analitik Eksekutif Dispar" (`ExecutiveAnalyticsPage.tsx`)
+1. **Tab 1: Ringkasan Intel & Heatmap 19 Kab/Kota**: Visualisasi pergerakan wisatawan, Paspor Digital Minangkabau Explorer, dan pelaporan PDF/CSV resmi.
+2. **Tab 2: Health & Benchmark Sistem (`SystemHealthBenchmarkSubTab.tsx`)**:
+   - Telemetri status server Go Gin (:8080) dan database PostgreSQL PostGIS.
+   - Pengukuran latensi kueri spasial `ST_DWithin` (<100ms) untuk radius destinasi dan plang QR.
+   - Status rate-limiter, konsumsi memori, dan kecepatan bundel offline 360°.
+   - Tombol interaktif **"Jalankan Uji Benchmark Endpoint"** dengan selektor konkurensi (10 s.d. 100 concurrent requests) dan metrik latensi persentil (p50, p95, p99).
+3. **Integrasi Klik Pintar Sidebar**:
+   - Mengklik kotak **"Status Sistem"** di Sidebar kiri kini secara otomatis mengarahkan admin ke Sub-Tab *Health & Benchmark Sistem* ini.
+
+---
+
+## 7. Status Pengujian & Kesiapan Rilis
+
+- **Pemeriksaan Tipe TypeScript (`tsc --noEmit`):** `Exit Code 0` (0 error, 100% lulus kompilasi tipe ketat).
+- **Pengujian Bundel Produksi (`vite build`):** `Exit Code 0` (1.564 modul berhasil dibundel optimal).
+- **Server Dev Lokal:** Berjalan aktif dan responsif di `http://localhost:3000/`.

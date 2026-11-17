@@ -38,6 +38,7 @@ interface SidebarProps {
   openSosCount?: number;
   onOpenPublicQR?: () => void;
   onOpenGroupInvite?: () => void;
+  onOpenSystemBenchmark?: () => void;
   isShowcaseMode?: boolean;
   onToggleShowcaseMode?: () => void;
   onLogout: () => void;
@@ -55,6 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   openSosCount = 2,
   onOpenPublicQR,
   onOpenGroupInvite,
+  onOpenSystemBenchmark,
   isShowcaseMode = false,
   onToggleShowcaseMode,
   onLogout,
@@ -146,19 +148,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Indikator Status Sistem */}
-          <div className="mt-4 px-3 py-2 rounded-xl bg-black/20 border border-white/10 flex items-center gap-2 text-xs">
+          <button
+            type="button"
+            onClick={onOpenSystemBenchmark}
+            title="Klik untuk membuka Health & Benchmark Sistem"
+            className="mt-4 w-full text-left px-3 py-2 rounded-xl bg-black/20 hover:bg-black/35 border border-white/10 hover:border-white/25 flex items-center gap-2 text-xs transition cursor-pointer group"
+          >
             <Database
-              className="w-4 h-4 text-[#1E9E5A] shrink-0"
+              className="w-4 h-4 text-[#1E9E5A] shrink-0 group-hover:scale-110 transition"
               aria-hidden="true"
             />
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-[#F6F3EC] text-[11px] leading-tight">
-                {backendOnline
-                  ? 'Status: Terhubung Database Utama'
-                  : 'Status: Mode Lokal (Sinkronisasi Otomatis)'}
+              <div className="font-semibold text-[#F6F3EC] text-[11px] leading-tight flex items-center justify-between">
+                <span>
+                  {backendOnline
+                    ? 'Status: Terhubung Database'
+                    : 'Status: Mode Lokal Aktif'}
+                </span>
+                <span className="text-[10px] text-[#A7F3D0] opacity-80 group-hover:opacity-100 group-hover:underline">Health &rsaquo;</span>
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Menu Navigasi Operasional */}

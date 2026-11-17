@@ -25,6 +25,7 @@ import {
   Building2,
   MapPin,
   TrendingUp,
+  Users,
 } from 'lucide-react';
 import {
   Destination,
@@ -34,6 +35,13 @@ import {
 } from '../types/contract';
 import { SUMBAR_REGENCIES } from '../data/mockDestinations';
 import { ImageDropzone } from '../components/ImageDropzone';
+import { OpenTripsSubTab } from '../components/OpenTripsSubTab';
+import { CommunityCurationSubTab } from '../components/CommunityCurationSubTab';
+
+export type PartnersSubTab =
+  | 'partners_directory'
+  | 'open_trips'
+  | 'community_curation';
 
 interface PartnersPageProps {
   partners: Partner[];
@@ -67,6 +75,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
   const regencyFilterId = useId();
 
   // Search & Filter
+  const [activeSubTab, setActiveSubTab] = useState<PartnersSubTab>('partners_directory');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [regencyFilter, setRegencyFilter] = useState<string>('all');
@@ -283,14 +292,14 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                  Monitoring 5 Kategori Mitra Nagari &amp; Escrow
+                  Monitoring Mitra Nagari, Escrow &amp; Komunitas
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                  Ekonomi Nagari &amp; Rekening Bersama
+                  Ekonomi Nagari &amp; Pengawasan Wisata
                 </span>
               </div>
               <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Kelola 5 kategori mitra UMKM nagari (Homestay, Kapal, Pemandu Pokdarwis, Kuliner Halal, Sewa Busana Adat), pantau mutasi rekening bersama (*Escrow*), serta hubungkan pin booking langsung ke Studio 360°.
+                Kelola 5 kategori mitra UMKM nagari (Homestay, Kapal, Pemandu Pokdarwis, Kuliner Halal, Sewa Busana Adat), pantau mutasi rekening bersama (*Escrow*), pengawasan Open Trip wisatawan, dan kurasi tempat wisata komunitas.
               </p>
             </div>
           </div>
@@ -302,20 +311,75 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
               <strong className="text-[#234B24]">Verifikasi Pokdarwis &amp; Pemprov Sumbar</strong>
             </div>
 
+            {activeSubTab === 'partners_directory' && (
+              <button
+                type="button"
+                onClick={handleOpenCreate}
+                className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
+              >
+                <Plus className="w-4 h-4" aria-hidden="true" />
+                <span>+ Tambah Mitra Nagari Baru</span>
+              </button>
+            )}
+          </div>
+
+          {/* Baris 3: 3 Sub-Tabs Navigasi Header */}
+          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={handleOpenCreate}
-              className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
+              onClick={() => setActiveSubTab('partners_directory')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSubTab === 'partners_directory'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              }`}
             >
-              <Plus className="w-4 h-4" aria-hidden="true" />
-              <span>+ Tambah Mitra Nagari Baru</span>
+              <Store className="w-4 h-4" aria-hidden="true" />
+              <span>Direktori 5 Mitra UMKM &amp; 360°</span>
+              <span
+                className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+                  activeSubTab === 'partners_directory'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[#234B24]/10 text-[#234B24]'
+                }`}
+              >
+                {partners.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('open_trips')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSubTab === 'open_trips'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              }`}
+            >
+              <Users className="w-4 h-4" aria-hidden="true" />
+              <span>Pantau Open Trip Wisatawan</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('community_curation')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSubTab === 'community_curation'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              }`}
+            >
+              <Compass className="w-4 h-4" aria-hidden="true" />
+              <span>Verifikasi Input Tempat Wisata (Komunitas)</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* 4 Kartu KPI Statistik Mitra & Escrow */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {activeSubTab === 'partners_directory' && (
+        <>
+          {/* 4 Kartu KPI Statistik Mitra & Escrow */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
           <span className="text-xs font-bold text-[#4A5248]">Mitra Terverifikasi</span>
           <div className="mt-2 text-3xl font-extrabold text-[#234B24]">
@@ -583,6 +647,16 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </table>
         </div>
       </div>
+        </>
+      )}
+
+      {activeSubTab === 'open_trips' && (
+        <OpenTripsSubTab showToast={showToast} />
+      )}
+
+      {activeSubTab === 'community_curation' && (
+        <CommunityCurationSubTab showToast={showToast} />
+      )}
 
       {/* ==================================================================== */}
       {/* DRAWER / MODAL: DETAIL LENGKAP MITRA, ESCROW & INTEGRASI 360°         */}

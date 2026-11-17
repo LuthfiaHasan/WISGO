@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   Layers,
   Filter,
+  Activity,
 } from 'lucide-react';
 import {
   CommunityHiddenGemSubmission,
@@ -34,23 +35,35 @@ import {
   fetchRegencyHeatmap,
   updateCommunitySubmission,
 } from '../services/api';
+import { SystemHealthBenchmarkSubTab } from '../components/SystemHealthBenchmarkSubTab';
+
+export type AnalyticsSubTab = 'intel_heatmap' | 'system_benchmark';
 
 interface ExecutiveAnalyticsPageProps {
   destinations: Destination[];
   partners: Partner[];
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
+  initialSubTab?: AnalyticsSubTab;
 }
 
 export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
   destinations,
   partners,
   showToast,
+  initialSubTab = 'intel_heatmap',
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<AnalyticsSubTab>(initialSubTab);
   const [heatmapData, setHeatmapData] = useState<RegencyHeatmapData[]>([]);
   const [submissions, setSubmissions] = useState<CommunityHiddenGemSubmission[]>([]);
   const [passportMetrics, setPassportMetrics] =
     useState<DigitalPassportMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
 
   // Filters for Heatmap
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -250,11 +263,46 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Baris 3: Sub-Tabs Navigasi Header */}
+          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('intel_heatmap')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSubTab === 'intel_heatmap'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" aria-hidden="true" />
+              <span>Ringkasan Intel &amp; Heatmap 19 Kab/Kota</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('system_benchmark')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSubTab === 'system_benchmark'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              }`}
+            >
+              <Activity className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
+              <span>Health &amp; Benchmark Sistem</span>
+              <span className="flex h-2 w-2 relative ml-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1E9E5A] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#1E9E5A]"></span>
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* 4 Ringkasan Metrik Makro */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {activeSubTab === 'intel_heatmap' && (
+        <>
+          {/* 4 Ringkasan Metrik Makro */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Total Kunjungan Mingguan</span>
@@ -667,6 +715,12 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </table>
         </div>
       </section>
+        </>
+      )}
+
+      {activeSubTab === 'system_benchmark' && (
+        <SystemHealthBenchmarkSubTab showToast={showToast} />
+      )}
 
       {/* Kolom Tanda Tangan Cetak PDF (Hanya Tampil Saat Print) */}
       <div className="hidden print:block pt-12 text-xs">

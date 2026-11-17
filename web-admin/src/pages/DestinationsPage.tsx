@@ -21,6 +21,10 @@ import {
   Navigation,
   AlertTriangle,
   X,
+  Volume2,
+  Calendar,
+  TrendingUp,
+  Compass,
 } from 'lucide-react';
 import {
   Destination,
@@ -33,6 +37,9 @@ import {
   toDestinationSlug,
 } from '../data/mockDestinations';
 import { ImageDropzone } from '../components/ImageDropzone';
+import { MinangDictionarySubTab } from '../components/MinangDictionarySubTab';
+import { CultureCalendarSubTab } from '../components/CultureCalendarSubTab';
+import { GaodeRankingSubTab } from '../components/GaodeRankingSubTab';
 
 interface DestinationsPageProps {
   destinations: Destination[];
@@ -49,6 +56,7 @@ interface DestinationsPageProps {
   ) => Promise<void> | void;
   onOpenTariffManager: (destId: string) => void;
   onOpenSmartQRModal: (dest: Destination) => void;
+  showToast?: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
 }
 
 type SortColumn = 'name' | 'city_regency' | 'distance' | 'price';
@@ -60,6 +68,12 @@ const collator = new Intl.Collator('id', {
   sensitivity: 'base',
 });
 
+export type DestinationsSubTab =
+  | 'directory'
+  | 'minang_dictionary'
+  | 'culture_calendar'
+  | 'gaode_ranking';
+
 export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   destinations,
   backendOnline,
@@ -69,7 +83,9 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   onDeleteDestination,
   onOpenTariffManager,
   onOpenSmartQRModal,
+  showToast = () => {},
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<DestinationsSubTab>('directory');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegency, setSelectedRegency] =
     useState<string>('Semua Kab/Kota');
@@ -464,60 +480,129 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   return (
     <div className="p-6 lg:p-8 space-y-6 no-print">
       {/* Header Utama Halaman */}
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E4E9DA] text-[#234B24] text-xs font-bold">
-            <CheckCircle2
-              className="w-3.5 h-3.5 text-[#1E9E5A]"
-              aria-hidden="true"
-            />
-            <span>
-              {backendOnline
-                ? 'Status Sistem: Terhubung (Database Utama)'
-                : 'Status Sistem: Mode Lokal Aktif (Sinkronisasi Otomatis)'}
-            </span>
+      <header className="bg-white rounded-[24px] p-6 border border-[#CFD8BE] shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E4E9DA] text-[#234B24] text-xs font-bold">
+              <CheckCircle2
+                className="w-3.5 h-3.5 text-[#1E9E5A]"
+                aria-hidden="true"
+              />
+              <span>
+                {backendOnline
+                  ? 'Status Sistem: Terhubung (Database Utama)'
+                  : 'Status Sistem: Mode Lokal Aktif (Sinkronisasi Otomatis)'}
+              </span>
+            </div>
+            <h1 className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#1B1F1A] tracking-tight">
+              Manajemen Destinasi Wisata &amp; Kesiapan Medan
+            </h1>
+            <p className="text-sm text-[#4A5248] mt-0.5">
+              Direktori resmi destinasi unggulan, 5 indikator kesiapan medan, kamus audio Minang, kalender budaya, dan Gaode ranking.
+            </p>
           </div>
-          <h1 className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#1B1F1A] tracking-tight">
-            Manajemen Destinasi Wisata &amp; Kesiapan Medan
-          </h1>
-          <p className="text-sm text-[#4A5248] mt-0.5">
-            Direktori resmi destinasi unggulan, 4 statistik keputusan wisatawan,
-            5 indikator kesiapan medan lapangan, dan standar tarif Perda.
-          </p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={loading}
+              className="min-h-[48px] px-4 py-2.5 rounded-pill bg-white border border-[#CFD8BE] hover:bg-[#E4E9DA]/50 text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition shadow-sm"
+            >
+              <RefreshCw
+                className={`w-4 h-4 text-[#234B24] ${
+                  loading ? 'animate-spin' : ''
+                }`}
+                aria-hidden="true"
+              />
+              <span>Sinkronisasi Data</span>
+            </button>
+
+            {activeSubTab === 'directory' && (
+              <button
+                type="button"
+                onClick={handleOpenNewModal}
+                className="h-[52px] px-6 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-sm flex items-center gap-2 shadow-sm transition"
+              >
+                <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+                <span>+ Tambah Destinasi Baru</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        {/* 4 Sub-Tabs Navigasi Header */}
+        <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={onRefresh}
-            disabled={loading}
-            className="min-h-[48px] px-4 py-2.5 rounded-pill bg-white border border-[#CFD8BE] hover:bg-[#E4E9DA]/50 text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition shadow-sm"
+            onClick={() => setActiveSubTab('directory')}
+            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'directory'
+                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+            }`}
           >
-            <RefreshCw
-              className={`w-4 h-4 text-[#234B24] ${
-                loading ? 'animate-spin' : ''
+            <Compass className="w-4 h-4" aria-hidden="true" />
+            <span>Direktori Destinasi &amp; 5 Medan</span>
+            <span
+              className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+                activeSubTab === 'directory'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-[#234B24]/10 text-[#234B24]'
               }`}
-              aria-hidden="true"
-            />
-            <span>Sinkronisasi Data</span>
+            >
+              {destinations.length}
+            </span>
           </button>
 
           <button
             type="button"
-            onClick={handleOpenNewModal}
-            className="h-[52px] px-6 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-sm flex items-center gap-2 shadow-sm transition"
+            onClick={() => setActiveSubTab('minang_dictionary')}
+            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'minang_dictionary'
+                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+            }`}
           >
-            <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-            <span>+ Tambah Destinasi Baru</span>
+            <Volume2 className="w-4 h-4" aria-hidden="true" />
+            <span>Kamus Saku Audio Minang</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('culture_calendar')}
+            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'culture_calendar'
+                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+            }`}
+          >
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+            <span>Kalender Budaya Sumbar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('gaode_ranking')}
+            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'gaode_ranking'
+                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" aria-hidden="true" />
+            <span>Rekalkulasi Gaode Ranking</span>
           </button>
         </div>
       </header>
 
-      {/* 4 Kartu Ringkasan Eksekutif */}
-      <section
-        aria-label="Ringkasan Statistik Destinasi Sumatera Barat"
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
-      >
+      {activeSubTab === 'directory' && (
+        <>
+          {/* 4 Kartu Ringkasan Eksekutif */}
+          <section
+            aria-label="Ringkasan Statistik Destinasi Sumatera Barat"
+            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
+          >
         <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Destinasi Terdaftar
@@ -1093,6 +1178,20 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           </tbody>
         </table>
       </div>
+        </>
+      )}
+
+      {activeSubTab === 'minang_dictionary' && (
+        <MinangDictionarySubTab showToast={showToast} />
+      )}
+
+      {activeSubTab === 'culture_calendar' && (
+        <CultureCalendarSubTab showToast={showToast} />
+      )}
+
+      {activeSubTab === 'gaode_ranking' && (
+        <GaodeRankingSubTab showToast={showToast} />
+      )}
 
       {/* =====================================================================
           MODAL EDITOR DESTINASI 3 BAGIAN (FS1-M1-03)

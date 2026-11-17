@@ -457,3 +457,143 @@ export interface WhatsAppSimulationMessage {
   service_date?: string;
 }
 
+// ============================================================================
+// KAMUS SAKU AUDIO MINANG (USE CASE ADMIN DISPAR)
+// ============================================================================
+
+export type MinangPhraseCategory =
+  | 'Belanja & Menawar'
+  | 'Salam & Sapaan'
+  | 'Arah & Navigasi'
+  | 'Kuliner'
+  | 'Darurat & Bantuan';
+
+export interface MinangAudioPhrase {
+  id: string;
+  phrase: string;              // Frasa Minang asli, e.g. "Bara ko ciek, Da?"
+  pronunciation: string;       // Cara baca / pelafalan fonetik, e.g. "Bara ko ci-ek, Da?"
+  meaning_id: string;          // Arti Bahasa Indonesia
+  meaning_en: string;          // Arti Bahasa Inggris
+  category: MinangPhraseCategory;
+  audio_url?: string;          // Data URL audio MP3 atau path
+  notes?: string;              // Konteks adat / etika pemakaian
+  updated_at: string;
+}
+
+// ============================================================================
+// KALENDER BUDAYA SUMATERA BARAT (19 KAB/KOTA)
+// ============================================================================
+
+export type CultureEventCategory =
+  | 'Upacara Tradisi'
+  | 'Festival Seni & Musik'
+  | 'Atraksi Adat'
+  | 'Wisata Alam & Olahraga';
+
+export type CultureEventStatus =
+  | 'Akan Datang'
+  | 'Sedang Berlangsung'
+  | 'Selesai';
+
+export interface CultureCalendarEvent {
+  id: string;
+  title: string;               // Nama Festival / Acara Budaya
+  city_regency: string;        // 19 Kab/Kota
+  location: string;            // Lokasi spesifik
+  start_date: string;          // YYYY-MM-DD
+  end_date: string;            // YYYY-MM-DD
+  category: CultureEventCategory;
+  description: string;         // Deskripsi dan filosofi adat
+  poster_url: string;          // Foto poster festival (dari device)
+  organizer: string;           // Dinas Pariwisata / Kerapatan Adat Nagari (KAN)
+  status: CultureEventStatus;
+  updated_at: string;
+}
+
+// ============================================================================
+// REKALKULASI GAODE RANKING DESTINASI WISATA SUMBAR
+// ============================================================================
+
+export interface GaodeWeightConfig {
+  satisfaction_weight: number; // Persentase bobot kepuasan (default 35%)
+  pungli_free_weight: number;   // Persentase bobot bebas pungli (default 30%)
+  medan_access_weight: number;  // Persentase bobot aksesibilitas medan (default 20%)
+  visit_volume_weight: number;  // Persentase bobot volume kunjungan (default 15%)
+}
+
+export interface GaodeRankingItem {
+  id: string;
+  destination_id: string;
+  name: string;
+  city_regency: string;
+  category: string;
+  weekly_visits: number;
+  avg_dwell_hours: number;
+  satisfaction_rate: number;    // % (misal 96.5)
+  pungli_free_index: number;    // % (misal 98.2)
+  medan_score: number;          // 1 - 5
+  calculated_gaode_score: number; // 0 - 100
+  previous_rank: number;
+  current_rank: number;
+  trend: 'up' | 'down' | 'same';
+}
+
+// ============================================================================
+// PANTAU OPEN TRIP / CARI BARENGAN WISATAWAN
+// ============================================================================
+
+export type OpenTripStatus =
+  | 'Menunggu Kuota'
+  | 'Terkonfirmasi & Siaga'
+  | 'Berjalan'
+  | 'Ditangguhkan';
+
+export interface OpenTripItem {
+  id: string;
+  trip_code: string;            // e.g. "TRIP-HARAU-042"
+  title: string;                // e.g. "Eksplor Lembah Harau & Kelok 9"
+  destination_routes: string[]; // e.g. ["Lembah Harau", "Kelok 9", "Istano Basa Pagaruyung"]
+  city_regency: string;
+  leader_name: string;          // Ketua Rombongan / Pemandu Pokdarwis
+  leader_phone: string;
+  pokdarwis_partner: string;    // Pokdarwis Pendamping Nagari
+  departure_date: string;       // YYYY-MM-DD
+  duration_days: number;        // Durasi hari
+  quota_max: number;            // Kuota maks (misal 12)
+  quota_filled: number;         // Kuota terisi (misal 9)
+  split_bill_idr: number;       // Biaya patungan per orang (IDR)
+  split_bill_myr: number;       // Biaya patungan per orang (MYR)
+  status: OpenTripStatus;
+  notes?: string;
+  created_at: string;
+}
+
+// ============================================================================
+// HEALTH & BENCHMARK SISTEM ENDPOINT
+// ============================================================================
+
+export interface BenchmarkRunResult {
+  total_requests: number;
+  concurrency: number;
+  latency_p50_ms: number;
+  latency_p95_ms: number;
+  latency_p99_ms: number;
+  error_rate_pct: number;
+  throughput_qps: number;
+  timestamp: string;
+}
+
+export interface SystemBenchmarkMetrics {
+  server_status: 'ONLINE' | 'STANDBY_LOCAL';
+  backend_version: string;
+  go_engine_latency_ms: number;
+  postgres_spatial_query_ms: number; // < 100ms PostGIS ST_DWithin
+  offline_360_bundle_speed_sec: number;
+  rate_limit_status: string;
+  memory_allocated_mb: number;
+  requests_per_second: number;
+  last_benchmark_time?: string;
+  benchmark_history: BenchmarkRunResult[];
+}
+
+
