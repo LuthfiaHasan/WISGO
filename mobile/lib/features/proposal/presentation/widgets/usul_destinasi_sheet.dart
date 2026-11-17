@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Item 13: Formulir Usulan Destinasi Wisata Baru (Hidden Gem)
-/// Berisi 8 komponen utama sesuai regulasi Dinas Pariwisata Sumbar:
+/// Berisi komponen lengkap sesuai regulasi:
 /// 1. Nama Tempat
 /// 2. Deskripsi & Narasi Sejarah (Voice Over AI Tur 360°)
 /// 3. Wilayah (Kabupaten / Kota di Sumbar)
 /// 4. Nama Pengusul (Wisatawan / Komunitas)
-/// 5. Titik Koordinat GPS
-/// 6. Foto Panorama Equirectangular 360°
-/// 7. Kategori Wisata Alam
-/// 8. Fasilitas & Informasi Tiket Masuk (Non-transaksi / Informasi saja)
+/// 5. Nomor WhatsApp Pengelola / Pemilik Tempat (Pokdarwis)
+/// 6. Titik Koordinat GPS
+/// 7. Foto Panorama Equirectangular 360°
+/// 8. Kategori Wisata Alam
+/// 9. Fasilitas & Informasi Tiket Masuk (Non-transaksi / Informasi saja)
 ///
 /// Pasca submit: Status masuk ke "Menunggu Validasi Admin", baru akan tampil
-/// di katalog aplikasi setelah diverifikasi oleh Admin Dispar.
+/// di katalog aplikasi setelah divalidasi dan disetujui oleh Admin Dispar.
 class UsulDestinasiSheet extends StatefulWidget {
   final Function(String name)? onSubmitSuccess;
 
@@ -28,6 +29,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _proposerController = TextEditingController(text: 'Ahmad Fauzi (Wisatawan)');
+  final TextEditingController _ownerWhatsAppController = TextEditingController(text: '+62 812-7578-953');
   final TextEditingController _gpsController = TextEditingController(text: '-0.098412, 100.672195');
   final TextEditingController _feeInfoController = TextEditingController(
     text: 'Karcis Masuk: Rp 5.000 / orang, Parkir Motor: Rp 2.000, Mobil: Rp 5.000 (Pokdarwis)',
@@ -82,6 +84,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
     _nameController.dispose();
     _descController.dispose();
     _proposerController.dispose();
+    _ownerWhatsAppController.dispose();
     _gpsController.dispose();
     _feeInfoController.dispose();
     super.dispose();
@@ -160,7 +163,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
             ),
           ),
 
-          // Scrollable Body (Form with 8 Items)
+          // Scrollable Body
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
@@ -281,11 +284,27 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       ),
                       const SizedBox(height: 14),
 
-                      // 5. TITIK KOORDINAT GPS
+                      // 5. NOMOR WHATSAPP PENGELOLA / PEMILIK TEMPAT
+                      _buildFieldHeader('5. NOMOR WHATSAPP PEMILIK / PENGELOLA TEMPAT:', Icons.chat_bubble_outline_rounded),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Nomor WhatsApp resmi pemilik tempat/Pokdarwis untuk dihubungi wisatawan saat ingin reservasi langsung (tanpa transaksi sistem).',
+                        style: TextStyle(fontSize: 9.5, color: AppColors.muted),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _ownerWhatsAppController,
+                        keyboardType: TextInputType.phone,
+                        decoration: _inputDecoration('Contoh: +62 812-7578-953 (Pemilik / Pengelola)'),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // 6. TITIK KOORDINAT GPS
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildFieldHeader('5. TITIK KOORDINAT GPS (SPASIAL):', Icons.my_location_rounded),
+                          _buildFieldHeader('6. TITIK KOORDINAT GPS (SPASIAL):', Icons.my_location_rounded),
                           GestureDetector(
                             onTap: _detectCurrentGpsLocation,
                             child: Container(
@@ -322,8 +341,8 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       ),
                       const SizedBox(height: 14),
 
-                      // 6. FOTO TEMPAT UNTUK TUR 360 DERAJAT
-                      _buildFieldHeader('6. FOTO TEMPAT UNTUK TUR PANORAMA 360°:', Icons.threesixty_rounded),
+                      // 7. FOTO TEMPAT UNTUK TUR 360 DERAJAT
+                      _buildFieldHeader('7. FOTO TEMPAT UNTUK TUR PANORAMA 360°:', Icons.threesixty_rounded),
                       const SizedBox(height: 3),
                       const Text(
                         'Unggah foto equirectangular / panorama 360° keindahan tempat wisata untuk tur virtual.',
@@ -377,8 +396,8 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       ),
                       const SizedBox(height: 14),
 
-                      // 7. KATEGORI WISATA
-                      _buildFieldHeader('7. KATEGORI WISATA ALAM:', Icons.category_rounded),
+                      // 8. KATEGORI WISATA
+                      _buildFieldHeader('8. KATEGORI WISATA ALAM:', Icons.category_rounded),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 6,
@@ -408,9 +427,9 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       ),
                       const SizedBox(height: 14),
 
-                      // 8. FASILITAS & INFORMASI TIKET MASUK (NON-TRANSAKSI)
+                      // 9. FASILITAS & INFORMASI TIKET MASUK (NON-TRANSAKSI)
                       _buildFieldHeader(
-                        '8. FASILITAS & INFORMASI TIKET (NON-TRANSAKSI):',
+                        '9. FASILITAS & INFORMASI TIKET (NON-TRANSAKSI):',
                         Icons.info_rounded,
                       ),
                       const SizedBox(height: 3),

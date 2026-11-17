@@ -22,7 +22,6 @@ import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
 import '../../../booking/presentation/widgets/quick_booking_panel.dart';
 import '../../../group_room/presentation/widgets/live_group_tracking_sheet.dart';
 import '../../../passport/presentation/widgets/digital_passport_sheet.dart';
-import '../../../culture/presentation/widgets/culture_and_community_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
 
@@ -1665,26 +1664,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   },
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _openCultureAndCommunityModal();
-                    },
-                    icon: const Icon(Icons.forum_outlined, size: 16),
-                    label: const Text('Buka Diskusi Budaya & Forum Nagari'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5A3E85),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
-                ),
-              ),
+              const SizedBox(height: 12),
             ],
           ),
         );
@@ -3030,20 +3010,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => const DigitalPassportSheet(),
-    );
-  }
-
-  // ===========================================================================
-  // MODAL 11: BUDAYA, SERTIFIKAT & FORUM NAGARI (ITEM 19)
-  // ===========================================================================
-  void _openCultureAndCommunityModal([String? destTitle]) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => CultureAndCommunitySheet(
-        destinationTitle: destTitle ?? 'Air Terjun Lubuk Hitam (Cindakir) 3 Tingkat',
-      ),
     );
   }
 
