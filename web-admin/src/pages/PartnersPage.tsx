@@ -26,10 +26,10 @@ import {
   MapPin,
   TrendingUp,
   Users,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Destination,
-  EscrowTransaction,
   Partner,
   PartnerCategoryType,
 } from '../types/contract';
@@ -88,7 +88,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
     return null;
   });
 
-  const [activeDetailTab, setActiveDetailTab] = useState<'profile' | 'escrow' | '360'>(
+  const [activeDetailTab, setActiveDetailTab] = useState<'profile' | 'contact_catalog' | '360'>(
     'profile'
   );
 
@@ -117,25 +117,8 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
   // KPI Calculations
   const totalVerified = partners.filter((p) => p.is_verified).length;
 
-  const totalEscrowLocked = useMemo(() => {
-    let total = 0;
-    partners.forEach((p) => {
-      p.ledger?.forEach((t) => {
-        if (t.status === 'ESCROW_LOCKED') total += t.amount;
-      });
-    });
-    return total || 800000;
-  }, [partners]);
-
-  const totalEscrowPayout = useMemo(() => {
-    let total = 0;
-    partners.forEach((p) => {
-      p.ledger?.forEach((t) => {
-        if (t.status === 'READY_PAYOUT' || t.status === 'REDEEMED')
-          total += t.amount;
-      });
-    });
-    return total || 550000;
+  const totalWaClicks = useMemo(() => {
+    return partners.reduce((acc, p) => acc + (p.wa_click_count || 120), 0);
   }, [partners]);
 
   const totalWith360 = partners.filter((p) => p.has_360_pin).length;
@@ -235,21 +218,13 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
       pitch: formPitch,
       yaw: formYaw,
       has_360_pin: Boolean(formDestId && formSceneId),
-      created_at: editingPartner?.created_at || new Date().toISOString(),
-      ledger: editingPartner?.ledger || [
-        {
-          id: `esc-${Date.now()}`,
-          booking_code: `ESCR-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-          tourist_name: 'Pemesanan Wisatawan Aplikasi',
-          tourist_phone: '081234567890',
-          amount: formStandardFee,
-          fee_currency: 'IDR',
-          status: 'ESCROW_LOCKED',
-          wa_status: 'CONFIRMED',
-          service_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString(),
-        },
+      wa_click_count: editingPartner?.wa_click_count || 120,
+      direct_payment_methods: editingPartner?.direct_payment_methods || [
+        'QRIS Bank Nagari',
+        'Transfer Bank',
+        'Tunai Langsung',
       ],
+      created_at: editingPartner?.created_at || new Date().toISOString(),
     };
 
     await onSavePartner(partnerData);
@@ -292,14 +267,14 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                  Monitoring Mitra Nagari, Escrow &amp; Komunitas
+                  Direktori &amp; Verifikasi 5 Kategori Mitra UMKM Nagari
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                  Ekonomi Nagari &amp; Pengawasan Wisata
+                  Ekonomi Nagari &amp; Transaksi Langsung P2P
                 </span>
               </div>
               <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Kelola 5 kategori mitra UMKM nagari (Homestay, Kapal, Pemandu Pokdarwis, Kuliner Halal, Sewa Busana Adat), pantau mutasi rekening bersama (*Escrow*), pengawasan Open Trip wisatawan, dan kurasi tempat wisata komunitas.
+                Kelola 5 kategori mitra UMKM nagari (Homestay, Kapal, Pemandu Pokdarwis, Kuliner Halal, Sewa Busana Adat), konektivitas kontak langsung WhatsApp (P2P), pemantauan Open Trip wisatawan, dan kurasi tempat wisata komunitas.
               </p>
             </div>
           </div>
@@ -378,7 +353,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
 
       {activeSubTab === 'partners_directory' && (
         <>
-          {/* 4 Kartu KPI Statistik Mitra & Escrow */}
+          {/* 4 Kartu KPI Statistik Mitra & Interaksi P2P */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#4A5248]">Mitra Terverifikasi</span>
@@ -391,22 +366,12 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
         </div>
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
-          <span className="text-xs font-bold text-[#C2410C]">Dana Escrow Tertahan</span>
-          <div className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#D95637]">
-            Rp {totalEscrowLocked.toLocaleString('id-ID')}
-          </div>
-          <p className="text-[11px] text-[#4A5248] mt-1">
-            Menunggu konfirmasi kedatangan
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
-          <span className="text-xs font-bold text-[#166534]">Dana Cair ke Nagari</span>
-          <div className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#16A34A]">
-            Rp {totalEscrowPayout.toLocaleString('id-ID')}
+          <span className="text-xs font-bold text-[#234B24]">Total Klik / Interaksi WA</span>
+          <div className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#234B24]">
+            {totalWaClicks.toLocaleString('id-ID')}
           </div>
           <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
-            Ditransfer otomatis via Bot WA
+            Leads Langsung ke WhatsApp Mitra
           </p>
         </div>
 
@@ -416,7 +381,17 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             {totalWith360} Mitra
           </div>
           <p className="text-[11px] text-[#4A5248] mt-1">
-            Memiliki pin booking di panorama
+            Spot &amp; Pin Booking Virtual Aktif
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+          <span className="text-xs font-bold text-[#F26B4B]">Kategori Layanan Aktif</span>
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
+            5 Kategori
+          </div>
+          <p className="text-[11px] text-[#4A5248] mt-1">
+            Homestay, Kapal, Tour, Kuliner, Busana
           </p>
         </div>
       </div>
@@ -659,7 +634,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* DRAWER / MODAL: DETAIL LENGKAP MITRA, ESCROW & INTEGRASI 360°         */}
+      {/* DRAWER / MODAL: DETAIL LENGKAP MITRA, KONTAK WA P2P & INTEGRASI 360°  */}
       {/* ==================================================================== */}
       {selectedPartner && (
         <div
@@ -708,14 +683,14 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveDetailTab('escrow')}
+                  onClick={() => setActiveDetailTab('contact_catalog')}
                   className={`py-2 rounded-lg transition ${
-                    activeDetailTab === 'escrow'
+                    activeDetailTab === 'contact_catalog'
                       ? 'bg-white text-[#234B24] shadow-xs'
                       : 'text-[#4A5248] hover:text-[#1B1F1A]'
                   }`}
                 >
-                  Buku Besar Escrow ({selectedPartner.ledger?.length || 0})
+                  Katalog Layanan &amp; Kontak WA
                 </button>
                 <button
                   type="button"
@@ -812,80 +787,93 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                 </div>
               )}
 
-              {/* KONTEN TAB B: BUKU BESAR ESCROW (LEDGER) */}
-              {activeDetailTab === 'escrow' && (
-                <div className="mt-5 space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#1B1F1A]">
-                      Riwayat Transaksi Rekening Bersama Escrow
-                    </span>
-                    <span className="text-[#1E9E5A] font-bold">
-                      Dijamin Bank Nagari &amp; Pemprov Sumbar
-                    </span>
+              {/* KONTEN TAB B: KATALOG LAYANAN & INFORMASI KONTAK */}
+              {activeDetailTab === 'contact_catalog' && (
+                <div className="mt-5 space-y-4">
+                  <div className="p-4 rounded-2xl bg-[#E4E9DA]/60 border border-[#CFD8BE] space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[#4A5248] text-xs font-bold block">
+                          Kanal WhatsApp Resmi (P2P Langsung):
+                        </span>
+                        <div className="font-mono text-base font-extrabold text-[#234B24] flex items-center gap-2 mt-0.5">
+                          <Phone className="w-4 h-4 text-[#1E9E5A]" />
+                          <span>+{selectedPartner.whatsapp}</span>
+                        </div>
+                      </div>
+
+                      <a
+                        href={`https://wa.me/${selectedPartner.whatsapp.replace(/\D/g, '')}?text=Halo%20${encodeURIComponent(
+                          selectedPartner.name
+                        )},%20saya%20melihat%20informasi%20layanan%20Anda%20di%20WISGO.%20Apakah%20layanan%20ini%20tersedia?`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-extrabold inline-flex items-center justify-center gap-2 shadow-sm transition"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>Buka Chat WA Mitra (P2P)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   </div>
 
-                  <div className="border border-[#E4E9DA] rounded-2xl overflow-hidden">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-[#F6F3EC] text-[10px] font-bold text-[#4A5248] uppercase border-b border-[#E4E9DA]">
-                          <th className="py-2.5 px-3">Kode Booking</th>
-                          <th className="py-2.5 px-3">Wisatawan</th>
-                          <th className="py-2.5 px-3">Nominal</th>
-                          <th className="py-2.5 px-3">Status Escrow</th>
-                          <th className="py-2.5 px-3">Bot WA</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#E4E9DA]">
-                        {selectedPartner.ledger && selectedPartner.ledger.length > 0 ? (
-                          selectedPartner.ledger.map((tx) => (
-                            <tr key={tx.id} className="hover:bg-gray-50">
-                              <td className="py-2.5 px-3 font-mono font-bold text-[#234B24]">
-                                {tx.booking_code}
-                              </td>
-                              <td className="py-2.5 px-3">
-                                <div className="font-bold text-[#1B1F1A]">
-                                  {tx.tourist_name}
-                                </div>
-                                <div className="text-[10px] text-[#767676]">
-                                  {tx.service_date}
-                                </div>
-                              </td>
-                              <td className="py-2.5 px-3 font-extrabold text-[#1B1F1A]">
-                                Rp {tx.amount.toLocaleString('id-ID')}
-                              </td>
-                              <td className="py-2.5 px-3">
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                    tx.status === 'READY_PAYOUT'
-                                      ? 'bg-[#FEF08A] text-[#854D0E]'
-                                      : tx.status === 'REDEEMED'
-                                      ? 'bg-[#DCFCE7] text-[#166534]'
-                                      : 'bg-[#FFEDD5] text-[#C2410C]'
-                                  }`}
-                                >
-                                  {tx.status === 'READY_PAYOUT'
-                                    ? 'Siap Cair'
-                                    : tx.status === 'REDEEMED'
-                                    ? 'Sudah Cair'
-                                    : 'Tertahan'}
-                                </span>
-                              </td>
-                              <td className="py-2.5 px-3">
-                                <span className="text-[10px] font-bold text-[#1E9E5A]">
-                                  {tx.wa_status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={5} className="py-4 text-center text-xs text-[#767676]">
-                              Belum ada transaksi escrow untuk mitra ini.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                  {/* Informasi Tarif & Pembayaran Langsung */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+                    <div className="p-3.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                      <span className="text-[#4A5248] block text-[10px] font-bold">
+                        Acuan Tarif Transaksi Langsung:
+                      </span>
+                      <div className="text-base font-extrabold text-[#234B24] mt-0.5">
+                        Rp {selectedPartner.standard_fee.toLocaleString('id-ID')}
+                        <span className="text-xs text-[#767676] font-normal ml-1">
+                          (± RM {(selectedPartner.fee_myr_estimate || (selectedPartner.standard_fee / 3300)).toFixed(1)} MYR)
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-[#4A5248] block mt-1">
+                        Dibayar langsung ke mitra via QRIS Nagari / Transfer / Tunai tanpa potongan platform.
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                      <span className="text-[#4A5248] block text-[10px] font-bold">
+                        Total Interaksi Wisatawan (Leads WA):
+                      </span>
+                      <div className="text-base font-extrabold text-[#1B1F1A] mt-0.5">
+                        {(selectedPartner.wa_click_count || 140).toLocaleString('id-ID')} Klik
+                      </div>
+                      <span className="text-[10px] text-[#1E9E5A] font-bold block mt-1">
+                        Wisatawan terhubung langsung ke pengelola
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Metode Pembayaran Langsung Mitra */}
+                  <div className="p-3.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs">
+                    <span className="text-[#4A5248] block text-[10px] font-bold mb-2">
+                      Metode Pembayaran Langsung (Direct P2P) Diterima Mitra:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {(selectedPartner.direct_payment_methods || [
+                        'QRIS Bank Nagari',
+                        'Transfer Bank',
+                        'Tunai Langsung',
+                      ]).map((method) => (
+                        <span
+                          key={method}
+                          className="px-3 py-1 rounded-full bg-white border border-[#234B24]/20 text-[#234B24] font-bold text-[11px] shadow-2xs"
+                        >
+                          ✓ {method}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Catatan Otoritas Pariwisata */}
+                  <div className="p-3 rounded-xl bg-[#FFEECD] border border-[#FDE047]/60 text-xs text-[#854D0E] flex items-start gap-2">
+                    <ShieldCheck className="w-4 h-4 shrink-0 text-[#CA8A04] mt-0.5" />
+                    <span>
+                      Sistem WISGO menghubungkan wisatawan langsung dengan pengelola nagari. WISGO tidak memungut biaya perantara atau menahan dana. Seluruh transaksi disepakati mandiri (P2P).
+                    </span>
                   </div>
                 </div>
               )}

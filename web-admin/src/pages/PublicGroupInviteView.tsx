@@ -332,14 +332,14 @@ export const PublicGroupInviteView: React.FC<PublicGroupInviteViewProps> = ({
               </div>
             </section>
 
-            {/* Edukasi Keamanan Escrow Nagari */}
+            {/* Edukasi Keamanan & Kemitraan Resmi Nagari */}
             <div className="p-3.5 rounded-2xl bg-[#E4E9DA]/70 border border-[#CFD8BE] flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-[#234B24] shrink-0 mt-0.5" aria-hidden="true" />
               <div className="text-xs text-[#1B1F1A]">
                 <span className="font-bold text-[#234B24]">
-                  Perlindungan Rekening Bersama Escrow:
+                  Kemitraan Resmi Terverifikasi Nagari (Direct P2P):
                 </span>{' '}
-                Seluruh pemesanan Homestay Nagari, Pemandu Pokdarwis, dan Kapal Mandeh rombongan dijamin aman oleh Dinas Pariwisata Provinsi Sumatera Barat.
+                Seluruh kontak Homestay Nagari, Pemandu Pokdarwis, dan Kapal Mandeh rombongan terhubung langsung ke pengelola lokal resmi binaan Dinas Pariwisata Provinsi Sumatera Barat tanpa perantara.
               </div>
             </div>
           </div>

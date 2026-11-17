@@ -201,8 +201,47 @@ Sebagai pemenuhan standar visual production-grade pada tampilan layar Web Admin 
 
 ---
 
-## 8. Status Pengujian & Kesiapan Rilis
+## 8. Refaktor Logika Bisnis: Eliminasi Escrow Menjadi Transaksi Langsung P2P via WhatsApp
+
+Menindaklanjuti keputusan arsitektur bisnis bahwa sistem pariwisata Sumatera Barat **tidak menggunakan rekening bersama (Escrow)** demi memberdayakan kemandirian ekonomi nagari secara langsung, telah dilakukan perombakan menyeluruh pada aplikasi Web Admin:
+
+1. **Pembaruan Navigasi & Identitas Menu**:
+   - Menu 5 diubah dari `"Monitoring Mitra & Escrow"` menjadi **`"Direktori & Verifikasi Mitra UMKM"`** (Subjudul: *5 Kategori UMKM & Kontak WA P2P*).
+   - Menu 6 diubah dari `"Simulator Bot WA & Escrow"` menjadi **`"Simulator Interaksi WA Mitra"`** (Subjudul: *Chat Langsung P2P & Leads 360°*).
+   - Dihilangkan seluruh terminologi dan variabel yang menampilkan "Dana Escrow Tertahan", "Dana Cair ke Nagari", dan "Buku Besar Escrow" di seluruh halaman Web Admin.
+
+2. **Pembaruan Metrik Interaksi pada Direktori Mitra (`PartnersPage.tsx`)**:
+   - 4 Kartu KPI Statistik atas diganti menjadi metrik interaksi riil:
+     - Kartu 1: *Mitra Terverifikasi* (100% Ber-SK Pokdarwis Nagari).
+     - Kartu 2: *Total Klik / Interaksi WA* (Total leads wisatawan yang menghubungi langsung pengelola nagari).
+     - Kartu 3: *Terhubung Tur 360°* (Spot & Pin booking virtual aktif).
+     - Kartu 4: *Kategori Layanan Aktif* (5 Kategori: Homestay, Kapal, Tour, Kuliner, Busana Adat).
+   - Di dalam Modal Detail Mitra, tab dan tabel "Buku Besar Escrow" diganti dengan panel **`"Katalog Layanan & Kontak WA"`**:
+     - Menampilkan nomor WhatsApp aktif mitra (`+62...`) dengan badge terverifikasi.
+     - Tautan klik langsung ke chat WhatsApp (`wa.me/...`) dan tombol aksi *"Buka Chat WA Mitra (P2P)"*.
+     - Acuan tarif transaksi langsung (IDR & MYR) yang ditransaksikan tanpa potongan perantara platform.
+     - Saluran pembayaran langsung mitra (*QRIS Bank Nagari*, *Transfer Bank*, *Tunai Langsung*).
+     - Counter total interaksi wisatawan / leads WA yang tercatat.
+
+3. **Perombakan Simulator Interaksi WA Mitra (`WhatsAppBotSimulator.tsx`)**:
+   - Menghapus logika penerbitan tiket QR dan simulasi pencairan dana escrow.
+   - Merombak skenario menjadi simulasi murni alur penjelajahan 360° wisatawan:
+     - Wisatawan mengetuk Pin UMKM di panorama 360° $\rightarrow$ Sistem mengarahkan pesan template WhatsApp otomatis ke nomor pengelola mitra nagari.
+     - Mitra membalas langsung di chat dengan tombol aksi cepat:
+       - *Balas Ketersediaan & QRIS Nagari* (Mengirimkan info ketersediaan slot dan saluran pembayaran langsung QRIS Bank Nagari / Transfer).
+       - *Balas Slot Penuh* (Pemberitahuan ramah slot terisi dan saran tanggal alternatif).
+       - *Kirim Titik Temu Maps* (Mengirim tautan Google Maps nagari & patokan gerbang resmi Pokdarwis).
+     - Panel kanan menyajikan profil mitra, acuan tarif, saluran pembayaran, serta tombol uji coba langsung *"Buka Langsung di Web WhatsApp (wa.me)"*.
+
+4. **Penyesuaian Analitik Eksekutif (`ExecutiveAnalyticsPage.tsx`)**:
+   - Kartu Makro 2 diperbarui dari "Perputaran Escrow" menjadi **`"Total Interaksi Mitra (Leads WA)"`** (12.580 Klik · 100% Langsung P2P ke WhatsApp Mitra).
+   - Bagian 2 diperbarui menjadi **`"2. Grafik Interaksi Mitra (Leads) pada 5 Kategori UMKM Nagari"`** dan **`"Top 5 Nagari dengan Interaksi / Leads Mitra Tertinggi"`**.
+   - Kolom tabel Heatmap dan ekspor data CSV diperbarui dari nominal Escrow menjadi jumlah klik interaksi leads WA per wilayah.
+
+---
+
+## 9. Status Pengujian & Kesiapan Rilis
 
 - **Pemeriksaan Tipe TypeScript (`tsc --noEmit`):** `Exit Code 0` (0 error, 100% lulus kompilasi tipe ketat).
-- **Pengujian Bundel Produksi (`vite build`):** `Exit Code 0` (1.564 modul berhasil dibundel optimal).
+- **Pengujian Bundel Produksi (`npm run build`):** `Exit Code 0` (1.564 modul sukses dibundel dalam 7,34 detik).
 - **Server Dev Lokal:** Berjalan aktif dan responsif di `http://localhost:3000/`.

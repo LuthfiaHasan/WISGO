@@ -1038,7 +1038,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                             className="min-h-[32px] px-3 py-1 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1 shadow-xs"
                           >
                             <Store className="w-3.5 h-3.5" />
-                            <span>Lihat Detail Mitra &amp; Escrow</span>
+                            <span>Lihat Kontak &amp; Detail Mitra</span>
                           </button>
                         )}
                       </div>

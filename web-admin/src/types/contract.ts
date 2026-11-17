@@ -231,7 +231,9 @@ export interface Partner {
   has_360_pin?: boolean;             // Penanda apakah mitra memiliki pin aktif di tur 360
   halal_certified?: boolean;         // Sertifikat Halal MUI / Kemenag
   created_at?: string;
-  ledger?: EscrowTransaction[];      // Riwayat transaksi buku besar escrow
+  wa_click_count?: number;           // Total klik tombol WhatsApp / Leads wisatawan (P2P)
+  direct_payment_methods?: string[]; // Metode pembayaran langsung P2P (QRIS Nagari, Transfer Bank, Tunai)
+  ledger?: EscrowTransaction[];      // Opsional / Catatan interaksi
 }
 
 export type PartnerNagari = Partner;
@@ -419,7 +421,8 @@ export interface RegencyHeatmapData {
   domestic_pct: number;
   foreign_myr_pct: number;
   top_destination: string;
-  escrow_circulation: number; // IDR perputaran dana mitra di kab/kota ini
+  wa_leads_count: number;     // Total interaksi / leads chat WhatsApp mitra di kab/kota ini
+  escrow_circulation?: number; // Opsional / nilai kompatibilitas
 }
 
 export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -442,8 +445,11 @@ export interface CommunityHiddenGemSubmission {
 export interface DigitalPassportMetrics {
   total_gps_checkins_verified: number; // Check-in GPS radius <= 200m
   total_governor_certificates_issued: number; // Sertifikat Digital Gubernur diunduh
-  top_nagari_escrow: { nagari: string; amount: number }[];
-  escrow_by_category: { category: PartnerCategoryType; total_amount: number; count: number }[];
+  total_wa_leads_generated: number; // Total klik tombol WA / inquiries P2P
+  top_nagari_leads: { nagari: string; leads_count: number }[];
+  leads_by_category: { category: PartnerCategoryType; total_leads: number; count: number }[];
+  top_nagari_escrow?: { nagari: string; amount: number }[];
+  escrow_by_category?: { category: PartnerCategoryType; total_amount: number; count: number }[];
 }
 
 export interface WhatsAppSimulationMessage {

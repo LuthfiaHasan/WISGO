@@ -1492,33 +1492,9 @@ export const INITIAL_PARTNERS: Partner[] = [
     yaw: -88,
     has_360_pin: true,
     halal_certified: true,
+    wa_click_count: 248,
+    direct_payment_methods: ['QRIS Bank Nagari', 'Transfer Bank', 'Tunai Langsung'],
     created_at: '2026-11-01T10:00:00Z',
-    ledger: [
-      {
-        id: 'esc-001',
-        booking_code: 'ESCR-HARAU-101',
-        tourist_name: 'Rahmat Hidayat (Pekanbaru)',
-        tourist_phone: '081267891234',
-        amount: 75000,
-        fee_currency: 'IDR',
-        status: 'READY_PAYOUT',
-        wa_status: 'CONFIRMED',
-        service_date: '2026-11-16',
-        created_at: '2026-11-15T14:00:00Z',
-      },
-      {
-        id: 'esc-002',
-        booking_code: 'ESCR-HARAU-102',
-        tourist_name: 'Farhan Bahar Rombongan',
-        tourist_phone: '081377884411',
-        amount: 150000,
-        fee_currency: 'IDR',
-        status: 'ESCROW_LOCKED',
-        wa_status: 'CONFIRMED',
-        service_date: '2026-11-20',
-        created_at: '2026-11-16T08:30:00Z',
-      },
-    ],
   },
   {
     id: 'ptr-02',
@@ -1538,21 +1514,9 @@ export const INITIAL_PARTNERS: Partner[] = [
     destination_id: 'dest-004',
     destination_name: 'Ngarai Sianok & Panorama',
     halal_certified: true,
+    wa_click_count: 312,
+    direct_payment_methods: ['QRIS Bank Nagari', 'Transfer Bank', 'Tunai Langsung'],
     created_at: '2026-11-01T11:00:00Z',
-    ledger: [
-      {
-        id: 'esc-003',
-        booking_code: 'ESCR-SIANOK-201',
-        tourist_name: 'Keluarga Budi Santoso',
-        tourist_phone: '081399881122',
-        amount: 225000,
-        fee_currency: 'IDR',
-        status: 'REDEEMED',
-        wa_status: 'CONFIRMED',
-        service_date: '2026-11-14',
-        created_at: '2026-11-13T12:00:00Z',
-      },
-    ],
   },
   {
     id: 'ptr-03',
@@ -1571,21 +1535,9 @@ export const INITIAL_PARTNERS: Partner[] = [
     destination_id: 'dest-005',
     destination_name: 'Kawasan Wisata Bahari Mandeh',
     halal_certified: true,
+    wa_click_count: 185,
+    direct_payment_methods: ['Transfer Bank Nagari', 'QRIS Nagari', 'Tunai di Dermaga'],
     created_at: '2026-11-01T12:00:00Z',
-    ledger: [
-      {
-        id: 'esc-004',
-        booking_code: 'ESCR-MANDEH-301',
-        tourist_name: 'Rombongan Mahasiswa UI (10 Orang)',
-        tourist_phone: '081299001122',
-        amount: 650000,
-        fee_currency: 'IDR',
-        status: 'ESCROW_LOCKED',
-        wa_status: 'CONFIRMED',
-        service_date: '2026-11-18',
-        created_at: '2026-11-16T10:15:00Z',
-      },
-    ],
   },
   {
     id: 'ptr-04',
@@ -1604,21 +1556,9 @@ export const INITIAL_PARTNERS: Partner[] = [
     destination_id: 'dest-007',
     destination_name: 'Air Terjun Nyarai & Hutan Gamaran',
     halal_certified: true,
+    wa_click_count: 276,
+    direct_payment_methods: ['QRIS Bank Nagari', 'Tunai di Posko Pokdarwis'],
     created_at: '2026-11-01T13:00:00Z',
-    ledger: [
-      {
-        id: 'esc-005',
-        booking_code: 'ESCR-NYARAI-401',
-        tourist_name: 'Ahmad Fauzi Trekker',
-        tourist_phone: '081377884411',
-        amount: 100000,
-        fee_currency: 'IDR',
-        status: 'READY_PAYOUT',
-        wa_status: 'CONFIRMED',
-        service_date: '2026-11-15',
-        created_at: '2026-11-14T09:00:00Z',
-      },
-    ],
   },
   {
     id: 'ptr-05',
@@ -1642,21 +1582,9 @@ export const INITIAL_PARTNERS: Partner[] = [
     yaw: 135,
     has_360_pin: true,
     halal_certified: true,
+    wa_click_count: 194,
+    direct_payment_methods: ['QRIS Bank Nagari', 'Tunai di Stand'],
     created_at: '2026-11-01T14:00:00Z',
-    ledger: [
-      {
-        id: 'esc-006',
-        booking_code: 'ESCR-SUNTIANG-501',
-        tourist_name: 'Siti Nurhaliza (Padang)',
-        tourist_phone: '085274129988',
-        amount: 150000,
-        fee_currency: 'IDR',
-        status: 'REDEEMED',
-        wa_status: 'CONFIRMED',
-        service_date: '2026-11-15',
-        created_at: '2026-11-14T15:20:00Z',
-      },
-    ],
   },
 ];
 
@@ -1965,6 +1893,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 78,
     foreign_myr_pct: 22,
     top_destination: 'Pantai Padang & Pantai Air Manis',
+    wa_leads_count: 1480,
     escrow_circulation: 142500000,
   },
   {
@@ -1976,6 +1905,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 68,
     foreign_myr_pct: 32,
     top_destination: 'Jam Gadang & Ngarai Sianok',
+    wa_leads_count: 2450,
     escrow_circulation: 285000000,
   },
   {
@@ -1987,6 +1917,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 82,
     foreign_myr_pct: 18,
     top_destination: 'Lembah Harau & Flyover Kelok 9',
+    wa_leads_count: 1680,
     escrow_circulation: 198000000,
   },
   {
@@ -1998,6 +1929,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 74,
     foreign_myr_pct: 26,
     top_destination: 'Istano Basa Pagaruyung & Danau Singkarak',
+    wa_leads_count: 1390,
     escrow_circulation: 165000000,
   },
   {
@@ -2009,6 +1941,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 76,
     foreign_myr_pct: 24,
     top_destination: 'Kawasan Mandeh & Jembatan Akar Bayang',
+    wa_leads_count: 1420,
     escrow_circulation: 210000000,
   },
   {
@@ -2020,6 +1953,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 85,
     foreign_myr_pct: 15,
     top_destination: 'Danau Maninjau & Puncak Lawang',
+    wa_leads_count: 890,
     escrow_circulation: 95000000,
   },
   {
@@ -2031,6 +1965,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 88,
     foreign_myr_pct: 12,
     top_destination: 'Pusat Dokumentasi & Informasi Minangkabau (PDIKM)',
+    wa_leads_count: 650,
     escrow_circulation: 52000000,
   },
   {
@@ -2042,6 +1977,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 90,
     foreign_myr_pct: 10,
     top_destination: 'Sentra Rendang Payakumbuh & Ngalau Indah',
+    wa_leads_count: 780,
     escrow_circulation: 78000000,
   },
   {
@@ -2053,6 +1989,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 92,
     foreign_myr_pct: 8,
     top_destination: 'Pantai Gandoriah & Pulau Angso Duo',
+    wa_leads_count: 590,
     escrow_circulation: 64000000,
   },
   {
@@ -2064,6 +2001,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 91,
     foreign_myr_pct: 9,
     top_destination: 'Danau Diatas, Danau Dibawah & Kebun Teh Alahan Panjang',
+    wa_leads_count: 670,
     escrow_circulation: 88000000,
   },
   {
@@ -2075,6 +2013,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 80,
     foreign_myr_pct: 20,
     top_destination: 'Warisan Tambang Batubara Ombilin (UNESCO)',
+    wa_leads_count: 380,
     escrow_circulation: 42000000,
   },
   {
@@ -2086,6 +2025,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 35,
     foreign_myr_pct: 65,
     top_destination: 'Spot Surfing Telescopes & Budaya Sikerei',
+    wa_leads_count: 420,
     escrow_circulation: 310000000,
   },
   {
@@ -2097,6 +2037,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 94,
     foreign_myr_pct: 6,
     top_destination: 'Air Terjun Nyarai Lubuk Alung',
+    wa_leads_count: 510,
     escrow_circulation: 48000000,
   },
   {
@@ -2108,6 +2049,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 95,
     foreign_myr_pct: 5,
     top_destination: 'Kawasan Agrowisata Payo Solok',
+    wa_leads_count: 260,
     escrow_circulation: 28000000,
   },
   {
@@ -2119,6 +2061,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 85,
     foreign_myr_pct: 15,
     top_destination: 'Kawasan Seribu Rumah Gadang Sungai Pagu',
+    wa_leads_count: 310,
     escrow_circulation: 54000000,
   },
   {
@@ -2130,6 +2073,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 93,
     foreign_myr_pct: 7,
     top_destination: 'Geopark Ranah Minang Silokek',
+    wa_leads_count: 240,
     escrow_circulation: 34000000,
   },
   {
@@ -2141,6 +2085,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 96,
     foreign_myr_pct: 4,
     top_destination: 'Candi Padang Roco & Sejarah Pamalayu',
+    wa_leads_count: 170,
     escrow_circulation: 21000000,
   },
   {
@@ -2152,6 +2097,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 94,
     foreign_myr_pct: 6,
     top_destination: 'Tugu Khatulistiwa Equator Bonjol',
+    wa_leads_count: 210,
     escrow_circulation: 24000000,
   },
   {
@@ -2163,6 +2109,7 @@ export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
     domestic_pct: 95,
     foreign_myr_pct: 5,
     top_destination: 'Pantai Sasak & Danau Laut Tinggal',
+    wa_leads_count: 220,
     escrow_circulation: 31000000,
   },
 ];
@@ -2232,24 +2179,39 @@ export const INITIAL_COMMUNITY_SUBMISSIONS: CommunityHiddenGemSubmission[] = [
 ];
 
 // ============================================================================
-// DATA AWAL METRIK PASPOR DIGITAL & EKONOMI NAGARI (MINGGU 4)
+// DATA AWAL METRIK PASPOR DIGITAL & LEADS MITRA NAGARI (MINGGU 4)
 // ============================================================================
 export const INITIAL_DIGITAL_PASSPORT_METRICS: DigitalPassportMetrics = {
   total_gps_checkins_verified: 8420,
   total_governor_certificates_issued: 3150,
+  total_wa_leads_generated: 12580,
+  top_nagari_leads: [
+    { nagari: 'Nagari Harau (Lima Puluh Kota)', leads_count: 3240 },
+    { nagari: 'Nagari Mandeh (Pesisir Selatan)', leads_count: 2890 },
+    { nagari: 'Nagari Koto Gadang (Agam)', leads_count: 2150 },
+    { nagari: 'Nagari Pagaruyung (Tanah Datar)', leads_count: 2420 },
+    { nagari: 'Nagari Sungai Pagu (Solok Selatan)', leads_count: 1880 },
+  ],
+  leads_by_category: [
+    { category: 'Homestay Rumah Gadang', total_leads: 3420, count: 48 },
+    { category: 'Kapal & Transportasi', total_leads: 2980, count: 62 },
+    { category: 'Pemandu Pokdarwis', total_leads: 2150, count: 75 },
+    { category: 'Kuliner Halal', total_leads: 2680, count: 94 },
+    { category: 'Sewa Baju Adat', total_leads: 1350, count: 38 },
+  ],
   top_nagari_escrow: [
-    { nagari: 'Nagari Harau (Lima Puluh Kota)', amount: 198000000 },
-    { nagari: 'Nagari Mandeh (Pesisir Selatan)', amount: 210000000 },
-    { nagari: 'Nagari Koto Gadang (Agam)', amount: 95000000 },
-    { nagari: 'Nagari Pagaruyung (Tanah Datar)', amount: 165000000 },
-    { nagari: 'Nagari Sungai Pagu (Solok Selatan)', amount: 54000000 },
+    { nagari: 'Nagari Harau (Lima Puluh Kota)', amount: 3240 },
+    { nagari: 'Nagari Mandeh (Pesisir Selatan)', amount: 2890 },
+    { nagari: 'Nagari Koto Gadang (Agam)', amount: 2150 },
+    { nagari: 'Nagari Pagaruyung (Tanah Datar)', amount: 2420 },
+    { nagari: 'Nagari Sungai Pagu (Solok Selatan)', amount: 1880 },
   ],
   escrow_by_category: [
-    { category: 'Homestay Rumah Gadang', total_amount: 324000000, count: 48 },
-    { category: 'Kapal & Transportasi', total_amount: 286000000, count: 62 },
-    { category: 'Pemandu Pokdarwis', total_amount: 145000000, count: 75 },
-    { category: 'Kuliner Halal', total_amount: 192000000, count: 94 },
-    { category: 'Sewa Baju Adat', total_amount: 88000000, count: 38 },
+    { category: 'Homestay Rumah Gadang', total_amount: 3420, count: 48 },
+    { category: 'Kapal & Transportasi', total_amount: 2980, count: 62 },
+    { category: 'Pemandu Pokdarwis', total_amount: 2150, count: 75 },
+    { category: 'Kuliner Halal', total_amount: 2680, count: 94 },
+    { category: 'Sewa Baju Adat', total_amount: 1350, count: 38 },
   ],
 };
 

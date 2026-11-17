@@ -74,7 +74,7 @@ export const App: React.FC = () => {
     null
   );
 
-  // Cross-Navigation between Studio 360 & Mitra UMKM Escrow
+  // Cross-Navigation between Studio 360 & Direktori Mitra UMKM
   const [studioNavTarget, setStudioNavTarget] = useState<{
     destId?: string;
     sceneId?: string;
@@ -210,7 +210,7 @@ export const App: React.FC = () => {
     }
     setActiveMenu('wa_simulator');
     showToast(
-      'Membuka modul Monitoring Mitra UMKM & Buku Besar Escrow.',
+      'Membuka modul Simulator Interaksi WA Mitra (Direct P2P).',
       'info'
     );
   };

@@ -160,7 +160,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
             </span>
           </div>
           <p className="mt-1 text-xs text-[#4A5248]">
-            Kunci dana Escrow &amp; transportasi nagari terverifikasi
+            Verifikasi Pokdarwis &amp; transportasi nagari terhubung P2P
           </p>
         </div>
 

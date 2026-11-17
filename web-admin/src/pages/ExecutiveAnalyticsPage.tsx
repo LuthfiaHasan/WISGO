@@ -110,9 +110,12 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
     [heatmapData]
   );
 
-  const totalEscrowCirculation = useMemo(
-    () => heatmapData.reduce((acc, r) => acc + r.escrow_circulation, 0),
-    [heatmapData]
+  const totalWaLeads = useMemo(
+    () =>
+      heatmapData.reduce((acc, r) => acc + (r.wa_leads_count || 0), 0) ||
+      passportMetrics?.total_wa_leads_generated ||
+      12580,
+    [heatmapData, passportMetrics]
   );
 
   // Toggle Masking Action
@@ -165,7 +168,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       'Wisatawan Domestik (%)',
       'Wisatawan Asing MYR (%)',
       'Destinasi Terpopuler',
-      'Perputaran Escrow (IDR)',
+      'Interaksi Leads WA (Total Klik)',
     ];
 
     const rows = heatmapData.map((r) => [
@@ -176,7 +179,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       `${r.domestic_pct}%`,
       `${r.foreign_myr_pct}%`,
       `"${r.top_destination}"`,
-      r.escrow_circulation,
+      r.wa_leads_count || 120,
     ]);
 
     const csvContent =
@@ -209,7 +212,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           Jl. Khatib Sulaiman No. 22, Padang, Sumatera Barat · Portal Ekosistem Wisata Pintar (WISGO)
         </p>
         <div className="mt-4 pt-2 border-t border-black text-xs font-bold flex justify-between">
-          <span>LAPORAN EKSEKUTIF KEPADATAN 19 KAB/KOTA &amp; EKONOMI ESCROW NAGARI</span>
+          <span>LAPORAN EKSEKUTIF KEPADATAN 19 KAB/KOTA &amp; INTERAKSI MITRA UMKM (LEADS WA)</span>
           <span>Dicetak: {new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}</span>
         </div>
       </div>
@@ -232,7 +235,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                 </span>
               </div>
               <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Visualisasi data pergerakan 19 Kabupaten/Kota, monitoring perputaran dana Escrow UMKM Nagari, moderasi tempat sensitif komunitas, dan pelaporan berkala.
+                Visualisasi data pergerakan 19 Kabupaten/Kota, monitoring interaksi minat wisatawan ke UMKM Nagari (Leads WhatsApp P2P), moderasi tempat sensitif komunitas, dan pelaporan berkala.
               </p>
             </div>
           </div>
@@ -318,14 +321,14 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#4A5248]">Perputaran Escrow Nagari</span>
-            <DollarSign className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
+            <span className="text-xs font-bold text-[#4A5248]">Total Interaksi Mitra (Leads WA)</span>
+            <TrendingUp className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
           </div>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
-            Rp {(totalEscrowCirculation / 1000000).toFixed(0)} Jt
+            {totalWaLeads.toLocaleString('id-ID')}
           </div>
           <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
-            100% Mengalir ke Kas Nagari
+            100% Langsung P2P ke WhatsApp Mitra
           </p>
         </div>
 
@@ -491,7 +494,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                     <span>{reg.top_destination}</span>
                   </div>
                   <div className="text-[10px] font-bold text-[#1E9E5A] mt-0.5">
-                    Escrow: Rp {(reg.escrow_circulation / 1000000).toFixed(1)} Jt
+                    Leads WA: {(reg.wa_leads_count || 120).toLocaleString('id-ID')} Klik
                   </div>
                 </div>
               </div>
@@ -501,25 +504,25 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       </section>
 
       {/* ==================================================================== */}
-      {/* BAGIAN 2: GRAFIK PERPUTARAN EKONOMI UMKM NAGARI & PASPOR DIGITAL     */}
+      {/* BAGIAN 2: GRAFIK INTERAKSI MITRA (LEADS) & PASPOR DIGITAL            */}
       {/* ==================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Kolom Kiri: Breakdown Escrow 5 Kategori Mitra (Col 7) */}
+        {/* Kolom Kiri: Breakdown Leads WA 5 Kategori Mitra (Col 7) */}
         <section className="lg:col-span-7 bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-4">
           <div>
             <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-[#234B24]" aria-hidden="true" />
-              <span>2. Perputaran Ekonomi Escrow pada 5 Kategori UMKM Nagari</span>
+              <span>2. Grafik Interaksi Mitra (Leads) pada 5 Kategori UMKM Nagari</span>
             </h2>
             <p className="text-xs text-[#4A5248] mt-0.5">
-              Distribusi realisasi dana yang telah ditransaksikan wisatawan melalui sistem rekening bersama.
+              Statistik minat wisatawan menghubungi pengelola UMKM Nagari via chat WhatsApp dan Pin Studio 360°.
             </p>
           </div>
 
           <div className="space-y-3.5 pt-2">
-            {passportMetrics?.escrow_by_category.map((cat) => {
-              const maxAmount = 350000000;
-              const pct = Math.min(100, Math.round((cat.total_amount / maxAmount) * 100));
+            {(passportMetrics?.leads_by_category || []).map((cat) => {
+              const maxLeads = 4000;
+              const pct = Math.min(100, Math.round((cat.total_leads / maxLeads) * 100));
 
               return (
                 <div key={cat.category} className="space-y-1.5">
@@ -531,7 +534,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                       </span>
                     </span>
                     <span className="font-extrabold text-[#234B24]">
-                      Rp {cat.total_amount.toLocaleString('id-ID')}
+                      {cat.total_leads.toLocaleString('id-ID')} Klik WA
                     </span>
                   </div>
                   <div className="w-full bg-[#F6F3EC] h-3 rounded-full overflow-hidden border border-[#CFD8BE]">
@@ -546,19 +549,19 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </div>
         </section>
 
-        {/* Kolom Kanan: Top 5 Nagari Penerima Escrow & Paspor Digital (Col 5) */}
+        {/* Kolom Kanan: Top 5 Nagari Leads WA & Paspor Digital (Col 5) */}
         <section className="lg:col-span-5 bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-4 flex flex-col justify-between">
           <div>
             <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
               <Award className="w-5 h-5 text-[#F26B4B]" aria-hidden="true" />
-              <span>Top 5 Nagari Mandiri Ekonomi Digital</span>
+              <span>Top 5 Nagari dengan Interaksi / Leads Mitra Tertinggi</span>
             </h2>
             <p className="text-xs text-[#4A5248] mt-0.5">
-              Nagari dengan integrasi pemesanan WhatsApp bot dan serapan escrow tertinggi.
+              Nagari dengan volume klik tombol WhatsApp mitra dan eksplorasi Pin 360° paling aktif.
             </p>
 
             <div className="mt-4 space-y-2.5">
-              {passportMetrics?.top_nagari_escrow.map((nagari, index) => (
+              {(passportMetrics?.top_nagari_leads || []).map((nagari, index) => (
                 <div
                   key={nagari.nagari}
                   className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between text-xs"
@@ -570,7 +573,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                     <span className="font-bold text-[#1B1F1A] truncate">{nagari.nagari}</span>
                   </div>
                   <span className="font-extrabold text-[#1E9E5A] shrink-0">
-                    Rp {(nagari.amount / 1000000).toFixed(0)} Jt
+                    {nagari.leads_count.toLocaleString('id-ID')} Klik
                   </span>
                 </div>
               ))}

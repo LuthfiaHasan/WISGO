@@ -749,83 +749,78 @@ export async function deletePartnerWithBridge(
   }
 }
 
+export async function trackPartnerWaLead(partnerId: string): Promise<Partner | null> {
+  const currentPartners = await fetchPartnersCatalog();
+  const updatedPartners = currentPartners.map((p) => {
+    if (p.id !== partnerId) return p;
+    return {
+      ...p,
+      wa_click_count: (p.wa_click_count || 0) + 1,
+    };
+  });
+  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedPartners));
+  const target = updatedPartners.find((p) => p.id === partnerId) || null;
+  return target;
+}
+
 // ============================================================================
-// SIMULATOR BOT WHATSAPP MITRA & PENCAIRAN ESCROW (MINGGU 3)
+// SIMULATOR INTERAKSI WA MITRA & CHAT P2P LANGSUNG (MINGGU 3 & REVISI P2P)
 // ============================================================================
 
 export async function processWASimulationAction(
-  action: '1' | '0' | 'scan',
-  bookingCode: string
+  action: '1' | '0' | 'chat',
+  partnerIdOrBookingCode: string,
+  inquiryMessage?: string
 ): Promise<{
-  action: '1' | '0' | 'scan';
-  status: 'CONFIRMED' | 'REJECTED' | 'REDEEMED';
+  action: '1' | '0' | 'chat';
+  status: 'CONFIRMED' | 'REJECTED' | 'INQUIRY_SENT';
   message: string;
-  qr_code_ticket?: string;
+  wa_chat_url?: string;
   updatedPartner?: Partner;
 }> {
   const currentPartners = await fetchPartnersCatalog();
-  let targetPartner: Partner | null = null;
-  let targetTx: EscrowTransaction | null = null;
+  let targetPartner = currentPartners.find(
+    (p) => p.id === partnerIdOrBookingCode || p.name.includes(partnerIdOrBookingCode)
+  );
 
-  for (const p of currentPartners) {
-    const tx = p.ledger?.find((t) => t.booking_code === bookingCode);
-    if (tx) {
-      targetPartner = p;
-      targetTx = tx;
-      break;
-    }
-  }
-
-  // Jika tidak ditemukan di ledger, buat simulasi transaksi dinamis
   if (!targetPartner) {
     targetPartner = currentPartners[0] || INITIAL_PARTNERS[0];
   }
 
-  let newStatus: 'ESCROW_LOCKED' | 'READY_PAYOUT' | 'REDEEMED' = 'ESCROW_LOCKED';
-  let waStatus: 'CONFIRMED' | 'PENDING' | 'REJECTED' = 'CONFIRMED';
-  let returnStatus: 'CONFIRMED' | 'REJECTED' | 'REDEEMED' = 'CONFIRMED';
+  let returnStatus: 'CONFIRMED' | 'REJECTED' | 'INQUIRY_SENT' = 'CONFIRMED';
   let resultMsg = '';
-  const qrTicket = `QR-WISGO-ETIKET-${bookingCode}`;
+  const waNumber = targetPartner.whatsapp.replace(/\D/g, '');
+  const defaultText = `Halo ${targetPartner.name}, saya melihat profil Anda di WISGO 360°. Apakah layanan ini tersedia untuk jadwal kunjungan saya?`;
+  const encodedText = encodeURIComponent(inquiryMessage || defaultText);
+  const waChatUrl = `https://wa.me/${waNumber}?text=${encodedText}`;
 
   if (action === '1') {
-    newStatus = 'ESCROW_LOCKED';
-    waStatus = 'CONFIRMED';
     returnStatus = 'CONFIRMED';
-    resultMsg = `Pesanan ${bookingCode} telah DITERIMA oleh ${targetPartner.name}. E-Ticket QR diterbitkan untuk wisatawan dan dana Rp ${(targetTx?.amount || 50000).toLocaleString('id-ID')} terkunci di Rekening Escrow WISGO.`;
+    resultMsg = `Pesan konfirmasi ketersediaan dan rincian pembayaran langsung (P2P QRIS/Transfer Bank Nagari) berhasil dikirimkan oleh ${targetPartner.name} kepada wisatawan via WhatsApp.`;
   } else if (action === '0') {
-    newStatus = 'REDEEMED';
-    waStatus = 'REJECTED';
     returnStatus = 'REJECTED';
-    resultMsg = `Pesanan ${bookingCode} DITOLAK oleh ${targetPartner.name}. Dana simulasi telah dikembalikan 100% ke saldo wisatawan.`;
-  } else if (action === 'scan') {
-    newStatus = 'REDEEMED';
-    waStatus = 'CONFIRMED';
-    returnStatus = 'REDEEMED';
-    resultMsg = `QR E-Ticket ${bookingCode} berhasil dipindai di lokasi! Wisatawan telah tiba dan dana Rp ${(targetTx?.amount || 50000).toLocaleString('id-ID')} sukses DICAIRKAN ke rekening mitra nagari ${targetPartner.name}.`;
+    resultMsg = `Mitra ${targetPartner.name} mengabarkan slot penuh/jadwal bentrok dengan ramah via WhatsApp. Alternatif mitra UMKM nagari sejenis telah disarankan.`;
+  } else {
+    returnStatus = 'INQUIRY_SENT';
+    resultMsg = `Permintaan informasi wisatawan berhasil diteruskan ke chat WhatsApp resmi mitra (+${targetPartner.whatsapp}). Transaksi 100% mandiri (P2P).`;
   }
 
-  // Update transaction status in partner ledger
+  // Increment wa_click_count for the partner
   const updatedPartners = currentPartners.map((p) => {
     if (p.id !== targetPartner!.id) return p;
-    const ledger = p.ledger?.map((tx) => {
-      if (tx.booking_code === bookingCode) {
-        return {
-          ...tx,
-          status: newStatus,
-          wa_status: waStatus,
-        };
-      }
-      return tx;
-    }) || [];
-    return { ...p, ledger };
+    return {
+      ...p,
+      wa_click_count: (p.wa_click_count || 0) + 1,
+    };
   });
 
   safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedPartners));
 
   try {
     await apiClient.post('/bookings/wa-webhook', {
-      action: action === 'scan' ? '1' : action,
-      booking_code: bookingCode,
+      action,
+      partner_id: targetPartner.id,
+      inquiry: inquiryMessage,
     });
   } catch {
     // Offline mode
@@ -837,7 +832,7 @@ export async function processWASimulationAction(
     action,
     status: returnStatus,
     message: resultMsg,
-    qr_code_ticket: qrTicket,
+    wa_chat_url: waChatUrl,
     updatedPartner: updatedTarget,
   };
 }

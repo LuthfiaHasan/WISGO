@@ -104,15 +104,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       key: 'partners',
-      label: 'Monitoring Mitra & Escrow',
-      sublabel: '5 Kategori UMKM & Integrasi 360°',
+      label: 'Direktori & Verifikasi Mitra UMKM',
+      sublabel: '5 Kategori UMKM & Kontak WA P2P',
       badge: `${totalPartners} Mitra`,
       icon: <Store className="w-5 h-5 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'wa_simulator',
-      label: 'Simulator Bot WA & Escrow',
-      sublabel: 'Chat UMKM & Pencairan E-Ticket',
+      label: 'Simulator Interaksi WA Mitra',
+      sublabel: 'Chat Langsung P2P & Leads 360°',
       icon: <MessageSquare className="w-5 h-5 shrink-0" aria-hidden="true" />,
     },
     {
