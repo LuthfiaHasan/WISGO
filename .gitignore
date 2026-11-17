@@ -57,6 +57,7 @@ web-admin/.cache/
 
 # AI Agent & Internal Configurations
 .agents/
+.stitch/
 memory/
 GEMINI.md
 

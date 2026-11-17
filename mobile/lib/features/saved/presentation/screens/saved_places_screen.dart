@@ -123,7 +123,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   // Supabase Live Destinations State (Sinkronisasi Cloud & Fallback Luring)
   List<SavedDestinationModel> _destinations = List<SavedDestinationModel>.from(kAllSumbarDestinations);
-  bool _isLoadingApi = false;
 
   // View 0: Explore Region, Nature Type, Search & Sort
   String _currentExploreRegion = 'ALL';
@@ -218,7 +217,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   Future<void> _fetchDestinationsAndSaved() async {
     if (!mounted) return;
     setState(() {
-      _isLoadingApi = true;
       _savedViewState = 'shimmer';
     });
 
@@ -267,10 +265,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           _isOfflineMode = true;
           _savedViewState = 'loaded';
         });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingApi = false);
       }
     }
   }
