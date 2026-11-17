@@ -315,3 +315,56 @@ Menindaklanjuti instruksi untuk merombak total halaman [ExecutiveAnalyticsPage.t
    - Dilengkapi Lembar Pengesahan, stempel cap dinas digital, dan tanda tangan resmi Kepala Dinas Pariwisata Prov. Sumbar (Drs. H. Luhur Budianda, S.Y., M.Si).
 2. **Unduh Berkas Mentah CSV**:
    - Tombol ekspor CSV berparameter rentang waktu (*Bulan Ini*, *Kuartal IV*, *Tahun Berjalan*) memuat data komprehensif 19 Kab/Kota.
+
+---
+
+## 12. PENAMBAHAN FITUR TINGKAT LANJUT & FINALISASI PRODUCTION-READY: STUDIO 360 PETA FASILITAS, GAMIFIKASI CHECKLIST TANTANGAN, KURASI UGC, MODERASI ULASAN, & ANALITIK PERSONAL VS ROMBONGAN
+
+### A. Fitur 1: Studio 360 sebagai Peta Fasilitas Fisik & Integrasi Chat WhatsApp Mitra
+1. **Rekonseptualisasi Pin Hotspot ke Penanda Fasilitas Fisik**:
+   - **1. Fasilitas Umum (Teal `#0D9488`):** Toilet Bersih & Sanitasi, Area Parkir Resmi (Motor/Mobil), Musala/Tempat Salat, Posko Medis/P3K, Area Kuliner/Rest Area.
+   - **2. Mitra UMKM / Jasa (Koral `#C2410C`):** Dilengkapi field **Wajib Nomor WhatsApp Aktif**, nama mitra nagari, dan estimasi tarif/jasa. Wisatawan yang mengklik pin langsung diarahkan ke tautan chat `https://wa.me/62...`.
+   - **3. Loket & Info Resmi (Kuning Emas `#CA8A04`):** Penanda posko pengelola nagari beserta jadwal jam operasional (e.g. `08:00 - 17:00 WIB`).
+   - **4. Navigasi Arah (Biru Langit `#1D4ED8`):** Penanda lompat antar scene panorama imersif (aerial ke ground).
+2. **Filter & Modal Responsif**: Bilah filter kategori penanda fasilitas pada bilah kanan kanvas serta validasi nomor WhatsApp saat menyimpan pin mitra UMKM.
+
+### B. Fitur 2: Gamifikasi "Challenge" Berbasis Checklist Murni (`ChallengePage.tsx`)
+1. **Konsep Murni Checklist (Non-Poin)**:
+   - Sesuai Use Case Diagram: *Buat tantangan*, *Tentukan reward*, *Sertifikat dan reward*, serta *Scan QR check-in GPS*.
+   - Sistem tidak menggunakan akumulasi skor poin buatan, melainkan progres penaklukan tempat secara proporsional (misal: `10/10 Lokasi Destinasi`).
+2. **Tab 1: Master Challenge**:
+   - Pengelolaan program tantangan: Judul, kategori tema, target jumlah tempat (angka), reward bebas (uang tunai, voucher menginap, piagam/sertifikat Kadispar), durasi hari, dan pilihan destinasi sasaran.
+   - Tombol sakelar aktif/nonaktif dan penghapusan tantangan dengan aman.
+3. **Tab 2: Verifikasi & Klaim Hadiah**:
+   - Tabel progres wisatawan: nama wisatawan, nomor WhatsApp, progres ceklis (misal: `10/10 Tempat` 100%), nama reward, dan status (`DALAM_PROGRES`, `SIAP_KLAIM`, `HADIAH_TERKIRIM`).
+   - Tombol **Kirim Hadiah** saat progres mencapai 100%: memicu modal pencatatan bukti tanda terima/resi, menerbitkan notifikasi ke wisatawan, dan mencatat riwayat serah terima.
+   - Data persisten di `localStorage` (`wisgo_checklist_challenges` dan `wisgo_checklist_claims`).
+
+### C. Fitur 3 & 4: Kurasi Usulan Wisatawan (UGC) & Moderasi Ulasan (`DestinationsPage.tsx`)
+1. **Sub-Tab 5: Usulan Destinasi (UGC)**:
+   - Sesuai Use Case *Verifikasi Input Wisata*: tabel usulan objek wisata baru yang diajukan oleh wisatawan.
+   - Memuat pratinjau foto objek, nama pengusul, nomor WhatsApp, wilayah Kab/Kota, kategori medan, estimasi tiket, dan status (`MENUNGGU`, `DISETUJUI`, `DITOLAK`).
+   - **Tombol Hijau "Setujui":** Otomatis memasukkan destinasi yang diusulkan ke dalam direktori 20 destinasi utama dengan indikator medan default dan menerbitkan notifikasi toast.
+   - **Tombol Merah "Tolak":** Menandai usulan ditolak dengan catatan evaluasi kelayakan.
+   - Form simulasi input usulan wisatawan dari admin dengan dukungan unggah foto lokal via ImageDropzone.
+2. **Sub-Tab 6: Ulasan & Komentar Wisatawan**:
+   - Sesuai Use Case *Ulasan & Rating*: tabel moderasi ulasan wisatawan dengan penilaian bintang 1 hingga 5.
+   - **Sakelar Takedown/Pulihkan:** Admin dapat men-takedown ulasan yang memuat ujaran kebencian, spam tautan terlarang, atau iklan liar, mencatat alasan moderasi, dan menyembunyikannya dari aplikasi publik.
+   - Kartu metrik ringkasan: Total Ulasan, Ulasan Tayang Publik, Ulasan Di-Takedown, dan Rata-rata Skor Kepuasan (Rating Index).
+
+### D. Fitur 6: Analitik Personal (Mandiri) vs Rombongan (Grup / Open Trip)
+1. **Pemisahan Metrik Makro Utama**:
+   - Kartu 1 kini memuat rincian tegas: Total `148.920 Wisatawan` dengan sub-metrik `98.200 Personal / Mandiri (65.9%)` dan `50.720 Rombongan / Grup (34.1%)`.
+2. **Grafik Prediksi 7 Hari Multi-Kurva (Hijau vs Koral)**:
+   - Kurva Hijau `#234B24` melambangkan pergerakan estimasi wisatawan personal mandiri.
+   - Kurva Koral `#F26B4B` (garis putus-putus) melambangkan pergerakan rombongan grup berbasis Auto-Itinerary.
+   - Legenda warna interaktif dan panel mitigasi lonjakan cerdas yang menampilkan rincian wisatawan personal vs rombongan.
+3. **Peta/Grid 19 Kabupaten/Kota**: Setiap kartu wilayah menyajikan rincian estimasi kunjungan personal (66%) dan rombongan (34%).
+4. **Dokumen Cetak PDF Resmi & Ekspor CSV**:
+   - Tabel 2 pada Dokumen Ber-Kop Resmi Dispar Sumbar kini memuat kolom *Personal (Mandiri)*, *Rombongan (Grup)*, dan *Total Wisatawan*.
+   - Ekspor berkas mentah CSV kini memuat kolom `Kunjungan Personal Mandiri (Est 66%)` dan `Kunjungan Rombongan Grup (Est 34%)`.
+
+### E. Kerapian UI/UX Pixel-Perfect (Poin 5)
+1. **Sidebar Sticky 1 Layar**: Menggunakan `h-screen sticky top-0 overflow-y-auto` dengan scrollbar transparan. Menu tetap stay saat halaman utama digulir panjang.
+2. **Struktur Modal Form Aman dari Tergencet**: Header modal dan barisan tab berstatus `shrink-0`, active tab berlatar hijau tua `#234B24` dengan teks putih tegas (`!text-white`), serta body form berstatus `overflow-y-auto` sehingga tinggi tab tidak pernah 0px.
+3. **Verifikasi Build Produksi**: Kompilasi TypeScript (`npx tsc --noEmit`) dan bundling Vite (`npm run build`) berhasil 100% dengan status sukses (*0 error, 1569 modules transformed, dist generated in 7.75s*).

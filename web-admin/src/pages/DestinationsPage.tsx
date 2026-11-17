@@ -25,6 +25,8 @@ import {
   Calendar,
   TrendingUp,
   Compass,
+  Inbox,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Destination,
@@ -40,6 +42,8 @@ import { ImageDropzone } from '../components/ImageDropzone';
 import { MinangDictionarySubTab } from '../components/MinangDictionarySubTab';
 import { CultureCalendarSubTab } from '../components/CultureCalendarSubTab';
 import { GaodeRankingSubTab } from '../components/GaodeRankingSubTab';
+import { UgcSubmissionsSubTab } from '../components/UgcSubmissionsSubTab';
+import { TouristReviewsSubTab } from '../components/TouristReviewsSubTab';
 
 interface DestinationsPageProps {
   destinations: Destination[];
@@ -72,7 +76,9 @@ export type DestinationsSubTab =
   | 'directory'
   | 'minang_dictionary'
   | 'culture_calendar'
-  | 'gaode_ranking';
+  | 'gaode_ranking'
+  | 'ugc_submissions'
+  | 'reviews_moderation';
 
 export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   destinations,
@@ -592,6 +598,32 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           >
             <TrendingUp className="w-4 h-4" aria-hidden="true" />
             <span>Rekalkulasi Gaode Ranking</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('ugc_submissions')}
+            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'ugc_submissions'
+                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+            }`}
+          >
+            <Inbox className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+            <span>Usulan Destinasi (UGC)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('reviews_moderation')}
+            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'reviews_moderation'
+                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" aria-hidden="true" />
+            <span>Ulasan &amp; Komentar</span>
           </button>
         </div>
       </header>
@@ -1191,6 +1223,21 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
 
       {activeSubTab === 'gaode_ranking' && (
         <GaodeRankingSubTab showToast={showToast} />
+      )}
+
+      {activeSubTab === 'ugc_submissions' && (
+        <UgcSubmissionsSubTab
+          destinations={destinations}
+          onSaveDestination={onSaveDestination}
+          showToast={showToast}
+        />
+      )}
+
+      {activeSubTab === 'reviews_moderation' && (
+        <TouristReviewsSubTab
+          destinations={destinations}
+          showToast={showToast}
+        />
       )}
 
       {/* =====================================================================

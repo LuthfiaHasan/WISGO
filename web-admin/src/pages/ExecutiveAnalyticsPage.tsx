@@ -67,6 +67,8 @@ interface PredictionDay {
   date: string;
   dayName: string;
   groupsCount: number;
+  personalTouristsEst: number;
+  groupTouristsEst: number;
   touristsEst: number;
   status: 'Normal' | 'Peningkatan' | 'Padat' | 'Puncak (Peak)';
   topDestinations: string[];
@@ -77,6 +79,8 @@ const PREDICTION_7_DAYS: PredictionDay[] = [
     date: '18 Nov 2026',
     dayName: 'Senin',
     groupsCount: 42,
+    personalTouristsEst: 780,
+    groupTouristsEst: 470,
     touristsEst: 1250,
     status: 'Normal',
     topDestinations: ['Jam Gadang & Pasar Atas', 'Pantai Padang'],
@@ -85,6 +89,8 @@ const PREDICTION_7_DAYS: PredictionDay[] = [
     date: '19 Nov 2026',
     dayName: 'Selasa',
     groupsCount: 38,
+    personalTouristsEst: 720,
+    groupTouristsEst: 400,
     touristsEst: 1120,
     status: 'Normal',
     topDestinations: ['Istano Basa Pagaruyung', 'Desa Pariangan'],
@@ -93,6 +99,8 @@ const PREDICTION_7_DAYS: PredictionDay[] = [
     date: '20 Nov 2026',
     dayName: 'Rabu',
     groupsCount: 45,
+    personalTouristsEst: 840,
+    groupTouristsEst: 500,
     touristsEst: 1340,
     status: 'Normal',
     topDestinations: ['Danau Maninjau', 'Ngarai Sianok'],
@@ -101,6 +109,8 @@ const PREDICTION_7_DAYS: PredictionDay[] = [
     date: '21 Nov 2026',
     dayName: 'Kamis',
     groupsCount: 68,
+    personalTouristsEst: 1250,
+    groupTouristsEst: 760,
     touristsEst: 2010,
     status: 'Peningkatan',
     topDestinations: ['Lembah Harau', 'Kelok 9', 'Bukittinggi'],
@@ -109,6 +119,8 @@ const PREDICTION_7_DAYS: PredictionDay[] = [
     date: '22 Nov 2026',
     dayName: 'Jumat',
     groupsCount: 95,
+    personalTouristsEst: 1700,
+    groupTouristsEst: 1150,
     touristsEst: 2850,
     status: 'Padat',
     topDestinations: ['Kawasan Wisata Mandeh', 'Pantai Air Manis', 'Lembah Harau'],
@@ -117,6 +129,8 @@ const PREDICTION_7_DAYS: PredictionDay[] = [
     date: '23 Nov 2026',
     dayName: 'Sabtu',
     groupsCount: 142,
+    personalTouristsEst: 2600,
+    groupTouristsEst: 1800,
     touristsEst: 4400,
     status: 'Puncak (Peak)',
     topDestinations: ['Lembah Harau', 'Jam Gadang & Bukittinggi', 'Danau Singkarak'],
@@ -125,6 +139,8 @@ const PREDICTION_7_DAYS: PredictionDay[] = [
     date: '24 Nov 2026',
     dayName: 'Minggu',
     groupsCount: 130,
+    personalTouristsEst: 2380,
+    groupTouristsEst: 1600,
     touristsEst: 3980,
     status: 'Puncak (Peak)',
     topDestinations: ['Lembah Harau', 'Puncak Lawang', 'Desa Pariangan'],
@@ -469,7 +485,9 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       'Kode Wilayah',
       'Kabupaten/Kota',
       'Status Kepadatan',
-      'Kunjungan Mingguan (Wisatawan)',
+      'Total Kunjungan Mingguan',
+      'Kunjungan Personal Mandiri (Est 66%)',
+      'Kunjungan Rombongan Grup (Est 34%)',
       'Wisatawan Domestik (%)',
       'Wisatawan Asing MYR (%)',
       'Destinasi Terpopuler',
@@ -489,6 +507,8 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       `"${r.name}"`,
       r.crowd_status,
       r.visitor_count_week,
+      Math.round(r.visitor_count_week * 0.66),
+      Math.round(r.visitor_count_week * 0.34),
       `${r.domestic_pct}%`,
       `${r.foreign_myr_pct}%`,
       `"${r.top_destination}"`,
@@ -562,18 +582,22 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           <div>
             <span className="text-[10px] text-gray-600 block">Total Kunjungan Terlacak</span>
             <strong className="text-base text-black">148.920 Wisatawan</strong>
+            <span className="text-[9px] text-gray-600 block">Personal: 98.200 | Rombongan: 50.720</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Rombongan Terdaftar</span>
             <strong className="text-base text-black">342 Rombongan</strong>
+            <span className="text-[9px] text-gray-500 block">Auto-Itinerary &amp; Open Trip</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Interaksi Leads WA Mitra</span>
             <strong className="text-base text-black">12.580 Klik P2P</strong>
+            <span className="text-[9px] text-gray-500 block">Pemberdayaan UMKM</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Rasio Selesai Pungli &amp; SAR</span>
             <strong className="text-base text-black">92.6% (18 Menit SLA)</strong>
+            <span className="text-[9px] text-gray-500 block">Pusat Komando Saber &amp; Siaga</span>
           </div>
         </div>
 
@@ -610,13 +634,14 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
         {/* Tabel Ringkasan Prediksi 7 Hari Print */}
         <div className="mb-6">
-          <h3 className="text-xs font-bold uppercase mb-2">2. Prediksi Kunjungan Rombongan (7 Hari ke Depan)</h3>
+          <h3 className="text-xs font-bold uppercase mb-2">2. Prediksi Kunjungan Personal vs Rombongan (7 Hari ke Depan)</h3>
           <table className="w-full text-xs border border-gray-300 border-collapse">
             <thead>
               <tr className="bg-gray-100 text-left">
                 <th className="border p-1.5">Hari / Tanggal</th>
-                <th className="border p-1.5 text-center">Estimasi Rombongan</th>
-                <th className="border p-1.5 text-center">Estimasi Wisatawan</th>
+                <th className="border p-1.5 text-center">Personal (Mandiri)</th>
+                <th className="border p-1.5 text-center">Rombongan (Grup)</th>
+                <th className="border p-1.5 text-center">Total Wisatawan</th>
                 <th className="border p-1.5 text-center">Status Beban</th>
                 <th className="border p-1.5">Fokus Destinasi Puncak</th>
               </tr>
@@ -625,8 +650,9 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               {PREDICTION_7_DAYS.map((p) => (
                 <tr key={p.date}>
                   <td className="border p-1.5 font-semibold">{p.dayName}, {p.date}</td>
-                  <td className="border p-1.5 text-center font-bold">{p.groupsCount} Grup</td>
-                  <td className="border p-1.5 text-center">{p.touristsEst.toLocaleString('id-ID')} Org</td>
+                  <td className="border p-1.5 text-center font-semibold text-emerald-800">{p.personalTouristsEst.toLocaleString('id-ID')} Org</td>
+                  <td className="border p-1.5 text-center font-bold text-orange-700">{p.groupTouristsEst.toLocaleString('id-ID')} Org ({p.groupsCount} Grup)</td>
+                  <td className="border p-1.5 text-center font-black">{p.touristsEst.toLocaleString('id-ID')} Org</td>
                   <td className="border p-1.5 text-center font-semibold">{p.status}</td>
                   <td className="border p-1.5">{p.topDestinations.join(', ')}</td>
                 </tr>
@@ -721,7 +747,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         aria-label="4 Kartu Metrik Makro Utama Kunjungan Dispar Sumbar"
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 no-print"
       >
-        {/* Kartu 1: Total Wisatawan Terlacak */}
+        {/* Kartu 1: Total Wisatawan Terlacak (Breakdown Personal vs Rombongan) */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Total Wisatawan Terlacak</span>
@@ -736,9 +762,19 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                 +14.2% MoM
               </span>
             </div>
-            <p className="text-[11px] text-[#4A5248] mt-1 font-medium">
-              Bulan ini (Check-in GPS &amp; Aplikasi) · 88% Domestik, 12% Wisman
-            </p>
+            {/* Visualisasi Terpisah Personal vs Rombongan */}
+            <div className="mt-3 pt-2.5 border-t border-[#E4E9DA] grid grid-cols-2 gap-2">
+              <div className="p-2 rounded-xl bg-[#234B24]/5 border border-[#234B24]/10">
+                <span className="text-[10px] font-extrabold text-[#234B24] block uppercase">Personal / Mandiri</span>
+                <span className="text-sm font-black text-[#234B24]">98.200</span>
+                <span className="text-[10px] text-[#4A5248] block">65.9% total</span>
+              </div>
+              <div className="p-2 rounded-xl bg-[#F26B4B]/10 border border-[#F26B4B]/20">
+                <span className="text-[10px] font-extrabold text-[#C2410C] block uppercase">Rombongan / Grup</span>
+                <span className="text-sm font-black text-[#F26B4B]">50.720</span>
+                <span className="text-[10px] text-[#4A5248] block">34.1% total</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -922,39 +958,49 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-[#4A5248]">Fokus Terpilih:</span>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#234B24]/10 text-[#234B24] text-xs font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#234B24]" />
+                  <span>Personal (Mandiri)</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F26B4B]/15 text-[#C2410C] text-xs font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#F26B4B]" />
+                  <span>Rombongan (Grup / Open Trip)</span>
+                </div>
                 <span className="px-3 py-1 rounded-xl bg-[#234B24] text-white text-xs font-bold shadow-xs">
-                  {selectedPredictionDay.dayName}, {selectedPredictionDay.date} ({selectedPredictionDay.groupsCount} Grup)
+                  {selectedPredictionDay.dayName}, {selectedPredictionDay.date}
                 </span>
               </div>
             </div>
 
-            {/* Line Chart SVG Interaktif */}
+            {/* Line Chart SVG Interaktif (Personal Hijau vs Rombongan Koral) */}
             <div className="w-full overflow-x-auto">
               <div className="min-w-[680px]">
                 <svg
                   viewBox="0 0 760 220"
                   className="w-full h-56 select-none"
-                  aria-label="Line chart prediksi kunjungan 7 hari"
+                  aria-label="Line chart prediksi kunjungan personal vs rombongan 7 hari"
                 >
                   <defs>
                     <linearGradient id="surgeAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#F26B4B" stopOpacity="0.45" />
-                      <stop offset="60%" stopColor="#234B24" stopOpacity="0.15" />
+                      <stop offset="0%" stopColor="#234B24" stopOpacity="0.25" />
                       <stop offset="100%" stopColor="#234B24" stopOpacity="0.0" />
+                    </linearGradient>
+                    <linearGradient id="coralAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#F26B4B" stopOpacity="0.30" />
+                      <stop offset="100%" stopColor="#F26B4B" stopOpacity="0.0" />
                     </linearGradient>
                   </defs>
 
                   {/* Garis Grid Horizontal & Label Ambang Batas */}
                   <line x1="50" y1="30" x2="730" y2="30" stroke="#CFD8BE" strokeDasharray="3 3" />
-                  <text x="40" y="34" textAnchor="end" className="text-[10px] fill-[#767676] font-mono">150 Grup</text>
+                  <text x="40" y="34" textAnchor="end" className="text-[10px] fill-[#767676] font-mono">3.000 Org</text>
 
                   <line x1="50" y1="80" x2="730" y2="80" stroke="#CFD8BE" strokeDasharray="3 3" />
-                  <text x="40" y="84" textAnchor="end" className="text-[10px] fill-[#767676] font-mono">100 Grup</text>
+                  <text x="40" y="84" textAnchor="end" className="text-[10px] fill-[#767676] font-mono">2.000 Org</text>
 
                   <line x1="50" y1="130" x2="730" y2="130" stroke="#CFD8BE" strokeDasharray="3 3" />
-                  <text x="40" y="134" textAnchor="end" className="text-[10px] fill-[#767676] font-mono">50 Grup</text>
+                  <text x="40" y="134" textAnchor="end" className="text-[10px] fill-[#767676] font-mono">1.000 Org</text>
 
                   <line x1="50" y1="180" x2="730" y2="180" stroke="#CFD8BE" />
                   <text x="40" y="184" textAnchor="end" className="text-[10px] fill-[#767676] font-mono">0</text>
@@ -962,44 +1008,51 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                   {/* Garis Ambang Batas Kapasitas Siaga */}
                   <line x1="50" y1="65" x2="730" y2="65" stroke="#F26B4B" strokeWidth="1.5" strokeDasharray="4 4" />
                   <text x="725" y="60" textAnchor="end" className="text-[9.5px] fill-[#F26B4B] font-bold">
-                    Ambang Batas Siaga Lonjakan (&gt; 110 Grup)
+                    Ambang Batas Siaga Lonjakan (&gt; 2.500 Wisatawan)
                   </text>
 
-                  {/* Area Fill Gradient di Bawah Kurva */}
-                  {/* Koordinat X untuk 7 titik: 80, 185, 290, 395, 500, 605, 710 */}
-                  {/* Skala Y: 180 - (groups / 150) * 150.
-                      Hari 1: 42 -> 180 - 42 = 138
-                      Hari 2: 38 -> 180 - 38 = 142
-                      Hari 3: 45 -> 180 - 45 = 135
-                      Hari 4: 68 -> 180 - 68 = 112
-                      Hari 5: 95 -> 180 - 95 = 85
-                      Hari 6: 142 -> 180 - 142 = 38
-                      Hari 7: 130 -> 180 - 130 = 50
-                  */}
+                  {/* 1. Kurva Area Fill Personal (Hijau) */}
                   <polygon
-                    points="80,180 80,138 185,142 290,135 395,112 500,85 605,38 710,50 710,180"
+                    points="80,180 80,141 185,144 290,138 395,118 500,95 605,50 710,61 710,180"
                     fill="url(#surgeAreaGradient)"
                   />
 
-                  {/* Garis Kurva Poligon */}
+                  {/* 1. Garis Poligon Personal (Hijau) */}
                   <polyline
-                    points="80,138 185,142 290,135 395,112 500,85 605,38 710,50"
+                    points="80,141 185,144 290,138 395,118 500,95 605,50 710,61"
                     fill="none"
                     stroke="#234B24"
-                    strokeWidth="3.5"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {/* 2. Kurva Area Fill Rombongan (Koral) */}
+                  <polygon
+                    points="80,180 80,157 185,160 290,155 395,142 500,123 605,90 710,100 710,180"
+                    fill="url(#coralAreaGradient)"
+                  />
+
+                  {/* 2. Garis Poligon Rombongan (Koral) */}
+                  <polyline
+                    points="80,157 185,160 290,155 395,142 500,123 605,90 710,100"
+                    fill="none"
+                    stroke="#F26B4B"
+                    strokeWidth="3"
+                    strokeDasharray="4 2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
 
                   {/* Titik Lingkaran & Label Setiap Hari */}
                   {[
-                    { cx: 80, cy: 138, day: PREDICTION_7_DAYS[0] },
-                    { cx: 185, cy: 142, day: PREDICTION_7_DAYS[1] },
-                    { cx: 290, cy: 135, day: PREDICTION_7_DAYS[2] },
-                    { cx: 395, cy: 112, day: PREDICTION_7_DAYS[3] },
-                    { cx: 500, cy: 85, day: PREDICTION_7_DAYS[4] },
-                    { cx: 605, cy: 38, day: PREDICTION_7_DAYS[5] },
-                    { cx: 710, cy: 50, day: PREDICTION_7_DAYS[6] },
+                    { cx: 80, cyPersonal: 141, cyGroup: 157, day: PREDICTION_7_DAYS[0] },
+                    { cx: 185, cyPersonal: 144, cyGroup: 160, day: PREDICTION_7_DAYS[1] },
+                    { cx: 290, cyPersonal: 138, cyGroup: 155, day: PREDICTION_7_DAYS[2] },
+                    { cx: 395, cyPersonal: 118, cyGroup: 142, day: PREDICTION_7_DAYS[3] },
+                    { cx: 500, cyPersonal: 95, cyGroup: 123, day: PREDICTION_7_DAYS[4] },
+                    { cx: 605, cyPersonal: 50, cyGroup: 90, day: PREDICTION_7_DAYS[5] },
+                    { cx: 710, cyPersonal: 61, cyGroup: 100, day: PREDICTION_7_DAYS[6] },
                   ].map((pt, idx) => {
                     const isSelected = selectedPredictionDay.date === pt.day.date;
                     const isPeak = pt.day.status === 'Puncak (Peak)';
@@ -1011,28 +1064,47 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                       >
                         {/* Glow halo saat aktif */}
                         {isSelected && (
-                          <circle cx={pt.cx} cy={pt.cy} r="14" fill="#F26B4B" opacity="0.25" className="animate-pulse" />
+                          <circle cx={pt.cx} cy={pt.cyPersonal} r="14" fill="#F26B4B" opacity="0.25" className="animate-pulse" />
                         )}
+
+                        {/* Titik Personal (Hijau) */}
                         <circle
                           cx={pt.cx}
-                          cy={pt.cy}
-                          r={isSelected ? '7' : '5'}
-                          fill={isPeak ? '#F26B4B' : '#234B24'}
+                          cy={pt.cyPersonal}
+                          r={isSelected ? '6' : '4.5'}
+                          fill="#234B24"
                           stroke="#FFFFFF"
-                          strokeWidth="2.5"
-                          className="transition-all duration-200 group-hover:scale-125"
+                          strokeWidth="2"
                         />
+
+                        {/* Titik Rombongan (Koral) */}
+                        <circle
+                          cx={pt.cx}
+                          cy={pt.cyGroup}
+                          r={isSelected ? '6' : '4.5'}
+                          fill="#F26B4B"
+                          stroke="#FFFFFF"
+                          strokeWidth="2"
+                        />
+
                         {/* Badge angka di atas titik */}
                         <text
                           x={pt.cx}
-                          y={pt.cy - 12}
+                          y={pt.cyPersonal - 10}
                           textAnchor="middle"
-                          className={`text-[11px] font-black ${
-                            isPeak ? 'fill-[#F26B4B]' : 'fill-[#234B24]'
-                          }`}
+                          className="text-[10px] font-extrabold fill-[#234B24]"
                         >
-                          {pt.day.groupsCount}
+                          {pt.day.personalTouristsEst}
                         </text>
+                        <text
+                          x={pt.cx}
+                          y={pt.cyGroup + 14}
+                          textAnchor="middle"
+                          className="text-[9.5px] font-extrabold fill-[#C2410C]"
+                        >
+                          {pt.day.groupTouristsEst}
+                        </text>
+
                         {/* Label Hari & Tanggal di Bawah */}
                         <text
                           x={pt.cx}
@@ -1070,7 +1142,9 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                     Peringatan Dini Lonjakan: {selectedPredictionDay.dayName}, {selectedPredictionDay.date} ({selectedPredictionDay.status})
                   </h4>
                   <p className="text-xs text-[#1B1F1A] mt-0.5">
-                    Terdeteksi lonjakan <strong>{selectedPredictionDay.groupsCount} rombongan (~{selectedPredictionDay.touristsEst.toLocaleString('id-ID')} wisatawan)</strong> menuju kawasan:{' '}
+                    Total Kunjungan: <strong>{selectedPredictionDay.touristsEst.toLocaleString('id-ID')} Wisatawan</strong>{' '}
+                    (Terdiri dari <span className="text-[#234B24] font-bold">{selectedPredictionDay.personalTouristsEst.toLocaleString('id-ID')} Personal</span> &amp;{' '}
+                    <span className="text-[#F26B4B] font-bold">{selectedPredictionDay.groupTouristsEst.toLocaleString('id-ID')} Rombongan</span> dalam <strong>{selectedPredictionDay.groupsCount} grup</strong>) menuju kawasan:{' '}
                     <span className="font-bold text-[#234B24]">{selectedPredictionDay.topDestinations.join(' & ')}</span>.
                   </p>
                 </div>
@@ -1162,13 +1236,27 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
                       <div className="mt-3 space-y-1.5 text-xs text-[#4A5248]">
                         <div className="flex justify-between">
-                          <span>Kunjungan Mingguan:</span>
+                          <span>Total Kunjungan:</span>
                           <strong className="text-[#234B24]">
                             {reg.visitor_count_week.toLocaleString('id-ID')}
                           </strong>
                         </div>
 
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-[11px]">
+                          <span>• Personal (Mandiri):</span>
+                          <span className="font-bold text-[#234B24]">
+                            {Math.round(reg.visitor_count_week * 0.66).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[11px]">
+                          <span>• Rombongan (Grup):</span>
+                          <span className="font-bold text-[#F26B4B]">
+                            {Math.round(reg.visitor_count_week * 0.34).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between pt-1 border-t border-black/5">
                           <span>Destinasi Teratas:</span>
                           <span className="font-semibold text-[#1B1F1A] truncate max-w-[130px]">
                             {reg.top_destination}

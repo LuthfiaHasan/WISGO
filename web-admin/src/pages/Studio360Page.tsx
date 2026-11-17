@@ -28,6 +28,7 @@ import {
   Navigation,
   Store,
   VolumeX,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Destination,
@@ -141,9 +142,9 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
   const [sceneFormPitch, setSceneFormPitch] = useState(0);
   const [sceneFormYaw, setSceneFormYaw] = useState(0);
 
-  // Form states for Pin Modal
+  // Form states for Pin Modal (Tata Ruang / Fasilitas Fisik 360°)
   const [pinFormCategory, setPinFormCategory] =
-    useState<HotspotPinCategory>('info_adat');
+    useState<HotspotPinCategory>('fasilitas_umum');
   const [pinFormTitle, setPinFormTitle] = useState('');
   const [pinFormDesc, setPinFormDesc] = useState('');
   const [pinFormPitch, setPinFormPitch] = useState(0);
@@ -152,6 +153,9 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
   const [pinFormAudioUrl, setPinFormAudioUrl] = useState('');
   const [pinFormPartnerName, setPinFormPartnerName] = useState('');
   const [pinFormPartnerFee, setPinFormPartnerFee] = useState<number>(0);
+  const [pinFormWhatsapp, setPinFormWhatsapp] = useState('');
+  const [pinFormFacilitySubtype, setPinFormFacilitySubtype] = useState('Toilet Bersih & Sanitasi');
+  const [pinFormOperatingHours, setPinFormOperatingHours] = useState('08:00 - 17:00 WIB');
 
   // Filter Pin List
   const [pinCategoryFilter, setPinCategoryFilter] = useState<string>('all');
@@ -298,26 +302,30 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
             ctx.beginPath();
             ctx.arc(0, 0, 16 + (isHighlighted ? pulse + 4 : 0), 0, Math.PI * 2);
             ctx.fillStyle =
-              pin.category === 'info_adat'
-                ? 'rgba(234, 179, 8, 0.4)'
-                : pin.category === 'navigasi'
-                ? 'rgba(59, 130, 246, 0.4)'
-                : pin.category === 'audio_budaya'
-                ? 'rgba(99, 102, 241, 0.4)'
-                : 'rgba(242, 107, 75, 0.45)';
+              pin.category === 'fasilitas_umum'
+                ? 'rgba(13, 148, 136, 0.45)'
+                : pin.category === 'mitra_umkm'
+                ? 'rgba(242, 107, 75, 0.45)'
+                : pin.category === 'loket_info' || pin.category === 'info_adat'
+                ? 'rgba(217, 119, 6, 0.45)'
+                : pin.category === 'navigasi_arah' || pin.category === 'navigasi'
+                ? 'rgba(37, 99, 235, 0.45)'
+                : 'rgba(99, 102, 241, 0.45)';
             ctx.fill();
 
             // Pin base circle
             ctx.beginPath();
             ctx.arc(0, 0, 14, 0, Math.PI * 2);
             ctx.fillStyle =
-              pin.category === 'info_adat'
-                ? '#CA8A04'
-                : pin.category === 'navigasi'
-                ? '#1D4ED8'
-                : pin.category === 'audio_budaya'
-                ? '#4F46E5'
-                : '#F26B4B';
+              pin.category === 'fasilitas_umum'
+                ? '#0D9488'
+                : pin.category === 'mitra_umkm'
+                ? '#F26B4B'
+                : pin.category === 'loket_info' || pin.category === 'info_adat'
+                ? '#D97706'
+                : pin.category === 'navigasi_arah' || pin.category === 'navigasi'
+                ? '#2563EB'
+                : '#7C3AED';
             ctx.fill();
             ctx.lineWidth = isSelected || isHighlighted ? 3 : 2;
             ctx.strokeStyle = '#FFFFFF';
@@ -427,13 +435,16 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
 
     setPinFormPitch(pickedPitch);
     setPinFormYaw(pickedYaw);
-    setPinFormCategory('info_adat');
+    setPinFormCategory('fasilitas_umum');
     setPinFormTitle('');
     setPinFormDesc('');
     setPinFormTargetScene('');
     setPinFormAudioUrl('');
     setPinFormPartnerName('');
     setPinFormPartnerFee(0);
+    setPinFormWhatsapp('');
+    setPinFormFacilitySubtype('Toilet Bersih & Sanitasi');
+    setPinFormOperatingHours('08:00 - 17:00 WIB');
     setEditingPin(null);
     setIsPinModalOpen(true);
     setInteractionMode('explore'); // switch back to explore
@@ -532,13 +543,18 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
     );
   };
 
-  // Save Pin
+  // Save Pin (Tata Ruang & Fasilitas Fisik 360°)
   const handleSavePin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDestination || !activeScene) return;
 
     if (!pinFormTitle.trim()) {
-      showToast('Judul pin hotspot wajib diisi.', 'warning');
+      showToast('Judul pin fasilitas / penanda tata ruang wajib diisi.', 'warning');
+      return;
+    }
+
+    if (pinFormCategory === 'mitra_umkm' && !pinFormWhatsapp.trim()) {
+      showToast('Nomor WhatsApp Mitra wajib diisi agar wisatawan dapat terhubung ke chat.', 'warning');
       return;
     }
 
@@ -551,13 +567,21 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
       pitch: pinFormPitch,
       yaw: pinFormYaw,
       target_scene_id:
-        pinFormCategory === 'navigasi' ? pinFormTargetScene : undefined,
+        pinFormCategory === 'navigasi_arah' || pinFormCategory === 'navigasi'
+          ? pinFormTargetScene
+          : undefined,
       audio_url:
         pinFormCategory === 'audio_budaya' ? pinFormAudioUrl : undefined,
       partner_name:
         pinFormCategory === 'mitra_umkm' ? pinFormPartnerName : undefined,
       partner_fee:
         pinFormCategory === 'mitra_umkm' ? pinFormPartnerFee : undefined,
+      whatsapp_number:
+        pinFormCategory === 'mitra_umkm' ? pinFormWhatsapp.trim() : undefined,
+      facility_subtype:
+        pinFormCategory === 'fasilitas_umum' ? pinFormFacilitySubtype : undefined,
+      operating_hours:
+        pinFormCategory === 'loket_info' ? pinFormOperatingHours : undefined,
     };
 
     const updatedDestinations = await saveSceneHotspot(
@@ -611,33 +635,43 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
 
   const getCategoryMeta = (cat: HotspotPinCategory) => {
     switch (cat) {
+      case 'fasilitas_umum':
+        return {
+          label: 'Fasilitas Umum (Toilet/Parkir/Musala)',
+          color: '#0D9488',
+          bg: '#CCFBF1',
+          icon: <MapPin className="w-4 h-4" />,
+        };
+      case 'mitra_umkm':
+        return {
+          label: 'Mitra UMKM / Jasa (Chat WA)',
+          color: '#C2410C',
+          bg: '#FFEDD5',
+          icon: <ShoppingBag className="w-4 h-4" />,
+        };
+      case 'loket_info':
       case 'info_adat':
         return {
-          label: 'Info Adat & Sejarah',
+          label: 'Loket & Info Resmi (Posko)',
           color: '#CA8A04',
           bg: '#FEF08A',
           icon: <BookOpen className="w-4 h-4" />,
         };
+      case 'navigasi_arah':
       case 'navigasi':
         return {
-          label: 'Navigasi Pindah Scene',
+          label: 'Navigasi Arah (Pindah Scene)',
           color: '#1D4ED8',
           bg: '#BFDBFE',
           icon: <Compass className="w-4 h-4" />,
         };
       case 'audio_budaya':
+      default:
         return {
           label: 'Audio Narasi Budaya',
           color: '#4F46E5',
           bg: '#C7D2FE',
           icon: <Volume2 className="w-4 h-4" />,
-        };
-      case 'mitra_umkm':
-        return {
-          label: 'Mitra UMKM Nagari',
-          color: '#C2410C',
-          bg: '#FFEDD5',
-          icon: <ShoppingBag className="w-4 h-4" />,
         };
     }
   };
@@ -996,7 +1030,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                     </p>
 
                     {/* Jika Pin Navigasi Pindah Scene */}
-                    {selectedPin.category === 'navigasi' &&
+                    {(selectedPin.category === 'navigasi_arah' || selectedPin.category === 'navigasi') &&
                       selectedPin.target_scene_id && (
                         <div className="mt-2">
                           <button
@@ -1004,13 +1038,33 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                             onClick={() =>
                               handleTransitionToScene(selectedPin.target_scene_id!)
                             }
-                            className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition"
+                            className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition"
                           >
                             <span>Melompat ke Scene Tujuan</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       )}
+
+                    {/* Jika Pin Fasilitas Umum */}
+                    {selectedPin.category === 'fasilitas_umum' && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#0D9488] bg-[#CCFBF1] px-2.5 py-1 rounded-lg flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>Fasilitas: {selectedPin.facility_subtype || 'Toilet, Parkir, Musala'}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Jika Pin Loket & Info Resmi */}
+                    {(selectedPin.category === 'loket_info' || selectedPin.category === 'info_adat') && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#D97706] bg-[#FEF08A] px-2.5 py-1 rounded-lg flex items-center gap-1">
+                          <Info className="w-3 h-3" />
+                          <span>Posko Resmi · Jam: {selectedPin.operating_hours || '08:00 - 17:00 WIB'}</span>
+                        </span>
+                      </div>
+                    )}
 
                     {/* Jika Pin Audio Budaya */}
                     {selectedPin.category === 'audio_budaya' &&
@@ -1026,11 +1080,22 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
 
                     {/* Jika Pin Mitra UMKM */}
                     {selectedPin.category === 'mitra_umkm' && (
-                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <div className="mt-2 flex flex-wrap items-center gap-2.5">
                         <span className="text-xs font-bold text-[#F26B4B]">
                           Mitra: {selectedPin.partner_name || 'Mitra Nagari'} (Rp{' '}
                           {(selectedPin.partner_fee || 0).toLocaleString('id-ID')})
                         </span>
+                        {selectedPin.whatsapp_number && (
+                          <a
+                            href={`https://wa.me/${selectedPin.whatsapp_number.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="min-h-[32px] px-3 py-1 rounded-lg bg-[#128C7E] hover:bg-[#075E54] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>Chat WA Mitra ({selectedPin.whatsapp_number})</span>
+                          </a>
+                        )}
                         {onNavigateToPartner && (
                           <button
                             type="button"
@@ -1038,7 +1103,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                             className="min-h-[32px] px-3 py-1 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1 shadow-xs"
                           >
                             <Store className="w-3.5 h-3.5" />
-                            <span>Lihat Kontak &amp; Detail Mitra</span>
+                            <span>Direktori Mitra</span>
                           </button>
                         )}
                       </div>
@@ -1060,6 +1125,9 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                       setPinFormAudioUrl(selectedPin.audio_url || '');
                       setPinFormPartnerName(selectedPin.partner_name || '');
                       setPinFormPartnerFee(selectedPin.partner_fee || 0);
+                      setPinFormWhatsapp(selectedPin.whatsapp_number || '');
+                      setPinFormFacilitySubtype(selectedPin.facility_subtype || 'Toilet Bersih & Sanitasi');
+                      setPinFormOperatingHours(selectedPin.operating_hours || '08:00 - 17:00 WIB');
                       setIsPinModalOpen(true);
                     }}
                     className="p-2 rounded-lg bg-white hover:bg-gray-100 text-[#234B24] border border-[#CFD8BE]"
@@ -1111,14 +1179,14 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
               </button>
             </div>
 
-            {/* Filter Kategori */}
+            {/* Filter Kategori Fasilitas */}
             <div className="flex flex-wrap gap-1.5">
               {[
                 { id: 'all', label: 'Semua' },
-                { id: 'info_adat', label: 'Adat' },
-                { id: 'navigasi', label: 'Navigasi' },
-                { id: 'audio_budaya', label: 'Audio' },
-                { id: 'mitra_umkm', label: 'Mitra' },
+                { id: 'fasilitas_umum', label: 'Fasilitas' },
+                { id: 'mitra_umkm', label: 'Mitra WA' },
+                { id: 'loket_info', label: 'Loket & Info' },
+                { id: 'navigasi_arah', label: 'Navigasi' },
               ].map((f) => (
                 <button
                   key={f.id}
@@ -1212,6 +1280,9 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                             setPinFormAudioUrl(pin.audio_url || '');
                             setPinFormPartnerName(pin.partner_name || '');
                             setPinFormPartnerFee(pin.partner_fee || 0);
+                            setPinFormWhatsapp(pin.whatsapp_number || '');
+                            setPinFormFacilitySubtype(pin.facility_subtype || 'Toilet Bersih & Sanitasi');
+                            setPinFormOperatingHours(pin.operating_hours || '08:00 - 17:00 WIB');
                             setIsPinModalOpen(true);
                           }}
                           className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-white text-[#234B24] border border-[#CFD8BE]"
@@ -1458,7 +1529,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                   htmlFor={pinCatId}
                   className="block text-xs font-bold text-[#1B1F1A] mb-1"
                 >
-                  Kategori Pin Hotspot <span className="text-[#F26B4B]">*</span>
+                  Kategori Penanda Fasilitas Fisik <span className="text-[#F26B4B]">*</span>
                 </label>
                 <select
                   id={pinCatId}
@@ -1468,17 +1539,17 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                   }
                   className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
                 >
-                  <option value="info_adat">
-                    Info Adat &amp; Sejarah (Kuning Emas)
-                  </option>
-                  <option value="navigasi">
-                    Navigasi Pindah Scene (Biru Langit)
-                  </option>
-                  <option value="audio_budaya">
-                    Audio Narasi Budaya / Minang (Ungu Indigo)
+                  <option value="fasilitas_umum">
+                    1. Fasilitas Umum (Toilet, Parkir, Musala)
                   </option>
                   <option value="mitra_umkm">
-                    Katalog Mitra UMKM Nagari (Koral Oranye)
+                    2. Mitra UMKM / Jasa (Wajib Nomor WA Chat)
+                  </option>
+                  <option value="loket_info">
+                    3. Loket &amp; Info Resmi (Posko Pengelola)
+                  </option>
+                  <option value="navigasi_arah">
+                    4. Navigasi Arah (Pindah Scene Panorama)
                   </option>
                 </select>
               </div>
@@ -1488,14 +1559,14 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                   htmlFor={pinTitleId}
                   className="block text-xs font-bold text-[#1B1F1A] mb-1"
                 >
-                  Judul Pin Hotspot <span className="text-[#F26B4B]">*</span>
+                  Judul Fasilitas / Penanda Fisik <span className="text-[#F26B4B]">*</span>
                 </label>
                 <input
                   id={pinTitleId}
                   type="text"
                   value={pinFormTitle}
                   onChange={(e) => setPinFormTitle(e.target.value)}
-                  placeholder="Contoh: Formasi Batuan Granit Geopark Harau"
+                  placeholder="Contoh: Toilet Bersih & Musala Rest Area Harau"
                   required
                   className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
                 />
@@ -1506,20 +1577,127 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                   htmlFor={pinDescId}
                   className="block text-xs font-bold text-[#1B1F1A] mb-1"
                 >
-                  Deskripsi / Narasi Edukasi
+                  Keterangan Fasilitas / Petunjuk Lokasi
                 </label>
                 <textarea
                   id={pinDescId}
-                  rows={3}
+                  rows={2}
                   value={pinFormDesc}
                   onChange={(e) => setPinFormDesc(e.target.value)}
-                  placeholder="Tuliskan cerita sejarah, filosofi adat Minangkabau..."
+                  placeholder="Deskripsi fasilitas, arah pintu masuk, kondisi kebersihan..."
                   className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
                 />
               </div>
 
-              {/* Navigasi Target Scene */}
-              {pinFormCategory === 'navigasi' && (
+              {/* Sub-form Kategori: Fasilitas Umum */}
+              {pinFormCategory === 'fasilitas_umum' && (
+                <div className="p-3.5 rounded-xl bg-[#CCFBF1]/50 border border-[#99F6E4] space-y-2">
+                  <label
+                    htmlFor="pin-facility-subtype"
+                    className="block text-xs font-bold text-[#0D9488]"
+                  >
+                    Jenis Fasilitas Umum <span className="text-[#F26B4B]">*</span>
+                  </label>
+                  <select
+                    id="pin-facility-subtype"
+                    value={pinFormFacilitySubtype}
+                    onChange={(e) => setPinFormFacilitySubtype(e.target.value)}
+                    className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#99F6E4] text-xs font-bold text-[#1B1F1A]"
+                  >
+                    <option value="Toilet Bersih & Sanitasi">Toilet Bersih &amp; Sanitasi</option>
+                    <option value="Area Parkir Resmi (Motor & Mobil)">Area Parkir Resmi (Motor &amp; Mobil)</option>
+                    <option value="Musala / Tempat Ibadah Salat">Musala / Tempat Ibadah Salat</option>
+                    <option value="Posko P3K / Medis Darurat">Posko P3K / Medis Darurat</option>
+                    <option value="Area Kuliner & Gazebo Istirahat">Area Kuliner &amp; Gazebo Istirahat</option>
+                    <option value="Tempat Sampah & Sanitasi Lingkungan">Tempat Sampah &amp; Sanitasi Lingkungan</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Sub-form Kategori: Mitra UMKM (WAJIB NOMOR WHATSAPP) */}
+              {pinFormCategory === 'mitra_umkm' && (
+                <div className="p-3.5 rounded-xl bg-[#FFEDD5]/50 border border-[#FDBA74] space-y-2.5">
+                  <div>
+                    <label
+                      htmlFor={pinPartnerNameId}
+                      className="block text-xs font-bold text-[#C2410C] mb-1"
+                    >
+                      Nama Mitra UMKM / Usaha Jasa <span className="text-[#F26B4B]">*</span>
+                    </label>
+                    <input
+                      id={pinPartnerNameId}
+                      type="text"
+                      value={pinFormPartnerName}
+                      onChange={(e) => setPinFormPartnerName(e.target.value)}
+                      placeholder="Contoh: Pondok Kawa Sarasah Harau"
+                      required
+                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#FDBA74] text-xs font-medium text-[#1B1F1A]"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="pin-partner-whatsapp"
+                      className="block text-xs font-bold text-[#C2410C] mb-1"
+                    >
+                      Nomor WhatsApp Aktif Mitra <span className="text-[#F26B4B]">*</span>
+                    </label>
+                    <input
+                      id="pin-partner-whatsapp"
+                      type="tel"
+                      value={pinFormWhatsapp}
+                      onChange={(e) => setPinFormWhatsapp(e.target.value)}
+                      placeholder="081234567890 (Wisatawan klik pin langsung chat WA)"
+                      required
+                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#FDBA74] text-xs font-mono font-bold text-[#1B1F1A]"
+                    />
+                    <p className="text-[10px] text-[#9A3412] mt-0.5">
+                      Wajib diisi: Pin ini akan langsung membuka chat WhatsApp dengan mitra ketika diklik di peta 360°.
+                    </p>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor={pinPartnerFeeId}
+                      className="block text-xs font-bold text-[#C2410C] mb-1"
+                    >
+                      Estimasi Tarif / Jasa Layanan (IDR)
+                    </label>
+                    <input
+                      id={pinPartnerFeeId}
+                      type="number"
+                      min={0}
+                      step={1000}
+                      value={pinFormPartnerFee}
+                      onChange={(e) =>
+                        setPinFormPartnerFee(Number(e.target.value))
+                      }
+                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#FDBA74] text-xs font-medium text-[#1B1F1A]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Sub-form Kategori: Loket & Info Posko */}
+              {(pinFormCategory === 'loket_info' || pinFormCategory === 'info_adat') && (
+                <div className="p-3.5 rounded-xl bg-[#FEF08A]/40 border border-[#FACC15] space-y-2">
+                  <label
+                    htmlFor="pin-operating-hours"
+                    className="block text-xs font-bold text-[#854D0E] mb-1"
+                  >
+                    Jam Operasional Loket / Posko Pengelola
+                  </label>
+                  <input
+                    id="pin-operating-hours"
+                    type="text"
+                    value={pinFormOperatingHours}
+                    onChange={(e) => setPinFormOperatingHours(e.target.value)}
+                    placeholder="Contoh: 08:00 - 17:00 WIB (Setiap Hari)"
+                    className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#FACC15] text-xs font-medium text-[#1B1F1A]"
+                  />
+                </div>
+              )}
+
+              {/* Sub-form Kategori: Navigasi Pindah Scene */}
+              {(pinFormCategory === 'navigasi_arah' || pinFormCategory === 'navigasi') && (
                 <div className="p-3.5 rounded-xl bg-[#BFDBFE]/30 border border-[#93C5FD]">
                   <label
                     htmlFor={pinTargetSceneId}
@@ -1543,60 +1721,6 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                         </option>
                       ))}
                   </select>
-                </div>
-              )}
-
-              {/* Audio Budaya Upload dari Device */}
-              {pinFormCategory === 'audio_budaya' && (
-                <div>
-                  <AudioDropzone
-                    label="File Audio Instrumen / Narasi Budaya Minang (Upload dari Device)"
-                    value={pinFormAudioUrl}
-                    onChange={(audioDataUrl) => setPinFormAudioUrl(audioDataUrl)}
-                    onClear={() => setPinFormAudioUrl('')}
-                    helperText="Pilih file rekaman instrumen saluang, rabab, atau narasi petuah adat dari komputer."
-                  />
-                </div>
-              )}
-
-              {/* Mitra UMKM */}
-              {pinFormCategory === 'mitra_umkm' && (
-                <div className="p-3.5 rounded-xl bg-[#FFEDD5]/40 border border-[#FDBA74] space-y-2.5">
-                  <div>
-                    <label
-                      htmlFor={pinPartnerNameId}
-                      className="block text-xs font-bold text-[#C2410C] mb-1"
-                    >
-                      Nama Mitra UMKM Nagari
-                    </label>
-                    <input
-                      id={pinPartnerNameId}
-                      type="text"
-                      value={pinFormPartnerName}
-                      onChange={(e) => setPinFormPartnerName(e.target.value)}
-                      placeholder="Contoh: Pondok Kawa Sarasah Harau"
-                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#FDBA74] text-xs font-medium text-[#1B1F1A]"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={pinPartnerFeeId}
-                      className="block text-xs font-bold text-[#C2410C] mb-1"
-                    >
-                      Tarif / Biaya Standar (IDR)
-                    </label>
-                    <input
-                      id={pinPartnerFeeId}
-                      type="number"
-                      min={0}
-                      step={1000}
-                      value={pinFormPartnerFee}
-                      onChange={(e) =>
-                        setPinFormPartnerFee(Number(e.target.value))
-                      }
-                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#FDBA74] text-xs font-medium text-[#1B1F1A]"
-                    />
-                  </div>
                 </div>
               )}
 

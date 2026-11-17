@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Users,
   Monitor,
+  Trophy,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
 
@@ -20,6 +21,7 @@ export type AdminMenuKey =
   | 'destinations'
   | 'tariffs_qr'
   | 'cms_360'
+  | 'challenges'
   | 'command_center'
   | 'saber_pungli' // alias to command_center
   | 'partners'
@@ -93,6 +95,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Studio Virtual 360°',
       sublabel: 'Kurasi Panorama & 4 Hotspot Pin',
       icon: <Camera className="w-5 h-5 shrink-0" aria-hidden="true" />,
+    },
+    {
+      key: 'challenges',
+      label: 'Gamifikasi Challenge Wisata',
+      sublabel: 'Checklist Tempat & Hadiah',
+      badge: 'Ceklis',
+      icon: <Trophy className="w-5 h-5 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'command_center',

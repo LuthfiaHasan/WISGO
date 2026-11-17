@@ -101,13 +101,17 @@ export interface OfficialTariff {
 }
 
 /**
- * 4 Kategori Pin Hotspot Kanvas 360°
+ * 4 Kategori Pin Hotspot Tata Ruang / Fasilitas Fisik Kanvas 360° (WISGO Studio 360)
  */
 export type HotspotPinCategory =
-  | 'info_adat'      // Pin Info Adat/Sejarah (Emas/Kuning)
-  | 'navigasi'       // Pin Navigasi Pindah Scene (Biru)
-  | 'audio_budaya'   // Pin Spatial Audio/Narasi (Ungu/Indigo)
-  | 'mitra_umkm';    // Pin Katalog/Booking Mitra UMKM (Oranye)
+  | 'fasilitas_umum' // 1) Fasilitas Umum (Toilet, Parkir, Musala)
+  | 'mitra_umkm'     // 2) Mitra UMKM/Jasa (Wajib input Nomor WA agar bisa chat)
+  | 'loket_info'     // 3) Loket & Info Resmi (Posko)
+  | 'navigasi_arah'  // 4) Navigasi Arah (Pindah scene)
+  // Backwards compatibility aliases:
+  | 'info_adat'
+  | 'navigasi'
+  | 'audio_budaya';
 
 /**
  * HotspotPin / Hotspot360 pada Kanvas 360°
@@ -119,13 +123,16 @@ export interface HotspotPin {
   category: HotspotPinCategory;
   title: string;
   description?: string;
-  pitch: number; // Sudut vertikal (-90 s.d. 90 derajat atau persen posisi visual)
-  yaw: number;   // Sudut horizontal (-180 s.d. 180 derajat atau persen posisi visual)
+  pitch: number; // Sudut vertikal (-90 s.d. 90 derajat)
+  yaw: number;   // Sudut horizontal (-180 s.d. 180 derajat)
   target_scene_id?: string; // Untuk pin navigasi pindah scene
   audio_url?: string;        // Untuk pin audio budaya / narasi Minang
   partner_id?: string;       // Untuk pin mitra UMKM
   partner_name?: string;
   partner_fee?: number;
+  whatsapp_number?: string;  // Nomor WhatsApp Mitra UMKM (WAJIB agar pin bisa diklik chat)
+  facility_subtype?: 'toilet' | 'parkir' | 'musala' | 'posko' | 'lainnya' | string;
+  operating_hours?: string;  // Untuk loket / posko resmi
 
   // Backwards compatibility
   type?: 'navigasi' | 'audio' | 'fasilitas' | 'mitra';
@@ -690,5 +697,77 @@ export interface SystemNotification {
   broadcasted_at: string;
   is_delivered: boolean;
 }
+
+// ============================================================================
+// FITUR 2: GAMIFIKASI "CHALLENGE" BERBASIS CHECKLIST MURNI (TANPA POIN)
+// ============================================================================
+
+export interface ChecklistChallenge {
+  id: string;
+  title: string;              // Contoh: "Jelajah 10 Tempat Wisata di Sumbar"
+  description: string;
+  category: string;           // Contoh: "Eksplorasi Alam", "Pusaka Sejarah", "Bahari"
+  target_count: number;       // Target Tempat (Angka, misal 10)
+  reward_description: string; // Reward Bebas: "Uang Tunai Rp 1 Juta", "Voucher", "Sertifikat"
+  duration_days: number;      // Durasi hari (misal 30)
+  target_destinations?: string[]; // Destinasi sasaran
+  participant_count: number;
+  completed_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ChecklistClaimStatus = 'DALAM_PROGRES' | 'SIAP_KLAIM' | 'HADIAH_TERKIRIM';
+
+export interface TouristChecklistClaim {
+  id: string;
+  challenge_id: string;
+  challenge_title: string;
+  tourist_name: string;
+  tourist_phone: string;
+  target_count: number;
+  completed_count: number;
+  completed_destinations: string[]; // Daftar tempat yang sudah diceklis
+  reward_description: string;
+  status: ChecklistClaimStatus;
+  completed_at?: string;
+  reward_sent_at?: string;
+  reward_notes?: string;
+}
+
+// ============================================================================
+// FITUR 3 & 4: USULAN DESTINASI (UGC) & ULASAN KOMENTAR WISATAWAN
+// ============================================================================
+
+export type UGCSubmissionStatus = 'MENUNGGU' | 'DISETUJUI' | 'DITOLAK';
+
+export interface TouristDestinationSubmission {
+  id: string;
+  title: string;
+  submitter_name: string;
+  submitter_phone: string;
+  city_regency: string;
+  category: string;
+  description: string;
+  photo_url: string;
+  estimated_price: string;
+  status: UGCSubmissionStatus;
+  submitted_at: string;
+  admin_notes?: string;
+}
+
+export interface TouristReview {
+  id: string;
+  tourist_name: string;
+  destination_id: string;
+  destination_name: string;
+  rating: number;           // 1 - 5 Bintang
+  comment: string;
+  created_at: string;
+  is_hidden: boolean;       // True jika disembunyikan/takedown oleh admin
+  admin_moderation_reason?: string;
+}
+
 
 

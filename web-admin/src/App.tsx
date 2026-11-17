@@ -39,6 +39,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DestinationsPage } from './pages/DestinationsPage';
 import { TariffsAndQRPage } from './pages/TariffsAndQRPage';
 import { Studio360Page } from './pages/Studio360Page';
+import { ChallengePage } from './pages/ChallengePage';
 import { CommandCenterPage } from './pages/CommandCenterPage';
 import { PartnersPage } from './pages/PartnersPage';
 import { PublicSmartQRView } from './pages/PublicSmartQRView';
@@ -312,6 +313,15 @@ export const App: React.FC = () => {
               initialSceneId={studioNavTarget?.sceneId}
               initialHighlightPinId={studioNavTarget?.pinId}
               onNavigateToPartner={handleNavigateToPartner}
+            />
+          </div>
+        );
+      case 'challenges':
+        return (
+          <div className="p-6 lg:p-8">
+            <ChallengePage
+              destinations={destinations}
+              showToast={showToast}
             />
           </div>
         );
