@@ -662,13 +662,14 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
 
       {/* Header Halaman */}
       <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0">
+        <div className="flex flex-col gap-5">
+          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
               <Camera className="w-6 h-6" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Studio Virtual 360° &amp; Visual 4-Pin Editor
                 </h1>
@@ -676,20 +677,20 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                   60 FPS Panorama Viewer
                 </span>
               </div>
-              <p className="text-xs text-[#4A5248] mt-1">
+              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
                 Jelajahi panorama 360° dengan wrap-around mulus, tilt vertikal, zoom, dan tempelkan 4 pin interaktif (Info Adat, Navigasi Aerial-to-Ground, Audio Budaya, dan Pin Mitra UMKM Nagari).
               </p>
             </div>
           </div>
 
-          {/* Pemilih Destinasi & Tambah Scene */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex items-center gap-2">
+          {/* Baris 2: Pemilih Destinasi & Tambah Scene */}
+          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <label
                 htmlFor={destSelectId}
                 className="text-xs font-bold text-[#1B1F1A] shrink-0"
               >
-                Destinasi:
+                Pilih Destinasi:
               </label>
               <select
                 id={destSelectId}
@@ -723,10 +724,10 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                 setSceneFormYaw(0);
                 setIsSceneModalOpen(true);
               }}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
+              className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
             >
               <Plus className="w-4 h-4" />
-              <span>Tambah Scene 360°</span>
+              <span>+ Tambah Scene 360° Baru</span>
             </button>
           </div>
         </div>

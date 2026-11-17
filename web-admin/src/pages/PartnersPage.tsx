@@ -274,13 +274,14 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
     <div className="space-y-6">
       {/* Header Halaman */}
       <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0">
+        <div className="flex flex-col gap-5">
+          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
               <Store className="w-6 h-6" aria-hidden="true" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Monitoring 5 Kategori Mitra Nagari &amp; Escrow
                 </h1>
@@ -288,20 +289,28 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                   Ekonomi Nagari &amp; Rekening Bersama
                 </span>
               </div>
-              <p className="text-xs text-[#4A5248] mt-1">
+              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
                 Kelola 5 kategori mitra UMKM nagari (Homestay, Kapal, Pemandu Pokdarwis, Kuliner Halal, Sewa Busana Adat), pantau mutasi rekening bersama (*Escrow*), serta hubungkan pin booking langsung ke Studio 360°.
               </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
-          >
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>Tambah Mitra Nagari</span>
-          </button>
+          {/* Baris 2: Informasi Otoritas & Tombol Aksi */}
+          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-[#4A5248]">
+              <span>Kemitraan Resmi:</span>
+              <strong className="text-[#234B24]">Verifikasi Pokdarwis &amp; Pemprov Sumbar</strong>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              <span>+ Tambah Mitra Nagari Baru</span>
+            </button>
+          </div>
         </div>
       </header>
 

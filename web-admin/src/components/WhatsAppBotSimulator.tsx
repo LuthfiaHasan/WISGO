@@ -253,13 +253,14 @@ export const WhatsAppBotSimulator: React.FC<WhatsAppBotSimulatorProps> = ({
     <div className="space-y-6">
       {/* Header Halaman Simulator */}
       <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#075E54] text-white flex items-center justify-center shadow-sm shrink-0">
+        <div className="flex flex-col gap-5">
+          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#075E54] text-white flex items-center justify-center shadow-sm shrink-0 mt-0.5">
               <MessageSquare className="w-6 h-6" aria-hidden="true" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Simulator Bot WhatsApp Mitra &amp; Pencairan Escrow
                 </h1>
@@ -267,28 +268,36 @@ export const WhatsAppBotSimulator: React.FC<WhatsAppBotSimulatorProps> = ({
                   Simulasi 2-Arah Live
                 </span>
               </div>
-              <p className="text-xs text-[#4A5248] mt-1">
+              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
                 Menguji alur interaksi pesan instan WhatsApp UMKM Nagari: penerimaan order wisatawan, penguncian dana di Rekening Bersama Escrow, dan pencairan instan via scan QR code E-Ticket.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <label htmlFor="sim-partner-select" className="text-xs font-bold text-[#4A5248] whitespace-nowrap">
-              Pilih Mitra:
-            </label>
-            <select
-              id="sim-partner-select"
-              value={selectedPartnerId}
-              onChange={(e) => setSelectedPartnerId(e.target.value)}
-              className="px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-none focus:ring-2 focus:ring-[#234B24]"
-            >
-              {partners.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.category})
-                </option>
-              ))}
-            </select>
+          {/* Baris 2: Pemilih Mitra Simulasi */}
+          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-[#4A5248]">
+              <span>Kanal Simulasi:</span>
+              <strong className="text-[#075E54]">WhatsApp Official Sandbox (+62 811-7788-9900)</strong>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <label htmlFor="sim-partner-select" className="text-xs font-bold text-[#1B1F1A] whitespace-nowrap">
+                Pilih Akun Mitra UMKM:
+              </label>
+              <select
+                id="sim-partner-select"
+                value={selectedPartnerId}
+                onChange={(e) => setSelectedPartnerId(e.target.value)}
+                className="px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-none focus:ring-2 focus:ring-[#234B24]"
+              >
+                {partners.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.category})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </header>

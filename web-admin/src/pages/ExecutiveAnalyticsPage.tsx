@@ -203,13 +203,14 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
       {/* Header Utama Layar Admin */}
       <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA] no-print">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0">
+        <div className="flex flex-col gap-5">
+          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
               <BarChart3 className="w-6 h-6" aria-hidden="true" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Analitik Eksekutif Dinas Pariwisata Sumbar
                 </h1>
@@ -217,29 +218,37 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                   WISGO Command Intel
                 </span>
               </div>
-              <p className="text-xs text-[#4A5248] mt-1">
+              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
                 Visualisasi data pergerakan 19 Kabupaten/Kota, monitoring perputaran dana Escrow UMKM Nagari, moderasi tempat sensitif komunitas, dan pelaporan berkala.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24] text-xs font-bold flex items-center gap-2 border border-[#CFD8BE] transition shadow-xs"
-            >
-              <Download className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
-              <span>Unduh Data CSV</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm transition"
-            >
-              <Printer className="w-4 h-4 text-[#A7F3D0]" aria-hidden="true" />
-              <span>Cetak / Ekspor PDF Resmi</span>
-            </button>
+          {/* Baris 2: Informasi Wilayah & Tombol Ekspor */}
+          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-[#4A5248]">
+              <span>Cakupan Intelijen:</span>
+              <strong className="text-[#234B24]">19 Kabupaten/Kota Provinsi Sumatera Barat</strong>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24] text-xs font-bold flex items-center gap-2 border border-[#CFD8BE] transition shadow-xs"
+              >
+                <Download className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
+                <span>Unduh Data CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm transition"
+              >
+                <Printer className="w-4 h-4 text-[#A7F3D0]" aria-hidden="true" />
+                <span>Cetak / Ekspor PDF Resmi</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>

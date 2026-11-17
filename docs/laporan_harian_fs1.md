@@ -104,5 +104,30 @@ Untuk mendemonstrasikan keunggulan sistem WISGO secara *live* di hadapan penguji
 ## 4. Hasil Verifikasi Kualitas Teknis
 
 - **Pemeriksaan Tipe TypeScript (`tsc --noEmit`):** `Exit Code 0` (0 error, 100% lulus kompilasi tipe ketat).
-- **Pengujian Bundel Produksi (`vite build`):** `Exit Code 0` (1.558 modul berhasil dibangun optimal dalam 12,13 detik).
+- **Pengujian Bundel Produksi (`vite build`):** `Exit Code 0` (1.558 modul berhasil dibangun optimal dalam 17,34 detik).
 - **Server Dev Lokal:** Berjalan aktif dan responsif di `http://localhost:3000/`.
+
+---
+
+## 5. Pembaruan & Optimasi Tata Letak (Layout) UI/UX (Production-Grade)
+
+Sebagai tindak lanjut penyempurnaan keterbacaan dan kenyamanan operasional admin di layar desktop/laptop (resolusi 1280px s.d. 1920px), telah dilakukan perbaikan visual menyeluruh:
+
+1. **Sticky Sidebar Kiri Terkunci Saat Gulir (Scroll)**:
+   - Sidebar diatur dengan `sticky top-0 h-screen shrink-0 overflow-y-auto z-30` sehingga tetap diam dan kokoh di posisinya saat halaman konten utama di sebelah kanan digulir jauh ke bawah.
+   - Perbaikan tipografi item menu navigasi: teks judul menu tidak lagi terpotong menjadi titik-titik (`...`), dilengkapi pembagian proporsi teks `leading-snug` dan badge status berukuran presisi (`shrink-0 whitespace-nowrap`).
+
+2. **Restrukturisasi Modal Tambah/Edit Destinasi (4 Bagian Vertikal Tegas)**:
+   - Mengatasi masalah barisan tab modal yang sebelumnya tergencet flexbox menjadi 0px.
+   - Modal kini memiliki 4 tingkatan vertikal yang tegas:
+     - **Header Modal (`shrink-0`)**: Judul modal & tombol tutup (X) kontras tinggi.
+     - **Baris Tab Navigasi 4 Bagian (`shrink-0 bg-[#F6F3EC] border-b px-6 py-3`)**: Menggunakan `grid grid-cols-2 sm:grid-cols-4 gap-2` dengan tab **Bagian A (Profil & 4 Statistik)**, **Bagian B (5 Indikator Medan)**, **Bagian C (Edukasi & Adat Minangkabau)**, dan **Bagian D (Foto & Media Lokal)** dengan indikator aktif hijau tua kontras tinggi.
+     - **Kontainer Isi Form (`flex-1 min-h-0 overflow-y-auto p-6 space-y-5`)**: Porsi area formulir yang dapat digulir mandiri tanpa menggeser header maupun footer.
+     - **Sticky Action Footer (`shrink-0 border-t bg-white px-6 py-4`)**: Pinned di dasar modal berisi navigasi bertahap "← Sebelumnya" / "Selanjutnya →" di sisi kiri, serta tombol "Batal" dan "Simpan Destinasi" di sisi kanan.
+
+3. **Pemisahan Header Kartu Menjadi 2 Baris Terpisah (Header Card De-cluttering)**:
+   - Menerapkan layout 2 baris terpisah pada halaman **Pusat Komando Pungli & SOS**, **Studio Virtual 360°**, **Monitoring Mitra & Escrow**, **Analitik Eksekutif Dispar**, dan **Simulator Bot WA**:
+     - **Baris Atas**: Ikon institusi, judul halaman tunggal yang lega tanpa melipat ke banyak baris, badge status kesiagaan, dan deskripsi tugas operasional.
+     - **Baris Bawah**: Dipisahkan oleh garis batas halus `border-t border-[#234B24]/10 pt-4` khusus memuat tombol switcher tab, filter dropdown, dan tombol aksi (ekspor CSV/PDF, tambah mitra/scene).
+
+Seluruh revisi telah lulus kompilasi TypeScript dan siap diuji langsung di `http://localhost:3000/`.

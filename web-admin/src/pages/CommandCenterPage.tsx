@@ -305,13 +305,14 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
     <div className="space-y-6">
       {/* Header Utama Pusat Komando */}
       <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0">
+        <div className="flex flex-col gap-5">
+          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
               <Radio className="w-6 h-6" aria-hidden="true" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Pusat Komando Terpadu Pungli &amp; SOS SAR
                 </h1>
@@ -319,65 +320,72 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                   Siaga 24/7 Sumbar
                 </span>
               </div>
-              <p className="text-xs text-[#4A5248] mt-1">
+              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
                 Kendali penuh Administrator Utama: Penindakan aduan pungli &amp; pelanggaran tarif resmi Perda, respon sinyal darurat SOS GPS wisatawan, dan pemantauan jalur ekstrem rawan bencana di 19 Kabupaten/Kota.
               </p>
             </div>
           </div>
 
-          {/* Switcher Tab 1 vs Tab 2 */}
-          <div className="flex items-center p-1.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] shrink-0 self-start lg:self-center">
-            <button
-              type="button"
-              onClick={() => setActiveTab('pungli')}
-              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                activeTab === 'pungli'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'text-[#4A5248] hover:text-[#1B1F1A]'
-              }`}
-            >
-              <ShieldAlert className="w-4 h-4" aria-hidden="true" />
-              <span>Aduan Pungli &amp; Fasilitas</span>
-              {countBaru > 0 && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white">
-                  {countBaru} Baru
-                </span>
-              )}
-            </button>
+          {/* Baris 2: Barisan Tab Navigasi Pusat Komando */}
+          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center p-1.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]">
+              <button
+                type="button"
+                onClick={() => setActiveTab('pungli')}
+                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  activeTab === 'pungli'
+                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                }`}
+              >
+                <ShieldAlert className="w-4 h-4" aria-hidden="true" />
+                <span>Aduan Pungli &amp; Fasilitas</span>
+                {countBaru > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white">
+                    {countBaru} Baru
+                  </span>
+                )}
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('sos')}
-              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                activeTab === 'sos'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'text-[#4A5248] hover:text-[#1B1F1A]'
-              }`}
-            >
-              <LifeBuoy className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-              <span>Siaga Darurat SOS &amp; SAR</span>
-              {activeSosCount > 0 && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse">
-                  {activeSosCount} Sinyal
-                </span>
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('sos')}
+                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  activeTab === 'sos'
+                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                }`}
+              >
+                <LifeBuoy className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+                <span>Siaga Darurat SOS &amp; SAR</span>
+                {activeSosCount > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse">
+                    {activeSosCount} Sinyal
+                  </span>
+                )}
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('hazard')}
-              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                activeTab === 'hazard'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'text-[#4A5248] hover:text-[#1B1F1A]'
-              }`}
-            >
-              <AlertTriangle className="w-4 h-4 text-[#CA8A04]" aria-hidden="true" />
-              <span>Peringatan Jalur Rawan</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24] font-bold">
-                {hazardAlerts.length} Jalur
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('hazard')}
+                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  activeTab === 'hazard'
+                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                }`}
+              >
+                <AlertTriangle className="w-4 h-4 text-[#CA8A04]" aria-hidden="true" />
+                <span>Peringatan Jalur Rawan</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24] font-bold">
+                  {hazardAlerts.length} Jalur
+                </span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-[#4A5248]">
+              <span>Kesiagaan Wilayah:</span>
+              <strong className="text-[#234B24]">Satgas Saber Pungli &amp; Basarnas Padang</strong>
+            </div>
           </div>
         </div>
       </header>

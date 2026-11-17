@@ -53,7 +53,7 @@ interface DestinationsPageProps {
 
 type SortColumn = 'name' | 'city_regency' | 'distance' | 'price';
 type SortDirection = 'ascending' | 'descending';
-type EditorTabKey = 'A' | 'B' | 'C';
+type EditorTabKey = 'A' | 'B' | 'C' | 'D';
 
 const collator = new Intl.Collator('id', {
   numeric: true,
@@ -1104,12 +1104,15 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
         ref={editorDialogRef}
         aria-labelledby="editor-modal-title"
         onClose={() => setEditingDest(null)}
-        className="w-full max-w-4xl rounded-[28px] p-0 bg-transparent"
+        className="w-full max-w-4xl rounded-[28px] p-0 bg-transparent backdrop:bg-black/60"
       >
         {editingDest && (
-          <div className="bg-[#F6F3EC] text-[#1B1F1A] rounded-[28px] border border-[#CFD8BE] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
-            {/* Header Modal Editor */}
-            <div className="bg-[#234B24] text-[#F6F3EC] px-6 py-5 flex items-center justify-between">
+          <form
+            onSubmit={handleSaveEditorForm}
+            className="bg-[#F6F3EC] text-[#1B1F1A] rounded-[28px] border border-[#CFD8BE] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+          >
+            {/* Bagian a) Header Modal Editor (shrink-0) */}
+            <div className="shrink-0 bg-[#234B24] text-[#F6F3EC] px-6 py-5 flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#A7F3D0]">
                   Formulir Manajemen Destinasi &amp; Kesiapan Medan ({editingDest.id.toUpperCase()})
@@ -1133,65 +1136,64 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               </button>
             </div>
 
-            {/* Navigasi Tab 3 Bagian (modern-web-guidance: tabs) */}
+            {/* Bagian b) Baris Tab Navigasi (shrink-0 bg-[#F6F3EC] border-b border-[#234B24]/15 px-6 py-3) */}
             <div
               role="tablist"
-              {...({ focusgroup: 'tablist nomemory' } as React.HTMLAttributes<HTMLDivElement>)}
               aria-label="Tahapan Pengisian Data Destinasi"
-              className="bg-white px-6 border-b border-[#CFD8BE] flex overflow-x-auto gap-2"
+              className="shrink-0 bg-[#F6F3EC] border-b border-[#234B24]/15 px-6 py-3"
             >
-              {(
-                [
-                  {
-                    key: 'A',
-                    title: 'Bagian A: Profil & 4 Statistik Keputusan',
-                  },
-                  {
-                    key: 'B',
-                    title: 'Bagian B: Editor Visual 5 Indikator Medan',
-                  },
-                  {
-                    key: 'C',
-                    title: 'Bagian C: Edukasi & Adat Minangkabau',
-                  },
-                ] as const
-              ).map((tab) => {
-                const selected = editorTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    id={`editor-tab-${tab.key}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    {...(selected
-                      ? ({ focusgroupstart: '' } as React.ButtonHTMLAttributes<HTMLButtonElement>)
-                      : {})}
-                    onClick={() => setEditorTab(tab.key)}
-                    className="px-4 py-4 text-xs sm:text-sm font-bold text-[#1B1F1A] whitespace-nowrap transition-colors"
-                  >
-                    {tab.title}
-                  </button>
-                );
-              })}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(
+                  [
+                    {
+                      key: 'A',
+                      title: 'Bagian A: Profil & 4 Statistik',
+                    },
+                    {
+                      key: 'B',
+                      title: 'Bagian B: 5 Indikator Medan',
+                    },
+                    {
+                      key: 'C',
+                      title: 'Bagian C: Edukasi & Adat',
+                    },
+                    {
+                      key: 'D',
+                      title: 'Bagian D: Foto & Media Lokal',
+                    },
+                  ] as const
+                ).map((tab) => {
+                  const selected = editorTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      id={`editor-tab-${tab.key}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setEditorTab(tab.key)}
+                      className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center text-center ${
+                        selected
+                          ? 'bg-[#234B24] text-white shadow-xs'
+                          : 'bg-white text-[#234B24] border border-[#CFD8BE] hover:bg-[#E4E9DA]'
+                      }`}
+                    >
+                      {tab.title}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Isi Form 3 Bagian */}
-            <form
-              onSubmit={handleSaveEditorForm}
-              className="flex-1 overflow-y-auto"
-            >
+            {/* Bagian c) Kontainer Isi Form (flex-1 min-h-0 overflow-y-auto p-6 space-y-5) */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-5">
               {/* PANEL BAGIAN A: PROFIL & 4 STATISTIK KEPUTUSAN */}
               <div
                 role="tabpanel"
                 aria-labelledby="editor-tab-A"
-                hidden={
-                  editorTab !== 'A'
-                    ? ('until-found' as unknown as boolean)
-                    : undefined
-                }
+                hidden={editorTab !== 'A'}
               >
-                <div className="p-6 lg:p-8 space-y-5">
+                <div className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label
@@ -1461,56 +1463,27 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                     />
                   </div>
 
-                  {/* Deskripsi & URL Sampul */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label
-                        htmlFor="dest-desc"
-                        className="text-xs font-bold text-[#1B1F1A]"
-                      >
-                        Deskripsi Ringkas Kawasan Wisata
-                      </label>
-                      <textarea
-                        id="dest-desc"
-                        rows={3}
-                        value={editingDest.description}
-                        onChange={(e) =>
-                          setEditingDest({
-                            ...editingDest,
-                            description: e.target.value,
-                          })
-                        }
-                        className="p-3.5 rounded-2xl bg-white border border-[#767676] text-sm"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <ImageDropzone
-                        label="Foto Sampul Utama Destinasi"
-                        value={editingDest.cover_image}
-                        onChange={(dataUrl) =>
-                          setEditingDest({
-                            ...editingDest,
-                            cover_image: dataUrl,
-                          })
-                        }
-                        onClear={() =>
-                          setEditingDest({
-                            ...editingDest,
-                            cover_image: '',
-                          })
-                        }
-                        helperText="Pilih foto sampul berkualitas tinggi dari device. Otomatis dikompresi ringan ke format WebP."
-                      />
-                      <span className="text-[11px] text-[#4A5248]">
-                        Slug Smart QR Otomatis:{' '}
-                        <strong>
-                          /qr/
-                          {editingDest.slug ||
-                            toDestinationSlug(editingDest.name || 'destinasi')}
-                        </strong>
-                      </span>
-                    </div>
+                  {/* Deskripsi Kawasan Wisata */}
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="dest-desc"
+                      className="text-xs font-bold text-[#1B1F1A]"
+                    >
+                      Deskripsi Ringkas Kawasan Wisata
+                    </label>
+                    <textarea
+                      id="dest-desc"
+                      rows={3}
+                      value={editingDest.description}
+                      onChange={(e) =>
+                        setEditingDest({
+                          ...editingDest,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Tuliskan gambaran daya tarik wisata, sejarah, atau keunikan alam..."
+                      className="p-3.5 rounded-2xl bg-white border border-[#767676] text-sm"
+                    />
                   </div>
                 </div>
               </div>
@@ -1519,13 +1492,9 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               <div
                 role="tabpanel"
                 aria-labelledby="editor-tab-B"
-                hidden={
-                  editorTab !== 'B'
-                    ? ('until-found' as unknown as boolean)
-                    : undefined
-                }
+                hidden={editorTab !== 'B'}
               >
-                <div className="p-6 lg:p-8 space-y-5">
+                <div className="space-y-5">
                   <div className="p-4 rounded-2xl bg-[#E4E9DA] border border-[#CFD8BE] text-xs text-[#1B1F1A]">
                     <strong>Panduan Penilaian Medan:</strong> Atur kategori dan
                     skor kesiapan (1–5) untuk setiap indikator agar wisatawan
@@ -1912,13 +1881,9 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               <div
                 role="tabpanel"
                 aria-labelledby="editor-tab-C"
-                hidden={
-                  editorTab !== 'C'
-                    ? ('until-found' as unknown as boolean)
-                    : undefined
-                }
+                hidden={editorTab !== 'C'}
               >
-                <div className="p-6 lg:p-8 space-y-4">
+                <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-extrabold text-[#1B1F1A]">
@@ -1933,7 +1898,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                     <button
                       type="button"
                       onClick={handleAddTipRow}
-                      className="min-h-[42px] px-4 py-2 rounded-pill bg-[#234B24] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5"
+                      className="min-h-[42px] px-4 py-2 rounded-pill bg-[#234B24] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 shadow-xs"
                     >
                       <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Tambah Butir Panduan</span>
@@ -2004,33 +1969,157 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                 </div>
               </div>
 
-              {/* Footer Modal Editor */}
-              <div className="bg-white px-6 py-4 border-t border-[#CFD8BE] flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-[#4A5248]">
-                  <span>Bagian aktif:</span>
-                  <strong className="text-[#234B24]">Bagian {editorTab}</strong>
-                </div>
+              {/* PANEL BAGIAN D: FOTO & MEDIA LOKAL */}
+              <div
+                role="tabpanel"
+                aria-labelledby="editor-tab-D"
+                hidden={editorTab !== 'D'}
+              >
+                <div className="space-y-5">
+                  <div className="p-4 rounded-2xl bg-[#E4E9DA] border border-[#CFD8BE] text-xs text-[#1B1F1A]">
+                    <strong>Standarisasi Media Resmi:</strong> Unggah foto lanskap berkualitas tinggi langsung dari perangkat komputer/laptop Anda. Sistem secara otomatis mengoptimalkan dan mengompresi gambar ke format WebP ringan agar pemuatan di perangkat wisatawan sangat cepat.
+                  </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setEditingDest(null)}
-                    className="min-h-[48px] px-5 rounded-pill bg-[#F6F3EC] border border-[#767676] text-xs font-bold text-[#1B1F1A]"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="h-[52px] px-7 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-sm font-bold shadow-md transition"
-                  >
-                    {isNewDest
-                      ? 'Simpan Destinasi Baru'
-                      : 'Simpan Seluruh Perubahan'}
-                  </button>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    {/* Komponen Pengunggah File Lokal */}
+                    <div className="space-y-3">
+                      <ImageDropzone
+                        label="Foto Sampul Utama Destinasi"
+                        value={editingDest.cover_image}
+                        onChange={(dataUrl) =>
+                          setEditingDest({
+                            ...editingDest,
+                            cover_image: dataUrl,
+                          })
+                        }
+                        onClear={() =>
+                          setEditingDest({
+                            ...editingDest,
+                            cover_image: '',
+                          })
+                        }
+                        helperText="Pilih foto dari device (JPG, PNG, WebP). Kompresi kanvas otomatis menjaga penyimpanan tetap optimal."
+                      />
+
+                      <div className="p-4 rounded-2xl bg-white border border-[#CFD8BE] space-y-2">
+                        <span className="text-xs font-extrabold uppercase tracking-wider text-[#234B24]">
+                          Integrasi URL Pintar
+                        </span>
+                        <div className="flex items-center gap-2 text-xs text-[#4A5248]">
+                          <span>Slug Smart QR Otomatis:</span>
+                          <strong className="text-[#234B24] font-mono">
+                            /qr/{editingDest.slug || toDestinationSlug(editingDest.name || 'destinasi')}
+                          </strong>
+                        </div>
+                        <p className="text-[11px] text-[#4A5248]">
+                          Tautan ini otomatis dihubungkan dengan plang fisik QR Perda, stiker retribusi resmi, dan aplikasi panduan luring.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Pratinjau Tampilan Kartu Wisatawan */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-bold text-[#1B1F1A]">
+                        Pratinjau Kartu di Aplikasi Wisatawan
+                      </span>
+                      <div className="bg-white rounded-3xl border border-[#CFD8BE] overflow-hidden shadow-sm">
+                        <div className="relative h-44 bg-[#234B24]/10">
+                          {editingDest.cover_image ? (
+                            <img
+                              src={editingDest.cover_image}
+                              alt={editingDest.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-[#4A5248] text-xs">
+                              <Eye className="w-6 h-6 text-[#234B24]/40 mb-1" />
+                              <span>Belum ada foto yang dipilih</span>
+                            </div>
+                          )}
+                          <div className="absolute top-3 left-3 flex gap-1.5">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E9E5A] text-white">
+                              {editingDest.city_regency}
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#234B24] text-white">
+                              {editingDest.category}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-4 space-y-2">
+                          <h4 className="font-extrabold text-[#1B1F1A] text-base">
+                            {editingDest.name || 'Nama Destinasi Wisata'}
+                          </h4>
+                          <p className="text-xs text-[#4A5248] line-clamp-2">
+                            {editingDest.description || 'Deskripsi destinasi akan tampil di sini untuk memandu wisatawan.'}
+                          </p>
+                          <div className="pt-2 border-t border-[#CFD8BE]/50 flex items-center justify-between text-xs">
+                            <span className="font-bold text-[#234B24]">
+                              {editingDest.ticket_price_summary || 'Tarif Resmi Perda'}
+                            </span>
+                            <span className="text-[#4A5248]">
+                              {editingDest.estimated_distance_km || 0} km • ± {editingDest.estimated_duration_min || 0} mnt
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </form>
-          </div>
+            </div>
+
+            {/* Bagian d) Sticky Action Footer (shrink-0 border-t border-[#234B24]/15 bg-white px-6 py-4 flex flex-wrap items-center justify-between gap-3) */}
+            <div className="shrink-0 border-t border-[#234B24]/15 bg-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={editorTab === 'A'}
+                  onClick={() => {
+                    const tabs: EditorTabKey[] = ['A', 'B', 'C', 'D'];
+                    const currIdx = tabs.indexOf(editorTab);
+                    if (currIdx > 0) setEditorTab(tabs[currIdx - 1]);
+                  }}
+                  className="min-h-[44px] px-4 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#E4E9DA] transition"
+                >
+                  ← Sebelumnya
+                </button>
+                <button
+                  type="button"
+                  disabled={editorTab === 'D'}
+                  onClick={() => {
+                    const tabs: EditorTabKey[] = ['A', 'B', 'C', 'D'];
+                    const currIdx = tabs.indexOf(editorTab);
+                    if (currIdx < tabs.length - 1) setEditorTab(tabs[currIdx + 1]);
+                  }}
+                  className="min-h-[44px] px-4 rounded-xl bg-[#234B24]/10 border border-[#234B24]/20 text-xs font-bold text-[#234B24] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#234B24]/20 transition"
+                >
+                  Selanjutnya →
+                </button>
+                <span className="text-xs text-[#4A5248] hidden sm:inline ml-2">
+                  Tab aktif: <strong>Bagian {editorTab}</strong>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingDest(null)}
+                  className="min-h-[44px] px-5 rounded-pill bg-[#F6F3EC] border border-[#767676] text-xs font-bold text-[#1B1F1A] hover:bg-[#E4E9DA] transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="min-h-[46px] px-7 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-sm font-bold shadow-md transition"
+                >
+                  {isNewDest
+                    ? 'Simpan Destinasi Baru'
+                    : 'Simpan Seluruh Perubahan'}
+                </button>
+              </div>
+            </div>
+          </form>
         )}
       </dialog>
 
