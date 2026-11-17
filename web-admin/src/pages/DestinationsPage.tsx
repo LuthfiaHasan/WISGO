@@ -747,7 +747,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
         aria-labelledby="destinations-table-caption"
         className="table-wrapper bg-white rounded-3xl border border-[#E4E9DA] shadow-sm"
       >
-        <table className="rancak-table text-left text-sm">
+        <table className="wisgo-table rancak-table text-left text-sm">
           <caption
             id="destinations-table-caption"
             className="p-4 lg:px-6 text-left font-bold text-xs uppercase tracking-wider text-[#234B24] bg-[#E4E9DA]/50 border-b border-[#E4E9DA]"

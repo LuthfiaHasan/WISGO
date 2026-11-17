@@ -58,8 +58,8 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   const hazardMsgId = useId();
   const hazardDetourId = useId();
 
-  // Active Tab
-  const [activeTab, setActiveTab] = useState<'pungli' | 'sos'>('pungli');
+  // Active Tab: 3 Operational Panels
+  const [activeTab, setActiveTab] = useState<'pungli' | 'sos' | 'hazard'>('pungli');
 
   // Data States
   const [pungliReports, setPungliReports] = useState<PungliReport[]>([]);
@@ -361,6 +361,22 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                   {activeSosCount} Sinyal
                 </span>
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('hazard')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeTab === 'hazard'
+                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
+                  : 'text-[#4A5248] hover:text-[#1B1F1A]'
+              }`}
+            >
+              <AlertTriangle className="w-4 h-4 text-[#CA8A04]" aria-hidden="true" />
+              <span>Peringatan Jalur Rawan</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24] font-bold">
+                {hazardAlerts.length} Jalur
+              </span>
             </button>
           </div>
         </div>
@@ -801,37 +817,71 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               })}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* TAB 3: TRIGGER PERINGATAN JALUR RAWAN / BENCANA (LIVE HAZARD ALERT)  */}
+      {/* ==================================================================== */}
+      {activeTab === 'hazard' && (
+        <div className="space-y-6">
+          {/* Banner Peringatan Siaga Darurat */}
+          <div className="bg-[#234B24] text-[#F6F3EC] rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#1E9E5A] flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0 shadow-md">
+                <AlertTriangle className="w-6 h-6 animate-pulse" aria-hidden="true" />
+              </div>
+              <div>
+                <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/15 text-[#A7F3D0]">
+                  SISTEM BROADCAST KESELAMATAN JALUR SUMBAR (LIVE)
+                </span>
+                <h2 className="text-lg lg:text-xl font-extrabold mt-1.5 text-white">
+                  Pusat Kendali 5 Jalur Rawan Bencana &amp; Titik Ekstrem
+                </h2>
+                <p className="text-xs text-[#E4E9DA]/90 mt-1 max-w-2xl leading-relaxed">
+                  Setiap perubahan status jalur di bawah ini langsung disiarkan secara *real-time* ke aplikasi mobile wisatawan, notifikasi offline pocket, dan plang Smart QR destinasi terkait.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-bold text-[#A7F3D0] flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#1E9E5A] animate-ping" />
+                Live Broadcast Aktif
+              </span>
+            </div>
+          </div>
 
           {/* Panel Kontrol Status Jalur Rawan Bencana (Hazard Zone Alerts) */}
           <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E4E9DA] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
+                <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
                   <Navigation className="w-5 h-5 text-[#234B24]" aria-hidden="true" />
-                  <span>Panel Kontrol Status Jalur Rawan Ekstrem Sumbar</span>
-                </h2>
+                  <span>Daftar 5 Jalur Ekstrem Rawan Longsor &amp; Bencana Sumbar</span>
+                </h3>
                 <p className="text-xs text-[#4A5248]">
-                  Pembaruan peringatan dini jalur Sitinjau Lauik, Lembah Anai, Kelok 9, dan Malalak yang disiarkan langsung ke navigasi mobile wisatawan.
+                  Pembaruan status Sitinjau Lauik, Lembah Anai, Kelok 9, Malalak, dan Kelok 44 beserta rute alternatif resmi.
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {hazardAlerts.map((hazard) => {
                 const meta = getHazardSeverityMeta(hazard.severity);
 
                 return (
                   <div
                     key={hazard.id}
-                    className="p-5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex flex-col justify-between space-y-3"
+                    className="p-5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex flex-col justify-between space-y-3 hover:shadow-md transition"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-sm font-extrabold text-[#1B1F1A]">
+                        <h4 className="text-sm font-extrabold text-[#1B1F1A] leading-snug">
                           {hazard.location}
-                        </h3>
+                        </h4>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-extrabold border flex items-center gap-1.5 ${meta.badge}`}
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border shrink-0 flex items-center gap-1.5 ${meta.badge}`}
                         >
                           <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
                           <span>{hazard.severity}</span>
@@ -864,7 +914,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                           setHazardMessage(hazard.message);
                           setHazardDetour(hazard.detour_route);
                         }}
-                        className="min-h-[38px] px-3.5 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-[#234B24] font-bold text-xs border border-[#CFD8BE] shadow-xs"
+                        className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-xs shadow-xs transition"
                       >
                         Ubah Status Jalur
                       </button>

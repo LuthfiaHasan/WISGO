@@ -1,5 +1,6 @@
 // ============================================================================
-// KONTRAK JSON & INTERFACE TYPESCRIPT RESMI RANCAK.IN SUMATERA BARAT
+// KONTRAK JSON & INTERFACE TYPESCRIPT RESMI WISGO SUMATERA BARAT
+// Ekosistem Wisata Pintar Sumatera Barat — Dinas Pariwisata Prov. Sumbar
 // Sinkron dengan backend/internal/models/models.go, be1_core & be2_group
 // Arsitektur: Single Admin (Pusat Komando Terpadu Dispar • Pungli • Siaga SAR)
 // ============================================================================
@@ -402,3 +403,57 @@ export interface BookingEscrow {
   qr_code_ticket: string;
   created_at: string;
 }
+
+// ============================================================================
+// ANALITIK EKSEKUTIF, HEATMAP 19 KAB/KOTA & KURASI KOMUNITAS (MINGGU 3 & 4)
+// ============================================================================
+
+export type RegencyCrowdStatus = 'Sepi' | 'Sedang' | 'Ramai' | 'Overload';
+
+export interface RegencyHeatmapData {
+  id: string;
+  name: string;           // Nama 19 Kab/Kota Sumbar
+  code: string;
+  crowd_status: RegencyCrowdStatus;
+  visitor_count_week: number;
+  domestic_pct: number;
+  foreign_myr_pct: number;
+  top_destination: string;
+  escrow_circulation: number; // IDR perputaran dana mitra di kab/kota ini
+}
+
+export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface CommunityHiddenGemSubmission {
+  id: string;
+  title: string;
+  pokdarwis_name: string;
+  city_regency: string;
+  category: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  is_masked: boolean;     // Sakelar Masking Koordinat Lokasi Sensitif (Wajib Pemandu Pokdarwis)
+  status: ModerationStatus;
+  submitted_at: string;
+  reviewer_notes?: string;
+}
+
+export interface DigitalPassportMetrics {
+  total_gps_checkins_verified: number; // Check-in GPS radius <= 200m
+  total_governor_certificates_issued: number; // Sertifikat Digital Gubernur diunduh
+  top_nagari_escrow: { nagari: string; amount: number }[];
+  escrow_by_category: { category: PartnerCategoryType; total_amount: number; count: number }[];
+}
+
+export interface WhatsAppSimulationMessage {
+  id: string;
+  sender: 'system' | 'tourist' | 'mitra';
+  message: string;
+  timestamp: string;
+  booking_code?: string;
+  qr_code_ticket?: string;
+  amount?: number;
+  service_date?: string;
+}
+

@@ -101,7 +101,7 @@ export const SmartQRPlacardView: React.FC<SmartQRPlacardProps> = ({
           <QrCode className="w-5 h-5 text-[#1E9E5A]" aria-hidden="true" />
           <div>
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#A7F3D0]">
-              Pratinjau Plang Fisik Resmi Rancak.in
+              Pratinjau Plang Fisik Resmi WISGO Sumbar
             </span>
             <p className="text-xs text-[#E4E9DA]/80">
               Siap cetak untuk dipasang di loket tiket, gerbang kawasan, dan
@@ -206,7 +206,7 @@ export const SmartQRPlacardView: React.FC<SmartQRPlacardProps> = ({
           </div>
 
           <div className="mt-3 px-3.5 py-1.5 rounded-full bg-[#E4E9DA] text-[#234B24] font-mono text-xs font-extrabold">
-            rancak.in{qrPath}
+            wisgo.sumbarprov.go.id{qrPath}
           </div>
 
           <p className="mt-2.5 text-[11px] text-[#4A5248] leading-relaxed">

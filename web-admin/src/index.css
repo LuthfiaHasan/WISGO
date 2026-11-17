@@ -79,7 +79,8 @@ dialog::backdrop {
   container-type: inline-size;
 }
 
-.rancak-table {
+.rancak-table,
+.wisgo-table {
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;

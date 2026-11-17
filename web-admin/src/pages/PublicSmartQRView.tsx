@@ -30,15 +30,22 @@ import { ImageDropzone } from '../components/ImageDropzone';
 
 interface PublicSmartQRViewProps {
   destination: Destination;
+  allDestinations?: Destination[];
   onBackToAdmin?: () => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
 }
 
 export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
   destination,
+  allDestinations,
   onBackToAdmin,
   showToast,
 }) => {
+  const [currentDest, setCurrentDest] = useState<Destination>(destination);
+
+  React.useEffect(() => {
+    setCurrentDest(destination);
+  }, [destination]);
   const reporterNameId = useId();
   const reporterPhoneId = useId();
   const reporterCatId = useId();
@@ -82,15 +89,15 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
     setSubmittingReport(true);
     try {
       // Find official amount matching the category if possible
-      const matchedTariff = destination.tariffs?.find((t) =>
+      const matchedTariff = currentDest.tariffs?.find((t) =>
         t.category?.toLowerCase().includes(reportCategory.toLowerCase().slice(0, 4))
       );
       const officialAmt = matchedTariff ? matchedTariff.price : 5000;
 
       await submitPungliReport({
-        destination_id: destination.id,
-        destination_name: destination.name,
-        kab_kota: destination.city_regency,
+        destination_id: currentDest.id,
+        destination_name: currentDest.name,
+        kab_kota: currentDest.city_regency,
         reporter_name: reportName.trim(),
         reporter_phone: reportPhone.trim(),
         category: reportCategory,
@@ -100,8 +107,8 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
         photo_url:
           reportPhoto ||
           'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80',
-        lat: destination.latitude,
-        lng: destination.longitude,
+        lat: currentDest.latitude,
+        lng: currentDest.longitude,
         status: 'Laporan Baru',
       });
 
@@ -130,12 +137,12 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
       await submitSosEmergency({
         tourist_name: sosName.trim(),
         tourist_phone: sosPhone.trim(),
-        destination_name: destination.name,
-        kab_kota: destination.city_regency,
-        lat: destination.latitude,
-        lng: destination.longitude,
+        destination_name: currentDest.name,
+        kab_kota: currentDest.city_regency,
+        lat: currentDest.latitude,
+        lng: currentDest.longitude,
         battery_level: 45,
-        signal_status: destination.is_blank_spot
+        signal_status: currentDest.is_blank_spot
           ? 'Satelit Mesh (Zero-Signal Seluler)'
           : '4G Aktif',
         medical_notes:
@@ -159,18 +166,44 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
     <div className="min-h-screen bg-[#F6F3EC] text-[#1B1F1A] flex flex-col items-center justify-start pb-12">
       {/* Top Banner Navigation (For Admin Preview Mode) */}
       {onBackToAdmin && (
-        <div className="w-full bg-[#234B24] text-[#F6F3EC] px-4 py-2.5 flex items-center justify-between shadow-sm sticky top-0 z-40">
-          <button
-            type="button"
-            onClick={onBackToAdmin}
-            className="flex items-center gap-1.5 text-xs font-bold text-[#A7F3D0] hover:text-white"
-          >
-            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-            <span>Kembali ke Pusat Komando Admin</span>
-          </button>
-          <span className="text-[11px] font-mono text-[#E4E9DA]/80">
-            Pratinjau Web Publik Smart QR: /qr/{destination.slug || 'destinasi'}
-          </span>
+        <div className="w-full bg-[#234B24] text-[#F6F3EC] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-sm sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onBackToAdmin}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#A7F3D0] hover:text-white"
+            >
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+              <span>Kembali ke Pusat Komando Admin</span>
+            </button>
+            <span className="text-[11px] font-mono text-[#E4E9DA]/80 hidden md:inline">
+              /qr/{currentDest.slug || 'destinasi'}
+            </span>
+          </div>
+
+          {/* Dynamic Destination Selector (All 20 Destinations) */}
+          {allDestinations && allDestinations.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label htmlFor="qr-dest-select" className="text-xs text-[#A7F3D0] font-bold whitespace-nowrap">
+                Pilih Destinasi (20 Lokasi):
+              </label>
+              <select
+                id="qr-dest-select"
+                value={currentDest.id}
+                onChange={(e) => {
+                  const found = allDestinations.find((d) => d.id === e.target.value);
+                  if (found) setCurrentDest(found);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-black/30 border border-white/20 text-xs font-bold text-[#F6F3EC] focus:outline-none focus:ring-2 focus:ring-[#1E9E5A]"
+              >
+                {allDestinations.map((d) => (
+                  <option key={d.id} value={d.id} className="bg-[#234B24] text-white">
+                    {d.name} ({d.city_regency})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       )}
 
@@ -181,28 +214,28 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
           <div className="flex items-center justify-between mb-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold text-[#A7F3D0]">
               <Building2 className="w-3 h-3 text-[#1E9E5A]" aria-hidden="true" />
-              <span>PEMPROV SUMATERA BARAT</span>
+              <span>PEMPROV SUMATERA BARAT · WISGO</span>
             </div>
             <span className="text-[10px] font-mono text-[#E4E9DA]/80 flex items-center gap-1">
               <QrCode className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
-              <span>Plang Smart QR Terverifikasi</span>
+              <span>Smart QR Terverifikasi</span>
             </span>
           </div>
 
           <h1 className="text-xl font-extrabold leading-tight tracking-tight">
-            {destination.name}
+            {currentDest.name}
           </h1>
           <p className="text-xs text-[#E4E9DA]/90 flex items-center gap-1 mt-1">
             <MapPin className="w-3.5 h-3.5 text-[#F26B4B] shrink-0" aria-hidden="true" />
-            <span>{destination.city_regency} · {destination.category}</span>
+            <span>{currentDest.city_regency} · {currentDest.category}</span>
           </p>
 
           {/* Barometer Badges */}
           <div className="mt-4 flex items-center gap-2">
             <span className="px-2.5 py-1 rounded-lg bg-black/20 text-[11px] font-bold text-white border border-white/10">
-              Tiket: {destination.ticket_price_summary || 'Resmi Perda'}
+              Tiket: {currentDest.ticket_price_summary || 'Resmi Perda'}
             </span>
-            {destination.is_blank_spot && (
+            {currentDest.is_blank_spot && (
               <span className="px-2.5 py-1 rounded-lg bg-[#F26B4B] text-[11px] font-bold text-white shadow-xs">
                 Kawasan Blank Spot
               </span>
@@ -213,13 +246,13 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
         {/* Gambar Destinasi */}
         <div className="w-full aspect-[16/9] bg-black/10 overflow-hidden relative">
           <img
-            src={destination.cover_image}
-            alt={destination.name}
+            src={currentDest.cover_image}
+            alt={currentDest.name}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
             <p className="text-xs text-white/95 line-clamp-2 leading-relaxed">
-              {destination.description}
+              {currentDest.description}
             </p>
           </div>
         </div>
@@ -291,8 +324,8 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
               </p>
 
               <div className="space-y-2.5">
-                {destination.tariffs && destination.tariffs.length > 0 ? (
-                  destination.tariffs.map((t) => (
+                {currentDest.tariffs && currentDest.tariffs.length > 0 ? (
+                  currentDest.tariffs.map((t) => (
                     <div
                       key={t.id}
                       className="p-3.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-start justify-between gap-2"
@@ -332,14 +365,14 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
               </div>
 
               {/* Edukasi Adat & Etika */}
-              {destination.tips && destination.tips.length > 0 && (
+              {currentDest.tips && currentDest.tips.length > 0 && (
                 <div className="p-4 rounded-2xl bg-[#E4E9DA]/80 border border-[#CFD8BE] space-y-2">
                   <div className="text-xs font-bold text-[#234B24] flex items-center gap-1.5">
                     <Info className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
                     <span>Tips Menjaga Tempat Ini (Etika &amp; Adat Minang)</span>
                   </div>
                   <ul className="text-xs text-[#1B1F1A] space-y-1.5 pl-4 list-disc">
-                    {destination.tips.map((tip) => (
+                    {currentDest.tips.map((tip) => (
                       <li
                         key={tip.id}
                         className={tip.is_important ? 'font-bold text-[#D95637]' : ''}
@@ -364,48 +397,48 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
                 Informasi objektif kondisi jalan, sinyal seluler, dan kebutuhan fisik sebelum menjelajah.
               </p>
 
-              {destination.medan_indicator ? (
+              {currentDest.medan_indicator ? (
                 <div className="space-y-2.5">
                   <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between text-xs">
                     <span className="font-bold text-[#4A5248]">Akses Kendaraan</span>
                     <span className="font-extrabold text-[#234B24]">
-                      {destination.medan_indicator.vehicle_access}
+                      {currentDest.medan_indicator.vehicle_access}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between text-xs">
                     <span className="font-bold text-[#4A5248]">Tingkat Trekking</span>
                     <span className="font-extrabold text-[#234B24]">
-                      {destination.medan_indicator.trekking_level}
+                      {currentDest.medan_indicator.trekking_level}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between text-xs">
                     <span className="font-bold text-[#4A5248]">Kualitas Sinyal Seluler</span>
                     <span
                       className={`font-extrabold ${
-                        destination.is_blank_spot
+                        currentDest.is_blank_spot
                           ? 'text-[#D95637]'
                           : 'text-[#234B24]'
                       }`}
                     >
-                      {destination.medan_indicator.cellular_signal}
+                      {currentDest.medan_indicator.cellular_signal}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between text-xs">
                     <span className="font-bold text-[#4A5248]">Fasilitas Resmi</span>
                     <span className="font-extrabold text-[#234B24]">
-                      {destination.medan_indicator.facilities}
+                      {currentDest.medan_indicator.facilities}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between text-xs">
                     <span className="font-bold text-[#4A5248]">Kebutuhan Pemandu Lokal</span>
                     <span className="font-extrabold text-[#234B24]">
-                      {destination.medan_indicator.guide_need}
+                      {currentDest.medan_indicator.guide_need}
                     </span>
                   </div>
 
-                  {destination.medan_indicator.readiness_notes && (
+                  {currentDest.medan_indicator.readiness_notes && (
                     <div className="p-3.5 rounded-xl bg-white border border-[#CFD8BE] text-xs text-[#4A5248] italic">
-                      &quot;{destination.medan_indicator.readiness_notes}&quot;
+                      &quot;{currentDest.medan_indicator.readiness_notes}&quot;
                     </div>
                   )}
                 </div>
@@ -602,7 +635,7 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
                       Titik Koordinat GPS Otomatis:{' '}
                     </span>
                     <span className="font-mono text-[#234B24] font-bold">
-                      {destination.latitude}, {destination.longitude}
+                      {currentDest.latitude}, {currentDest.longitude}
                     </span>
                   </div>
 
@@ -680,10 +713,10 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
         {/* Footer Identitas Resmi */}
         <footer className="p-4 bg-[#F6F3EC] border-t border-[#CFD8BE] text-center text-[10px] text-[#4A5248]">
           <p className="font-semibold text-[#234B24]">
-            Rancak.in — Dinas Pariwisata Provinsi Sumatera Barat
+            WISGO — Dinas Pariwisata Provinsi Sumatera Barat
           </p>
           <p className="mt-0.5">
-            Layanan Informasi Publik &amp; Siaga Wisatawan 19 Kab/Kota
+            Ekosistem Wisata Pintar &amp; Siaga Wisatawan 19 Kab/Kota
           </p>
         </footer>
       </main>

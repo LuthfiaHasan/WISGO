@@ -44,6 +44,8 @@ import { PartnersPage } from './pages/PartnersPage';
 import { PublicSmartQRView } from './pages/PublicSmartQRView';
 import { PublicGroupInviteView } from './pages/PublicGroupInviteView';
 import { SmartQRPlacardModal } from './components/SmartQRPlacardModal';
+import { WhatsAppBotSimulator } from './components/WhatsAppBotSimulator';
+import { ExecutiveAnalyticsPage } from './pages/ExecutiveAnalyticsPage';
 
 export const App: React.FC = () => {
   const [session, setSession] = useState<AdminAuthResponse | null>(() =>
@@ -81,6 +83,10 @@ export const App: React.FC = () => {
   const [partnerNavTargetId, setPartnerNavTargetId] = useState<string | null>(
     null
   );
+
+  // Layar Demo Terpadu (Split-Screen Showcase)
+  const [isShowcaseMode, setIsShowcaseMode] = useState<boolean>(false);
+  const [showcaseRightTab, setShowcaseRightTab] = useState<'wa' | 'qr'>('wa');
 
   const [loading, setLoading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
@@ -238,6 +244,7 @@ export const App: React.FC = () => {
     return (
       <PublicSmartQRView
         destination={previewTarget}
+        allDestinations={destinations}
         onBackToAdmin={() => setPublicPreviewMode(null)}
         showToast={showToast}
       />
@@ -247,7 +254,7 @@ export const App: React.FC = () => {
   if (publicPreviewMode === 'group') {
     return (
       <PublicGroupInviteView
-        groupCode="RANCAK-MINANG-88"
+        groupCode="WISGO-MINANG-88"
         onBackToAdmin={() => setPublicPreviewMode(null)}
         showToast={showToast}
       />
@@ -268,6 +275,96 @@ export const App: React.FC = () => {
     );
   }
 
+  const renderMainContent = () => {
+    switch (activeMenu) {
+      case 'destinations':
+        return (
+          <DestinationsPage
+            destinations={destinations}
+            backendOnline={backendOnline}
+            loading={loading}
+            onRefresh={() => loadSystemData(true)}
+            onSaveDestination={handleSaveDestination}
+            onDeleteDestination={handleDeleteDestination}
+            onOpenTariffManager={handleOpenTariffManager}
+            onOpenSmartQRModal={(dest) => setSmartQRModalDest(dest)}
+          />
+        );
+      case 'tariffs_qr':
+        return (
+          <TariffsAndQRPage
+            destinations={destinations}
+            selectedDestinationId={selectedTariffDestId}
+            onSelectDestinationId={setSelectedTariffDestId}
+            onSaveDestination={handleSaveDestination}
+          />
+        );
+      case 'cms_360':
+        return (
+          <div className="p-6 lg:p-8">
+            <Studio360Page
+              destinations={destinations}
+              onUpdateDestinations={setDestinations}
+              showToast={showToast}
+              initialDestId={studioNavTarget?.destId}
+              initialSceneId={studioNavTarget?.sceneId}
+              initialHighlightPinId={studioNavTarget?.pinId}
+              onNavigateToPartner={handleNavigateToPartner}
+            />
+          </div>
+        );
+      case 'command_center':
+      case 'saber_pungli':
+        return (
+          <div className="p-6 lg:p-8">
+            <CommandCenterPage
+              showToast={showToast}
+              onUpdateBadgeCount={(openPungli, openSos) => {
+                setOpenPungliCount(openPungli);
+                setOpenSosCount(openSos);
+              }}
+            />
+          </div>
+        );
+      case 'partners':
+        return (
+          <div className="p-6 lg:p-8">
+            <PartnersPage
+              partners={partners}
+              destinations={destinations}
+              onSavePartner={handleSavePartner}
+              onDeletePartner={handleDeletePartner}
+              onNavigateToStudio360={handleNavigateToStudio360}
+              initialSelectedPartnerId={partnerNavTargetId || undefined}
+              showToast={showToast}
+            />
+          </div>
+        );
+      case 'wa_simulator':
+        return (
+          <div className="p-6 lg:p-8">
+            <WhatsAppBotSimulator
+              partners={partners}
+              onPartnerUpdated={handleSavePartner}
+              showToast={showToast}
+            />
+          </div>
+        );
+      case 'dispar_analytics':
+        return (
+          <div className="p-6 lg:p-8">
+            <ExecutiveAnalyticsPage
+              destinations={destinations}
+              partners={partners}
+              showToast={showToast}
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F6F3EC] text-[#1B1F1A] flex flex-col lg:flex-row">
       <Sidebar
@@ -277,6 +374,7 @@ export const App: React.FC = () => {
         backendOnline={backendOnline}
         totalDestinations={destinations.length}
         totalTariffs={totalTariffsCount}
+        totalPartners={partners.length}
         openPungliCount={openPungliCount}
         openSosCount={openSosCount}
         onOpenPublicQR={() => {
@@ -286,16 +384,18 @@ export const App: React.FC = () => {
         onOpenGroupInvite={() => {
           setPublicPreviewMode('group');
         }}
+        isShowcaseMode={isShowcaseMode}
+        onToggleShowcaseMode={() => setIsShowcaseMode((prev) => !prev)}
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 min-w-0 overflow-x-hidden relative">
+      <main className="flex-1 min-w-0 overflow-x-hidden relative flex flex-col">
         {/* Notifikasi Toast Halus */}
         {toastMessage && (
           <div
             role="status"
             aria-live="polite"
-            className="no-print fixed bottom-6 right-6 z-40 max-w-md bg-[#234B24] text-[#F6F3EC] px-5 py-3.5 rounded-2xl shadow-xl border border-[#1E9E5A] flex items-center gap-3"
+            className="no-print fixed bottom-6 right-6 z-50 max-w-md bg-[#234B24] text-[#F6F3EC] px-5 py-3.5 rounded-2xl shadow-xl border border-[#1E9E5A] flex items-center gap-3"
           >
             <CheckCircle2
               className="w-5 h-5 text-[#1E9E5A] shrink-0"
@@ -315,170 +415,89 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* 1. Manajemen Destinasi & Medan */}
-        {activeMenu === 'destinations' && (
-          <DestinationsPage
-            destinations={destinations}
-            backendOnline={backendOnline}
-            loading={loading}
-            onRefresh={() => loadSystemData(true)}
-            onSaveDestination={handleSaveDestination}
-            onDeleteDestination={handleDeleteDestination}
-            onOpenTariffManager={handleOpenTariffManager}
-            onOpenSmartQRModal={(dest) => setSmartQRModalDest(dest)}
-          />
-        )}
-
-        {/* 2. Standar Tarif Perda & QR */}
-        {activeMenu === 'tariffs_qr' && (
-          <TariffsAndQRPage
-            destinations={destinations}
-            selectedDestinationId={selectedTariffDestId}
-            onSelectDestinationId={setSelectedTariffDestId}
-            onSaveDestination={handleSaveDestination}
-          />
-        )}
-
-        {/* 3. Studio Virtual 360° (FS1-M2-02) */}
-        {activeMenu === 'cms_360' && (
-          <div className="p-6 lg:p-8">
-            <Studio360Page
-              destinations={destinations}
-              onUpdateDestinations={setDestinations}
-              showToast={showToast}
-              initialDestId={studioNavTarget?.destId}
-              initialSceneId={studioNavTarget?.sceneId}
-              initialHighlightPinId={studioNavTarget?.pinId}
-              onNavigateToPartner={handleNavigateToPartner}
-            />
+        {/* Normal Mode vs Split-Screen Showcase Mode */}
+        {!isShowcaseMode ? (
+          <div className="flex-1">
+            {renderMainContent()}
           </div>
-        )}
-
-        {/* 4. Pusat Komando Pungli & SOS SAR (FS1-M2-03) */}
-        {(activeMenu === 'command_center' || activeMenu === 'saber_pungli') && (
-          <div className="p-6 lg:p-8">
-            <CommandCenterPage
-              showToast={showToast}
-              onUpdateBadgeCount={(openPungli, openSos) => {
-                setOpenPungliCount(openPungli);
-                setOpenSosCount(openSos);
-              }}
-            />
-          </div>
-        )}
-
-        {/* 5. Monitoring Mitra & Escrow (Manajemen Lengkap & Integrasi 360°) */}
-        {activeMenu === 'wa_simulator' && (
-          <div className="p-6 lg:p-8">
-            <PartnersPage
-              partners={partners}
-              destinations={destinations}
-              onSavePartner={handleSavePartner}
-              onDeletePartner={handleDeletePartner}
-              onNavigateToStudio360={handleNavigateToStudio360}
-              initialSelectedPartnerId={partnerNavTargetId || undefined}
-              showToast={showToast}
-            />
-          </div>
-        )}
-
-        {/* 6. Analitik Eksekutif Dispar */}
-        {activeMenu === 'dispar_analytics' && (
-          <div className="p-6 lg:p-8 space-y-6">
-            <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0">
-                  <BarChart3 className="w-6 h-6" aria-hidden="true" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                      Analitik Eksekutif Dinas Pariwisata Sumbar
-                    </h1>
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                      19 Kabupaten/Kota
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#4A5248] mt-1">
-                    Pemantauan persebaran {destinations.length} destinasi unggulan, kepatuhan tarif resmi Perda, zona blank spot, dan dampak ekonomi UMKM Nagari.
-                  </p>
-                </div>
+        ) : (
+          <div className="flex-1 flex flex-col xl:flex-row">
+            {/* Sisi Kiri: Web Admin Utama */}
+            <div className="flex-1 min-w-0 border-r border-[#CFD8BE]">
+              <div className="bg-[#234B24] text-white px-5 py-2.5 text-xs font-bold flex items-center justify-between no-print">
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#1E9E5A] animate-ping" />
+                  <span>SHOWCASE PANEL KIRI: Portal Pusat Komando Web Admin WISGO</span>
+                </span>
+                <span className="text-[10px] text-[#A7F3D0] uppercase font-mono">
+                  Mode Penguji Terpadu
+                </span>
               </div>
-            </header>
-
-            {/* Statistik Eksekutif */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
-                <span className="text-xs font-bold text-[#4A5248]">Total Destinasi Terdata</span>
-                <div className="mt-2 text-3xl font-extrabold text-[#234B24]">
-                  {destinations.length}
-                </div>
-                <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
-                  100% Terpetakan 5 Medan
-                </p>
-              </div>
-
-              <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
-                <span className="text-xs font-bold text-[#4A5248]">Item Tarif Resmi Perda</span>
-                <div className="mt-2 text-3xl font-extrabold text-[#234B24]">
-                  {totalTariffsCount}
-                </div>
-                <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
-                  Tercakup Fair-Price Barometer
-                </p>
-              </div>
-
-              <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
-                <span className="text-xs font-bold text-[#4A5248]">Kawasan Blank Spot</span>
-                <div className="mt-2 text-3xl font-extrabold text-[#F26B4B]">
-                  {destinations.filter((d) => d.is_blank_spot).length}
-                </div>
-                <p className="text-[11px] text-[#4A5248] mt-1">
-                  Wajib Offline Pocket
-                </p>
-              </div>
-
-              <div className="bg-white rounded-[20px] p-5 shadow-sm border border-[#E4E9DA]">
-                <span className="text-xs font-bold text-[#4A5248]">Mitra UMKM Nagari</span>
-                <div className="mt-2 text-3xl font-extrabold text-[#234B24]">
-                  {partners.length}
-                </div>
-                <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
-                  100% Terverifikasi Nagari
-                </p>
-              </div>
+              {renderMainContent()}
             </div>
 
-            {/* Quick Actions Card */}
-            <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E4E9DA] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                  Pratinjau Pengalaman Wisatawan di Lapangan
-                </h3>
-                <p className="text-xs text-[#4A5248] mt-0.5">
-                  Buka tampilan web publik yang diakses turis saat memindai Plang Smart QR atau membuka tautan rombongan.
-                </p>
+            {/* Sisi Kanan: Showcase Live Device (Wisatawan / Bot WA Mitra) */}
+            <div className="w-full xl:w-[460px] 2xl:w-[500px] shrink-0 bg-[#EFEAE2] flex flex-col border-t xl:border-t-0 xl:border-l border-[#CFD8BE]">
+              {/* Header Showcase Kanan */}
+              <div className="bg-[#1B3B1C] text-[#F6F3EC] px-4 py-3 flex items-center justify-between shrink-0 shadow-sm no-print">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-[#A7F3D0]" />
+                  <span className="text-xs font-bold">Layar HP Pengguna (Live)</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowcaseRightTab('wa')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                      showcaseRightTab === 'wa'
+                        ? 'bg-[#128C7E] text-white shadow-xs'
+                        : 'bg-white/10 hover:bg-white/20 text-[#E4E9DA]'
+                    }`}
+                  >
+                    Bot WA Mitra
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowcaseRightTab('qr')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                      showcaseRightTab === 'qr'
+                        ? 'bg-[#F26B4B] text-white shadow-xs'
+                        : 'bg-white/10 hover:bg-white/20 text-[#E4E9DA]'
+                    }`}
+                  >
+                    Smart QR Wisatawan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsShowcaseMode(false)}
+                    className="p-1 rounded-lg hover:bg-white/20 text-white ml-1"
+                    title="Tutup Mode Showcase"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPublicPreviewDest(destinations[0]);
-                    setPublicPreviewMode('qr');
-                  }}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 transition"
-                >
-                  <QrCode className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-                  <span>Pratinjau Web Smart QR</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPublicPreviewMode('group')}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-[#E4E9DA] hover:bg-[#D5DFC9] text-[#234B24] text-xs font-bold flex items-center gap-2 transition"
-                >
-                  <Users className="w-4 h-4" aria-hidden="true" />
-                  <span>Pratinjau Web Group Invite</span>
-                </button>
+
+              {/* Konten Showcase Kanan */}
+              <div className="flex-1 overflow-y-auto p-4 flex justify-center">
+                {showcaseRightTab === 'wa' ? (
+                  <div className="w-full">
+                    <WhatsAppBotSimulator
+                      partners={partners}
+                      onPartnerUpdated={handleSavePartner}
+                      showToast={showToast}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full">
+                    <PublicSmartQRView
+                      destination={destinations[0] || MOCK_20_DESTINATIONS[0]}
+                      allDestinations={destinations}
+                      showToast={showToast}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

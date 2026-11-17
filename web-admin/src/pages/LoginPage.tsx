@@ -24,7 +24,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   backendOnline,
 }) => {
   const [email, setEmail] = useState('admin.komando@sumbarprov.go.id');
-  const [password, setPassword] = useState('KomandoRancak2026');
+  const [password, setPassword] = useState('KomandoWISGO2026');
   const [showPassword, setShowPassword] = useState(false);
 
   const [emailTouched, setEmailTouched] = useState(false);
@@ -53,7 +53,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
   const handleQuickAuthorityAccess = async () => {
     const targetEmail = 'admin.komando@sumbarprov.go.id';
-    const targetPass = 'KomandoRancak2026';
+    const targetPass = 'KomandoWISGO2026';
     setEmail(targetEmail);
     setPassword(targetPass);
     setEmailError('');
@@ -122,7 +122,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           <h1 className="mt-6 text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
-            Pusat Komando Terpadu Rancak.in
+            Pusat Komando Terpadu WISGO
           </h1>
           <p className="mt-4 text-sm lg:text-base text-[#E4E9DA]/90 leading-relaxed">
             Portal otoritas terpadu Dinas Pariwisata Provinsi Sumatera Barat:
@@ -164,7 +164,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </div>
 
         <p className="text-xs text-[#E4E9DA]/75">
-          &copy; 2026 Dinas Pariwisata Provinsi Sumatera Barat · Portal Pusat Komando Resmi Rancak.in
+          &copy; 2026 Dinas Pariwisata Provinsi Sumatera Barat · Portal Pusat Komando Resmi WISGO Sumbar
         </p>
       </section>
 

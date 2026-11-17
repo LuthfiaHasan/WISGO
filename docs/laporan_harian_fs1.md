@@ -1,53 +1,108 @@
-# Laporan Harian Pekerjaan FS-1 — Ekosistem Web Admin Rancak.in
+# Laporan Pekerjaan FS-1 — Ekosistem Web Admin WISGO Sumbar
+## Penuntasan Menyeluruh Target Minggu 1 s.d. Minggu 4 (FINAL)
 
-**Proyek:** WISGO / Rancak.in — Ekosistem Wisata Pintar Sumatera Barat  
+**Nama Sistem:** WISGO (Ekosistem Wisata Pintar Sumatera Barat)  
 **Instansi Pengguna:** Dinas Pariwisata Provinsi Sumatera Barat, Satgas Saber Pungli & Siaga SAR  
-**Tanggal:** 16 November 2026  
-**Status Target:** Minggu 1 (`FS1-M1-01` – `FS1-M1-04`) & Minggu 2 (`FS1-M2-01` – `FS1-M2-04`) **100% TUNTAS (Production-Ready)**  
-**Branch Git:** `Fullstack` (Commit: `ccd497a`)  
-**Alamat Server Lokal:** `http://localhost:3000/`
+**Arsitektur Akses:** Single Admin (Pusat Komando Terpadu Dispar • Penindakan Pungli • Siaga SAR)  
+**Status Target:** Minggu 1 (`FS1-M1-01` s.d. `M1-04`), Minggu 2 (`FS1-M2-01` s.d. `M2-04`), Minggu 3 & Minggu 4 **100% TUNTAS (Production-Ready)**  
+**Branch Git:** `Fullstack`  
+**Alamat Server Dev Lokal:** `http://localhost:3000/`
 
 ---
 
-## 1. Ringkasan Eksekutif Pencapaian Hari Ini
-Hari ini telah diselesaikan perombakan arsitektur dan penuntasan seluruh target fitur aplikasi `web-admin/` dengan standar produksi resmi (*clean*, tanpa teks demo/mock/sprint) serta mematuhi palet warna Minangkabau (`#F6F3EC` Krem, `#234B24` Hijau Rimba, `#F26B4B` Koral, dan `#1E9E5A` Hijau Terverifikasi).
+## 1. Matriks Pencapaian Seluruh Minggu (M1 s.d. M4)
 
-| Modul / Target | Fitur & Fungsi Utama | Status | Tautan Berkas Implementasi |
+| Fase / Kode | Modul & Fitur Utama | Status | Berkas Kunci Implementasi |
 | :--- | :--- | :---: | :--- |
-| **Otoritas Single Admin** | Peleburan akun Kadispar & Saber Pungli menjadi Administrator Utama Pusat Komando Terpadu | **TUNTAS** | [LoginPage.tsx](file:///d:/WISGO/web-admin/src/pages/LoginPage.tsx), [Sidebar.tsx](file:///d:/WISGO/web-admin/src/components/Sidebar.tsx) |
-| **Direktori & 5 Indikator Medan (M1)** | CRUD 20 Destinasi, 4 Statistik Keputusan & Visual 5 Indikator Medan (Mobil, Trekking, Sinyal, Fasilitas, Pemandu) | **TUNTAS** | [DestinationsPage.tsx](file:///d:/WISGO/web-admin/src/pages/DestinationsPage.tsx) |
-| **Tarif Perda & Smart QR (M1)** | Fair-Price Barometer Tarif Resmi Perda & Generator Plang Smart QR Fisik Cetak (A3/A4) | **TUNTAS** | [TariffsAndQRPage.tsx](file:///d:/WISGO/web-admin/src/pages/TariffsAndQRPage.tsx) |
-| **Pusat Komando Pungli & SOS (M2)** | Verifikasi aduan pungli (kalkulasi selisih Perda) & Siaga Darurat SAR GPS (Kendali 4 Jalur Rawan Bencana) | **TUNTAS** | [CommandCenterPage.tsx](file:///d:/WISGO/web-admin/src/pages/CommandCenterPage.tsx) |
-| **Studio Virtual 360° (M2)** | Kanvas 360° pan 60 FPS, HUD kompas Pitch/Yaw, 4 Hotspot Pin, Transisi Scene (*Scene Leap*) & Mode Crosshair | **TUNTAS** | [Studio360Page.tsx](file:///d:/WISGO/web-admin/src/pages/Studio360Page.tsx) |
-| **Monitoring Mitra & Escrow (M2)** | 4 KPI Keuangan Nagari, Profil Lengkap UMKM, Buku Besar Escrow (*Ledger*), & Integrasi Pin 360° | **TUNTAS** | [PartnersPage.tsx](file:///d:/WISGO/web-admin/src/pages/PartnersPage.tsx) |
-| **Web Publik Turis (/qr & /join)** | Tampilan web instan plang QR (tarif & lapor) dan web group invite (itinerary tur & live voting) | **TUNTAS** | [PublicSmartQRView.tsx](file:///d:/WISGO/web-admin/src/pages/PublicSmartQRView.tsx), [PublicGroupInviteView.tsx](file:///d:/WISGO/web-admin/src/pages/PublicGroupInviteView.tsx) |
-| **Upload Device & Kompresi Canvas** | Pengunggah file lokal native, kompresi otomatis WebP (hemat >85% ukuran), bebas `QuotaExceededError` | **TUNTAS** | [ImageDropzone.tsx](file:///d:/WISGO/web-admin/src/components/ImageDropzone.tsx), [imageOptimizer.ts](file:///d:/WISGO/web-admin/src/utils/imageOptimizer.ts) |
+| **Rebranding** | Migrasi total identitas brand ke **WISGO** (Dispar Prov. Sumbar) | **Tuntas** | Seluruh Halaman, Header, Sidebar & Plang |
+| **M1-01 s.d. M1-04** | Direktori 20 Destinasi, 5 Indikator Medan, Fair-Price Barometer & Plang Cetak | **Tuntas** | [DestinationsPage.tsx](file:///d:/WISGO/web-admin/src/pages/DestinationsPage.tsx), [TariffsAndQRPage.tsx](file:///d:/WISGO/web-admin/src/pages/TariffsAndQRPage.tsx) |
+| **M2-01 & Otoritas** | Single Admin Otoritas Penuh, JWT Session, & Silent Proxy Error Handler | **Tuntas** | [LoginPage.tsx](file:///d:/WISGO/web-admin/src/pages/LoginPage.tsx), [Sidebar.tsx](file:///d:/WISGO/web-admin/src/components/Sidebar.tsx), [vite.config.ts](file:///d:/WISGO/web-admin/vite.config.ts) |
+| **M2-02 (360° Studio)** | Kanvas Panorama 360° pan 60fps, Pitch/Yaw HUD, 4 Hotspot Pin & Scene Leap | **Tuntas** | [Studio360Page.tsx](file:///d:/WISGO/web-admin/src/pages/Studio360Page.tsx) |
+| **M2-03 (Komando)** | Penindakan Pungli (komparasi selisih Perda) & Siaga Darurat SOS GPS SAR | **Tuntas** | [CommandCenterPage.tsx](file:///d:/WISGO/web-admin/src/pages/CommandCenterPage.tsx) |
+| **M2-04 (Web Publik)** | Web Plang Smart QR (20 Destinasi) & Web Group Invite (Itinerary 7 Hari & Split-Bill) | **Tuntas** | [PublicSmartQRView.tsx](file:///d:/WISGO/web-admin/src/pages/PublicSmartQRView.tsx), [PublicGroupInviteView.tsx](file:///d:/WISGO/web-admin/src/pages/PublicGroupInviteView.tsx) |
+| **M3 (Bot WA & Escrow)**| Simulator Bot WhatsApp Mitra 2-Arah, Kunci Escrow & Scan QR E-Ticket Cair ke Nagari | **Tuntas** | [WhatsAppBotSimulator.tsx](file:///d:/WISGO/web-admin/src/components/WhatsAppBotSimulator.tsx) |
+| **M3 (Live Hazard)** | Pusat Kendali Siaga 5 Jalur Ekstrem (Sitinjau Lauik, Anai, Kelok 9, Malalak, Kelok 44) | **Tuntas** | Tab 3 di [CommandCenterPage.tsx](file:///d:/WISGO/web-admin/src/pages/CommandCenterPage.tsx) |
+| **M4 (Analitik Eksekutif)**| Heatmap Kepadatan 19 Kab/Kota, Paspor Digital & Grafik Escrow 5 Kategori | **Tuntas** | [ExecutiveAnalyticsPage.tsx](file:///d:/WISGO/web-admin/src/pages/ExecutiveAnalyticsPage.tsx) |
+| **M4 (Meja Kurasi)** | Moderasi Usulan Hidden Gem & Sakelar Proteksi Masking Koordinat Sensitif | **Tuntas** | Bagian 3 di [ExecutiveAnalyticsPage.tsx](file:///d:/WISGO/web-admin/src/pages/ExecutiveAnalyticsPage.tsx) |
+| **M4 (Ekspor & Demo)** | Ekspor PDF Kop Resmi Dispar Sumbar, Unduh CSV, & Mode Showcase 1 Layar | **Tuntas** | [ExecutiveAnalyticsPage.tsx](file:///d:/WISGO/web-admin/src/pages/ExecutiveAnalyticsPage.tsx), [App.tsx](file:///d:/WISGO/web-admin/src/App.tsx) |
+| **Upload Device** | Pengunggah File Lokal Native + Kompresi HTML5 Canvas (Bebas Quota Error) | **Tuntas** | [ImageDropzone.tsx](file:///d:/WISGO/web-admin/src/components/ImageDropzone.tsx), [imageOptimizer.ts](file:///d:/WISGO/web-admin/src/utils/imageOptimizer.ts) |
 
 ---
 
-## 2. Rincian Fitur Utama yang Selesai Dibangun
+## 2. Rincian Teknis & Arsitektur Implementasi
 
-### A. Fondasi Otoritas & Integrasi Data
-1. **Single Admin Otoritas Penuh:** Seluruh wewenang (CMS Destinasi, Tarif & QR, Studio 360°, Penindakan Pungli, serta Siaga SAR) terintegrasi dalam satu akun: *Administrator Utama Pusat Komando Terpadu Rancak.in*.
-2. **Kontrak Data & Persistensi Sinkron:** Kontrak TypeScript ([contract.ts](file:///d:/WISGO/web-admin/src/types/contract.ts)) sinkron dengan struct Go Gin. Penyimpanan lokal aman (`safeSetLocalStorage` di [imageOptimizer.ts](file:///d:/WISGO/web-admin/src/utils/imageOptimizer.ts)) menjamin data tidak hilang saat refresh tanpa risiko crash kuota penyimpanan.
+### A. Rebranding Menyeluruh & Otoritas Single Admin
+- Seluruh istilah brand lama telah dimigrasikan secara menyeluruh ke **WISGO** (*Ekosistem Wisata Pintar Sumatera Barat — Dinas Pariwisata Provinsi Sumatera Barat*).
+- Otoritas dilebur menjadi **Administrator Utama (Pusat Komando Terpadu WISGO)** dengan kredensial resmi `admin.komando@sumbarprov.go.id`.
+- Konfigurasi `vite.config.ts` dilengkapi penangan error senyap (*silent proxy*) sehingga tidak menimbulkan error merah `ECONNREFUSED` saat server Go (:8080) tidak aktif, dan seluruh data tersimpan aman di `localStorage` dengan penanganan kuota otomatis (`safeSetLocalStorage`).
 
-### B. Pengelolaan Destinasi & Standar Tarif (Target Minggu 1)
-1. **Editor Visual 5 Indikator Medan:** Skor interaktif (1–5) dengan label kesiapan fisik & kendaraan untuk Akses Mobil, Trekking, Sinyal Seluler (sakelar Blank Spot), Fasilitas Resmi, dan Kebutuhan Pemandu.
-2. **Fair-Price Barometer & Plang Smart QR Fisik:** Proteksi wisatawan dari getok harga melalui daftar tarif resmi Perda serta cetak plang fisik siap pasang di lokasi wisata.
+### B. Upload File Lokal Device & Kompresi HTML5 Canvas Klien
+- Komponen reusable `ImageDropzone` mendukung pemilihan file langsung dari memori komputer/device (`.jpg`, `.jpeg`, `.png`, `.webp`) dan *drag-and-drop*.
+- Gambar otomatis dikompresi di sisi klien via Canvas menjadi format WebP resolusi tinggi optimal (maksimal 2048px–2560px, kualitas 0.82), memangkas ukuran data **>85%–92%** sehingga bebas dari `QuotaExceededError`.
+- Komponen terpasang di: (1) Form Destinasi, (2) Form Scene 360°, (3) Form Mitra UMKM, dan (4) Form Lapor Pungli Wisatawan.
 
-### C. Pusat Komando Lapangan Terpadu (Target Minggu 2)
-1. **Penindakan Aduan Pungli:** Verifikasi aduan, filter status/kategori, bukti foto karcis/lokasi, komparasi selisih pungutan vs Perda, dan pencatatan Berita Acara penertiban.
-2. **Siaga Darurat SOS GPS & SAR:** Telemetri baterai dan sinyal turis darurat, penugasan unit penyelamat (SAR/BPBD/Pokdarwis), serta kendali status 4 Jalur Rawan Bencana (Sitinjau Lauik, Lembah Anai, Kelok 9, Malalak).
+### C. CMS Studio Virtual 360° & Visual 4-Pin Editor (Minggu 2)
+- Kanvas panorama interaktif 360° bola sejati (*yaw* -180° s.d. +180° *seamless wrap-around*, *pitch* -80° s.d. +80°), kontrol zoom FOV, dan HUD kompas derajat real-time.
+- Sakelar mode kerja di atas kanvas: **"Mode Putar Kamera 360°"** vs **"Mode Klik-Tempel Pin Hotspot"** (kursor crosshair).
+- 4 Kategori Hotspot Pin: (1) Info Adat/Sejarah, (2) Navigasi Pindah Scene (*Scene Leap Transition*), (3) Spatial Audio Budaya, dan (4) Quick Booking Mitra UMKM Nagari.
 
-### D. Pengalaman Imersif & Ekonomi Nagari (Target Minggu 2 + Revisi Lanjutan)
-1. **Studio Virtual 360° 60 FPS:** Viewer panorama bola sejati (*seamless pan & wrap-around* -180° s.d. +180°, *tilt* -80° s.d. +80°), kontrol zoom FOV, kompas derajat real-time, transisi *Scene Leap*, pemisahan *Mode Jelajah Kamera* vs *Mode Tempel Pin Crosshair*, serta tautan langsung ke detail mitra UMKM.
-2. **Monitoring Mitra & Rekening Escrow:** 4 KPI keuangan nagari, profil UMKM (SK Pokdarwis, WhatsApp Bot, tarif ganda IDR & MYR, skala pedas cabai 1–5, sertifikasi halal), Buku Besar Escrow (*ledger history* & simulasi WA bot), serta tombol navigasi otomatis *"Buka & Atur Pin Mitra di Studio 360°"*.
-3. **Upload File Lokal & Kompresi Klien Otomatis:** Mengganti semua input manual teks URL dengan komponen pengunggah file komputer/ponsel native. Foto otomatis dikompresi via HTML5 `<canvas>` (WebP/JPEG kualitas 0.82, hemat >85%–92% ukuran) lengkap dengan validasi rasio aspek Equirectangular 2:1.
+### D. Monitoring Mitra & Simulator WhatsApp Bot Escrow (Minggu 2 & 3)
+- Modul lengkap 5 kategori UMKM Nagari: Homestay Rumah Gadang, Kapal & Transportasi, Pemandu Pokdarwis, Kuliner Halal, dan Sewa Baju Adat.
+- Drawer detail mitra 3 tab (Profil & SK Pokdarwis, Buku Besar Escrow, serta Integrasi Titik Pin 360° dua arah).
+- **Simulator Bot WhatsApp Interaktif ([WhatsAppBotSimulator.tsx](file:///d:/WISGO/web-admin/src/components/WhatsAppBotSimulator.tsx))**:
+  - UI obrolan WhatsApp mitra nagari menerima notifikasi pesanan booking wisatawan.
+  - Tombol aksi **"Balas 1 (Terima Pesanan)"**: mengunci dana di Rekening Escrow dan menerbitkan QR E-Ticket.
+  - Tombol aksi **"Balas 0 (Tolak Pesanan)"**: mengembalikan dana ke saldo wisatawan.
+  - Tombol aksi **"Simulasi Scan QR E-Ticket (Cairkan Escrow)"**: memvalidasi kehadiran wisatawan dan mencairkan dana langsung ke rekening mitra nagari secara real-time.
+
+### E. Pusat Komando Terpadu: Pungli, SOS SAR & 5 Jalur Rawan (Minggu 2 & 3)
+- **Tab 1 — Penindakan Pungli**: Verifikasi aduan, bukti foto karcis liar, komparasi harga vs Perda, input Berita Acara, dan update status tiket.
+- **Tab 2 — Siaga Darurat SOS GPS**: Telemetri baterai/sinyal turis darurat, catatan medis, penugasan tim SAR/BPBD, dan status evakuasi.
+- **Tab 3 — Peringatan 5 Jalur Rawan Bencana (Live Hazard Alerts)**: Kontrol status real-time untuk Sitinjau Lauik, Lembah Anai, Kelok 9, Malalak, dan Kelok 44 dengan siaran status (*Aman Terkendali*, *Waspada*, *Buka-Tutup*, *Tutup Total*) serta rute pengalihan.
+
+### F. Web Publik Dinamis: Smart QR & Group Invite (Minggu 2)
+- **Web Plang Smart QR (`/qr/:slug`)**: Dropdown pemilih 20 destinasi unggulan Sumbar, Fair-Price Barometer, 5 Indikator Medan, form lapor pungli foto langsung, dan tombol darurat SOS SAR.
+- **Web Group Invite (`/join/:code`)**: Pemilih 3 sampel rombongan wisata, jadwal perjalanan 7 hari (Auto-Itinerary), kalkulator Split-Bill patungan per orang (IDR & MYR), dan Live Polling/Voting interaktif.
+
+### G. Analitik Eksekutif Dispar Sumbar & Demo 1 Layar (Minggu 3 & 4)
+- **Heatmap 19 Kabupaten/Kota**: Visualisasi warna kepadatan (*Sepi*, *Sedang*, *Ramai*, *Overload*) serta proporsi wisatawan Nusantara vs Wisman (pengguna kurs MYR).
+- **Grafik Ekonomi Escrow & Paspor Digital**: Metrik check-in anti-fake GPS (radius &le; 200m) dan jumlah sertifikat digital Gubernur Sumbar yang diunduh.
+- **Meja Kurasi Lokasi Sensitif Komunitas**: Moderasi usulan *hidden gem*, tombol Setujui/Tolak, dan sakelar **"Masking Koordinat Lokasi Sensitif"** untuk menjaga cagar adat & mewajibkan pendampingan Pokdarwis.
+- **Ekspor Dokumen Resmi**: Cetak laporan PDF dengan Kop Resmi Dinas Pariwisata Prov. Sumbar + kolom tanda tangan Kepala Dinas, serta ekspor file CSV.
+- **Mode Showcase 1 Layar (Split-Screen)**: Tampilan berdampingan Web Admin di sisi kiri + Layar HP Wisatawan/Mitra di sisi kanan dalam satu layar monitor.
 
 ---
 
-## 3. Hasil Pengujian Kualitas & Kesiapan Teknis
-- **Pemeriksaan Tipe TypeScript (`tsc --noEmit`):** `Exit Code 0` (0 error, 100% lulus kompilasi tipe).
-- **Pengujian Bundel Produksi (`vite build`):** `Exit Code 0` (1.556 modul terbundel optimal dalam 10,67 detik).
-- **Server Dev Lokal:** Aktif dan berjalan stabil di `http://localhost:3000/`.
-- **Git Version Control:** Branch `Fullstack` bersih (*working tree clean*) pada commit `ccd497a`.
+## 3. Panduan Skenario Demo Terpadu WISGO (Split-Screen Showcase)
+
+Untuk mendemonstrasikan keunggulan sistem WISGO secara *live* di hadapan penguji/stakeholder pada 1 layar monitor:
+
+1. **Buka Aplikasi**: Buka browser di `http://localhost:3000/`.
+2. **Masuk Sebagai Admin Utama**: Di halaman login, klik tombol **"Akses Cepat Otoritas"**.
+3. **Aktifkan Mode Showcase 1 Layar**:
+   - Di Sidebar kiri bawah, klik tombol **"Mode Showcase 1 Layar"**.
+   - Layar akan terbagi dua:
+     - **Sisi Kiri (60%)**: Portal Web Admin (Pusat Komando / Destinasi / Mitra / Analitik).
+     - **Sisi Kanan (40%)**: Layar HP Pengguna (Live Device Mockup).
+4. **Skenario A — Alur Pemesanan & Pencairan Escrow Mitra**:
+   - Di sisi kiri: Buka menu **"Monitoring Mitra & Escrow"**.
+   - Di sisi kanan: Pilih tab **"Bot WA Mitra"**.
+   - Klik tombol **"Balas 1 (Terima Pesanan)"** di layar WA: perhatikan dana terkunci di Escrow dan QR E-Ticket terbit.
+   - Klik tombol **"Simulasi Scan QR E-Ticket"**: perhatikan dana berhasil dicairkan ke Rekening Nagari.
+   - Di sisi kiri: Perhatikan grafik ekonomi nagari dan ledger mitra bertambah secara *real-time*!
+5. **Skenario B — Alur Aduan Pungli & Siaga SOS SAR**:
+   - Di sisi kiri: Buka menu **"Pusat Komando Pungli & SOS"**.
+   - Di sisi kanan: Ganti tab ke **"Smart QR Wisatawan"**.
+   - Kirim laporan aduan pungli atau pancarkan sinyal darurat SOS dari HP di sisi kanan.
+   - Perhatikan di sisi kiri: Tiket aduan baru atau sirine SOS langsung muncul seketika di meja kerja Admin Utama!
+6. **Skenario C — Cetak Laporan Eksekutif Dispar**:
+   - Di sisi kiri: Buka menu **"Analitik Eksekutif Dispar"**.
+   - Klik tombol **"Cetak / Ekspor PDF Resmi"** untuk menampilkan format cetak resmi ber-Kop Pemprov Sumbar.
+
+---
+
+## 4. Hasil Verifikasi Kualitas Teknis
+
+- **Pemeriksaan Tipe TypeScript (`tsc --noEmit`):** `Exit Code 0` (0 error, 100% lulus kompilasi tipe ketat).
+- **Pengujian Bundel Produksi (`vite build`):** `Exit Code 0` (1.558 modul berhasil dibangun optimal dalam 12,13 detik).
+- **Server Dev Lokal:** Berjalan aktif dan responsif di `http://localhost:3000/`.

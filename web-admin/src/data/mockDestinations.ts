@@ -1,9 +1,12 @@
 import {
+  CommunityHiddenGemSubmission,
   Destination,
+  DigitalPassportMetrics,
   GroupRoomPreview,
   HazardZoneAlert,
   Partner,
   PungliReport,
+  RegencyHeatmapData,
   SosEmergencyTicket,
 } from '../types/contract';
 
@@ -158,7 +161,7 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
         panorama_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80',
         initial_pitch: 5,
         initial_yaw: 0,
-        ambient_audio_url: 'https://cdn.rancak.in/audio/ambient_nature_harau.mp3',
+        ambient_audio_url: 'https://cdn.wisgo.sumbarprov.go.id/audio/ambient_nature_harau.mp3',
         hotspots: [
           {
             id: 'pin-harau-01',
@@ -187,7 +190,7 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
             description: 'Dengarkan tiupan saluang bambu Minangkabau di tengah gema tebing cagar alam.',
             pitch: 8,
             yaw: 78,
-            audio_url: 'https://cdn.rancak.in/audio/saluang_harau.mp3',
+            audio_url: 'https://cdn.wisgo.sumbarprov.go.id/audio/saluang_harau.mp3',
           },
           {
             id: 'pin-harau-04',
@@ -211,7 +214,7 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
         panorama_url: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1920&q=80',
         initial_pitch: 0,
         initial_yaw: 0,
-        ambient_audio_url: 'https://cdn.rancak.in/audio/waterfall_harau.mp3',
+        ambient_audio_url: 'https://cdn.wisgo.sumbarprov.go.id/audio/waterfall_harau.mp3',
         hotspots: [
           {
             id: 'pin-harau-05',
@@ -324,7 +327,7 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
         panorama_url: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1920&q=80',
         initial_pitch: 15,
         initial_yaw: 0,
-        ambient_audio_url: 'https://cdn.rancak.in/audio/ambient_city_bukittinggi.mp3',
+        ambient_audio_url: 'https://cdn.wisgo.sumbarprov.go.id/audio/ambient_city_bukittinggi.mp3',
         hotspots: [
           {
             id: 'pin-jg-01',
@@ -343,7 +346,7 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
             description: 'Dengarkan gema dentang lonceng jam bersejarah yang mengiringi masa PDRI (Pemerintah Darurat Republik Indonesia).',
             pitch: -5,
             yaw: 72,
-            audio_url: 'https://cdn.rancak.in/audio/bell_jamgadang.mp3',
+            audio_url: 'https://cdn.wisgo.sumbarprov.go.id/audio/bell_jamgadang.mp3',
           },
           {
             id: 'pin-jg-03',
@@ -572,7 +575,7 @@ export const MOCK_20_DESTINATIONS: Destination[] = [
         id: 'tip-005',
         destination_id: 'dest-005',
         content:
-          'Pesan kapal wisata resmi melalui sistem Escrow Rancak.in agar terlindungi asuransi dan terhindar dari calo dermaga.',
+          'Pesan kapal wisata resmi melalui sistem Escrow WISGO Sumbar agar terlindungi asuransi dan terhindar dari calo dermaga.',
         is_important: true,
       },
     ],
@@ -1821,14 +1824,24 @@ export const INITIAL_HAZARD_ALERTS: HazardZoneAlert[] = [
       'Disarankan menggunakan jalur utama Padang Panjang - Koto Baru.',
     updated_at: '2026-11-16T11:15:00Z',
   },
+  {
+    id: 'haz-005',
+    location: 'Jalur Kelok 44 (Agam - Danau Maninjau)',
+    severity: 'Waspada Bencana',
+    message:
+      'Kabut tebal dan penurunan jarak pandang di tikungan 15 s.d. 27. Harap gunakan gigi rendah dan lampu kabut aktif. Truk roda 6 dilarang melintas.',
+    detour_route:
+      'Jalur Alternatif: Simpang Gudang - Lubuk Basung - Pariaman.',
+    updated_at: '2026-11-17T08:00:00Z',
+  },
 ];
 
 // ============================================================================
-// DATA AWAL GRUP INVITE / WEB GROUP ROOM PREVIEW (FS1-M2-04)
+// DATA AWAL GRUP INVITE / WEB GROUP ROOM PREVIEW (FS1-M2-04 & M3)
 // ============================================================================
 export const INITIAL_GROUP_ROOMS: Record<string, GroupRoomPreview> = {
-  'RANCAK-MINANG-88': {
-    group_code: 'RANCAK-MINANG-88',
+  'WISGO-MINANG-88': {
+    group_code: 'WISGO-MINANG-88',
     group_name: 'Eksplorasi Ranah Minang 7 Hari (Keluarga Besar Bahar)',
     leader_name: 'Farhan Bahar (Ketua Rombongan)',
     trip_dates: '20 - 27 Desember 2026',
@@ -1862,7 +1875,377 @@ export const INITIAL_GROUP_ROOMS: Record<string, GroupRoomPreview> = {
         votes_count: 6,
         is_winner: true,
       },
+      {
+        id: 'vote-04',
+        title: 'Kuliner Rendang Payakumbuh vs Itik Lado Mudo Ngarai Sianok',
+        category: 'Kuliner Minang',
+        votes_count: 5,
+        is_winner: true,
+      },
+    ],
+  },
+  'WISGO-HARAU-07': {
+    group_code: 'WISGO-HARAU-07',
+    group_name: 'Harau Rock Climbing & Geopark Adventure (Komunitas Pecinta Alam)',
+    leader_name: 'Rahmat Hidayat (Guide Pokdarwis Harau)',
+    trip_dates: '5 - 8 Januari 2027',
+    member_count: 8,
+    destinations_summary: [
+      'Tebing Karst Lembah Harau',
+      'Sarasah Murai Waterfall',
+      'Nagari Harau Eco-Homestay',
+      'Kelok 9 Skywalk',
+    ],
+    voting_items: [
+      {
+        id: 'vote-h1',
+        title: 'Bouldering Tebing Echo Point vs Abseiling Sarasah Bunta',
+        category: 'Ekstrem',
+        votes_count: 7,
+        is_winner: true,
+      },
+      {
+        id: 'vote-h2',
+        title: 'Camping Ground Sarasah vs Homestay Kayu Tradisional',
+        category: 'Akomodasi',
+        votes_count: 6,
+        is_winner: true,
+      },
+    ],
+  },
+  'WISGO-MANDHAP-12': {
+    group_code: 'WISGO-MANDHAP-12',
+    group_name: 'Mandeh Bahari Paradise Tour (Rombongan Wisman Malaysia)',
+    leader_name: 'Encik Khairul Azman (Kuala Lumpur)',
+    trip_dates: '12 - 16 Februari 2027',
+    member_count: 10,
+    destinations_summary: [
+      'Kawasan Mandeh Resort',
+      'Pulau Cubadak & Sironjong Gadang',
+      'Hutan Mangrove Mandeh',
+      'Puncak Mandeh Raja Ampat van Minang',
+    ],
+    voting_items: [
+      {
+        id: 'vote-m1',
+        title: 'Cliff Jumping Sironjong Ketek vs Snorkeling Karang Bunga',
+        category: 'Bahari',
+        votes_count: 9,
+        is_winner: true,
+      },
+      {
+        id: 'vote-m2',
+        title: 'Santap Siang Gulai Ikan Karang Tarusan vs Barbeque Seafood Tepi Pantai',
+        category: 'Kuliner',
+        votes_count: 8,
+        is_winner: true,
+      },
     ],
   },
 };
+
+// Alias untuk backwards compatibility
+INITIAL_GROUP_ROOMS['RANCAK-MINANG-88'] = INITIAL_GROUP_ROOMS['WISGO-MINANG-88'];
+
+// ============================================================================
+// DATA AWAL HEATMAP KEPADATAN 19 KABUPATEN/KOTA SUMBAR (MINGGU 3 & 4)
+// ============================================================================
+export const INITIAL_REGENCY_HEATMAP: RegencyHeatmapData[] = [
+  {
+    id: 'reg-01',
+    name: 'Kota Padang',
+    code: 'PDG',
+    crowd_status: 'Ramai',
+    visitor_count_week: 18450,
+    domestic_pct: 78,
+    foreign_myr_pct: 22,
+    top_destination: 'Pantai Padang & Pantai Air Manis',
+    escrow_circulation: 142500000,
+  },
+  {
+    id: 'reg-02',
+    name: 'Kota Bukittinggi',
+    code: 'BKT',
+    crowd_status: 'Overload',
+    visitor_count_week: 24300,
+    domestic_pct: 68,
+    foreign_myr_pct: 32,
+    top_destination: 'Jam Gadang & Ngarai Sianok',
+    escrow_circulation: 285000000,
+  },
+  {
+    id: 'reg-03',
+    name: 'Kab. Lima Puluh Kota',
+    code: 'LPK',
+    crowd_status: 'Ramai',
+    visitor_count_week: 15600,
+    domestic_pct: 82,
+    foreign_myr_pct: 18,
+    top_destination: 'Lembah Harau & Flyover Kelok 9',
+    escrow_circulation: 198000000,
+  },
+  {
+    id: 'reg-04',
+    name: 'Kab. Tanah Datar',
+    code: 'TDT',
+    crowd_status: 'Ramai',
+    visitor_count_week: 13200,
+    domestic_pct: 74,
+    foreign_myr_pct: 26,
+    top_destination: 'Istano Basa Pagaruyung & Danau Singkarak',
+    escrow_circulation: 165000000,
+  },
+  {
+    id: 'reg-05',
+    name: 'Kab. Pesisir Selatan',
+    code: 'PSS',
+    crowd_status: 'Ramai',
+    visitor_count_week: 14100,
+    domestic_pct: 76,
+    foreign_myr_pct: 24,
+    top_destination: 'Kawasan Mandeh & Jembatan Akar Bayang',
+    escrow_circulation: 210000000,
+  },
+  {
+    id: 'reg-06',
+    name: 'Kab. Agam',
+    code: 'AGM',
+    crowd_status: 'Sedang',
+    visitor_count_week: 9800,
+    domestic_pct: 85,
+    foreign_myr_pct: 15,
+    top_destination: 'Danau Maninjau & Puncak Lawang',
+    escrow_circulation: 95000000,
+  },
+  {
+    id: 'reg-07',
+    name: 'Kota Padang Panjang',
+    code: 'PDP',
+    crowd_status: 'Sedang',
+    visitor_count_week: 7400,
+    domestic_pct: 88,
+    foreign_myr_pct: 12,
+    top_destination: 'Pusat Dokumentasi & Informasi Minangkabau (PDIKM)',
+    escrow_circulation: 52000000,
+  },
+  {
+    id: 'reg-08',
+    name: 'Kota Payakumbuh',
+    code: 'PYK',
+    crowd_status: 'Sedang',
+    visitor_count_week: 8600,
+    domestic_pct: 90,
+    foreign_myr_pct: 10,
+    top_destination: 'Sentra Rendang Payakumbuh & Ngalau Indah',
+    escrow_circulation: 78000000,
+  },
+  {
+    id: 'reg-09',
+    name: 'Kota Pariaman',
+    code: 'PRM',
+    crowd_status: 'Sedang',
+    visitor_count_week: 6900,
+    domestic_pct: 92,
+    foreign_myr_pct: 8,
+    top_destination: 'Pantai Gandoriah & Pulau Angso Duo',
+    escrow_circulation: 64000000,
+  },
+  {
+    id: 'reg-10',
+    name: 'Kab. Solok',
+    code: 'SLK',
+    crowd_status: 'Sedang',
+    visitor_count_week: 7800,
+    domestic_pct: 91,
+    foreign_myr_pct: 9,
+    top_destination: 'Danau Diatas, Danau Dibawah & Kebun Teh Alahan Panjang',
+    escrow_circulation: 88000000,
+  },
+  {
+    id: 'reg-11',
+    name: 'Kota Sawahlunto',
+    code: 'SWL',
+    crowd_status: 'Sepi',
+    visitor_count_week: 3900,
+    domestic_pct: 80,
+    foreign_myr_pct: 20,
+    top_destination: 'Warisan Tambang Batubara Ombilin (UNESCO)',
+    escrow_circulation: 42000000,
+  },
+  {
+    id: 'reg-12',
+    name: 'Kab. Kepulauan Mentawai',
+    code: 'MTW',
+    crowd_status: 'Sedang',
+    visitor_count_week: 2600,
+    domestic_pct: 35,
+    foreign_myr_pct: 65,
+    top_destination: 'Spot Surfing Telescopes & Budaya Sikerei',
+    escrow_circulation: 310000000,
+  },
+  {
+    id: 'reg-13',
+    name: 'Kab. Padang Pariaman',
+    code: 'PDP-R',
+    crowd_status: 'Sedang',
+    visitor_count_week: 6100,
+    domestic_pct: 94,
+    foreign_myr_pct: 6,
+    top_destination: 'Air Terjun Nyarai Lubuk Alung',
+    escrow_circulation: 48000000,
+  },
+  {
+    id: 'reg-14',
+    name: 'Kota Solok',
+    code: 'K-SLK',
+    crowd_status: 'Sepi',
+    visitor_count_week: 3100,
+    domestic_pct: 95,
+    foreign_myr_pct: 5,
+    top_destination: 'Kawasan Agrowisata Payo Solok',
+    escrow_circulation: 28000000,
+  },
+  {
+    id: 'reg-15',
+    name: 'Kab. Solok Selatan',
+    code: 'SLS',
+    crowd_status: 'Sepi',
+    visitor_count_week: 2800,
+    domestic_pct: 85,
+    foreign_myr_pct: 15,
+    top_destination: 'Kawasan Seribu Rumah Gadang Sungai Pagu',
+    escrow_circulation: 54000000,
+  },
+  {
+    id: 'reg-16',
+    name: 'Kab. Sijunjung',
+    code: 'SJJ',
+    crowd_status: 'Sepi',
+    visitor_count_week: 2400,
+    domestic_pct: 93,
+    foreign_myr_pct: 7,
+    top_destination: 'Geopark Ranah Minang Silokek',
+    escrow_circulation: 34000000,
+  },
+  {
+    id: 'reg-17',
+    name: 'Kab. Dharmasraya',
+    code: 'DMR',
+    crowd_status: 'Sepi',
+    visitor_count_week: 1900,
+    domestic_pct: 96,
+    foreign_myr_pct: 4,
+    top_destination: 'Candi Padang Roco & Sejarah Pamalayu',
+    escrow_circulation: 21000000,
+  },
+  {
+    id: 'reg-18',
+    name: 'Kab. Pasaman',
+    code: 'PSM',
+    crowd_status: 'Sepi',
+    visitor_count_week: 2100,
+    domestic_pct: 94,
+    foreign_myr_pct: 6,
+    top_destination: 'Tugu Khatulistiwa Equator Bonjol',
+    escrow_circulation: 24000000,
+  },
+  {
+    id: 'reg-19',
+    name: 'Kab. Pasaman Barat',
+    code: 'PSB',
+    crowd_status: 'Sepi',
+    visitor_count_week: 2700,
+    domestic_pct: 95,
+    foreign_myr_pct: 5,
+    top_destination: 'Pantai Sasak & Danau Laut Tinggal',
+    escrow_circulation: 31000000,
+  },
+];
+
+// ============================================================================
+// DATA AWAL MEJA KURASI LOKASI SENSITIF KOMUNITAS (MINGGU 3 & 4)
+// ============================================================================
+export const INITIAL_COMMUNITY_SUBMISSIONS: CommunityHiddenGemSubmission[] = [
+  {
+    id: 'sub-001',
+    title: 'Gua Kelelawar & Batu Singing Lubuk Bonta',
+    pokdarwis_name: 'Pokdarwis Nagari Lubuk Alung',
+    city_regency: 'Kab. Padang Pariaman',
+    category: 'Gua Alam & Geopark',
+    description:
+      'Gua kapur alami dengan stalaktit langka yang memiliki gaung mirip alat musik talempong. Dihuni koloni fauna langka yang rentan kebisingan massal.',
+    latitude: -0.6845,
+    longitude: 100.2984,
+    is_masked: true, // Wajib masking koordinat untuk mencegah over-tourism tanpa izin adat
+    status: 'PENDING',
+    submitted_at: '2026-11-16T14:20:00Z',
+  },
+  {
+    id: 'sub-002',
+    title: 'Lubuk Batang Waterfall Lembah Sunyi',
+    pokdarwis_name: 'Pokdarwis Koto Bangun Pangkalan',
+    city_regency: 'Kab. Lima Puluh Kota',
+    category: 'Air Terjun Tersembunyi',
+    description:
+      'Air terjun unik di tengah tebing batu pasir dengan pantai pasir putih alami. Akses harus menembus hutan tropis rimba 2 jam jalan kaki.',
+    latitude: -0.0612,
+    longitude: 100.7812,
+    is_masked: true,
+    status: 'APPROVED',
+    submitted_at: '2026-11-15T09:10:00Z',
+    reviewer_notes: 'Disetujui dengan proteksi masking koordinat. Wajib didampingi pemandu resmi ber-SK Nagari.',
+  },
+  {
+    id: 'sub-003',
+    title: 'Hutan Lumut Rimba Singgalang Jalur Lama',
+    pokdarwis_name: 'Relawan Rimba Singgalang Nagari Pandai Sikek',
+    city_regency: 'Kab. Tanah Datar',
+    category: 'Konservasi Alam',
+    description:
+      'Ekosistem hutan lumut purba di ketinggian 2.400 mdpl. Sangat rentan terhadap pencemaran sampah plastik dan perusakan jalur.',
+    latitude: -0.3951,
+    longitude: 100.3289,
+    is_masked: true,
+    status: 'PENDING',
+    submitted_at: '2026-11-17T07:45:00Z',
+  },
+  {
+    id: 'sub-004',
+    title: 'Batu Karang Hiu Teluk Sikakap',
+    pokdarwis_name: 'Lembaga Adat Sikerei Pagai Selatan',
+    city_regency: 'Kab. Kepulauan Mentawai',
+    category: 'Kawasan Adat Sakral',
+    description:
+      'Kawasan karang ritual adat nenek moyang suku Mentawai. Turis hanya diizinkan mengambil foto dari atas perahu dengan batas jarak aman.',
+    latitude: -2.7841,
+    longitude: 100.1254,
+    is_masked: true,
+    status: 'APPROVED',
+    submitted_at: '2026-11-14T11:00:00Z',
+    reviewer_notes: 'Koordinat presisi diburamkan. Booking diwajibkan melalui Pokdarwis Mentawai.',
+  },
+];
+
+// ============================================================================
+// DATA AWAL METRIK PASPOR DIGITAL & EKONOMI NAGARI (MINGGU 4)
+// ============================================================================
+export const INITIAL_DIGITAL_PASSPORT_METRICS: DigitalPassportMetrics = {
+  total_gps_checkins_verified: 8420,
+  total_governor_certificates_issued: 3150,
+  top_nagari_escrow: [
+    { nagari: 'Nagari Harau (Lima Puluh Kota)', amount: 198000000 },
+    { nagari: 'Nagari Mandeh (Pesisir Selatan)', amount: 210000000 },
+    { nagari: 'Nagari Koto Gadang (Agam)', amount: 95000000 },
+    { nagari: 'Nagari Pagaruyung (Tanah Datar)', amount: 165000000 },
+    { nagari: 'Nagari Sungai Pagu (Solok Selatan)', amount: 54000000 },
+  ],
+  escrow_by_category: [
+    { category: 'Homestay Rumah Gadang', total_amount: 324000000, count: 48 },
+    { category: 'Kapal & Transportasi', total_amount: 286000000, count: 62 },
+    { category: 'Pemandu Pokdarwis', total_amount: 145000000, count: 75 },
+    { category: 'Kuliner Halal', total_amount: 192000000, count: 94 },
+    { category: 'Sewa Baju Adat', total_amount: 88000000, count: 38 },
+  ],
+};
+
 

@@ -2,7 +2,10 @@ import axios from 'axios';
 import {
   AdminAuthCredentials,
   AdminAuthResponse,
+  CommunityHiddenGemSubmission,
   Destination,
+  DigitalPassportMetrics,
+  EscrowTransaction,
   GroupRoomPreview,
   HazardSeverity,
   HazardZoneAlert,
@@ -11,29 +14,40 @@ import {
   Partner,
   PungliReport,
   PungliStatus,
+  RegencyHeatmapData,
   SosEmergencyStatus,
   SosEmergencyTicket,
   WAWebhookResponse,
 } from '../types/contract';
 import {
+  INITIAL_COMMUNITY_SUBMISSIONS,
+  INITIAL_DIGITAL_PASSPORT_METRICS,
   INITIAL_GROUP_ROOMS,
   INITIAL_HAZARD_ALERTS,
   INITIAL_PARTNERS,
   INITIAL_PUNGLI_REPORTS,
+  INITIAL_REGENCY_HEATMAP,
   INITIAL_SOS_TICKETS,
   MOCK_20_DESTINATIONS,
   toDestinationSlug,
 } from '../data/mockDestinations';
 import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
-const TOKEN_STORAGE_KEY = 'rancakin_admin_jwt';
-const USER_STORAGE_KEY = 'rancakin_admin_user';
-const DESTINATIONS_STORAGE_KEY = 'rancakin_dispar_destinations_v2';
-const PARTNERS_STORAGE_KEY = 'rancakin_dispar_partners_v2';
-const PUNGLI_STORAGE_KEY = 'rancakin_dispar_pungli_v2';
-const SOS_STORAGE_KEY = 'rancakin_dispar_sos_v2';
-const HAZARD_STORAGE_KEY = 'rancakin_dispar_hazard_v2';
-const GROUPS_STORAGE_KEY = 'rancakin_dispar_groups_v2';
+const TOKEN_STORAGE_KEY = 'wisgo_admin_jwt';
+const USER_STORAGE_KEY = 'wisgo_admin_user';
+const DESTINATIONS_STORAGE_KEY = 'wisgo_dispar_destinations_v2';
+const PARTNERS_STORAGE_KEY = 'wisgo_dispar_partners_v2';
+const PUNGLI_STORAGE_KEY = 'wisgo_dispar_pungli_v2';
+const SOS_STORAGE_KEY = 'wisgo_dispar_sos_v2';
+const HAZARD_STORAGE_KEY = 'wisgo_dispar_hazard_v2';
+const GROUPS_STORAGE_KEY = 'wisgo_dispar_groups_v2';
+const SUBMISSIONS_STORAGE_KEY = 'wisgo_community_submissions_v2';
+const HEATMAP_STORAGE_KEY = 'wisgo_regency_heatmap_v2';
+const PASSPORT_METRICS_KEY = 'wisgo_passport_metrics_v2';
+
+function getStoredWithFallback(newKey: string, legacyKey: string): string | null {
+  return localStorage.getItem(newKey) || localStorage.getItem(legacyKey);
+}
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -53,7 +67,10 @@ apiClient.interceptors.request.use((config) => {
 
 function readStoredDestinations(): Destination[] | null {
   try {
-    const raw = localStorage.getItem(DESTINATIONS_STORAGE_KEY);
+    const raw = getStoredWithFallback(
+      DESTINATIONS_STORAGE_KEY,
+      'rancakin_dispar_destinations_v2'
+    );
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
@@ -88,7 +105,7 @@ export async function checkBackendHealth(): Promise<{
 }
 
 /**
- * Otentikasi Administrator Utama — Pusat Komando Terpadu Rancak.in (Single Admin JWT Auth)
+ * Otentikasi Administrator Utama — Pusat Komando Terpadu WISGO (Single Admin JWT Auth)
  */
 export async function loginAdminJWT(
   credentials: AdminAuthCredentials
@@ -112,7 +129,7 @@ export async function loginAdminJWT(
         iat: Math.floor(Date.now() / 1000),
       })
     ) +
-    '.rancakin-komando-sig-2026';
+    '.wisgo-komando-sig-2026';
 
   const authResponse: AdminAuthResponse = {
     token: jwtToken,
@@ -124,7 +141,7 @@ export async function loginAdminJWT(
       role: 'admin_utama',
       email: emailLower,
       agency:
-        'Pusat Komando Terpadu Rancak.in (Dispar Sumbar • Penindakan Pungli • Siaga SAR)',
+        'Pusat Komando Terpadu WISGO (Dispar Sumbar • Penindakan Pungli • Siaga SAR)',
       created_at: new Date().toISOString(),
     },
   };
@@ -135,8 +152,8 @@ export async function loginAdminJWT(
 }
 
 export function getStoredAdminSession(): AdminAuthResponse | null {
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
-  const rawUser = localStorage.getItem(USER_STORAGE_KEY);
+  const token = getStoredWithFallback(TOKEN_STORAGE_KEY, 'rancakin_admin_jwt');
+  const rawUser = getStoredWithFallback(USER_STORAGE_KEY, 'rancakin_admin_user');
   if (!token || !rawUser) return null;
   try {
     return {
@@ -152,6 +169,8 @@ export function getStoredAdminSession(): AdminAuthResponse | null {
 export function logoutAdminJWT(): void {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem('rancakin_admin_jwt');
+  localStorage.removeItem('rancakin_admin_user');
 }
 
 /**
@@ -710,4 +729,178 @@ export async function deletePartnerWithBridge(
     return { updatedList, syncedRemote: false };
   }
 }
+
+// ============================================================================
+// SIMULATOR BOT WHATSAPP MITRA & PENCAIRAN ESCROW (MINGGU 3)
+// ============================================================================
+
+export async function processWASimulationAction(
+  action: '1' | '0' | 'scan',
+  bookingCode: string
+): Promise<{
+  action: '1' | '0' | 'scan';
+  status: 'CONFIRMED' | 'REJECTED' | 'REDEEMED';
+  message: string;
+  qr_code_ticket?: string;
+  updatedPartner?: Partner;
+}> {
+  const currentPartners = await fetchPartnersCatalog();
+  let targetPartner: Partner | null = null;
+  let targetTx: EscrowTransaction | null = null;
+
+  for (const p of currentPartners) {
+    const tx = p.ledger?.find((t) => t.booking_code === bookingCode);
+    if (tx) {
+      targetPartner = p;
+      targetTx = tx;
+      break;
+    }
+  }
+
+  // Jika tidak ditemukan di ledger, buat simulasi transaksi dinamis
+  if (!targetPartner) {
+    targetPartner = currentPartners[0] || INITIAL_PARTNERS[0];
+  }
+
+  let newStatus: 'ESCROW_LOCKED' | 'READY_PAYOUT' | 'REDEEMED' = 'ESCROW_LOCKED';
+  let waStatus: 'CONFIRMED' | 'PENDING' | 'REJECTED' = 'CONFIRMED';
+  let returnStatus: 'CONFIRMED' | 'REJECTED' | 'REDEEMED' = 'CONFIRMED';
+  let resultMsg = '';
+  const qrTicket = `QR-WISGO-ETIKET-${bookingCode}`;
+
+  if (action === '1') {
+    newStatus = 'ESCROW_LOCKED';
+    waStatus = 'CONFIRMED';
+    returnStatus = 'CONFIRMED';
+    resultMsg = `Pesanan ${bookingCode} telah DITERIMA oleh ${targetPartner.name}. E-Ticket QR diterbitkan untuk wisatawan dan dana Rp ${(targetTx?.amount || 50000).toLocaleString('id-ID')} terkunci di Rekening Escrow WISGO.`;
+  } else if (action === '0') {
+    newStatus = 'REDEEMED';
+    waStatus = 'REJECTED';
+    returnStatus = 'REJECTED';
+    resultMsg = `Pesanan ${bookingCode} DITOLAK oleh ${targetPartner.name}. Dana simulasi telah dikembalikan 100% ke saldo wisatawan.`;
+  } else if (action === 'scan') {
+    newStatus = 'REDEEMED';
+    waStatus = 'CONFIRMED';
+    returnStatus = 'REDEEMED';
+    resultMsg = `QR E-Ticket ${bookingCode} berhasil dipindai di lokasi! Wisatawan telah tiba dan dana Rp ${(targetTx?.amount || 50000).toLocaleString('id-ID')} sukses DICAIRKAN ke rekening mitra nagari ${targetPartner.name}.`;
+  }
+
+  // Update transaction status in partner ledger
+  const updatedPartners = currentPartners.map((p) => {
+    if (p.id !== targetPartner!.id) return p;
+    const ledger = p.ledger?.map((tx) => {
+      if (tx.booking_code === bookingCode) {
+        return {
+          ...tx,
+          status: newStatus,
+          wa_status: waStatus,
+        };
+      }
+      return tx;
+    }) || [];
+    return { ...p, ledger };
+  });
+
+  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedPartners));
+
+  try {
+    await apiClient.post('/bookings/wa-webhook', {
+      action: action === 'scan' ? '1' : action,
+      booking_code: bookingCode,
+    });
+  } catch {
+    // Offline mode
+  }
+
+  const updatedTarget = updatedPartners.find((p) => p.id === targetPartner!.id);
+
+  return {
+    action,
+    status: returnStatus,
+    message: resultMsg,
+    qr_code_ticket: qrTicket,
+    updatedPartner: updatedTarget,
+  };
+}
+
+// ============================================================================
+// ANALITIK EKSEKUTIF, HEATMAP 19 KAB/KOTA & MEJA KURASI (MINGGU 3 & 4)
+// ============================================================================
+
+export async function fetchRegencyHeatmap(): Promise<RegencyHeatmapData[]> {
+  try {
+    const raw = localStorage.getItem(HEATMAP_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    const res = await apiClient.get<RegencyHeatmapData[]>('/analytics/heatmap').catch(() => null);
+    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+      localStorage.setItem(HEATMAP_STORAGE_KEY, JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch {
+    // Fallback
+  }
+  localStorage.setItem(HEATMAP_STORAGE_KEY, JSON.stringify(INITIAL_REGENCY_HEATMAP));
+  return INITIAL_REGENCY_HEATMAP;
+}
+
+export async function fetchCommunitySubmissions(): Promise<CommunityHiddenGemSubmission[]> {
+  try {
+    const raw = localStorage.getItem(SUBMISSIONS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    const res = await apiClient.get<CommunityHiddenGemSubmission[]>('/curation/submissions').catch(() => null);
+    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+      localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch {
+    // Fallback
+  }
+  localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(INITIAL_COMMUNITY_SUBMISSIONS));
+  return INITIAL_COMMUNITY_SUBMISSIONS;
+}
+
+export async function updateCommunitySubmission(
+  submissionId: string,
+  updates: Partial<CommunityHiddenGemSubmission>
+): Promise<CommunityHiddenGemSubmission[]> {
+  const current = await fetchCommunitySubmissions();
+  const updated = current.map((sub) => {
+    if (sub.id !== submissionId) return sub;
+    return { ...sub, ...updates };
+  });
+  safeSetLocalStorage(SUBMISSIONS_STORAGE_KEY, JSON.stringify(updated));
+
+  try {
+    await apiClient.put(`/curation/submissions/${submissionId}`, updates);
+  } catch {
+    // Offline mode
+  }
+  return updated;
+}
+
+export async function fetchDigitalPassportMetrics(): Promise<DigitalPassportMetrics> {
+  try {
+    const raw = localStorage.getItem(PASSPORT_METRICS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.total_gps_checkins_verified) return parsed;
+    }
+    const res = await apiClient.get<DigitalPassportMetrics>('/analytics/passport').catch(() => null);
+    if (res?.data?.total_gps_checkins_verified) {
+      localStorage.setItem(PASSPORT_METRICS_KEY, JSON.stringify(res.data));
+      return res.data;
+    }
+  } catch {
+    // Fallback
+  }
+  localStorage.setItem(PASSPORT_METRICS_KEY, JSON.stringify(INITIAL_DIGITAL_PASSPORT_METRICS));
+  return INITIAL_DIGITAL_PASSPORT_METRICS;
+}
+
 

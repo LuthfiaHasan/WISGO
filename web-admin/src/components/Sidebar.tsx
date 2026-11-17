@@ -5,12 +5,14 @@ import {
   Camera,
   Radio,
   Store,
+  MessageSquare,
   BarChart3,
   LogOut,
   CheckCircle2,
   Database,
   ExternalLink,
   Users,
+  Monitor,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
 
@@ -20,6 +22,7 @@ export type AdminMenuKey =
   | 'cms_360'
   | 'command_center'
   | 'saber_pungli' // alias to command_center
+  | 'partners'
   | 'wa_simulator'
   | 'dispar_analytics';
 
@@ -30,10 +33,13 @@ interface SidebarProps {
   backendOnline: boolean;
   totalDestinations: number;
   totalTariffs: number;
+  totalPartners?: number;
   openPungliCount?: number;
   openSosCount?: number;
   onOpenPublicQR?: () => void;
   onOpenGroupInvite?: () => void;
+  isShowcaseMode?: boolean;
+  onToggleShowcaseMode?: () => void;
   onLogout: () => void;
 }
 
@@ -44,10 +50,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   backendOnline,
   totalDestinations,
   totalTariffs,
+  totalPartners = 5,
   openPungliCount = 2,
   openSosCount = 2,
   onOpenPublicQR,
   onOpenGroupInvite,
+  isShowcaseMode = false,
+  onToggleShowcaseMode,
   onLogout,
 }) => {
   const currentKey =
@@ -80,34 +89,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       key: 'cms_360',
       label: 'Studio Virtual 360°',
-      sublabel: 'Kurasi Panorama & Titik Interaktif',
+      sublabel: 'Kurasi Panorama & 4 Hotspot Pin',
       icon: <Camera className="w-5 h-5 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'command_center',
-      label: 'Pusat Komando Pungli & SOS SAR',
-      sublabel: 'Penindakan Saber Pungli & Siaga SAR',
+      label: 'Pusat Komando Pungli & SOS',
+      sublabel: 'Penindakan Saber & Siaga SAR',
       badge: totalEmergencyAlerts > 0 ? `${totalEmergencyAlerts} Siaga` : 'Terkendali',
       badgeColor: totalEmergencyAlerts > 0 ? 'bg-[#F26B4B] text-white' : 'bg-[#1E9E5A] text-white',
       icon: <Radio className="w-5 h-5 shrink-0" aria-hidden="true" />,
     },
     {
-      key: 'wa_simulator',
+      key: 'partners',
       label: 'Monitoring Mitra & Escrow',
-      sublabel: 'UMKM Nagari & Konfirmasi Pesanan',
+      sublabel: '5 Kategori UMKM & Integrasi 360°',
+      badge: `${totalPartners} Mitra`,
       icon: <Store className="w-5 h-5 shrink-0" aria-hidden="true" />,
+    },
+    {
+      key: 'wa_simulator',
+      label: 'Simulator Bot WA & Escrow',
+      sublabel: 'Chat UMKM & Pencairan QR E-Ticket',
+      icon: <MessageSquare className="w-5 h-5 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'dispar_analytics',
       label: 'Analitik Eksekutif Dispar',
-      sublabel: 'Kunjungan & Ekonomi 19 Kab/Kota',
+      sublabel: 'Heatmap 19 Kab/Kota & Cetak PDF',
       icon: <BarChart3 className="w-5 h-5 shrink-0" aria-hidden="true" />,
     },
   ];
 
   return (
     <aside
-      aria-label="Navigasi Utama Pusat Komando Terpadu Rancak.in"
+      aria-label="Navigasi Utama Pusat Komando Terpadu WISGO"
       className="w-full lg:w-80 bg-[#234B24] text-[#F6F3EC] flex flex-col justify-between shrink-0 lg:min-h-screen border-b lg:border-b-0 lg:border-r border-[#1B3B1C] no-print"
     >
       <div>
@@ -115,12 +131,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-[#F26B4B] flex items-center justify-center text-white font-extrabold text-lg shadow-md shrink-0">
-              R
+              W
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg tracking-tight text-[#F6F3EC] truncate">
-                  Rancak.in Sumbar
+                  WISGO Sumbar
                 </span>
               </div>
               <p className="text-xs text-[#E4E9DA]/85 truncate">
@@ -207,7 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </ul>
 
           {/* Pratinjau Halaman Web Publik Instan (FS1-M2-04) */}
-          <div className="mt-6 pt-4 border-t border-white/10">
+          <div className="mt-5 pt-4 border-t border-white/10">
             <p className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-[#A7F3D0]">
               Pratinjau Web Publik Wisatawan
             </p>
@@ -245,6 +261,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Profil Pejabat Aktif Single Admin & Tombol Keluar */}
       <div className="p-4 border-t border-white/10 bg-black/15">
+        {onToggleShowcaseMode && (
+          <button
+            type="button"
+            onClick={onToggleShowcaseMode}
+            className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition mb-3 ${
+              isShowcaseMode
+                ? 'bg-[#F26B4B] text-white shadow-md'
+                : 'bg-white/10 hover:bg-white/15 text-[#A7F3D0] border border-white/15'
+            }`}
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Monitor className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
+              <span>{isShowcaseMode ? 'Tutup Showcase' : 'Showcase 1 Layar'}</span>
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] bg-black/25">Live</span>
+          </button>
+        )}
+
         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 mb-3">
           <div className="flex items-center gap-2 text-xs font-bold text-[#A7F3D0]">
             <CheckCircle2
@@ -276,3 +310,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </aside>
   );
 };
+
