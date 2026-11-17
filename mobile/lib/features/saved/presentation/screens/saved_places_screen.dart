@@ -2836,13 +2836,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Usulan destinasi hidden gem Anda berhasil diajukan. Tim Verifikator Dinas Pariwisata Sumbar akan meninjau aksesibilitas, aspek kelayakan, dan penetapan regulasi Perda.',
+              'Usulan destinasi hidden gem Anda berhasil diajukan ke Dinas Pariwisata Sumbar.',
               style: TextStyle(fontSize: 11, color: Color(0xFF5A6B5D), height: 1.4),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'ℹ️ Catatan Sistem: Hak verifikasi & persetujuan sepenuhnya dimiliki Admin Dispar Sumbar. Wisatawan cukup memantau status verifikasi.',
-              style: TextStyle(fontSize: 10.5, fontStyle: FontStyle.italic, color: Color(0xFF1E5B82)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3D6),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                '📢 Catatan Validasi: Destinasi baru ini hanya akan resmi tampil di aplikasi wisata setelah diverifikasi dan divalidasi oleh Admin Dispar Sumbar.',
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF78350F), height: 1.35),
+              ),
             ),
           ],
         ),
