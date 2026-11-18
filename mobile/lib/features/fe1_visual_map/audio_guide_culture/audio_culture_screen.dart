@@ -5,7 +5,9 @@ import '../models/destination_model.dart';
 
 /// Modul FE-1: Kamus Saku Audio Minang & Kalender Budaya (Pilar 1)
 class AudioCultureScreen extends StatefulWidget {
-  const AudioCultureScreen({super.key});
+  final bool embedded;
+
+  const AudioCultureScreen({super.key, this.embedded = false});
 
   @override
   State<AudioCultureScreen> createState() => _AudioCultureScreenState();
@@ -134,7 +136,12 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
     return Scaffold(
       backgroundColor: AppColors.cream100,
       appBar: AppBar(
-        title: const Text('Kamus Saku Audio & Budaya Minang'),
+        automaticallyImplyLeading: !widget.embedded,
+        title: Text(
+          widget.embedded
+              ? 'Kamus Minang & Budaya'
+              : 'Kamus Saku Audio & Budaya Minang',
+        ),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.green800,
@@ -176,7 +183,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
     }).toList();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, widget.embedded ? 124 : 32),
       children: [
         // BANNER INTRODUKSI
         Container(
@@ -472,7 +479,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
   // ===========================================================================
   Widget _buildKalenderBudayaTab() {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, widget.embedded ? 124 : 32),
       children: [
         Container(
           padding: const EdgeInsets.all(16),
