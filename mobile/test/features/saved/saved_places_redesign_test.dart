@@ -17,11 +17,22 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 1. Initial card must show title and facilities chips
-    expect(find.text('Jelajah 10 Destinasi Wisata Sumbar'), findsOneWidget);
-    expect(find.text('FASILITAS LINGKUNGAN:'), findsWidgets);
+    // 1. Initial Beranda shows clean header + showcase sections
+    expect(find.text('Jelajah Sumbar'), findsOneWidget);
+    expect(find.text('Kategori Layanan'), findsOneWidget);
+    expect(find.text('Rekomendasi Terdekat'), findsOneWidget);
+    expect(find.textContaining('Tiket: Rp'), findsNothing);
+
+    // Scroll down to verify the destination cards & compact facility icons
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -850));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Tempat Parkir Warga'), findsOneWidget);
     expect(find.text('360° & Denah'), findsWidgets);
     expect(find.text('Detail'), findsWidgets);
+
+    // Scroll back up to Search Bar
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 850));
+    await tester.pumpAndSettle();
 
     // Initial card must NOT have the fee list directly visible
     expect(find.text('RINCIAN BIAYA RESMI (VERTIKAL)'), findsNothing);
@@ -35,10 +46,14 @@ void main() {
 
     expect(find.text('Lembah Harau & Air Terjun Sarasah Bunta'), findsOneWidget);
 
-    // 3. Distance sort chip is present
+    // 3. Sort button opens bottom sheet and allows selecting Jarak Terdekat (GPS)
+    expect(find.text('Urutkan'), findsOneWidget);
+    await tester.tap(find.text('Urutkan'));
+    await tester.pumpAndSettle();
     expect(find.text('Jarak Terdekat (GPS)'), findsOneWidget);
     await tester.tap(find.text('Jarak Terdekat (GPS)'));
     await tester.pumpAndSettle();
+    expect(find.text('Terdekat'), findsOneWidget);
 
     // 4. Tap 'Detail' on Lembah Harau to open detail modal
     final detailButtonFinder = find.widgetWithText(ElevatedButton, 'Detail').first;
