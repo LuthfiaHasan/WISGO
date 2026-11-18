@@ -13,6 +13,7 @@ type OTPRequest struct {
 type OTPVerifyRequest struct {
 	PhoneNumber string `json:"phone_number" binding:"required"`
 	OTPCode     string `json:"otp_code" binding:"required"`
+	FullName    string `json:"full_name,omitempty"`
 }
 
 // AuthResponse respon sukses login & token JWT

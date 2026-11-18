@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_config.dart';
+import '../../../../core/models/user_profile.dart';
 import '../../../../core/services/api_service.dart';
 import '../../data/destination_adapter.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
@@ -3356,193 +3357,305 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // VIEW 3: PROFIL WISATAWAN & PENGATURAN AKUN
   // ===========================================================================
   Widget _buildProfileView() {
-    return Column(
-      children: [
-        // Sticky Header
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-          decoration: const BoxDecoration(
-            color: AppColors.cream,
-            border: Border(
-              bottom: BorderSide(color: AppColors.warmBorder),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AKUN WISATAWAN • TERVERIFIKASI WHATSAPP',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.3,
-                        color: AppColors.brush,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Profil Saya',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.sage,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Aktif',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.forest,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return ValueListenableBuilder<UserProfile?>(
+      valueListenable: ApiConfig.authNotifier,
+      builder: (context, user, _) {
+        final isLoggedIn = user != null && ApiConfig.isAuthenticated;
+        final displayName = isLoggedIn ? user.fullName : 'Wisatawan Tamu';
+        final displayPhone = isLoggedIn ? user.phoneNumber : 'Belum Terhubung WhatsApp';
+        final initials = isLoggedIn ? user.initials : 'GT';
 
-        // Scrollable Profile Content
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-            children: [
-              // 1. Kartu Identitas Wisatawan
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sageBorder),
+        return Column(
+          children: [
+            // Sticky Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              decoration: const BoxDecoration(
+                color: AppColors.cream,
+                border: Border(
+                  bottom: BorderSide(color: AppColors.warmBorder),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: AppColors.forest,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            'AF',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.cream,
-                              letterSpacing: 0.5,
-                            ),
+                        Text(
+                          isLoggedIn
+                              ? 'AKUN WISATAWAN • TERVERIFIKASI WHATSAPP'
+                              : 'MODE PENJELAJAH • TAMU (GUEST)',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.3,
+                            color: AppColors.brush,
                           ),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 2),
+                        Text(
+                          isLoggedIn ? 'Profil Saya' : 'Akun Tamu',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isLoggedIn ? AppColors.sage : AppColors.warmBorder,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      isLoggedIn ? 'Aktif' : 'Tamu',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: isLoggedIn ? AppColors.forest : AppColors.muted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Scrollable Profile Content
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+                children: [
+                  // Banner Masuk Akun (Jika Belum Login)
+                  if (!isLoggedIn)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.brush, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.brush.withValues(alpha: 0.10),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              const Text(
-                                'Ahmad Fauzi',
-                                style: TextStyle(
-                                  fontSize: 16.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              const Text(
-                                '+62 812-7578-953 • Wisatawan Nusantara',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.sage,
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: AppColors.coralTint,
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Text(
-                                  'OTP WhatsApp Terverifikasi',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.forest,
+                                child: const Icon(Icons.lock_outline_rounded,
+                                    color: AppColors.terracotta, size: 20),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Masuk untuk Fitur Penuh',
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Buka sinkronisasi cloud & Paspor Minang',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Nikmati kemudahan simpan destinasi lintas perangkat, verifikasi Paspor Minang di geofence nagari, dan gabung ke room Open Trip.',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              height: 1.45,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
                                   ),
+                                );
+                              },
+                              icon: const Icon(Icons.login_rounded, size: 16),
+                              label: const Text(
+                                'Masuk dengan Nomor WhatsApp',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
                                 ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.forest,
+                                foregroundColor: AppColors.cream,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // 1. Kartu Identitas Wisatawan
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.sageBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 54,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: isLoggedIn ? AppColors.forest : AppColors.warmBorder,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                initials,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: isLoggedIn ? AppColors.cream : AppColors.forest,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    displayName,
+                                    style: const TextStyle(
+                                      fontSize: 16.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.ink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '$displayPhone • Wisatawan ${isLoggedIn ? "Nusantara" : "Tamu"}',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.muted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isLoggedIn ? AppColors.sage : AppColors.coralTint,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      isLoggedIn
+                                          ? 'OTP WhatsApp Terverifikasi'
+                                          : 'Sesi Tamu Lokal (Luring)',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: isLoggedIn ? AppColors.forest : AppColors.terracotta,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.cream,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.warmBorder),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildProfileStatRow(
+                                label: 'Destinasi Tersimpan di Perangkat',
+                                value: '${_savedIds.length} Lokasi',
+                                onTap: () => setState(() => _activeTabIndex = 1),
+                              ),
+                              const Divider(
+                                height: 16,
+                                color: AppColors.warmBorder,
+                              ),
+                              _buildProfileStatRow(
+                                label: 'Status Akses Lokasi GPS (3D)',
+                                value: 'Aktif • Sumatera Barat',
+                              ),
+                              const Divider(
+                                height: 16,
+                                color: AppColors.warmBorder,
+                              ),
+                              _buildProfileStatRow(
+                                label: 'Mode Memori Tanpa Sinyal (Luring)',
+                                value: _isOfflineMode ? 'Sedang Aktif' : 'Siap Siaga',
+                                valueColor: _isOfflineMode
+                                    ? AppColors.terracotta
+                                    : AppColors.forest,
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.cream,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.warmBorder),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildProfileStatRow(
-                            label: 'Destinasi Tersimpan di Perangkat',
-                            value: '${_savedIds.length} Lokasi',
-                            onTap: () => setState(() => _activeTabIndex = 1),
-                          ),
-                          const Divider(
-                            height: 16,
-                            color: AppColors.warmBorder,
-                          ),
-                          _buildProfileStatRow(
-                            label: 'Status Akses Lokasi GPS (3D)',
-                            value: 'Aktif • Sumatera Barat',
-                          ),
-                          const Divider(
-                            height: 16,
-                            color: AppColors.warmBorder,
-                          ),
-                          _buildProfileStatRow(
-                            label: 'Mode Memori Tanpa Sinyal (Luring)',
-                            value: _isOfflineMode ? 'Sedang Aktif' : 'Siap Siaga',
-                            valueColor: _isOfflineMode
-                                ? AppColors.terracotta
-                                : AppColors.forest,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
               const SizedBox(height: 14),
 
@@ -3697,7 +3810,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'SESI AKUN & ALUR ONBOARDING (JOBDESK 1–4)',
+                      'SESI AKUN & PENGATURAN',
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
@@ -3706,45 +3819,128 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Ingin menguji ulang alur awal mulai dari Splash Screen WISGO, Izin Lokasi 3D Rumah Gadang, Login Nomor WhatsApp (+62), hingga Verifikasi OTP 4 Digit?',
-                      style: TextStyle(
+                    Text(
+                      isLoggedIn
+                          ? 'Anda masuk dengan akun WhatsApp $displayPhone. Sesi aktif tersimpan secara aman di perangkat.'
+                          : 'Anda saat ini menjelajah sebagai Tamu. Masuk dengan nomor WhatsApp atau ulangi alur onboarding awal.',
+                      style: const TextStyle(
                         fontSize: 11.5,
                         height: 1.45,
                         color: AppColors.muted,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (_) => const SplashScreen(),
+                    if (isLoggedIn) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                backgroundColor: AppColors.cream,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                title: const Text(
+                                  'Keluar dari Akun?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                content: const Text(
+                                  'Sesi autentikasi WhatsApp Anda akan diakhiri dan kembali ke Mode Tamu.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Batal',
+                                        style: TextStyle(color: AppColors.muted)),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.terracotta,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      ApiService.logout();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Anda telah keluar dari akun WISGO.'),
+                                          backgroundColor: AppColors.forest,
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Ya, Keluar'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: AppColors.coralTint,
+                            foregroundColor: AppColors.terracotta,
+                            side: BorderSide(
+                              color: AppColors.terracotta.withValues(alpha: 0.45),
                             ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: AppColors.coralTint,
-                          foregroundColor: AppColors.terracotta,
-                          side: BorderSide(
-                            color: AppColors.terracotta.withValues(alpha: 0.45),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Keluar dari Akun & Ulangi Alur Masuk (Splash / OTP)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                          child: const Text(
+                            'Keluar dari Akun (Logout)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ] else ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (_) => const SplashScreen(),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: AppColors.coralTint,
+                            foregroundColor: AppColors.terracotta,
+                            side: BorderSide(
+                              color: AppColors.terracotta.withValues(alpha: 0.45),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Ulangi Alur Masuk (Splash / OTP)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -3753,6 +3949,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         ),
       ],
     );
+  },
+);
   }
 
   Widget _buildProfileStatRow({

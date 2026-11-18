@@ -40,8 +40,13 @@ func (h *Handler) RequestOTP(c *gin.Context) {
 		return
 	}
 
+	normPhone, _ := NormalizePhoneNumber(req.PhoneNumber)
+	if normPhone == "" {
+		normPhone = req.PhoneNumber
+	}
+
 	common.Success(c, http.StatusOK, "Kode OTP 4 digit telah dikirimkan via WhatsApp/SMS", map[string]interface{}{
-		"phone_number": req.PhoneNumber,
+		"phone_number": normPhone,
 		"otp_code_dev": otpCode,
 		"expires_in":   300,
 	})
@@ -55,7 +60,7 @@ func (h *Handler) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	user, token, err := h.service.VerifyOTP(req.PhoneNumber, req.OTPCode)
+	user, token, err := h.service.VerifyOTP(req.PhoneNumber, req.OTPCode, req.FullName)
 	if err != nil {
 		common.Error(c, http.StatusUnauthorized, err.Error())
 		return
@@ -102,15 +107,9 @@ func (h *Handler) ToggleSavedPlace(c *gin.Context) {
 
 	res, err := h.service.ToggleSavedPlace(req.UserID, req.DestinationID)
 	if err != nil {
-		common.Error(c, http.StatusBadRequest, err.Error())
+		common.Error(c, http.StatusInternalServerError, "Gagal mengubah status simpan tempat")
 		return
 	}
 
-	msg := "Tempat berhasil ditambahkan ke favorit"
-	if !res.IsSaved {
-		msg = "Tempat berhasil dihapus dari favorit"
-	}
-
-	common.Success(c, http.StatusOK, msg, res)
+	common.Success(c, http.StatusOK, "Status simpan tempat berhasil diperbarui", res)
 }
-

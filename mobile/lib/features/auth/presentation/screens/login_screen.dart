@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
 import '../../../fe1_visual_map/fe1_main_shell.dart';
@@ -18,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
       TextEditingController(text: '812-7578-953');
   final FocusNode _phoneFocus = FocusNode();
   bool _showError = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -71,19 +73,46 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _showError = false);
   }
 
-  void _submitPhoneAndSendOtp() {
+  Future<void> _submitPhoneAndSendOtp() async {
     final raw = _phoneController.text.replaceAll(RegExp(r'\D'), '');
     if (raw.length < 8) {
       setState(() => _showError = true);
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+      _showError = false;
+    });
+
+    String canonical = raw;
+    if (canonical.startsWith('62')) canonical = canonical.substring(2);
+    if (canonical.startsWith('0')) canonical = canonical.substring(1);
+    canonical = '62$canonical';
+
     final formattedPhone = '+62 ${_phoneController.text.trim()}';
+
+    String? devCode;
+    try {
+      final res = await ApiService.requestOtp(phoneNumber: canonical);
+      if (res.isSuccess && res.data is Map<String, dynamic>) {
+        devCode = res.data['otp_code_dev']?.toString();
+      }
+    } catch (_) {
+      // Fallback toleran jika backend dalam mode offline
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
     Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 380),
-        pageBuilder: (_, __, ___) =>
-            OtpVerificationScreen(phoneNumber: formattedPhone),
+        pageBuilder: (_, __, ___) => OtpVerificationScreen(
+          phoneNumber: formattedPhone,
+          canonicalPhone: canonical,
+          devOtpCode: devCode,
+        ),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -336,7 +365,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: _submitPhoneAndSendOtp,
+                            onPressed: _isLoading ? null : _submitPhoneAndSendOtp,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.forest,
                               foregroundColor: AppColors.cream,
@@ -345,14 +374,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
-                              'Kirim Kode OTP 4 Digit',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.cream,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.cream),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Kirim Kode OTP 4 Digit',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.cream,
+                                    ),
+                                  ),
                           ),
                         ),
 

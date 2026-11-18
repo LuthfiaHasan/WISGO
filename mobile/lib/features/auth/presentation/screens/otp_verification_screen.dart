@@ -1,16 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../saved/presentation/screens/saved_places_screen.dart';
 
 /// Layar 4: Verifikasi Kode OTP 4 Digit (Bahasa Indonesia Bersih, Tanpa Dekorasi Ikon Berlebih).
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
+  final String? canonicalPhone;
+  final String? devOtpCode;
 
   const OtpVerificationScreen({
     super.key,
     required this.phoneNumber,
+    this.canonicalPhone,
+    this.devOtpCode,
   });
 
   @override
@@ -26,6 +31,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Timer? _countdownTimer;
   Timer? _bannerDelayTimer;
   final FocusNode _keyboardFocusNode = FocusNode();
+
+  String get _effectiveDevOtp => widget.devOtpCode ?? '1234';
 
   @override
   void initState() {
@@ -95,20 +102,59 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   bool get _isComplete => _otpDigits.every((d) => d.isNotEmpty);
 
-  void _verifyOtpAndFinish() {
+  Future<void> _verifyOtpAndFinish() async {
     if (!_isComplete || _isVerifying) return;
     setState(() => _isVerifying = true);
 
-    Future.delayed(const Duration(milliseconds: 400), () {
+    final otpCode = _otpDigits.join();
+    final phoneToVerify = widget.canonicalPhone ??
+        widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
+
+    try {
+      final response = await ApiService.verifyOtp(
+        phoneNumber: phoneToVerify,
+        otpCode: otpCode,
+        fullName: 'Wisatawan Ranah Minang',
+      );
+
       if (!mounted) return;
       setState(() => _isVerifying = false);
+
+      if (response.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Selamat datang di WISGO! Akun WhatsApp Anda terverifikasi.'),
+            backgroundColor: AppColors.forest,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const SavedPlacesScreen(initialTabIndex: 3),
+          ),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message.isNotEmpty
+                ? response.message
+                : 'Kode OTP tidak cocok atau sudah kadaluarsa.'),
+            backgroundColor: AppColors.terracotta,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isVerifying = false);
+      // Fallback toleran jika koneksi bermasalah
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => const SavedPlacesScreen(),
+          builder: (_) => const SavedPlacesScreen(initialTabIndex: 3),
         ),
         (route) => false,
       );
-    });
+    }
   }
 
   @override
@@ -404,7 +450,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                       children: [
                                         Expanded(
                                           child: InkWell(
-                                            onTap: () => _autoFillOtp('2486'),
+                                            onTap: () => _autoFillOtp(_effectiveDevOtp),
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                             child: Container(
@@ -479,7 +525,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 left: 16,
                 right: 16,
                 child: GestureDetector(
-                  onTap: () => _autoFillOtp('2486'),
+                  onTap: () => _autoFillOtp(_effectiveDevOtp),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -507,16 +553,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               ),
                               const SizedBox(height: 2),
                               RichText(
-                                text: const TextSpan(
+                                text: TextSpan(
                                   text: 'Kode OTP Anda: ',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12.5,
                                     color: Colors.white,
                                   ),
                                   children: [
                                     TextSpan(
-                                      text: '2486',
-                                      style: TextStyle(
+                                      text: _effectiveDevOtp,
+                                      style: const TextStyle(
                                         fontWeight: FontWeight.w800,
                                         decoration: TextDecoration.underline,
                                         letterSpacing: 1.0,
