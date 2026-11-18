@@ -1871,8 +1871,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.verified_rounded,
-                                size: 13.5,
+                                Icons.qr_code_scanner_rounded,
+                                size: 14,
                                 color: AppColors.cream,
                               ),
                               SizedBox(width: 4),
