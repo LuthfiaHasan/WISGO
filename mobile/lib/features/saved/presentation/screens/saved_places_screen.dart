@@ -8,7 +8,6 @@ import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
-import '../../../group_room/presentation/widgets/group_room_sheet.dart';
 import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
@@ -1051,7 +1050,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _showAppToast('Menghubungi Koordinator Open Trip Harau...'),
+                            onPressed: _openTripPlannerModal,
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.forest,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1098,7 +1097,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _showAppToast('Menghubungi Koordinator Open Trip Mandeh...'),
+                            onPressed: _openTripPlannerModal,
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFF1E5B82),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1145,7 +1144,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _showAppToast('Menghubungi Koordinator Open Trip Budaya...'),
+                            onPressed: _openTripPlannerModal,
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFFC89242),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1267,7 +1266,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
               ),
 
-              // 3. Feature Card: Ruang Rombongan & Kolaborasi Voting
+              // 3. Feature Card: Kalender Event & Budaya Sumbar
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -1291,31 +1290,31 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3D6),
+                            color: const Color(0xFFF3E8FF),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.how_to_vote_rounded, size: 13, color: Color(0xFFB45309)),
+                              Icon(Icons.event_available_rounded, size: 13, color: Color(0xFF5A3E85)),
                               SizedBox(width: 4),
                               Text(
-                                'Kolaborasi Rombongan',
+                                'Agenda & Event',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFFB45309),
+                                  color: Color(0xFF5A3E85),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.share_rounded, size: 18, color: AppColors.forest),
+                        const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF5A3E85)),
                       ],
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Ruang Rombongan & Voting Destinasi',
+                      'Kalender Event & Festival Budaya',
                       style: TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w800,
@@ -1324,7 +1323,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Buat ruang bersama teman rombongan, lakukan voting destinasi favorit secara demokratis, dan bagikan link undangan.',
+                      'Lihat jadwal festival budaya, pertunjukan kesenian randai, pacu jawi, dan agenda wisata tahunan resmi di Sumatera Barat.',
                       style: TextStyle(
                         fontSize: 11.5,
                         color: AppColors.muted,
@@ -1332,42 +1331,22 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _openGroupRoomModal,
-                            icon: const Icon(Icons.group_rounded, size: 16),
-                            label: const Text(
-                              'Buka Ruang Room',
-                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.forest,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _openKalenderBudayaModal,
+                        icon: const Icon(Icons.event_note_rounded, size: 16),
+                        label: const Text(
+                          'Buka Kalender Event',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _openKalenderBudayaModal,
-                            icon: const Icon(Icons.event_note_rounded, size: 16),
-                            label: const Text(
-                              'Kalender Event',
-                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF5A3E85),
-                              side: const BorderSide(color: Color(0xFF5A3E85)),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5A3E85),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -2731,25 +2710,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => TripPlannerSheet(
-        onOpenGroupRoom: _openGroupRoomModal,
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // MODAL 7: RUANG ROMBONGAN PRIBADI & UNDANGAN WHATSAPP (ITEM 11)
-  // ===========================================================================
-  void _openGroupRoomModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => GroupRoomSheet(
-        onInviteWhatsApp: () {
-          _showAppToast('Tautan Undangan WhatsApp Rombongan Siap Dikirim!');
-        },
-      ),
+      builder: (ctx) => const TripPlannerSheet(),
     );
   }
 
