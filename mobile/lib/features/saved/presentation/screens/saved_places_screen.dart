@@ -8,7 +8,6 @@ import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
-import '../../../group_room/presentation/widgets/group_room_sheet.dart';
 import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
@@ -191,6 +190,46 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     {'key': 'Pantai & Bahari', 'label': 'Pantai & Bahari'},
     {'key': 'Nagari & Hutan Terpencil', 'label': 'Nagari & Hutan Terpencil'},
   ];
+
+  // Notifikasi & Pengingat Festival Budaya
+  final Set<String> _remindedFestivalIds = {'ev_harau'};
+  final List<Map<String, dynamic>> _appNotifications = [
+    {
+      'id': 'notif_1',
+      'title': 'Pengingat Festival: Festival Pasa Harau 2026',
+      'message': 'Acara kebudayaan akbar di Lembah Harau segera berlangsung pada 18 – 20 Desember 2026. Ketuk untuk panduan rute GPS.',
+      'time': 'Hari ini, 08:00 WIB',
+      'isRead': false,
+      'type': 'festival',
+      'eventId': 'ev_harau',
+    },
+    {
+      'id': 'notif_2',
+      'title': 'Permintaan Open Trip Disetujui!',
+      'message': 'Host telah menerima permohonan Anda untuk bergabung di Eksplor Harau Camp. Tautan WhatsApp Group kini dapat diakses.',
+      'time': '1 jam lalu',
+      'isRead': false,
+      'type': 'opentrip',
+    },
+    {
+      'id': 'notif_3',
+      'title': 'Lencana Paspor Digital Terbuka',
+      'message': 'Selamat! Anda telah melakukan check-in GPS di Nagari Pariangan dan mendapatkan Lencana Resmi.',
+      'time': 'Kemarin',
+      'isRead': true,
+      'type': 'passport',
+    },
+    {
+      'id': 'notif_4',
+      'title': 'Peringatan Jalur & Cuaca Nagari',
+      'message': 'Kondisi jalur Lembah Anai terpantau cerah berawan dan lancar untuk dilalui rombongan wisata.',
+      'time': '2 hari lalu',
+      'isRead': true,
+      'type': 'weather',
+    },
+  ];
+
+  int get _unreadNotificationCount => _appNotifications.where((n) => n['isRead'] == false).length;
 
 
 
@@ -531,159 +570,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _openNotificationSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 26),
-          decoration: const BoxDecoration(
-            color: AppColors.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.warmBorder,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Notifikasi WISGO',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  Text(
-                    '3 Terbaru',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.forest,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _buildNotifTile(
-                icon: Icons.warning_amber_rounded,
-                iconBg: const Color(0xFFFEF3C7),
-                iconColor: const Color(0xFFB45309),
-                title: 'Pantauan Jalur Sitinjau Lauik',
-                body: 'Arus lancar, tetap waspada tikungan licin saat hujan ringan.',
-                time: '12 mnt lalu',
-              ),
-              const SizedBox(height: 8),
-              _buildNotifTile(
-                icon: Icons.verified_rounded,
-                iconBg: AppColors.sage,
-                iconColor: AppColors.forest,
-                title: 'Stempel Paspor Digital Aktif',
-                body: 'Kumpulkan 6 destinasi lagi untuk lencana Penjelajah Ranah Minang.',
-                time: '1 jam lalu',
-              ),
-              const SizedBox(height: 8),
-              _buildNotifTile(
-                icon: Icons.celebration_rounded,
-                iconBg: const Color(0xFFF3EDFA),
-                iconColor: const Color(0xFF5A3E85),
-                title: 'Alek Nagari Pacu Jawi Akhir Pekan',
-                body: 'Digelar di Tanah Datar mulai pukul 14.00 WIB.',
-                time: 'Hari ini',
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildNotifTile({
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-    required String title,
-    required String body,
-    required String time,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.warmBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      time,
-                      style: const TextStyle(
-                        fontSize: 9.5,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: AppColors.muted,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -2043,14 +1929,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                   const SizedBox(width: 6),
 
-                  // 3. Lonceng Notifikasi WISGO
+                  // 3. Lonceng Pusat Notifikasi & Pengingat WISGO
                   Tooltip(
-                    message: 'Notifikasi & Info Jalur Wisata',
+                    message: 'Pusat Notifikasi & Pengingat WISGO',
                     child: Material(
                       color: Colors.white,
                       shape: const CircleBorder(),
                       child: InkWell(
-                        onTap: _openNotificationSheet,
+                        onTap: _openNotificationCenterModal,
                         customBorder: const CircleBorder(),
                         child: Container(
                           width: 34,
@@ -2061,28 +1947,45 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           ),
                           child: Stack(
                             alignment: Alignment.center,
+                            clipBehavior: Clip.none,
                             children: [
                               const Icon(
                                 Icons.notifications_none_rounded,
                                 size: 19,
                                 color: AppColors.ink,
                               ),
-                              Positioned(
-                                top: 6,
-                                right: 7,
-                                child: Container(
-                                  width: 7,
-                                  height: 7,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFDC2626),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 1.2,
+                              if (_unreadNotificationCount > 0)
+                                Positioned(
+                                  top: -2,
+                                  right: -2,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDC2626),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 1.3,
+                                      ),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 15,
+                                      minHeight: 15,
+                                    ),
+                                    child: Text(
+                                      '$_unreadNotificationCount',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -2776,7 +2679,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _showAppToast('Menghubungi Koordinator Open Trip Harau...'),
+                            onPressed: _openTripPlannerModal,
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.forest,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -2823,7 +2726,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _showAppToast('Menghubungi Koordinator Open Trip Mandeh...'),
+                            onPressed: _openTripPlannerModal,
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFF1E5B82),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -2870,7 +2773,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _showAppToast('Menghubungi Koordinator Open Trip Budaya...'),
+                            onPressed: _openTripPlannerModal,
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFFC89242),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -2992,7 +2895,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
               ),
 
-              // 3. Feature Card: Ruang Rombongan & Kolaborasi Voting
+              // 3. Feature Card: Kalender Event & Budaya Sumbar
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -3016,31 +2919,31 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3D6),
+                            color: const Color(0xFFF3E8FF),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.how_to_vote_rounded, size: 13, color: Color(0xFFB45309)),
+                              Icon(Icons.event_available_rounded, size: 13, color: Color(0xFF5A3E85)),
                               SizedBox(width: 4),
                               Text(
-                                'Kolaborasi Rombongan',
+                                'Agenda & Event',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFFB45309),
+                                  color: Color(0xFF5A3E85),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.share_rounded, size: 18, color: AppColors.forest),
+                        const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF5A3E85)),
                       ],
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Ruang Rombongan & Voting Destinasi',
+                      'Kalender Event & Festival Budaya',
                       style: TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w800,
@@ -3049,7 +2952,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Buat ruang bersama teman rombongan, lakukan voting destinasi favorit secara demokratis, dan bagikan link undangan.',
+                      'Lihat jadwal festival budaya, pertunjukan kesenian randai, pacu jawi, dan agenda wisata tahunan resmi di Sumatera Barat.',
                       style: TextStyle(
                         fontSize: 11.5,
                         color: AppColors.muted,
@@ -3057,42 +2960,22 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _openGroupRoomModal,
-                            icon: const Icon(Icons.group_rounded, size: 16),
-                            label: const Text(
-                              'Buka Ruang Room',
-                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.forest,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _openKalenderBudayaModal,
+                        icon: const Icon(Icons.event_note_rounded, size: 16),
+                        label: const Text(
+                          'Buka Kalender Event',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _openKalenderBudayaModal,
-                            icon: const Icon(Icons.event_note_rounded, size: 16),
-                            label: const Text(
-                              'Kalender Event',
-                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF5A3E85),
-                              side: const BorderSide(color: Color(0xFF5A3E85)),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5A3E85),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -3200,206 +3083,1325 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
+  // Data Master: Kalender Acara & Festival Budaya Minang
+  static final List<Map<String, dynamic>> _budayaFestivals = [
+    {
+      'id': 'ev_harau',
+      'title': 'Festival Pasa Harau 2026',
+      'date': '18 – 20 Desember 2026',
+      'time': '08:00 – 22:00 WIB',
+      'location': 'Lembah Harau, Kab. Lima Puluh Kota',
+      'venue': 'Area Terbuka Tebing Granit Lembah Harau',
+      'desc': 'Pagelaran akbar seni adat, randai tradisional, musik saluang, & kuliner nagari di bawah tebing granit.',
+      'badge': 'Festival Adat Resmi',
+      'badgeColor': 0xFF5A3E85,
+      'badgeBg': 0xFFF3EDFA,
+      'lat': -0.1008,
+      'lng': 100.6728,
+      'gpsCoordinate': '-0.1008, 100.6728',
+      'imageUrl': 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?w=800',
+      'longDesc': 'Festival Pasa Harau adalah perayaan kebudayaan tahunan Minangkabau terbesar di Lembah Harau. Diapit tebing granit raksasa setinggi 100-300 meter, festival ini menampilkan teater tradisional Randai, pertunjukan musik Saluang & Gandang Tambua, pameran kuliner legendaris 50 Kota, serta pergelaran busana tenun songket khas Luak Limopuluah.',
+      'rundown': [
+        'Hari 1: Pawai Budaya Adat 100 Gandang & Pembukaan Resmi Nagari',
+        'Hari 2: Randai Semalam Suntuk, Pasar Kuliner Tradisional, & Lomba Pacu Terbang Itik',
+        'Hari 3: Pentas Musik Etnik Kontemporer & Ritual Syukur Nagari Harau',
+      ],
+      'tips': 'Gunakan pakaian sopan, kenakan alas kaki nyaman untuk area berumput, dan siapkan kantong sampah pribadi demi menjaga keasrian lembah.',
+    },
+    {
+      'id': 'ev_pacu_jawi',
+      'title': 'Pacu Jawi Tradisional Luhak Nan Tuo',
+      'date': 'Setiap Sabtu (Pukul 09:00 WIB)',
+      'time': '09:00 – 16:30 WIB',
+      'location': 'Kec. Pariangan, Kab. Tanah Datar',
+      'venue': 'Sawah Basah Nagari Pariangan (Desa Terindah)',
+      'desc': 'Balapan sepasang sapi di sawah basah berlumpur khas Minangkabau sebagai perayaan syukur panen padi nagari.',
+      'badge': 'Warisan Budaya',
+      'badgeColor': 0xFF1E5B82,
+      'badgeBg': 0xFFE8F1F8,
+      'lat': -0.4469,
+      'lng': 100.4939,
+      'gpsCoordinate': '-0.4469, 100.4939',
+      'imageUrl': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800',
+      'longDesc': 'Pacu Jawi adalah tradisi permainan anak nagari turun-temurun di Tanah Datar yang digelar seusai panen padi. Seorang joki berdiri di atas bajak bambu dan memegang ekor sepasang sapi sambil meluncur kencang di hamparan sawah basah berlumpur. Tradisi ini menilai ketangkasan, kekompakan lari sapi lurus, dan nilai jual sapi bibit unggul.',
+      'rundown': [
+        '09:00 - 10:00: Pawai Sapi Hias Khas Luhak Nan Tuo',
+        '10:30 - 12:30: Babak Pertama Pacu Jawi Sawah Berlumpur',
+        '12:30 - 13:30: Makan Bajamba di Dangau Sawah Bersama Warga',
+        '13:30 - 16:30: Babak Utama & Penilaian Ketangkasan Joki',
+      ],
+      'tips': 'Bawa baju ganti dan pelindung kamera dari cipratan lumpur basah. Jangan berdiri terlalu dekat dengan jalur lintasan sapi demi keselamatan.',
+    },
+    {
+      'id': 'ev_maninjau',
+      'title': 'Festival Pesona Danau Maninjau',
+      'date': '24 – 26 Desember 2026',
+      'time': '08:30 – 18:00 WIB',
+      'location': 'Kelok 44 & Tepian Danau, Agam',
+      'venue': 'Puncak Lawang (Take-off) & Muko-Muko Maninjau',
+      'desc': 'Kejuaraan paralayang internasional dari puncak Lawang, pameran kriya perak, & santap rinuak segar.',
+      'badge': 'Agenda Tahunan',
+      'badgeColor': 0xFF15803D,
+      'badgeBg': 0xFFDCFCE7,
+      'lat': -0.2933,
+      'lng': 100.1989,
+      'gpsCoordinate': '-0.2933, 100.1989',
+      'imageUrl': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+      'longDesc': 'Festival tahunan kebanggaan Ranah Agam yang memadukan keindahan lanskap kaldera purba Danau Maninjau dengan atraksi kedirgantaraan dunia. Puluhan atlet paralayang terbang dari tebing Puncak Lawang menyuguhkan pemandangan spektakuler di atas Kelok 44, berpadu dengan kuliner khas ikan rinuak dan pameran kerajinan perak Koto Gadang.',
+      'rundown': [
+        'Hari 1: Kejuaraan Internasional Paralayang Puncak Lawang - Danau Maninjau',
+        'Hari 2: Lomba Dayung Sampan Tradisional & Pesta Kuliner Olahan Rinuak',
+        'Hari 3: Parade Musik Akustik Danau & Pagelaran Seni Tari Piring',
+      ],
+      'tips': 'Udara di Puncak Lawang berkabut dan sejuk, kenakan jaket hangat. Patuhi rambu jalan menurun saat melewati Kelok 44.',
+    },
+    {
+      'id': 'ev_tabuik',
+      'title': 'Pesta Budaya Tabuik Pariaman',
+      'date': '10 Muharram (Puncak Hoyak Tabuik)',
+      'time': '06:00 – 18:30 WIB',
+      'location': 'Pantai Gandoriah, Kota Pariaman',
+      'venue': 'Lapangan Merdeka & Pesisir Pantai Gandoriah',
+      'desc': 'Prosesi kultural pengusungan Tabuik raksasa nan megah hingga pembuangan ke laut diiringi tambua tasa membahana.',
+      'badge': 'Karnaval Akbar',
+      'badgeColor': 0xFFC2410C,
+      'badgeBg': 0xFFFFEDD5,
+      'lat': -0.6272,
+      'lng': 100.1192,
+      'gpsCoordinate': '-0.6272, 100.1192',
+      'imageUrl': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800',
+      'longDesc': 'Pesta Budaya Tabuik adalah tradisi kolosal spektakuler masyarakat pesisir Pariaman. Dua menara Tabuik (Tabuik Pasa & Tabuik Subarang) setinggi 12 meter berornamen burung Buraq diarak ribuan warga diiringi dentuman ratusan Gandang Tambua Tasa, diakhiri ritual Hoyak Tabuik menuju laut lepas saat matahari terbenam.',
+      'rundown': [
+        '06:00 - 09:00: Ritual Maarak Jari-jari & Saroban',
+        '10:00 - 14:00: Tabuik Naiak Pangkek di Lapangan Merdeka',
+        '14:30 - 17:30: Hoyak Tabuik kolosal menuju pesisir Pantai Gandoriah',
+        '18:00 - 18:30: Prosesi pelarungan Tabuik ke Samudera Hindia diiringi doa bersama',
+      ],
+      'tips': 'Suasana sangat padat dan meriah; simpan barang berharga di tas dada, gunakan topi dan tabir surya di area pantai.',
+    },
+    {
+      'id': 'ev_batagak',
+      'title': 'Batagak Panghulu & Alek Nagari',
+      'date': 'Jadwal Adat Nagari',
+      'time': '09:00 – 17:00 WIB',
+      'location': 'Balai Adat Koto Gadang',
+      'venue': 'Medan Nan Bapaneh & Rumah Gadang Suku',
+      'desc': 'Upacara sakral pengangkatan Datuak Datuak pemangku adat suku Minangkabau dengan jamuan bajamba adat.',
+      'badge': 'Hukum Adat',
+      'badgeColor': 0xFF4338CA,
+      'badgeBg': 0xFFEEF2FF,
+      'lat': -0.3201,
+      'lng': 100.3546,
+      'gpsCoordinate': '-0.3201, 100.3546',
+      'imageUrl': 'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800',
+      'longDesc': 'Batagak Panghulu adalah musyawarah dan prosesi sakral penobatan gelar kepemimpinan adat (Datuak) bagi pewaris suku menurut garis keturunan matrilineal. Acara ini diiringi pidato adat Pasambahan penuh pepatah petitih tingkat tinggi, penyembelihan kerbau, dan tradisi Makan Bajamba bersama ribuan anak nagari.',
+      'rundown': [
+        '09:00 - 11:00: Sidang Kerapatan Adat Nagari (KAN) & Pidato Pasambahan',
+        '11:00 - 12:30: Pemasangan Saluak & Keris Pusaka Pemangku Adat',
+        '12:30 - 14:30: Makan Bajamba Adat di Rumah Gadang',
+        '14:30 - 17:00: Arak-arakan Penghulu Keliling Nagari Koto Gadang',
+      ],
+      'tips': 'Wajib mengenakan pakaian sopan dan tertutup. Hormati prosesi sakral dan ikuti arahan tetua adat saat jamuan berlangsung.',
+    },
+  ];
+
   // Modal: Kalender Acara & Festival Budaya Minang (Dibuka lewat icon kalender di header Beranda)
   void _openKalenderBudayaModal() {
-    final events = [
-      {
-        'title': 'Festival Pasa Harau 2026',
-        'date': '18 – 20 Desember 2026',
-        'location': 'Lembah Harau, Kab. Lima Puluh Kota',
-        'desc': 'Pagelaran akbar seni adat, randai tradisional, musik saluang, & kuliner nagari di bawah tebing granit.',
-        'badge': 'Festival Adat Resmi',
-      },
-      {
-        'title': 'Pacu Jawi Tradisional Luhak Nan Tuo',
-        'date': 'Setiap Sabtu (Pukul 09:00 WIB)',
-        'location': 'Kec. Pariangan, Kab. Tanah Datar',
-        'desc': 'Balapan sepasang sapi di sawah basah berlumpur khas Minangkabau sebagai perayaan syukur panen padi nagari.',
-        'badge': 'Warisan Budaya',
-      },
-      {
-        'title': 'Festival Pesona Danau Maninjau',
-        'date': '24 – 26 Desember 2026',
-        'location': 'Kelok 44 & Tepian Danau, Agam',
-        'desc': 'Kejuaraan paralayang internasional dari puncak Lawang, pameran kriya perak, & santap rinuak segar.',
-        'badge': 'Agenda Tahunan',
-      },
-      {
-        'title': 'Pesta Budaya Tabuik Pariaman',
-        'date': '10 Muharram (Puncak Hoyak Tabuik)',
-        'location': 'Pantai Gandoriah, Kota Pariaman',
-        'desc': 'Prosesi kultural pengusungan Tabuik raksasa nan megah hingga pembuangan ke laut diiringi tambua tasa membahana.',
-        'badge': 'Karnaval Akbar',
-      },
-      {
-        'title': 'Batagak Panghulu & Alek Nagari',
-        'date': 'Jadwal Adat Nagari',
-        'location': 'Balai Adat Koto Gadang',
-        'desc': 'Upacara sakral pengangkatan Datuak Datuak pemangku adat suku Minangkabau dengan jamuan bajamba adat.',
-        'badge': 'Hukum Adat',
-      },
-    ];
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: AppColors.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(top: 10, bottom: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.warmBorder,
-                  borderRadius: BorderRadius.circular(99),
-                ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.88,
+              decoration: const BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 10, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmBorder,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'WARISAN & PERAYAAN NAGARI',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.1,
-                            color: Color(0xFF5A3E85),
-                          ),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'WARISAN & PERAYAAN NAGARI',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.1,
+                                color: Color(0xFF5A3E85),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Kalender Acara Budaya Minang',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Kalender Acara Budaya Minang',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink,
-                          ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(ctx),
+                          child: const Icon(Icons.close_rounded, size: 22, color: AppColors.muted),
                         ),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: const Icon(Icons.close_rounded, size: 22, color: AppColors.muted),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: AppColors.warmBorder),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: events.length,
-                  itemBuilder: (context, idx) {
-                    final ev = events[idx];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.sageBorder),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.ink.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                  ),
+                  const Divider(height: 1, color: AppColors.warmBorder),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _budayaFestivals.length,
+                      itemBuilder: (context, idx) {
+                        final ev = _budayaFestivals[idx];
+                        final isReminded = _remindedFestivalIds.contains(ev['id']);
+                        final badgeColor = Color(ev['badgeColor'] as int? ?? 0xFF5A3E85);
+                        final badgeBg = Color(ev['badgeBg'] as int? ?? 0xFFF3EDFA);
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isReminded ? AppColors.forest.withValues(alpha: 0.6) : AppColors.sageBorder,
+                              width: isReminded ? 1.5 : 1.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.ink.withValues(alpha: 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF3EDFA),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  ev['badge'] as String,
-                                  style: const TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF5A3E85),
-                                  ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                _openFestivalDetailModal(ev);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: badgeBg,
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            ev['badge'] as String,
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: badgeColor,
+                                            ),
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            if (isReminded) ...[
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                margin: const EdgeInsets.only(right: 6),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFDCFCE7),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: const Row(
+                                                  children: [
+                                                    Icon(Icons.notifications_active_rounded, size: 10, color: Color(0xFF15803D)),
+                                                    SizedBox(width: 3),
+                                                    Text(
+                                                      'Pengingat Aktif',
+                                                      style: TextStyle(
+                                                        fontSize: 8.5,
+                                                        fontWeight: FontWeight.w800,
+                                                        color: Color(0xFF15803D),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.muted),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              ev['date'] as String,
+                                              style: const TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.forest,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      ev['title'] as String,
+                                      style: const TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.ink,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.location_on_rounded, size: 13, color: AppColors.brush),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            ev['location'] as String,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.muted,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      ev['desc'] as String,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.muted,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.creamSubtle,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: AppColors.warmBorder),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.near_me_rounded, size: 12, color: AppColors.forest),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            'GPS: ${ev['gpsCoordinate']}',
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.forest,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          const Text(
+                                            'Lihat Detail & Rute',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.ink,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 3),
+                                          const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.ink),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Row(
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Modal: Detail Festival Budaya (Deskripsi lengkap, navigasi GPS, dan toggle pengingat)
+  void _openFestivalDetailModal(Map<String, dynamic> ev) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDetailState) {
+            final isReminded = _remindedFestivalIds.contains(ev['id']);
+            final badgeColor = Color(ev['badgeColor'] as int? ?? 0xFF5A3E85);
+            final badgeBg = Color(ev['badgeBg'] as int? ?? 0xFFF3EDFA);
+            final rundown = ev['rundown'] as List<String>? ?? [];
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.92,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  // Handle Bar
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 10, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmBorder,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  // Modal Top Bar
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: badgeBg,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                ev['badge'] as String,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: badgeColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Detail Acara Budaya',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(ctx),
+                          child: const Icon(Icons.close_rounded, size: 22, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppColors.warmBorder),
+
+                  // Scrollable Body
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+                      children: [
+                        // Judul Festival
+                        Text(
+                          ev['title'] as String,
+                          style: const TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.ink,
+                            height: 1.25,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Jadwal & Waktu Info Chips
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.creamSubtle,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.warmBorder),
+                              ),
+                              child: Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.muted),
-                                  const SizedBox(width: 4),
+                                  const Icon(Icons.calendar_month_rounded, size: 13, color: AppColors.forest),
+                                  const SizedBox(width: 5),
                                   Text(
                                     ev['date'] as String,
                                     style: const TextStyle(
-                                      fontSize: 10.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.forest,
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            ev['title'] as String,
-                            style: const TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
                             ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.creamSubtle,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.warmBorder),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.access_time_rounded, size: 13, color: AppColors.muted),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    ev['time'] as String? ?? '08:00 WIB',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.ink,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // KARTU LOKASI & GPS INTERAKTIF
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7FBF8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.forest.withValues(alpha: 0.35)),
                           ),
-                          const SizedBox(height: 3),
-                          Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.location_on_rounded, size: 12, color: AppColors.brush),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  ev['location'] as String,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.muted,
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.forest,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Icon(Icons.location_on_rounded, size: 18, color: Colors.white),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          ev['location'] as String,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.ink,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          ev['venue'] as String? ?? 'Sumatera Barat',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.muted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.sageBorder),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.my_location_rounded, size: 13, color: AppColors.forest),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Titik GPS: ${ev['gpsCoordinate']}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'monospace',
+                                          color: AppColors.forest,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              // Tombol Langsung Arahkan ke GPS
+                              SizedBox(
+                                width: double.infinity,
+                                height: 42,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    _navigateToGpsLocation(ev);
+                                  },
+                                  icon: const Icon(Icons.near_me_rounded, size: 16),
+                                  label: const Text(
+                                    'Arahkan ke Lokasi GPS',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.forest,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            ev['desc'] as String,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.muted,
-                              height: 1.35,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // DESKRIPSI KEBUDAYAAN
+                        const Text(
+                          'Tentang Acara & Nilai Budaya',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          ev['longDesc'] as String? ?? ev['desc'] as String,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.ink,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // SUSUNAN ACARA / AGENDA
+                        if (rundown.isNotEmpty) ...[
+                          const Text(
+                            'Rangkaian Acara Utama',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          ...rundown.map((item) => Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      margin: const EdgeInsets.only(top: 6, right: 8),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.brush,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        item,
+                                        style: const TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.ink,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )),
+                          const SizedBox(height: 14),
                         ],
+
+                        // PANDUAN & TATA KRAMA NAGARI
+                        if (ev['tips'] != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7).withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.35)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFD97706)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Tata Krama & Tips Kunjungan Nagari',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF92400E),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        ev['tips'] as String,
+                                        style: const TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF78350F),
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // TOMBOL PENGINGAT / NOTIFIKASI ACARA
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.creamSubtle,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.warmBorder),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    isReminded ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                                    size: 18,
+                                    color: isReminded ? const Color(0xFF15803D) : AppColors.ink,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isReminded ? 'Pengingat Festival Aktif' : 'Pasang Pengingat Acara',
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: isReminded ? const Color(0xFF15803D) : AppColors.ink,
+                                          ),
+                                        ),
+                                        Text(
+                                          isReminded
+                                              ? 'Anda akan menerima notifikasi otomatis di hari acara.'
+                                              : 'Dapatkan pemberitahuan otomatis saat mendekati jadwal festival.',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: AppColors.muted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 40,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      if (isReminded) {
+                                        _remindedFestivalIds.remove(ev['id']);
+                                      } else {
+                                        _remindedFestivalIds.add(ev['id'] as String);
+                                        // Tambahkan notifikasi pengingat ke daftar notifikasi aplikasi
+                                        _appNotifications.insert(0, {
+                                          'id': 'notif_${DateTime.now().millisecondsSinceEpoch}',
+                                          'title': 'Pengingat Aktif: ${ev['title']}',
+                                          'message': 'Jadwal acara ${ev['date']} di ${ev['location']} telah dipasang. Ketuk untuk panduan rute GPS.',
+                                          'time': 'Baru saja',
+                                          'isRead': false,
+                                          'type': 'festival',
+                                          'eventId': ev['id'],
+                                        });
+                                      }
+                                    });
+                                    setDetailState(() {});
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          isReminded
+                                              ? 'Pengingat untuk ${ev['title']} telah dinonaktifkan.'
+                                              : 'Pengingat aktif! Notifikasi pengingat untuk ${ev['title']} telah dijadwalkan.',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                        ),
+                                        backgroundColor: isReminded ? AppColors.ink : AppColors.forest,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                    );
+                                  },
+                                  icon: Icon(
+                                    isReminded ? Icons.check_circle_rounded : Icons.add_alert_rounded,
+                                    size: 16,
+                                    color: isReminded ? const Color(0xFF15803D) : AppColors.forest,
+                                  ),
+                                  label: Text(
+                                    isReminded ? 'Pengingat Aktif (Ketuk untuk Batalkan)' : 'Aktifkan Pengingat Acara',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: isReminded ? const Color(0xFF15803D) : AppColors.forest,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: isReminded ? const Color(0xFF15803D) : AppColors.forest,
+                                      width: 1.2,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Navigasi GPS: Dialog Arahkan Langsung ke GPS / Peta WisGo
+  void _navigateToGpsLocation(Map<String, dynamic> ev) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.forest.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.near_me_rounded, size: 20, color: AppColors.forest),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Navigasi Langsung ke GPS',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        Text(
+                          ev['location'] as String,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.creamSubtle,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Titik Koordinat GPS:',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
+                        ),
+                        Text(
+                          ev['gpsCoordinate'] as String,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'monospace',
+                            color: AppColors.forest,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Target Acara:',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
+                        ),
+                        Expanded(
+                          child: Text(
+                            ev['title'] as String,
+                            textAlign: TextAlign.right,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.ink),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Pilihan 1: Buka Peta Interaktif WisGo
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MapExploreShunluScreen(),
                       ),
                     );
                   },
+                  icon: const Icon(Icons.map_rounded, size: 18),
+                  label: const Text(
+                    'Buka Peta WisGo (Jelajah Interaktif)',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              // Pilihan 2: Salin Koordinat GPS
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: ev['gpsCoordinate'] as String));
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Koordinat GPS ${ev['gpsCoordinate']} berhasil disalin ke clipboard!',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                        backgroundColor: AppColors.ink,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 15, color: AppColors.ink),
+                  label: const Text(
+                    'Salin Koordinat GPS',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.warmBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  // Modal: Pusat Notifikasi & Pengingat WisGo
+  void _openNotificationCenterModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setNotifState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 10, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmBorder,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Pusat Notifikasi',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                            if (_unreadNotificationCount > 0) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDC2626),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '$_unreadNotificationCount Baru',
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            if (_unreadNotificationCount > 0)
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    for (var n in _appNotifications) {
+                                      n['isRead'] = true;
+                                    }
+                                  });
+                                  setNotifState(() {});
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: Text(
+                                    'Tandai Dibaca',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.forest,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(ctx),
+                              child: const Icon(Icons.close_rounded, size: 22, color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppColors.warmBorder),
+                  Expanded(
+                    child: _appNotifications.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.notifications_off_outlined, size: 48, color: AppColors.muted),
+                                SizedBox(height: 12),
+                                Text(
+                                  'Belum ada notifikasi',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _appNotifications.length,
+                            itemBuilder: (context, idx) {
+                              final notif = _appNotifications[idx];
+                              final isRead = notif['isRead'] as bool? ?? false;
+                              final type = notif['type'] as String? ?? 'general';
+
+                              IconData notifIcon;
+                              Color iconColor;
+                              Color iconBg;
+
+                              switch (type) {
+                                case 'festival':
+                                  notifIcon = Icons.calendar_month_rounded;
+                                  iconColor = const Color(0xFF5A3E85);
+                                  iconBg = const Color(0xFFF3EDFA);
+                                  break;
+                                case 'opentrip':
+                                  notifIcon = Icons.groups_rounded;
+                                  iconColor = AppColors.forest;
+                                  iconBg = const Color(0xFFDCFCE7);
+                                  break;
+                                case 'passport':
+                                  notifIcon = Icons.verified_rounded;
+                                  iconColor = const Color(0xFF1E5B82);
+                                  iconBg = const Color(0xFFE8F1F8);
+                                  break;
+                                case 'weather':
+                                  notifIcon = Icons.wb_sunny_rounded;
+                                  iconColor = const Color(0xFFD97706);
+                                  iconBg = const Color(0xFFFEF3C7);
+                                  break;
+                                default:
+                                  notifIcon = Icons.notifications_rounded;
+                                  iconColor = AppColors.ink;
+                                  iconBg = AppColors.creamSubtle;
+                              }
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  color: isRead ? Colors.white : const Color(0xFFFCFDFD),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isRead ? AppColors.warmBorder : AppColors.forest.withValues(alpha: 0.4),
+                                    width: isRead ? 1.0 : 1.3,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.ink.withValues(alpha: 0.03),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(14),
+                                    onTap: () {
+                                      setState(() {
+                                        notif['isRead'] = true;
+                                      });
+                                      setNotifState(() {});
+
+                                      // Jika notifikasi festival, langsung buka detail festival
+                                      if (type == 'festival' && notif['eventId'] != null) {
+                                        final matched = _budayaFestivals.firstWhere(
+                                          (f) => f['id'] == notif['eventId'],
+                                          orElse: () => _budayaFestivals.first,
+                                        );
+                                        _openFestivalDetailModal(matched);
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            width: 36,
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              color: iconBg,
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Icon(notifIcon, size: 18, color: iconColor),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        notif['title'] as String,
+                                                        style: TextStyle(
+                                                          fontSize: 12.5,
+                                                          fontWeight: isRead ? FontWeight.w700 : FontWeight.w900,
+                                                          color: AppColors.ink,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    if (!isRead)
+                                                      Container(
+                                                        width: 7,
+                                                        height: 7,
+                                                        margin: const EdgeInsets.only(left: 6),
+                                                        decoration: const BoxDecoration(
+                                                          color: Color(0xFFDC2626),
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 3),
+                                                Text(
+                                                  notif['message'] as String,
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: AppColors.muted,
+                                                    height: 1.35,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      notif['time'] as String,
+                                                      style: TextStyle(
+                                                        fontSize: 9.5,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: AppColors.muted.withValues(alpha: 0.8),
+                                                      ),
+                                                    ),
+                                                    if (type == 'festival')
+                                                      const Row(
+                                                        children: [
+                                                          Text(
+                                                            'Lihat Rute GPS',
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.w800,
+                                                              color: AppColors.forest,
+                                                            ),
+                                                          ),
+                                                          Icon(Icons.chevron_right_rounded, size: 13, color: AppColors.forest),
+                                                        ],
+                                                      ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -4528,25 +5530,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => TripPlannerSheet(
-        onOpenGroupRoom: _openGroupRoomModal,
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // MODAL 7: RUANG ROMBONGAN PRIBADI & UNDANGAN WHATSAPP (ITEM 11)
-  // ===========================================================================
-  void _openGroupRoomModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => GroupRoomSheet(
-        onInviteWhatsApp: () {
-          _showAppToast('Tautan Undangan WhatsApp Rombongan Siap Dikirim!');
-        },
-      ),
+      builder: (ctx) => const TripPlannerSheet(),
     );
   }
 
