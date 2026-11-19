@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import '../../../core/constants/colors.dart';
+import '../../../core/localization/app_locale.dart';
 import '../data/destination_repository.dart';
 import '../models/destination_model.dart';
 import '../map_explore_shunlu/map_explore_screen.dart';
@@ -1072,7 +1076,25 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
   }
 
   final DestinationRepository _repository = DestinationRepository();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final FlutterTts _flutterTts = FlutterTts();
   late TabController _tabController;
+
+  StreamSubscription<Duration>? _durationSub;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<void>? _completeSub;
+  Duration _currentDuration = Duration.zero;
+
+  static const Set<String> _bundledAudioIds = {
+    'phr-1',
+    'phr-2',
+    'phr-3',
+    'phr-4',
+    'phr-5',
+    'phr-6',
+    'phr-7',
+    'phr-8',
+  };
 
   String _selectedCategory = 'Semua';
   String _searchQuery = '';
@@ -1096,11 +1118,62 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _initAudioPlayer();
+    _initTts();
     _loadCultureData();
+  }
+
+  void _initAudioPlayer() {
+    try {
+      _durationSub = _audioPlayer.onDurationChanged.listen((d) {
+        if (!mounted) return;
+        _currentDuration = d;
+      });
+      _positionSub = _audioPlayer.onPositionChanged.listen((pos) {
+        if (!mounted || !_isAudioPlaying) return;
+        final totalMs = _currentDuration.inMilliseconds;
+        if (totalMs > 0) {
+          setState(() {
+            _playbackProgress = (pos.inMilliseconds / totalMs).clamp(0.05, 1.0);
+          });
+        }
+      });
+      _completeSub = _audioPlayer.onPlayerComplete.listen((_) {
+        if (!mounted) return;
+        setState(() {
+          _isAudioPlaying = false;
+          _currentlyPlayingId = null;
+          _playbackProgress = 0.0;
+        });
+      });
+    } on MissingPluginException {
+      // Aman saat widget test
+    } catch (_) {}
+  }
+
+  Future<void> _initTts() async {
+    try {
+      await _flutterTts.setLanguage('id-ID');
+      await _flutterTts.setSpeechRate(0.45);
+      await _flutterTts.setPitch(1.0);
+      await _flutterTts.setVolume(1.0);
+      await _flutterTts.awaitSpeakCompletion(true);
+    } on MissingPluginException {
+      // Aman saat dijalankan di environment widget test tanpa channel native
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    _durationSub?.cancel();
+    _positionSub?.cancel();
+    _completeSub?.cancel();
+    try {
+      _audioPlayer.dispose();
+    } catch (_) {}
+    try {
+      _flutterTts.stop();
+    } catch (_) {}
     _tabController.dispose();
     super.dispose();
   }
@@ -1118,32 +1191,109 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
     });
   }
 
-  void _playPhrase(MinangPhraseModel phrase) {
-    setState(() {
-      if (_currentlyPlayingId == phrase.id && _isAudioPlaying) {
+  String _prepareSpeechText(MinangPhraseModel phrase) {
+    return phrase.minangText
+        .replaceAll('/', ' atau ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  Future<void> _playPhrase(MinangPhraseModel phrase) async {
+    final isStoppingSame = _currentlyPlayingId == phrase.id && _isAudioPlaying;
+
+    try {
+      await _audioPlayer.stop();
+    } catch (_) {}
+    try {
+      await _flutterTts.stop();
+    } catch (_) {}
+
+    if (isStoppingSame) {
+      if (!mounted) return;
+      setState(() {
         _isAudioPlaying = false;
         _currentlyPlayingId = null;
         _playbackProgress = 0.0;
-      } else {
-        _currentlyPlayingId = phrase.id;
-        _isAudioPlaying = true;
-        _playbackProgress = 0.2;
-      }
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _currentlyPlayingId = phrase.id;
+      _isAudioPlaying = true;
+      _playbackProgress = 0.12;
+      _currentDuration = Duration.zero;
     });
 
-    if (_isAudioPlaying) {
-      // Simulasi progress audio
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted && _currentlyPlayingId == phrase.id) {
-          setState(() => _playbackProgress = 0.6);
-        }
-      });
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.green800,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        content: Row(
+          children: [
+            const Icon(Icons.volume_up_rounded, color: AppColors.pinAudioEmas),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Memutar Suara: "${phrase.minangText}"',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  Text(
+                    'Lafal: ${phrase.phoneticGuide} (${phrase.dialectNote})',
+                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // 1. Utamakan memutar file audio MP3 asli via rootBundle + BytesSource
+    // (100% kompatibel lintas platform: Web Chrome/Edge, Windows, Android & iOS)
+    if (_bundledAudioIds.contains(phrase.id)) {
+      try {
+        final byteData = await rootBundle.load('assets/audio/${phrase.id}.mp3');
+        final bytes = byteData.buffer.asUint8List();
+        await _audioPlayer.setVolume(1.0);
+        await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+        await _audioPlayer.play(
+          BytesSource(bytes, mimeType: 'audio/mpeg'),
+        );
+        return;
+      } on MissingPluginException catch (e) {
+        debugPrint('[KamusAudio] Plugin audioplayers belum terdaftar (perlu restart penuh flutter run): $e');
+      } catch (e) {
+        debugPrint('[KamusAudio] Gagal memutar MP3 lokal ${phrase.id}: $e');
+      }
+    }
+
+    // 2. Fallback: TTS sistem perangkat untuk frasa dinamis tambahan
+    final speechText = _prepareSpeechText(phrase);
+    var spokeNatively = false;
+    try {
+      await _flutterTts.setLanguage('id-ID');
+      await _flutterTts.setSpeechRate(0.45);
+      await _flutterTts.setVolume(1.0);
+      await _flutterTts.speak(speechText);
+      spokeNatively = true;
+    } on MissingPluginException {
+      spokeNatively = false;
+    } catch (_) {
+      spokeNatively = false;
+    }
+
+    if (!spokeNatively) {
       Future.delayed(const Duration(milliseconds: 1400), () {
-        if (mounted && _currentlyPlayingId == phrase.id) {
-          setState(() => _playbackProgress = 1.0);
-        }
-      });
-      Future.delayed(const Duration(milliseconds: 2000), () {
         if (mounted && _currentlyPlayingId == phrase.id) {
           setState(() {
             _isAudioPlaying = false;
@@ -1152,74 +1302,93 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
           });
         }
       });
+    } else if (mounted && _currentlyPlayingId == phrase.id) {
+      setState(() {
+        _isAudioPlaying = false;
+        _currentlyPlayingId = null;
+        _playbackProgress = 0.0;
+      });
+    }
+  }
 
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.green800,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          content: Row(
-            children: [
-              const Icon(Icons.volume_up, color: AppColors.pinAudioEmas),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Memutar Audio: "${phrase.minangText}"',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    Text(
-                      'Lafal: ${phrase.phoneticGuide} (${phrase.dialectNote})',
-                      style: const TextStyle(fontSize: 11, color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+  String _categoryLabel(String cat) {
+    if (!AppLocale.isEn) return cat;
+    switch (cat) {
+      case 'Semua':
+        return 'All';
+      case 'Kuliner':
+        return 'Culinary';
+      case 'Pasar & Belanja':
+        return 'Market & Shopping';
+      case 'Sapaan Nagari':
+        return 'Greetings';
+      case 'Arah & Navigasi':
+        return 'Directions';
+      default:
+        return cat;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream100,
-      appBar: AppBar(
-        automaticallyImplyLeading: !widget.embedded,
-        title: Text(
-          widget.embedded
-              ? 'Kamus Minang & Budaya'
-              : 'Kamus Saku Audio & Budaya Minang',
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.green800,
-          indicatorWeight: 3,
-          labelColor: AppColors.green800,
-          unselectedLabelColor: Colors.black54,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          tabs: const [
-            Tab(text: 'Kamus Audio Minang'),
-            Tab(text: 'Kalender Budaya'),
-          ],
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.green800))
-          : TabBarView(
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocale.notifier,
+      builder: (context, _, __) {
+        return Scaffold(
+          backgroundColor: AppColors.cream100,
+          appBar: AppBar(
+            automaticallyImplyLeading: !widget.embedded,
+            title: Text(
+              widget.embedded
+                  ? AppLocale.tr(
+                      'Kamus Minang & Budaya',
+                      'Minang Dictionary & Culture',
+                    )
+                  : AppLocale.tr(
+                      'Kamus Saku Audio & Budaya Minang',
+                      'Minang Pocket Audio & Culture',
+                    ),
+            ),
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Center(child: LanguageTogglePill(compact: true)),
+              ),
+            ],
+            bottom: TabBar(
               controller: _tabController,
-              children: [
-                _buildKamusAudioTab(),
-                _buildKalenderBudayaTab(),
+              indicatorColor: AppColors.green800,
+              indicatorWeight: 3,
+              labelColor: AppColors.green800,
+              unselectedLabelColor: Colors.black54,
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              tabs: [
+                Tab(
+                  text: AppLocale.tr(
+                    'Kamus Audio Minang',
+                    'Minang Audio Dictionary',
+                  ),
+                ),
+                Tab(
+                  text: AppLocale.tr('Kalender Budaya', 'Culture Calendar'),
+                ),
               ],
             ),
+          ),
+          body: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.green800),
+                )
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildKamusAudioTab(),
+                    _buildKalenderBudayaTab(),
+                  ],
+                ),
+        );
+      },
     );
   }
 
@@ -1234,6 +1403,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
       final matchQuery = q.isEmpty ||
           p.minangText.toLowerCase().contains(q) ||
           p.indonesianText.toLowerCase().contains(q) ||
+          p.englishText.toLowerCase().contains(q) ||
           p.usageContextTip.toLowerCase().contains(q);
       return matchCat && matchQuery;
     }).toList();
@@ -1268,22 +1438,28 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pemandu Bahasa Minang Asli',
-                      style: TextStyle(
+                      AppLocale.tr(
+                        'Pemandu Bahasa Minang Asli',
+                        'Authentic Minang Phrase Guide',
+                      ),
+                      style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.bold,
                         color: AppColors.ink900,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Lafal frasa otentik dengan prinsip Kato Nan Ampek (Adat Basandi Syarak).',
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                      AppLocale.tr(
+                        'Lafal frasa otentik dengan prinsip Kato Nan Ampek (Adat Basandi Syarak).',
+                        'Authentic local phrases with audio, ID & EN meanings for speaking with locals.',
+                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
                     ),
                   ],
                 ),
@@ -1302,12 +1478,16 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
           ),
           child: TextField(
             onChanged: (val) => setState(() => _searchQuery = val),
-            decoration: const InputDecoration(
-              hintText: 'Cari kata Minang atau arti bahasa Indonesia...',
-              hintStyle: TextStyle(fontSize: 13, color: Colors.black38),
-              prefixIcon: Icon(Icons.search, color: AppColors.green800),
+            decoration: InputDecoration(
+              hintText: AppLocale.tr(
+                'Cari kata Minang, Indonesia, atau English...',
+                'Search Minang, Indonesian, or English phrases...',
+              ),
+              hintStyle: const TextStyle(fontSize: 13, color: Colors.black38),
+              prefixIcon: const Icon(Icons.search, color: AppColors.green800),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
         ),
@@ -1322,7 +1502,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
-                  label: Text(cat),
+                  label: Text(_categoryLabel(cat)),
                   selected: isSelected,
                   selectedColor: AppColors.green800,
                   labelStyle: TextStyle(
@@ -1344,10 +1524,13 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Daftar Frasa Budaya & Pasar',
-                style: TextStyle(
+                AppLocale.tr(
+                  'Daftar Frasa Budaya & Pasar',
+                  'Cultural & Market Phrases',
+                ),
+                style: const TextStyle(
                   fontSize: 15.5,
                   fontWeight: FontWeight.bold,
                   color: AppColors.ink900,
@@ -1356,7 +1539,10 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              '${filteredPhrases.length} frasa',
+              AppLocale.tr(
+                '${filteredPhrases.length} frasa',
+                '${filteredPhrases.length} phrases',
+              ),
               style: const TextStyle(fontSize: 12, color: Colors.black45),
             ),
           ],
@@ -1451,7 +1637,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Lafal: [ ${phrase.phoneticGuide} ]',
+                            '${AppLocale.tr('Lafal:', 'Pronunciation:')} [ ${phrase.phoneticGuide} ]',
                             style: const TextStyle(
                               fontSize: 12,
                               fontStyle: FontStyle.italic,
@@ -1500,16 +1686,81 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                 const Divider(height: 1),
                 const SizedBox(height: 8),
 
-                // Arti Bahasa Indonesia & Konteks Penggunaan
-                Text(
-                  'Arti: "${phrase.indonesianText}"',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink900,
-                  ),
+                // Arti Bahasa Indonesia & Bahasa Inggris (Bilingual ID & EN)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5.5,
+                        vertical: 1.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.sage100,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: const Text(
+                        'ID',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.green800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        '"${phrase.indonesianText}"',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
+                if (phrase.englishText.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 1.5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5.5,
+                          vertical: 1.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F1F8),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          'EN',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E5B82),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          '"${phrase.englishText}"',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1E4A68),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     const Icon(Icons.lightbulb_outline, size: 12, color: AppColors.orange500),
@@ -1868,23 +2119,26 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFE89F3C).withValues(alpha: 0.3)),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.calendar_month_rounded, color: AppColors.orange500, size: 30),
-              SizedBox(width: 14),
+              const Icon(Icons.calendar_month_rounded, color: AppColors.orange500, size: 30),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kalender Adat & Hari Pakan',
-                      style: TextStyle(
+                      AppLocale.tr(
+                        'Kalender Adat & Hari Pakan',
+                        'Cultural & Market Day Calendar',
+                      ),
+                      style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.bold,
                         color: AppColors.ink900,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'Hari Pakan adalah hari pasar tradisional bergilir nagari tempat warga menjual kuliner otentik.',
                       style: TextStyle(fontSize: 12, color: Colors.black87),
