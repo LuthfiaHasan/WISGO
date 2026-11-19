@@ -55,6 +55,32 @@ class DestinationModel {
   }
 
   factory DestinationModel.fromJson(Map<String, dynamic> json) {
+    final rawDist = json['distance_km'];
+    final String parsedDistance = rawDist is num
+        ? '${rawDist.toStringAsFixed(rawDist.truncateToDouble() == rawDist ? 0 : 1)} km'
+        : (rawDist as String? ?? '120 km');
+
+    final rawTime = json['travel_time'];
+    final rawTimeMin = json['travel_time_min'];
+    String parsedTime = '2j 30m';
+    if (rawTime is String && rawTime.isNotEmpty) {
+      parsedTime = rawTime;
+    } else if (rawTimeMin is num && rawTimeMin > 0) {
+      final mins = rawTimeMin.round();
+      final h = mins ~/ 60;
+      final m = mins % 60;
+      parsedTime = h > 0 ? (m > 0 ? '${h}j ${m}m' : '$h jam') : '$m mnt';
+    }
+
+    final rawFee = json['entry_fee'];
+    final rawCost = json['estimated_cost'];
+    String parsedFee = 'Gratis';
+    if (rawFee is String && rawFee.isNotEmpty) {
+      parsedFee = rawFee;
+    } else if (rawCost is num) {
+      parsedFee = rawCost <= 0 ? 'Gratis' : 'Rp ${rawCost.round()}';
+    }
+
     return DestinationModel(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
@@ -65,9 +91,9 @@ class DestinationModel {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       coverImage: json['cover_image'] as String? ?? '',
       crowdLevel: json['crowd_level'] as String? ?? 'Sedang',
-      distanceKm: json['distance_km'] as String? ?? '120 km',
-      travelTime: json['travel_time'] as String? ?? '2j 30m',
-      entryFee: json['entry_fee'] as String? ?? 'Rp 10.000',
+      distanceKm: parsedDistance,
+      travelTime: parsedTime,
+      entryFee: parsedFee,
       medanIndicator: json['medan_indicator'] != null
           ? MedanIndicatorModel.fromJson(
               json['medan_indicator'] as Map<String, dynamic>,
@@ -261,6 +287,7 @@ class MinangPhraseModel {
   final String id;
   final String category; // sapaan_adat, tawar_pasar, kuliner_rm, navigasi_darurat
   final String indonesianText;
+  final String englishText;
   final String minangText;
   final String phoneticGuide;
   final String audioUrl;
@@ -272,6 +299,7 @@ class MinangPhraseModel {
     required this.id,
     required this.category,
     required this.indonesianText,
+    this.englishText = '',
     required this.minangText,
     required this.phoneticGuide,
     this.audioUrl = '',
@@ -285,6 +313,7 @@ class MinangPhraseModel {
       id: json['id'] as String? ?? '',
       category: json['category'] as String? ?? 'Umum',
       indonesianText: json['indonesian_text'] as String? ?? json['indo'] as String? ?? '',
+      englishText: json['english_text'] as String? ?? json['en'] as String? ?? '',
       minangText: json['minang_text'] as String? ?? json['minang'] as String? ?? '',
       phoneticGuide: json['phonetic_guide'] as String? ?? json['phonetic'] as String? ?? '',
       audioUrl: json['audio_url'] as String? ?? '',
