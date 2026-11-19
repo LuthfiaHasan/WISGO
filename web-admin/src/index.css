@@ -3,10 +3,21 @@
 @tailwind utilities;
 
 :root {
+  --cream: #FAF3E6;
+  --cream-subtle: #F3EBDC;
   --cream-100: #F6F3EC;
+  --forest: #193D22;
+  --brush: #2F663E;
+  --sage: #DFECE2;
+  --sage-border: #D5E2D7;
+  --warm-border: #E5DEC9;
+  --terracotta: #E65F2B;
+  --coral-tint: #F9E4DC;
   --green-800: #234B24;
   --green-500: #1E9E5A;
-  --ink-900: #1B1F1A;
+  --ink: #142618;
+  --ink-900: #142618;
+  --muted: #5A6B5D;
   --coral-500: #F26B4B;
   --orange-500: #E85D1A;
   --indigo-500: #5B6AE8;
@@ -15,8 +26,8 @@
 
 body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  background-color: var(--cream-100);
-  color: var(--ink-900);
+  background-color: var(--cream);
+  color: var(--ink);
 }
 
 /* Visually hidden helper from modern-web-guidance (forms & sortable-table) */

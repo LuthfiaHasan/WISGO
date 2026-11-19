@@ -8,8 +8,30 @@ export default {
     extend: {
       colors: {
         cream: {
+          DEFAULT: '#FAF3E6',
+          subtle: '#F3EBDC',
           100: '#F6F3EC',
           200: '#ECE6D8',
+        },
+        forest: {
+          DEFAULT: '#193D22',
+          deep: '#142618',
+        },
+        brush: {
+          DEFAULT: '#2F663E',
+          hover: '#265433',
+        },
+        sage: {
+          DEFAULT: '#DFECE2',
+          border: '#D5E2D7',
+          100: '#E4E9DA',
+          200: '#CFD8BE',
+        },
+        warm: {
+          border: '#E5DEC9',
+        },
+        terracotta: {
+          DEFAULT: '#E65F2B',
         },
         green: {
           500: '#1E9E5A',
@@ -17,10 +39,15 @@ export default {
           800: '#234B24',
         },
         ink: {
-          900: '#1B1F1A',
+          DEFAULT: '#142618',
+          900: '#142618',
+          800: '#1B1F1A',
           600: '#4A5248',
+          muted: '#5A6B5D',
         },
         coral: {
+          DEFAULT: '#F26B4B',
+          tint: '#F9E4DC',
           500: '#F26B4B',
           600: '#D95637',
         },
@@ -29,10 +56,6 @@ export default {
         },
         indigo: {
           500: '#5B6AE8',
-        },
-        sage: {
-          100: '#E4E9DA',
-          200: '#CFD8BE',
         },
       },
       fontFamily: {

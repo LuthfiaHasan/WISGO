@@ -135,22 +135,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       aria-label="Navigasi Utama Pusat Komando Terpadu WISGO"
-      className="w-72 lg:w-80 shrink-0 h-screen sticky top-0 overflow-y-auto sidebar-scroll flex flex-col justify-between z-30 bg-[#234B24] text-[#F6F3EC] border-b lg:border-b-0 lg:border-r border-[#1B3B1C] no-print shadow-md"
+      className="w-72 lg:w-80 shrink-0 h-screen sticky top-0 overflow-y-auto sidebar-scroll flex flex-col justify-between z-30 bg-[#193D22] text-[#FAF3E6] border-b lg:border-b-0 lg:border-r border-[#142618] no-print shadow-md"
     >
       <div>
         {/* Identitas Resmi Instansi */}
         <div className="p-4 lg:p-5 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#F26B4B] flex items-center justify-center text-white font-extrabold text-lg shadow-md shrink-0">
-              W
+            <div className="w-11 h-11 rounded-2xl bg-[#FAF3E6] p-1.5 flex items-center justify-center shadow-md shrink-0 border border-white/20">
+              <img
+                src="/logo_icon.png"
+                alt="Logo WISGO"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg tracking-tight text-[#F6F3EC] truncate">
-                  WISGO Sumbar
+                <span className="font-extrabold text-lg tracking-tight text-[#FAF3E6] truncate">
+                  WISGO
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#E65F2B] text-white">
+                  Rancak.in
                 </span>
               </div>
-              <p className="text-[11px] text-[#E4E9DA]/85 truncate">
+              <p className="text-[11px] text-[#DFECE2]/85 truncate">
                 Pusat Komando Dinas Pariwisata Sumbar
               </p>
             </div>
@@ -168,7 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               aria-hidden="true"
             />
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-[#F6F3EC] text-[11px] leading-tight flex items-center justify-between">
+              <div className="font-semibold text-[#FAF3E6] text-[11px] leading-tight flex items-center justify-between">
                 <span>
                   {backendOnline
                     ? 'Status: Terhubung Database'
@@ -182,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Menu Navigasi Operasional */}
         <nav aria-label="Menu Operasional Pusat Komando" className="p-2.5 lg:p-3">
-          <p className="px-3 mb-2 text-[10.5px] font-bold uppercase tracking-wider text-[#E4E9DA]/70">
+          <p className="px-3 mb-2 text-[10.5px] font-bold uppercase tracking-wider text-[#DFECE2]/70">
             Menu Otoritas Terpadu
           </p>
           <ul className="space-y-1">
@@ -196,14 +203,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => onSelectMenu(item.key)}
                     className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between min-h-[46px] gap-2 ${
                       isActive
-                        ? 'bg-[#F6F3EC] text-[#1B1F1A] font-bold shadow-sm border-l-4 border-[#F26B4B]'
-                        : 'text-[#F6F3EC]/90 hover:bg-white/10 font-medium'
+                        ? 'bg-[#FAF3E6] text-[#142618] font-bold shadow-sm border-l-4 border-[#E65F2B]'
+                        : 'text-[#FAF3E6]/90 hover:bg-white/10 font-medium'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <span
                         className={`shrink-0 ${
-                          isActive ? 'text-[#234B24]' : 'text-[#E4E9DA]'
+                          isActive ? 'text-[#193D22]' : 'text-[#DFECE2]'
                         }`}
                       >
                         {item.icon}
@@ -214,7 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                         <div
                           className={`text-[11px] leading-tight truncate mt-0.5 ${
-                            isActive ? 'text-[#4A5248]' : 'text-[#E4E9DA]/70'
+                            isActive ? 'text-[#5A6B5D]' : 'text-[#DFECE2]/70'
                           }`}
                         >
                           {item.sublabel}
@@ -228,8 +235,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           item.badgeColor
                             ? item.badgeColor
                             : isActive
-                            ? 'bg-[#234B24] text-[#F6F3EC]'
-                            : 'bg-white/15 text-[#F6F3EC]'
+                            ? 'bg-[#193D22] text-[#FAF3E6]'
+                            : 'bg-white/15 text-[#FAF3E6]'
                         }`}
                       >
                         {item.badge}
@@ -251,26 +258,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={onOpenPublicQR}
-                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#F6F3EC] flex items-center justify-between transition min-h-[38px]"
+                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#FAF3E6] flex items-center justify-between transition min-h-[38px]"
                 >
                   <span className="flex items-center gap-2 truncate">
-                    <QrCode className="w-4 h-4 text-[#F26B4B] shrink-0" aria-hidden="true" />
+                    <QrCode className="w-4 h-4 text-[#E65F2B] shrink-0" aria-hidden="true" />
                     <span className="truncate">Web Plang Smart QR (/qr)</span>
                   </span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#E4E9DA]/70 shrink-0" aria-hidden="true" />
+                  <ExternalLink className="w-3.5 h-3.5 text-[#DFECE2]/70 shrink-0" aria-hidden="true" />
                 </button>
               )}
               {onOpenGroupInvite && (
                 <button
                   type="button"
                   onClick={onOpenGroupInvite}
-                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#F6F3EC] flex items-center justify-between transition min-h-[38px]"
+                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#FAF3E6] flex items-center justify-between transition min-h-[38px]"
                 >
                   <span className="flex items-center gap-2 truncate">
                     <Users className="w-4 h-4 text-[#A7F3D0] shrink-0" aria-hidden="true" />
                     <span className="truncate">Web Group Invite (/join)</span>
                   </span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#E4E9DA]/70 shrink-0" aria-hidden="true" />
+                  <ExternalLink className="w-3.5 h-3.5 text-[#DFECE2]/70 shrink-0" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -286,7 +293,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onToggleShowcaseMode}
             className={`w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition mb-2.5 ${
               isShowcaseMode
-                ? 'bg-[#F26B4B] text-white shadow-md'
+                ? 'bg-[#E65F2B] text-white shadow-md'
                 : 'bg-white/10 hover:bg-white/15 text-[#A7F3D0] border border-white/15'
             }`}
           >
@@ -306,10 +313,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
             <span>Pusat Komando Terpadu</span>
           </div>
-          <p className="text-xs font-bold text-[#F6F3EC] mt-0.5 truncate">
+          <p className="text-xs font-bold text-[#FAF3E6] mt-0.5 truncate">
             {session.user.full_name || 'Administrator Utama'}
           </p>
-          <p className="text-[11px] text-[#E4E9DA]/80 truncate">
+          <p className="text-[11px] text-[#DFECE2]/80 truncate">
             {session.user.agency || 'Dinas Pariwisata Provinsi Sumatera Barat'}
           </p>
         </div>
@@ -317,7 +324,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           type="button"
           onClick={onLogout}
-          className="w-full min-h-[42px] px-4 py-2 rounded-pill bg-[#F26B4B] hover:bg-[#D95637] text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm"
+          className="w-full min-h-[42px] px-4 py-2 rounded-pill bg-[#E65F2B] hover:bg-[#D95637] text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-sm"
         >
           <LogOut className="w-4 h-4" aria-hidden="true" />
           <span>Keluar dari Pusat Komando</span>

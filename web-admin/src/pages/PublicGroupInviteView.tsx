@@ -138,16 +138,16 @@ export const PublicGroupInviteView: React.FC<PublicGroupInviteViewProps> = ({
       )}
 
       {/* Mobile-First Frame Container */}
-      <main className="w-full max-w-md bg-white shadow-xl min-h-screen border-x border-[#E4E9DA] flex flex-col justify-between">
+      <main className="w-full max-w-md bg-white shadow-xl min-h-screen border-x border-[#D5E2D7] flex flex-col justify-between font-sans">
         <div>
           {/* Header Undangan Rombongan */}
-          <header className="bg-[#234B24] text-[#F6F3EC] p-6 relative overflow-hidden">
+          <header className="bg-[#193D22] text-[#FAF3E6] p-6 relative overflow-hidden">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold text-[#A7F3D0] mb-3">
-              <Users className="w-3.5 h-3.5 text-[#1E9E5A]" aria-hidden="true" />
+              <img src="/logo_icon.png" alt="WISGO" className="w-3.5 h-3.5 object-contain" />
               <span>WISGO · UNDANGAN GRUP TUR SUMBAR</span>
             </div>
 
-            <div className="font-mono text-[11px] text-[#F26B4B] font-bold tracking-wider">
+            <div className="font-mono text-[11px] text-[#E65F2B] font-bold tracking-wider">
               KODE GRUP: {group?.group_code || selectedGroupCode}
             </div>
 

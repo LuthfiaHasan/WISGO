@@ -112,11 +112,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F3EC] text-[#1B1F1A] flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#142618] flex flex-col lg:flex-row font-sans">
       {/* Panel Identitas Resmi Dinas Pariwisata Sumatera Barat */}
-      <section className="lg:w-5/12 bg-[#234B24] text-[#F6F3EC] p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
+      <section className="lg:w-5/12 bg-[#193D22] text-[#FAF3E6] p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
         <div>
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-bold tracking-wide">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-12 w-12 rounded-2xl bg-[#FAF3E6] p-1.5 flex items-center justify-center shadow-sm shrink-0 border border-white/20">
+              <img src="/logo_icon.png" alt="WISGO" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <span className="font-extrabold text-2xl tracking-tight text-[#FAF3E6]">
+                WISGO
+              </span>
+              <span className="ml-2 text-xs font-bold px-2 py-0.5 rounded-full bg-[#E65F2B] text-white">
+                Rancak.in
+              </span>
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-bold tracking-wide text-[#A7F3D0]">
             <Building2 className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
             <span>PEMERINTAH PROVINSI SUMATERA BARAT</span>
           </div>
@@ -124,7 +138,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <h1 className="mt-6 text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
             Pusat Komando Terpadu WISGO
           </h1>
-          <p className="mt-4 text-sm lg:text-base text-[#E4E9DA]/90 leading-relaxed">
+          <p className="mt-4 text-sm lg:text-base text-[#DFECE2]/90 leading-relaxed">
             Portal otoritas terpadu Dinas Pariwisata Provinsi Sumatera Barat:
             Manajemen Destinasi &amp; 5 Indikator Medan, Standar Tarif Resmi Perda &amp; Smart QR,
             Studio Virtual 360°, Penindakan Aduan Pungli Satgas Saber Pungli, serta Koordinasi Siaga Darurat SOS Tim SAR di 19 Kabupaten/Kota.
@@ -170,10 +184,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       {/* Panel Formulir Otentikasi Otoritas */}
       <main className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-lg bg-white rounded-[28px] p-7 lg:p-10 shadow-md border border-[#E4E9DA]">
+        <div className="w-full max-w-lg bg-white rounded-[28px] p-7 lg:p-10 shadow-md border border-[#D5E2D7]">
           <div className="flex items-center gap-3.5 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm">
-              <KeyRound className="w-6 h-6" aria-hidden="true" />
+            <div className="w-12 h-12 rounded-2xl bg-[#FAF3E6] p-2 flex items-center justify-center shadow-sm border border-[#D5E2D7]">
+              <img src="/logo_icon.png" alt="WISGO" className="w-full h-full object-contain" />
             </div>
             <div>
               <h2

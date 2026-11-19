@@ -234,16 +234,16 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
       )}
 
       {/* Mobile-First Frame Container */}
-      <main className="w-full max-w-md bg-white shadow-xl min-h-screen border-x border-[#E4E9DA] flex flex-col">
+      <main className="w-full max-w-md bg-white shadow-xl min-h-screen border-x border-[#D5E2D7] flex flex-col font-sans">
         {/* Header Plang Smart QR Resmi */}
-        <header className="bg-[#234B24] text-[#F6F3EC] p-5 relative overflow-hidden">
+        <header className="bg-[#193D22] text-[#FAF3E6] p-5 relative overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold text-[#A7F3D0]">
-              <Building2 className="w-3 h-3 text-[#1E9E5A]" aria-hidden="true" />
+              <img src="/logo_icon.png" alt="WISGO" className="w-3.5 h-3.5 object-contain" />
               <span>PEMPROV SUMATERA BARAT · WISGO</span>
             </div>
-            <span className="text-[10px] font-mono text-[#E4E9DA]/80 flex items-center gap-1">
-              <QrCode className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
+            <span className="text-[10px] font-mono text-[#DFECE2]/80 flex items-center gap-1">
+              <QrCode className="w-3.5 h-3.5 text-[#E65F2B]" aria-hidden="true" />
               <span>Smart QR Terverifikasi</span>
             </span>
           </div>
