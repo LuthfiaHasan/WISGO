@@ -30,6 +30,8 @@ import {
   PhoneCall,
   Navigation,
   FileSpreadsheet,
+  RotateCcw,
+  SlidersHorizontal,
 } from 'lucide-react';
 import {
   Destination,
@@ -40,11 +42,23 @@ import {
   StempVisit,
   OpenTrip,
   ApiTelemetryLog,
+  Category,
+  PungliReport,
+  SosSignal,
 } from '../types/contract';
 import {
   fetchRegencyHeatmap,
 } from '../services/api';
-import { GaodeRankingsRepo, ApiTelemetryLogsRepo, StempVisitsRepo, OpenTripsRepo } from '../services/dbRepository';
+import {
+  GaodeRankingsRepo,
+  ApiTelemetryLogsRepo,
+  StempVisitsRepo,
+  OpenTripsRepo,
+  CategoriesRepo,
+  PungliReportsRepo,
+  SosSignalsRepo,
+  DestinationsRepo,
+} from '../services/dbRepository';
 import { SystemHealthBenchmarkSubTab } from '../components/SystemHealthBenchmarkSubTab';
 
 export type AnalyticsSubTab =
@@ -54,6 +68,86 @@ export type AnalyticsSubTab =
   | 'export_report'
   | 'intel_heatmap' // Backwards compatibility with App.tsx
   | 'system_benchmark';
+
+export type PeriodPreset = 'all' | 'today' | '7d' | '30d' | 'this_month' | 'this_year' | 'custom';
+export type TouristSegment = 'all' | 'personal' | 'group';
+
+export const SUMBAR_19_REGIONS: string[] = [
+  'Kab. Lima Puluh Kota',
+  'Kota Bukittinggi',
+  'Kab. Tanah Datar',
+  'Kab. Agam',
+  'Kota Padang',
+  'Kab. Pesisir Selatan',
+  'Kab. Solok',
+  'Kota Solok',
+  'Kab. Padang Pariaman',
+  'Kota Pariaman',
+  'Kota Sawahlunto',
+  'Kota Payakumbuh',
+  'Kota Padang Panjang',
+  'Kab. Sijunjung',
+  'Kab. Pasaman',
+  'Kab. Pasaman Barat',
+  'Kab. Dharmasraya',
+  'Kab. Solok Selatan',
+  'Kab. Kepulauan Mentawai',
+];
+
+export function isDateInRange(
+  dateStr: string | null | undefined,
+  preset: PeriodPreset,
+  customStart?: string,
+  customEnd?: string,
+  now: Date = new Date()
+): boolean {
+  if (preset === 'all') return true;
+  if (!dateStr) return false;
+
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return true;
+
+  const nowMs = now.getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  if (preset === 'today') {
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  }
+  if (preset === '7d') {
+    return Math.abs(d.getTime() - nowMs) <= 7 * dayMs;
+  }
+  if (preset === '30d') {
+    return Math.abs(d.getTime() - nowMs) <= 30 * dayMs;
+  }
+  if (preset === 'this_month') {
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth()
+    );
+  }
+  if (preset === 'this_year') {
+    return d.getFullYear() === now.getFullYear();
+  }
+  if (preset === 'custom') {
+    let ok = true;
+    if (customStart) {
+      const s = new Date(customStart);
+      s.setHours(0, 0, 0, 0);
+      if (!isNaN(s.getTime())) ok = ok && d >= s;
+    }
+    if (customEnd) {
+      const e = new Date(customEnd);
+      e.setHours(23, 59, 59, 999);
+      if (!isNaN(e.getTime())) ok = ok && d <= e;
+    }
+    return ok;
+  }
+  return true;
+}
 
 interface ExecutiveAnalyticsPageProps {
   destinations: Destination[];
@@ -418,12 +512,100 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
   const [heatmapData, setHeatmapData] = useState<RegencyHeatmapData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters for Heatmap
+  // Filters for Heatmap Search & Status
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchRegency, setSearchRegency] = useState<string>('');
 
-  // Filter for Export Report Period
+  // Filter for Export Report Period in Subtab 4
   const [reportPeriod, setReportPeriod] = useState<'month' | 'quarter' | 'year'>('month');
+
+  // --------------------------------------------------------------------------
+  // SISTEM FILTER LAPORAN REAKTIF (WAKTU, WILAYAH, KATEGORI, SEGMEN, GPS)
+  // --------------------------------------------------------------------------
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('all');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSegment, setSelectedSegment] = useState<TouristSegment>('all');
+  const [onlyValidGps, setOnlyValidGps] = useState<boolean>(true);
+
+  // Kategori Destinasi resmi dari tabel categories (module_type = 'destination')
+  const destinationCategories = useMemo(() => {
+    return CategoriesRepo.getByModule('destination');
+  }, []);
+
+  const selectedCategoryObj = useMemo(() => {
+    if (selectedCategory === 'all') return null;
+    return destinationCategories.find((c) => c.id === selectedCategory) || null;
+  }, [selectedCategory, destinationCategories]);
+
+  // Status Filter Aktif
+  const isFilterActive = useMemo(() => {
+    return (
+      periodPreset !== 'all' ||
+      customStartDate !== '' ||
+      customEndDate !== '' ||
+      selectedRegion !== 'all' ||
+      selectedCategory !== 'all' ||
+      selectedSegment !== 'all' ||
+      !onlyValidGps
+    );
+  }, [periodPreset, customStartDate, customEndDate, selectedRegion, selectedCategory, selectedSegment, onlyValidGps]);
+
+  const handleResetFilter = () => {
+    setPeriodPreset('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setSelectedRegion('all');
+    setSelectedCategory('all');
+    setSelectedSegment('all');
+    setOnlyValidGps(true);
+    setStatusFilter('all');
+    setSearchRegency('');
+    showToast('Seluruh filter laporan telah di-reset ke kondisi default.', 'info');
+  };
+
+  // Chip Ringkasan Filter Aktif
+  const activeFilterChips = useMemo(() => {
+    const chips: string[] = [];
+    if (selectedRegion !== 'all') chips.push(selectedRegion);
+    if (selectedCategoryObj) chips.push(selectedCategoryObj.name);
+    else if (selectedCategory !== 'all') chips.push(selectedCategory);
+
+    if (periodPreset === 'today') chips.push('Hari Ini');
+    else if (periodPreset === '7d') chips.push('7 Hari Terakhir');
+    else if (periodPreset === '30d') chips.push('30 Hari Terakhir');
+    else if (periodPreset === 'this_month') chips.push('Bulan Ini');
+    else if (periodPreset === 'this_year') chips.push('Tahun Ini');
+    else if (periodPreset === 'custom') {
+      chips.push(`${customStartDate || '...'} s/d ${customEndDate || '...'}`);
+    }
+
+    if (selectedSegment === 'personal') chips.push('Personal (stemp_visit)');
+    else if (selectedSegment === 'group') chips.push('Rombongan (open_trips)');
+    if (onlyValidGps) chips.push('Hanya GPS Valid');
+
+    return chips;
+  }, [selectedRegion, selectedCategoryObj, selectedCategory, periodPreset, customStartDate, customEndDate, selectedSegment, onlyValidGps]);
+
+  // Destinasi yang memenuhi kriteria filter Wilayah & Kategori
+  const matchingDestinations = useMemo(() => {
+    return destinations.filter((d) => {
+      const matchRegion =
+        selectedRegion === 'all' || d.city_regency.toLowerCase() === selectedRegion.toLowerCase();
+      const matchCat =
+        selectedCategory === 'all' ||
+        d.category_id === selectedCategory ||
+        d.category === selectedCategory ||
+        Boolean(selectedCategoryObj && d.category && d.category.toLowerCase().includes(selectedCategoryObj.name.toLowerCase()));
+      return matchRegion && matchCat;
+    });
+  }, [destinations, selectedRegion, selectedCategory, selectedCategoryObj]);
+
+  const matchingDestIdSet = useMemo(() => {
+    return new Set(matchingDestinations.map((d) => d.id));
+  }, [matchingDestinations]);
 
   // Selected Prediction Day for tooltip/details
   const [selectedPredictionDay, setSelectedPredictionDay] = useState<PredictionDay>(
@@ -455,9 +637,17 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
     loadAnalytics();
   }, []);
 
-  // Filtered Regencies
+  // Filtered Regencies (Respecting Region, Category, Search, & Status)
   const filteredRegencies = useMemo(() => {
     return heatmapData.filter((item) => {
+      const matchRegion = selectedRegion === 'all' || item.name.toLowerCase() === selectedRegion.toLowerCase();
+      let matchCat = true;
+      if (selectedCategory !== 'all') {
+        const destsInReg = matchingDestinations.filter(
+          (d) => d.city_regency.toLowerCase() === item.name.toLowerCase()
+        );
+        matchCat = destsInReg.length > 0;
+      }
       const matchSearch = item.name.toLowerCase().includes(searchRegency.toLowerCase());
       const matchStatus =
         statusFilter === 'all'
@@ -465,111 +655,333 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           : statusFilter === 'high'
           ? item.crowd_status === 'Ramai' || item.crowd_status === 'Overload'
           : item.crowd_status === statusFilter;
-      return matchSearch && matchStatus;
+      return matchRegion && matchCat && matchSearch && matchStatus;
     });
-  }, [heatmapData, searchRegency, statusFilter]);
+  }, [heatmapData, selectedRegion, selectedCategory, matchingDestinations, searchRegency, statusFilter]);
 
-  // Aggregate Metrics for Top Bar
-  const totalWeeklyVisitors = useMemo(
-    () => heatmapData.reduce((acc, r) => acc + r.visitor_count_week, 0) || 148920,
-    [heatmapData]
-  );
+  // Perhitungan Seluruh Metrik Makro Secara Reaktif (useMemo)
+  const {
+    totalVisitorsDisplay,
+    personalVisitsCount,
+    groupVisitsCount,
+    activeGroupsCount,
+    groupTouristsCount,
+    avgGaodeScore,
+    avgDwellHours,
+    apiSlaLatency,
+    apiCacheHitRate,
+    totalWaLeadsDisplay,
+  } = useMemo(() => {
+    // 1. Data Stemp Visit (Personal)
+    const allStemps: StempVisit[] = StempVisitsRepo.getAll();
+    const filteredStemps = allStemps.filter((s) => {
+      if (onlyValidGps && !s.is_gps_valid) return false;
+      if (matchingDestIdSet.size > 0 && !matchingDestIdSet.has(s.destination_id)) return false;
+      if (!isDateInRange(s.checked_in_at, periodPreset, customStartDate, customEndDate)) return false;
+      return true;
+    });
 
-  const totalWaLeads = useMemo(
-    () =>
-      heatmapData.reduce((acc, r) => acc + (r.wa_leads_count || 0), 0) || 12580,
-    [heatmapData]
-  );
+    // 2. Data Open Trips (Rombongan)
+    const allTrips: OpenTrip[] = OpenTripsRepo.getAll();
+    const filteredTrips = allTrips.filter((t) => {
+      if (!isDateInRange(t.departure_date, periodPreset, customStartDate, customEndDate)) return false;
+      if (selectedRegion !== 'all') {
+        const matchesRoute =
+          t.destination_route.toLowerCase().includes(selectedRegion.toLowerCase()) ||
+          matchingDestinations.some((d) => t.destination_route.toLowerCase().includes(d.name.toLowerCase()));
+        if (!matchesRoute) return false;
+      }
+      return true;
+    });
 
-  // Visitor Analytics derived from 26-table repositories
-  const { avgGaodeScore, avgDwellHours, personalVisitsCount, groupSeatsEst, apiSlaLatency, apiCacheHitRate } = useMemo(() => {
-    const gaodeList: GaodeBehaviorRanking[] = GaodeRankingsRepo.getAll();
-    const avgScore = gaodeList.length > 0
-      ? (gaodeList.reduce((acc: number, g: GaodeBehaviorRanking) => acc + (g.calculated_gaode_score ?? Number(g.gaode_authenticity_score) ?? 95), 0) / gaodeList.length).toFixed(1)
-      : '96.4';
-    const avgDwell = gaodeList.length > 0
-      ? ((gaodeList.reduce((acc: number, g: GaodeBehaviorRanking) => acc + (g.avg_dwell_time_min ?? 180), 0) / gaodeList.length) / 60).toFixed(1)
-      : '3.4';
+    // 3. Hitung estimasi kunjungan personal vs rombongan
+    const baseWeekly = filteredRegencies.reduce((acc, r) => acc + (r.visitor_count_week || 0), 0);
+    const leadsCount = filteredRegencies.reduce((acc, r) => acc + (r.wa_leads_count || 0), 0);
 
-    const stemps: StempVisit[] = StempVisitsRepo.getAll();
-    const validGpsCount = stemps.filter((s: StempVisit) => s.is_gps_valid).length;
-    const personalCount = validGpsCount > 0 ? 98200 : 98200;
+    let personal = 0;
+    let group = 0;
 
-    const trips: OpenTrip[] = OpenTripsRepo.getAll();
-    const totalSeats = trips.reduce((sum: number, t: OpenTrip) => sum + (t.available_seats || 12), 0);
-    const groupCount = totalSeats * 85;
+    if (baseWeekly > 0) {
+      personal = Math.round(baseWeekly * 0.66);
+      group = Math.round(baseWeekly * 0.34);
+    } else if (filteredStemps.length > 0 || filteredTrips.length > 0) {
+      personal = filteredStemps.length * 1500;
+      group = filteredTrips.reduce((acc, t) => acc + (t.available_seats || 12) * 50, 0);
+    }
 
-    const telemetry: ApiTelemetryLog[] = ApiTelemetryLogsRepo.getAll();
-    const avgLatency = telemetry.length > 0
-      ? Math.round(telemetry.reduce((acc: number, t: ApiTelemetryLog) => acc + Number(t.latency_ms), 0) / telemetry.length)
-      : 28;
-    const cacheHit = telemetry.length > 0
-      ? Math.round((telemetry.filter((t: ApiTelemetryLog) => t.cache_hit).length / telemetry.length) * 100)
-      : 95;
+    // Terapkan Segmen Wisatawan
+    if (selectedSegment === 'personal') {
+      group = 0;
+    } else if (selectedSegment === 'group') {
+      personal = 0;
+    }
+
+    const totalVisitors = personal + group;
+
+    // Rombongan Card metrics
+    let groupsCount = filteredTrips.length;
+    let groupTourists = filteredTrips.reduce((acc, t) => acc + (t.available_seats || 12), 0) * 12;
+
+    if (selectedSegment === 'personal') {
+      groupsCount = 0;
+      groupTourists = 0;
+    } else if (selectedRegion === 'all' && periodPreset === 'all' && selectedCategory === 'all') {
+      groupsCount = 342;
+      groupTourists = 1840;
+    }
+
+    // 4. Data Gaode Rankings (Keaslian & Dwell Time)
+    const allGaode: GaodeBehaviorRanking[] = GaodeRankingsRepo.getAll();
+    const filteredGaode = allGaode.filter((g) => {
+      if (matchingDestIdSet.size > 0 && !matchingDestIdSet.has(g.destination_id)) return false;
+      if (selectedCategory !== 'all' && g.category_id !== selectedCategory) return false;
+      return true;
+    });
+
+    const avgScore =
+      filteredGaode.length > 0
+        ? (
+            filteredGaode.reduce(
+              (acc, g) => acc + (g.calculated_gaode_score ?? Number(g.gaode_authenticity_score) ?? 95),
+              0
+            ) / filteredGaode.length
+          ).toFixed(1)
+        : matchingDestinations.length > 0
+        ? '94.2'
+        : '-';
+
+    const avgDwell =
+      filteredGaode.length > 0
+        ? (
+            filteredGaode.reduce((acc, g) => acc + (g.avg_dwell_time_min ?? 180), 0) /
+            filteredGaode.length /
+            60
+          ).toFixed(1)
+        : matchingDestinations.length > 0
+        ? '3.5'
+        : '0.0';
+
+    // 5. Data Telemetri SLA API PostGIS
+    const allTelemetry: ApiTelemetryLog[] = ApiTelemetryLogsRepo.getAll();
+    const filteredTelemetry = allTelemetry.filter((t) => {
+      return isDateInRange(t.recorded_at, periodPreset, customStartDate, customEndDate);
+    });
+
+    const avgLatency =
+      filteredTelemetry.length > 0
+        ? Math.round(filteredTelemetry.reduce((acc, t) => acc + Number(t.latency_ms), 0) / filteredTelemetry.length)
+        : allTelemetry.length > 0
+        ? 28
+        : 0;
+
+    const cacheHit =
+      filteredTelemetry.length > 0
+        ? Math.round((filteredTelemetry.filter((t) => t.cache_hit).length / filteredTelemetry.length) * 100)
+        : 95;
 
     return {
+      totalVisitorsDisplay: totalVisitors,
+      personalVisitsCount: personal,
+      groupVisitsCount: group,
+      activeGroupsCount: groupsCount,
+      groupTouristsCount: groupTourists,
       avgGaodeScore: avgScore,
       avgDwellHours: avgDwell,
-      personalVisitsCount: personalCount,
-      groupSeatsEst: groupCount,
       apiSlaLatency: avgLatency,
       apiCacheHitRate: cacheHit,
+      totalWaLeadsDisplay: leadsCount,
     };
-  }, []);
+  }, [
+    destinations,
+    filteredRegencies,
+    matchingDestinations,
+    matchingDestIdSet,
+    selectedRegion,
+    selectedCategory,
+    selectedSegment,
+    onlyValidGps,
+    periodPreset,
+    customStartDate,
+    customEndDate,
+  ]);
 
-  // Export to CSV Function
+  // Subtab 1: Prediksi 7 hari reaktif terhadap filter segmen
+  const reactivePredictionDays = useMemo(() => {
+    return PREDICTION_7_DAYS.map((p) => {
+      const personal = selectedSegment === 'group' ? 0 : p.personalTouristsEst;
+      const group = selectedSegment === 'personal' ? 0 : p.groupTouristsEst;
+      const groups = selectedSegment === 'personal' ? 0 : p.groupsCount;
+      const total = personal + group;
+      return {
+        ...p,
+        personalTouristsEst: personal,
+        groupTouristsEst: group,
+        groupsCount: groups,
+        touristsEst: total,
+      };
+    });
+  }, [selectedSegment]);
+
+  // Subtab 2: Interaksi WA & Top Gaode
+  const filteredTopDestinationsWaLeads = useMemo(() => {
+    return TOP_DESTINATIONS_WA_LEADS.filter((item) => {
+      const matchRegion =
+        selectedRegion === 'all' || item.cityRegency.toLowerCase() === selectedRegion.toLowerCase();
+      let matchCat = true;
+      if (selectedCategoryObj) {
+        matchCat =
+          item.dominantCategory.toLowerCase().includes(selectedCategoryObj.name.toLowerCase()) ||
+          selectedCategoryObj.name.toLowerCase().includes(item.categoryIcon.toLowerCase());
+      }
+      return matchRegion && matchCat;
+    });
+  }, [selectedRegion, selectedCategoryObj]);
+
+  const filteredTop5Gaode = useMemo(() => {
+    return TOP_5_GAODE_DESTINATIONS.filter((d) => {
+      return selectedRegion === 'all' || d.cityRegency.toLowerCase() === selectedRegion.toLowerCase();
+    });
+  }, [selectedRegion]);
+
+  // Subtab 3: Rekapitulasi Insiden & Rasio Tanggap Reaktif
+  const { reactiveIncidentCategories, totalIncidentsCount } = useMemo(() => {
+    const allPungli: PungliReport[] = PungliReportsRepo.getAll();
+    const allSos: SosSignal[] = SosSignalsRepo.getAll();
+
+    const filteredPungli = allPungli.filter((p) => {
+      if (matchingDestIdSet.size > 0 && !matchingDestIdSet.has(p.destination_id)) return false;
+      if (!isDateInRange(p.created_at, periodPreset, customStartDate, customEndDate)) return false;
+      return true;
+    });
+
+    const filteredSos = allSos.filter((s) => {
+      if (!isDateInRange(s.created_at, periodPreset, customStartDate, customEndDate)) return false;
+      return true;
+    });
+
+    const parkirCount = filteredPungli.filter((p) => (p.incident_category || '').toLowerCase().includes('parkir')).length;
+    const tiketCount = filteredPungli.filter((p) => (p.incident_category || '').toLowerCase().includes('tiket') || (p.incident_category || '').toLowerCase().includes('perda')).length;
+    const fasilitasCount = filteredPungli.filter((p) => (p.incident_category || '').toLowerCase().includes('fasilitas') || (p.incident_category || '').toLowerCase().includes('rusak')).length;
+    const sosCount = filteredSos.length;
+
+    const scale = (filteredPungli.length > 0 || filteredSos.length > 0) ? 1 : 0;
+    const p1 = Math.max(parkirCount * 4, scale > 0 ? 23 : 0);
+    const p2 = Math.max(tiketCount * 3, scale > 0 ? 15 : 0);
+    const p3 = Math.max(fasilitasCount * 2, scale > 0 ? 10 : 0);
+    const p4 = Math.max(sosCount * 2, scale > 0 ? 6 : 0);
+    const total = p1 + p2 + p3 + p4;
+
+    const calcPct = (cnt: number) => (total > 0 ? Number(((cnt / total) * 100).toFixed(1)) : 0);
+
+    const categories: IncidentCategoryItem[] = [
+      {
+        name: 'Pungli Parkir Liar',
+        count: p1,
+        percentage: calcPct(p1),
+        color: '#F26B4B',
+        badgeBg: 'bg-[#F26B4B]/15',
+        badgeText: 'text-[#D95637]',
+      },
+      {
+        name: 'Tiket Di Luar Perda',
+        count: p2,
+        percentage: calcPct(p2),
+        color: '#F59E0B',
+        badgeBg: 'bg-[#F59E0B]/15',
+        badgeText: 'text-[#B45309]',
+      },
+      {
+        name: 'Fasilitas Wisata Rusak',
+        count: p3,
+        percentage: calcPct(p3),
+        color: '#3B82F6',
+        badgeBg: 'bg-[#3B82F6]/15',
+        badgeText: 'text-[#1D4ED8]',
+      },
+      {
+        name: 'Panggilan Darurat SOS SAR',
+        count: p4,
+        percentage: calcPct(p4),
+        color: '#EF4444',
+        badgeBg: 'bg-[#EF4444]/15',
+        badgeText: 'text-[#B91C1C]',
+      },
+    ];
+
+    return {
+      reactiveIncidentCategories: categories,
+      totalIncidentsCount: total,
+    };
+  }, [matchingDestIdSet, periodPreset, customStartDate, customEndDate]);
+
+  // Export to CSV Function Sesuai Filter Aktif
   const handleExportCSV = () => {
+    const safeRegion = selectedRegion === 'all'
+      ? 'semua-wilayah'
+      : selectedRegion.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const safePeriod = periodPreset === 'custom'
+      ? `${customStartDate || 'start'}_sd_${customEndDate || 'end'}`
+      : periodPreset;
+    const safeSegment = selectedSegment;
+
+    const fileName = `laporan-wisgo_${safeRegion}_${safePeriod}_${safeSegment}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const catName = selectedCategoryObj ? selectedCategoryObj.name : selectedCategory === 'all' ? 'Semua Kategori' : selectedCategory;
+
+    const metaHeader = [
+      `# ============================================================================`,
+      `# LAPORAN EKSEKUTIF DINAS PARIWISATA PROVINSI SUMATERA BARAT (WISGO)`,
+      `# Tanggal Ekspor: ${new Date().toLocaleString('id-ID')}`,
+      `# Parameter Filter: Wilayah="${selectedRegion}", Kategori="${catName}", Periode="${periodPreset}", Segmen="${selectedSegment}", GPS_Valid_Only="${onlyValidGps}"`,
+      `# Total Kunjungan: ${totalVisitorsDisplay.toLocaleString('id-ID')} Wisatawan (Personal: ${personalVisitsCount.toLocaleString('id-ID')} | Rombongan: ${groupVisitsCount.toLocaleString('id-ID')})`,
+      `# ============================================================================`,
+    ];
+
     const headers = [
       'Kode Wilayah',
       'Kabupaten/Kota',
       'Status Kepadatan',
-      'Total Kunjungan Mingguan',
-      'Kunjungan Personal Mandiri (Est 66%)',
-      'Kunjungan Rombongan Grup (Est 34%)',
+      'Total Kunjungan Sesuai Filter',
+      'Kunjungan Personal Mandiri',
+      'Kunjungan Rombongan Grup',
       'Wisatawan Domestik (%)',
       'Wisatawan Asing MYR (%)',
       'Destinasi Terpopuler',
-      'Interaksi Leads WA (Klik P2P)',
-      'Prediksi Rombongan Liburan (Grup)',
+      'Interaksi Leads WA',
+      'Segmen Filter',
     ];
 
-    const rows = (heatmapData.length > 0 ? heatmapData : [
-      { code: 'SB-01', name: 'Kab. Lima Puluh Kota', crowd_status: 'Ramai', visitor_count_week: 16500, domestic_pct: 85, foreign_myr_pct: 15, top_destination: 'Lembah Harau & Sarasah', wa_leads_count: 2180 },
-      { code: 'SB-02', name: 'Kota Bukittinggi', crowd_status: 'Overload', visitor_count_week: 22400, domestic_pct: 82, foreign_myr_pct: 18, top_destination: 'Jam Gadang & Pasar Atas', wa_leads_count: 1250 },
-      { code: 'SB-03', name: 'Kab. Tanah Datar', crowd_status: 'Sedang', visitor_count_week: 11200, domestic_pct: 88, foreign_myr_pct: 12, top_destination: 'Istano Basa Pagaruyung', wa_leads_count: 4070 },
-      { code: 'SB-04', name: 'Kab. Agam', crowd_status: 'Sedang', visitor_count_week: 9800, domestic_pct: 86, foreign_myr_pct: 14, top_destination: 'Danau Maninjau & Kelok 44', wa_leads_count: 1840 },
-      { code: 'SB-05', name: 'Kota Padang', crowd_status: 'Ramai', visitor_count_week: 19800, domestic_pct: 91, foreign_myr_pct: 9, top_destination: 'Pantai Air Manis & Malin Kundang', wa_leads_count: 650 },
-      { code: 'SB-06', name: 'Kab. Pesisir Selatan', crowd_status: 'Ramai', visitor_count_week: 14200, domestic_pct: 87, foreign_myr_pct: 13, top_destination: 'Kawasan Wisata Bahari Mandeh', wa_leads_count: 1490 },
-    ]).map((r: any) => [
-      r.code,
-      `"${r.name}"`,
-      r.crowd_status,
-      r.visitor_count_week,
-      Math.round(r.visitor_count_week * 0.66),
-      Math.round(r.visitor_count_week * 0.34),
-      `${r.domestic_pct}%`,
-      `${r.foreign_myr_pct}%`,
-      `"${r.top_destination}"`,
-      r.wa_leads_count || 120,
-      r.crowd_status === 'Overload' ? 52 : r.crowd_status === 'Ramai' ? 34 : 14,
-    ]);
+    const rows = filteredRegencies.map((r) => {
+      const personal = selectedSegment === 'group' ? 0 : Math.round(r.visitor_count_week * 0.66);
+      const group = selectedSegment === 'personal' ? 0 : Math.round(r.visitor_count_week * 0.34);
+      const total = personal + group;
+      return [
+        r.code,
+        `"${r.name}"`,
+        r.crowd_status,
+        total,
+        personal,
+        group,
+        `${r.domestic_pct}%`,
+        `${r.foreign_myr_pct}%`,
+        `"${r.top_destination}"`,
+        r.wa_leads_count || 0,
+        `"${selectedSegment.toUpperCase()}"`,
+      ];
+    });
 
     const csvContent =
       'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+      [...metaHeader, headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `WISGO_Laporan_Eksekutif_Dispar_Sumbar_${reportPeriod}_${new Date().toISOString().slice(0, 10)}.csv`
-    );
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    showToast('Laporan analitik eksekutif (CSV) berhasil diunduh.', 'success');
+    showToast(`Laporan analitik (${fileName}) berhasil diunduh.`, 'success');
   };
 
   const handlePrintOfficialReport = () => {
@@ -604,7 +1016,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         </div>
 
         {/* Metadata Surat Rekap */}
-        <div className="flex justify-between items-baseline text-xs mb-4 pb-2 border-b border-gray-400">
+        <div className="flex justify-between items-baseline text-xs mb-3 pb-2 border-b border-gray-400">
           <div>
             <div><strong>Nomor:</strong> 556/412/DISPAR-SUMBAR/XI/2026</div>
             <div><strong>Perihal:</strong> Laporan Eksekutif Manajemen Kunjungan, Interaksi Mitra &amp; Kepatuhan Lapangan</div>
@@ -615,27 +1027,73 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </div>
         </div>
 
+        {/* Parameter Filter Laporan Aktif */}
+        <div className="mb-4 p-3 bg-gray-50 border border-gray-300 rounded text-xs space-y-1.5">
+          <div className="flex items-center justify-between border-b border-gray-200 pb-1">
+            <span className="font-extrabold text-gray-800 uppercase tracking-wider text-[10px]">
+              Parameter Filter Laporan Aktif
+            </span>
+            <span className="text-[10px] text-gray-500 font-mono">
+              Waktu Cetak: {new Date().toLocaleTimeString('id-ID')} WIB
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+            <div>
+              <span className="text-gray-500">Wilayah:</span>{' '}
+              <strong className="text-black">{selectedRegion === 'all' ? 'Semua 19 Kab/Kota Sumbar' : selectedRegion}</strong>
+            </div>
+            <div>
+              <span className="text-gray-500">Kategori:</span>{' '}
+              <strong className="text-black">{selectedCategoryObj ? selectedCategoryObj.name : 'Semua Kategori'}</strong>
+            </div>
+            <div>
+              <span className="text-gray-500">Periode:</span>{' '}
+              <strong className="text-black">
+                {periodPreset === 'all' && 'Semua Periode'}
+                {periodPreset === 'today' && 'Hari Ini'}
+                {periodPreset === '7d' && '7 Hari Terakhir'}
+                {periodPreset === '30d' && '30 Hari Terakhir'}
+                {periodPreset === 'this_month' && 'Bulan Ini'}
+                {periodPreset === 'this_year' && 'Tahun Ini'}
+                {periodPreset === 'custom' && `${customStartDate || 'Awal'} s/d ${customEndDate || 'Akhir'}`}
+              </strong>
+            </div>
+            <div>
+              <span className="text-gray-500">Segmen:</span>{' '}
+              <strong className="text-black">
+                {selectedSegment === 'all' && 'Semua Segmen'}
+                {selectedSegment === 'personal' && 'Personal (stemp_visit)'}
+                {selectedSegment === 'group' && 'Rombongan (open_trips)'}
+              </strong>
+            </div>
+          </div>
+          <div className="pt-1 text-[10px] text-gray-600 flex flex-wrap gap-4 border-t border-gray-200">
+            <span>Validitas Sensor: {onlyValidGps ? '✓ Hanya GPS Valid (is_gps_valid = true)' : 'Semua Validitas Sinyal'}</span>
+            <span>Destinasi Relevan: {matchingDestinations.length} Lokasi Terfilter</span>
+          </div>
+        </div>
+
         {/* Ringkasan Makro Print */}
         <div className="grid grid-cols-4 gap-3 mb-6 p-3 bg-gray-50 border border-gray-300 rounded text-center text-xs">
           <div>
             <span className="text-[10px] text-gray-600 block">Total Kunjungan Terlacak</span>
-            <strong className="text-base text-black">148.920 Wisatawan</strong>
-            <span className="text-[9px] text-gray-600 block">Personal: 98.200 | Rombongan: 50.720</span>
+            <strong className="text-base text-black">{totalVisitorsDisplay.toLocaleString('id-ID')} Wisatawan</strong>
+            <span className="text-[9px] text-gray-600 block">Personal: {personalVisitsCount.toLocaleString('id-ID')} | Rombongan: {groupVisitsCount.toLocaleString('id-ID')}</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Rombongan Terdaftar</span>
-            <strong className="text-base text-black">342 Rombongan</strong>
-            <span className="text-[9px] text-gray-500 block">Auto-Itinerary &amp; Open Trip</span>
+            <strong className="text-base text-black">{activeGroupsCount} Rombongan</strong>
+            <span className="text-[9px] text-gray-500 block">{groupTouristsCount.toLocaleString('id-ID')} Wisatawan Terjadwal</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Interaksi Leads WA Mitra</span>
-            <strong className="text-base text-black">12.580 Klik P2P</strong>
+            <strong className="text-base text-black">{totalWaLeadsDisplay.toLocaleString('id-ID')} Klik P2P</strong>
             <span className="text-[9px] text-gray-500 block">Pemberdayaan UMKM</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Rasio Selesai Pungli &amp; SAR</span>
             <strong className="text-base text-black">92.6% (18 Menit SLA)</strong>
-            <span className="text-[9px] text-gray-500 block">Pusat Komando Saber &amp; Siaga</span>
+            <span className="text-[9px] text-gray-500 block">{totalIncidentsCount} Total Laporan Terfilter</span>
           </div>
         </div>
 
@@ -655,17 +1113,25 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               </tr>
             </thead>
             <tbody>
-              {TOP_5_GAODE_DESTINATIONS.map((d) => (
-                <tr key={d.rank}>
-                  <td className="border p-1.5 text-center font-bold">#{d.rank}</td>
-                  <td className="border p-1.5 font-semibold">{d.name}</td>
-                  <td className="border p-1.5">{d.cityRegency}</td>
-                  <td className="border p-1.5 text-center font-bold">{d.gaodeScore}</td>
-                  <td className="border p-1.5 text-center">{d.pungliFreeIndex}%</td>
-                  <td className="border p-1.5 text-center">{d.avgDwellHours} Jam</td>
-                  <td className="border p-1.5 text-center">{d.views360Count.toLocaleString('id-ID')}</td>
+              {filteredTop5Gaode.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="border p-2 text-center text-gray-500 italic">
+                    Tidak ada destinasi yang cocok dengan filter wilayah/kategori aktif
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                filteredTop5Gaode.map((d) => (
+                  <tr key={d.rank}>
+                    <td className="border p-1.5 text-center font-bold">#{d.rank}</td>
+                    <td className="border p-1.5 font-semibold">{d.name}</td>
+                    <td className="border p-1.5">{d.cityRegency}</td>
+                    <td className="border p-1.5 text-center font-bold">{d.gaodeScore}</td>
+                    <td className="border p-1.5 text-center">{d.pungliFreeIndex}%</td>
+                    <td className="border p-1.5 text-center">{d.avgDwellHours} Jam</td>
+                    <td className="border p-1.5 text-center">{d.views360Count.toLocaleString('id-ID')}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -685,7 +1151,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               </tr>
             </thead>
             <tbody>
-              {PREDICTION_7_DAYS.map((p) => (
+              {reactivePredictionDays.map((p) => (
                 <tr key={p.date}>
                   <td className="border p-1.5 font-semibold">{p.dayName}, {p.date}</td>
                   <td className="border p-1.5 text-center font-semibold text-emerald-800">{p.personalTouristsEst.toLocaleString('id-ID')} Org</td>
@@ -779,6 +1245,217 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       </header>
 
       {/* ==================================================================== */}
+      {/* 1.5. BARIS KONTROL FILTER LAPORAN REAKTIF (No-Print)                  */}
+      {/* ==================================================================== */}
+      <section
+        aria-label="Panel Filter Laporan Eksekutif"
+        className="bg-white rounded-2xl p-5 shadow-sm border border-[#E4E9DA] no-print space-y-4"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E4E9DA] pb-3">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-[#234B24]" />
+            <h2 className="text-xs font-black uppercase tracking-wider text-[#234B24]">
+              Filter &amp; Parameter Laporan Eksekutif
+            </h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24]">
+              Reaktif Real-Time
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isFilterActive && (
+              <button
+                type="button"
+                onClick={handleResetFilter}
+                className="px-3 py-1.5 rounded-xl bg-[#F26B4B]/10 hover:bg-[#F26B4B]/20 text-[#D95637] text-xs font-bold flex items-center gap-1.5 transition border border-[#F26B4B]/30 shadow-xs"
+                title="Kembalikan semua filter ke kondisi awal"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Filter</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Kontrol Filter Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* 1. Periode Waktu */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-[#234B24]" />
+              <span>Periode Waktu:</span>
+            </label>
+            <select
+              value={periodPreset}
+              onChange={(e) => setPeriodPreset(e.target.value as PeriodPreset)}
+              className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
+            >
+              <option value="all">Semua Periode</option>
+              <option value="today">Hari Ini</option>
+              <option value="7d">7 Hari Terakhir</option>
+              <option value="30d">30 Hari Terakhir</option>
+              <option value="this_month">Bulan Ini</option>
+              <option value="this_year">Tahun Ini</option>
+              <option value="custom">Pilih Tanggal (Custom)</option>
+            </select>
+          </div>
+
+          {/* 2. Wilayah 19 Kab/Kota */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-[#234B24]" />
+              <span>Wilayah (19 Kab/Kota):</span>
+            </label>
+            <select
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
+            >
+              <option value="all">Semua 19 Kab/Kota Sumbar</option>
+              {SUMBAR_19_REGIONS.map((region) => (
+                <option key={region} value={region}>
+                  {region}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 3. Kategori Destinasi */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5 text-[#234B24]" />
+              <span>Kategori Destinasi:</span>
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
+            >
+              <option value="all">Semua Kategori ({destinationCategories.length})</option>
+              {destinationCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 4. Segmen Wisatawan */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
+              <Users className="w-3.5 h-3.5 text-[#234B24]" />
+              <span>Segmen Wisatawan:</span>
+            </label>
+            <div className="grid grid-cols-3 gap-1 bg-[#F6F3EC] p-1 rounded-xl border border-[#CFD8BE]">
+              <button
+                type="button"
+                onClick={() => setSelectedSegment('all')}
+                className={`py-1.5 text-[11px] font-bold rounded-lg transition ${
+                  selectedSegment === 'all'
+                    ? 'bg-[#234B24] text-white shadow-xs'
+                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                }`}
+              >
+                Semua
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedSegment('personal')}
+                className={`py-1.5 text-[11px] font-bold rounded-lg transition ${
+                  selectedSegment === 'personal'
+                    ? 'bg-[#234B24] text-white shadow-xs'
+                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                }`}
+                title="Personal Mandiri (stemp_visit)"
+              >
+                Personal
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedSegment('group')}
+                className={`py-1.5 text-[11px] font-bold rounded-lg transition ${
+                  selectedSegment === 'group'
+                    ? 'bg-[#F26B4B] text-white shadow-xs'
+                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                }`}
+                title="Rombongan (open_trips)"
+              >
+                Rombongan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Input Rentang Tanggal Custom (Jika periodPreset === 'custom') */}
+        {periodPreset === 'custom' && (
+          <div className="p-3.5 bg-[#F6F3EC] rounded-xl border border-[#CFD8BE] flex flex-wrap items-center gap-4">
+            <span className="text-xs font-bold text-[#234B24]">Rentang Tanggal Custom:</span>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-[#4A5248] font-medium">Dari:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-3 py-1.5 bg-white rounded-lg border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-[#4A5248] font-medium">Sampai:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-3 py-1.5 bg-white rounded-lg border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+              />
+            </div>
+            {(customStartDate || customEndDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                }}
+                className="text-[11px] font-bold text-[#D95637] hover:underline"
+              >
+                Bersihkan Tanggal
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Baris Bawah: Toggle Sensor GPS + Ringkasan Chips Filter Aktif */}
+        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-[#E4E9DA]">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={onlyValidGps}
+              onChange={(e) => setOnlyValidGps(e.target.checked)}
+              className="w-4 h-4 rounded text-[#234B24] accent-[#234B24] border-[#CFD8BE] focus:ring-0 cursor-pointer"
+            />
+            <span className="font-bold text-[#1B1F1A]">
+              Hanya GPS Valid (<code className="text-[11px] font-mono text-[#234B24]">is_gps_valid = true</code>)
+            </span>
+          </label>
+
+          {/* Chips Filter Aktif */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-medium text-[#767676]">Filter Aktif:</span>
+            {activeFilterChips.map((chip, idx) => (
+              <span
+                key={idx}
+                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24] border border-[#CFD8BE]"
+              >
+                {chip}
+              </span>
+            ))}
+            <span className="text-[11px] text-[#4A5248] ml-1 font-semibold">
+              ({matchingDestinations.length} Destinasi Lolos)
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================================== */}
       {/* 2. KARTU METRIK MAKRO (Bagian Atas, Selalu Tampil)                    */}
       {/* ==================================================================== */}
       <section
@@ -795,22 +1472,50 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </div>
           <div className="mt-3">
             <div className="text-2xl sm:text-3xl font-extrabold text-[#234B24] flex items-baseline gap-2">
-              <span>{totalWeeklyVisitors.toLocaleString('id-ID')}</span>
+              <span>{totalVisitorsDisplay.toLocaleString('id-ID')}</span>
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#1E9E5A]/15 text-[#166534]">
                 +14.2% MoM
               </span>
             </div>
             {/* Visualisasi Terpisah Personal vs Rombongan */}
             <div className="mt-3 pt-2.5 border-t border-[#E4E9DA] grid grid-cols-2 gap-2">
-              <div className="p-2 rounded-xl bg-[#234B24]/5 border border-[#234B24]/10">
-                <span className="text-[10px] font-extrabold text-[#234B24] block uppercase">Personal (stemp_visit)</span>
-                <span className="text-sm font-black text-[#234B24]">{personalVisitsCount.toLocaleString('id-ID')}</span>
-                <span className="text-[10px] text-[#4A5248] block">is_gps_valid = true</span>
+              <div
+                className={`p-2 rounded-xl border transition ${
+                  selectedSegment === 'group'
+                    ? 'bg-gray-50 border-gray-200 opacity-60'
+                    : 'bg-[#234B24]/5 border-[#234B24]/10'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold text-[#234B24] block uppercase">Personal</span>
+                  {selectedSegment === 'group' && (
+                    <span className="text-[9px] font-bold text-gray-500">(Dikecualikan)</span>
+                  )}
+                </div>
+                <span className="text-sm font-black text-[#234B24]">
+                  {personalVisitsCount.toLocaleString('id-ID')}
+                </span>
+                <span className="text-[10px] text-[#4A5248] block">
+                  {onlyValidGps ? 'GPS Valid' : 'stemp_visit'}
+                </span>
               </div>
-              <div className="p-2 rounded-xl bg-[#F26B4B]/10 border border-[#F26B4B]/20">
-                <span className="text-[10px] font-extrabold text-[#C2410C] block uppercase">Rombongan (open_trips)</span>
-                <span className="text-sm font-black text-[#F26B4B]">{(totalWeeklyVisitors - personalVisitsCount).toLocaleString('id-ID')}</span>
-                <span className="text-[10px] text-[#4A5248] block">Group Invite Aktif</span>
+              <div
+                className={`p-2 rounded-xl border transition ${
+                  selectedSegment === 'personal'
+                    ? 'bg-gray-50 border-gray-200 opacity-60'
+                    : 'bg-[#F26B4B]/10 border-[#F26B4B]/20'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold text-[#C2410C] block uppercase">Rombongan</span>
+                  {selectedSegment === 'personal' && (
+                    <span className="text-[9px] font-bold text-gray-500">(Dikecualikan)</span>
+                  )}
+                </div>
+                <span className="text-sm font-black text-[#F26B4B]">
+                  {groupVisitsCount.toLocaleString('id-ID')}
+                </span>
+                <span className="text-[10px] text-[#4A5248] block">open_trips</span>
               </div>
             </div>
           </div>
@@ -826,13 +1531,15 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </div>
           <div className="mt-3">
             <div className="text-2xl sm:text-3xl font-extrabold text-[#F26B4B] flex items-baseline gap-2">
-              <span>342 Rombongan</span>
+              <span>{activeGroupsCount} Rombongan</span>
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
-                1.840 Wisatawan
+                {groupTouristsCount.toLocaleString('id-ID')} Wisatawan
               </span>
             </div>
             <p className="text-[11px] text-[#4A5248] mt-1 font-medium">
-              Terjadwal via Group Invite (18 Grup berangkat hari ini)
+              {selectedSegment === 'personal'
+                ? 'Dikecualikan oleh filter segmen Personal'
+                : 'Terjadwal via Group Invite & Open Trip'}
             </p>
           </div>
         </div>
@@ -1034,151 +1741,156 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                     Ambang Batas Siaga Lonjakan (&gt; 2.500 Wisatawan)
                   </text>
 
-                  {/* 1. Kurva Area Fill Personal (Hijau) */}
-                  <polygon
-                    points="80,180 80,141 185,144 290,138 395,118 500,95 605,50 710,61 710,180"
-                    fill="url(#surgeAreaGradient)"
-                  />
+                  {(() => {
+                    const chartPoints = reactivePredictionDays.map((p, idx) => {
+                      const cx = 80 + idx * 105;
+                      const cyPersonal = 180 - Math.min(150, Math.round((p.personalTouristsEst / 3000) * 150));
+                      const cyGroup = 180 - Math.min(150, Math.round((p.groupTouristsEst / 3000) * 150));
+                      return { cx, cyPersonal, cyGroup, day: p };
+                    });
+                    const polyPersonal = chartPoints.map((pt) => `${pt.cx},${pt.cyPersonal}`).join(' ');
+                    const polyGroup = chartPoints.map((pt) => `${pt.cx},${pt.cyGroup}`).join(' ');
+                    const areaPersonal = `80,180 ${polyPersonal} 710,180`;
+                    const areaGroup = `80,180 ${polyGroup} 710,180`;
 
-                  {/* 1. Garis Poligon Personal (Hijau) */}
-                  <polyline
-                    points="80,141 185,144 290,138 395,118 500,95 605,50 710,61"
-                    fill="none"
-                    stroke="#234B24"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-
-                  {/* 2. Kurva Area Fill Rombongan (Koral) */}
-                  <polygon
-                    points="80,180 80,157 185,160 290,155 395,142 500,123 605,90 710,100 710,180"
-                    fill="url(#coralAreaGradient)"
-                  />
-
-                  {/* 2. Garis Poligon Rombongan (Koral) */}
-                  <polyline
-                    points="80,157 185,160 290,155 395,142 500,123 605,90 710,100"
-                    fill="none"
-                    stroke="#F26B4B"
-                    strokeWidth="3"
-                    strokeDasharray="4 2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-
-                  {/* Titik Lingkaran & Label Setiap Hari */}
-                  {[
-                    { cx: 80, cyPersonal: 141, cyGroup: 157, day: PREDICTION_7_DAYS[0] },
-                    { cx: 185, cyPersonal: 144, cyGroup: 160, day: PREDICTION_7_DAYS[1] },
-                    { cx: 290, cyPersonal: 138, cyGroup: 155, day: PREDICTION_7_DAYS[2] },
-                    { cx: 395, cyPersonal: 118, cyGroup: 142, day: PREDICTION_7_DAYS[3] },
-                    { cx: 500, cyPersonal: 95, cyGroup: 123, day: PREDICTION_7_DAYS[4] },
-                    { cx: 605, cyPersonal: 50, cyGroup: 90, day: PREDICTION_7_DAYS[5] },
-                    { cx: 710, cyPersonal: 61, cyGroup: 100, day: PREDICTION_7_DAYS[6] },
-                  ].map((pt, idx) => {
-                    const isSelected = selectedPredictionDay.date === pt.day.date;
-                    const isPeak = pt.day.status === 'Puncak (Peak)';
                     return (
-                      <g
-                        key={idx}
-                        className="cursor-pointer group"
-                        onClick={() => setSelectedPredictionDay(pt.day)}
-                      >
-                        {/* Glow halo saat aktif */}
-                        {isSelected && (
-                          <circle cx={pt.cx} cy={pt.cyPersonal} r="14" fill="#F26B4B" opacity="0.25" className="animate-pulse" />
-                        )}
-
-                        {/* Titik Personal (Hijau) */}
-                        <circle
-                          cx={pt.cx}
-                          cy={pt.cyPersonal}
-                          r={isSelected ? '6' : '4.5'}
-                          fill="#234B24"
-                          stroke="#FFFFFF"
-                          strokeWidth="2"
+                      <>
+                        {/* 1. Kurva Area Fill Personal (Hijau) */}
+                        <polygon points={areaPersonal} fill="url(#surgeAreaGradient)" />
+                        <polyline
+                          points={polyPersonal}
+                          fill="none"
+                          stroke="#234B24"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
 
-                        {/* Titik Rombongan (Koral) */}
-                        <circle
-                          cx={pt.cx}
-                          cy={pt.cyGroup}
-                          r={isSelected ? '6' : '4.5'}
-                          fill="#F26B4B"
-                          stroke="#FFFFFF"
-                          strokeWidth="2"
+                        {/* 2. Kurva Area Fill Rombongan (Koral) */}
+                        <polygon points={areaGroup} fill="url(#coralAreaGradient)" />
+                        <polyline
+                          points={polyGroup}
+                          fill="none"
+                          stroke="#F26B4B"
+                          strokeWidth="3"
+                          strokeDasharray="4 2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
 
-                        {/* Badge angka di atas titik */}
-                        <text
-                          x={pt.cx}
-                          y={pt.cyPersonal - 10}
-                          textAnchor="middle"
-                          className="text-[10px] font-extrabold fill-[#234B24]"
-                        >
-                          {pt.day.personalTouristsEst}
-                        </text>
-                        <text
-                          x={pt.cx}
-                          y={pt.cyGroup + 14}
-                          textAnchor="middle"
-                          className="text-[9.5px] font-extrabold fill-[#C2410C]"
-                        >
-                          {pt.day.groupTouristsEst}
-                        </text>
+                        {/* Titik Lingkaran & Label Setiap Hari */}
+                        {chartPoints.map((pt, idx) => {
+                          const isSelected = selectedPredictionDay.date === pt.day.date;
+                          return (
+                            <g
+                              key={idx}
+                              className="cursor-pointer group"
+                              onClick={() => setSelectedPredictionDay(pt.day)}
+                            >
+                              {/* Glow halo saat aktif */}
+                              {isSelected && (
+                                <circle cx={pt.cx} cy={pt.cyPersonal} r="14" fill="#F26B4B" opacity="0.25" className="animate-pulse" />
+                              )}
 
-                        {/* Label Hari & Tanggal di Bawah */}
-                        <text
-                          x={pt.cx}
-                          y="198"
-                          textAnchor="middle"
-                          className={`text-[11px] font-bold ${
-                            isSelected ? 'fill-[#234B24]' : 'fill-[#4A5248]'
-                          }`}
-                        >
-                          {pt.day.dayName}
-                        </text>
-                        <text
-                          x={pt.cx}
-                          y="212"
-                          textAnchor="middle"
-                          className="text-[9.5px] fill-[#767676] font-mono"
-                        >
-                          {pt.day.date.slice(0, 6)}
-                        </text>
-                      </g>
+                              {/* Titik Personal (Hijau) */}
+                              <circle
+                                cx={pt.cx}
+                                cy={pt.cyPersonal}
+                                r={isSelected ? '6' : '4.5'}
+                                fill="#234B24"
+                                stroke="#FFFFFF"
+                                strokeWidth="2"
+                              />
+
+                              {/* Titik Rombongan (Koral) */}
+                              <circle
+                                cx={pt.cx}
+                                cy={pt.cyGroup}
+                                r={isSelected ? '6' : '4.5'}
+                                fill="#F26B4B"
+                                stroke="#FFFFFF"
+                                strokeWidth="2"
+                              />
+
+                              {/* Badge angka di atas titik */}
+                              <text
+                                x={pt.cx}
+                                y={pt.cyPersonal - 10}
+                                textAnchor="middle"
+                                className="text-[10px] font-extrabold fill-[#234B24]"
+                              >
+                                {pt.day.personalTouristsEst.toLocaleString('id-ID')}
+                              </text>
+                              <text
+                                x={pt.cx}
+                                y={pt.cyGroup + 14}
+                                textAnchor="middle"
+                                className="text-[9.5px] font-extrabold fill-[#C2410C]"
+                              >
+                                {pt.day.groupTouristsEst.toLocaleString('id-ID')}
+                              </text>
+
+                              {/* Label Hari & Tanggal di Bawah */}
+                              <text
+                                x={pt.cx}
+                                y="198"
+                                textAnchor="middle"
+                                className={`text-[11px] font-bold ${
+                                  isSelected ? 'fill-[#234B24]' : 'fill-[#4A5248]'
+                                }`}
+                              >
+                                {pt.day.dayName}
+                              </text>
+                              <text
+                                x={pt.cx}
+                                y="212"
+                                textAnchor="middle"
+                                className="text-[9.5px] fill-[#767676] font-mono"
+                              >
+                                {pt.day.date.slice(0, 6)}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </>
                     );
-                  })}
+                  })()}
                 </svg>
               </div>
             </div>
 
             {/* Panel Peringatan Dini & Rekomendasi Mitigasi Cerdas */}
-            <div className="bg-[#F6F3EC] p-5 rounded-2xl border border-[#CFD8BE] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-[#D95637]">
-                    Peringatan Dini Lonjakan: {selectedPredictionDay.dayName}, {selectedPredictionDay.date} ({selectedPredictionDay.status})
-                  </h4>
-                  <p className="text-xs text-[#1B1F1A] mt-0.5">
-                    Total Kunjungan: <strong>{selectedPredictionDay.touristsEst.toLocaleString('id-ID')} Wisatawan</strong>{' '}
-                    (Terdiri dari <span className="text-[#234B24] font-bold">{selectedPredictionDay.personalTouristsEst.toLocaleString('id-ID')} Personal</span> &amp;{' '}
-                    <span className="text-[#F26B4B] font-bold">{selectedPredictionDay.groupTouristsEst.toLocaleString('id-ID')} Rombongan</span> dalam <strong>{selectedPredictionDay.groupsCount} grup</strong>) menuju kawasan:{' '}
-                    <span className="font-bold text-[#234B24]">{selectedPredictionDay.topDestinations.join(' & ')}</span>.
-                  </p>
-                </div>
-              </div>
+            {(() => {
+              const activePredDay =
+                reactivePredictionDays.find((d) => d.date === selectedPredictionDay.date) ||
+                reactivePredictionDays[0];
+              return (
+                <div className="bg-[#F6F3EC] p-5 rounded-2xl border border-[#CFD8BE] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                      <AlertTriangle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-extrabold uppercase tracking-wide text-[#D95637]">
+                        Peringatan Dini Lonjakan: {activePredDay.dayName}, {activePredDay.date} ({activePredDay.status})
+                      </h4>
+                      <p className="text-xs text-[#1B1F1A] mt-0.5">
+                        Total Kunjungan: <strong>{activePredDay.touristsEst.toLocaleString('id-ID')} Wisatawan</strong>{' '}
+                        (Terdiri dari <span className="text-[#234B24] font-bold">{activePredDay.personalTouristsEst.toLocaleString('id-ID')} Personal</span> &amp;{' '}
+                        <span className="text-[#F26B4B] font-bold">{activePredDay.groupTouristsEst.toLocaleString('id-ID')} Rombongan</span> dalam <strong>{activePredDay.groupsCount} grup</strong>) menuju kawasan:{' '}
+                        <span className="font-bold text-[#234B24]">{activePredDay.topDestinations.join(' & ')}</span>.
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-[#234B24] text-white shadow-xs">
-                  Saran: Kerahkan Posko Saber &amp; Rekayasa Jalur Kelok 9
-                </span>
-              </div>
-            </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-[#234B24] text-white shadow-xs">
+                      Saran: Kerahkan Posko Saber &amp; Rekayasa Jalur Kelok 9
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </section>
 
           {/* B. PETA / GRID STATUS SAAT INI (19 KABUPATEN / KOTA) */}
@@ -1225,83 +1937,95 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
             {/* Grid 19 Kabupaten / Kota */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredRegencies.map((reg) => {
-                const isOverload = reg.crowd_status === 'Overload';
-                const isRamai = reg.crowd_status === 'Ramai';
-                const isSedang = reg.crowd_status === 'Sedang';
+              {filteredRegencies.length === 0 ? (
+                <div className="col-span-full p-8 text-center bg-[#F6F3EC] rounded-2xl border border-dashed border-[#CFD8BE]">
+                  <MapPin className="w-8 h-8 text-[#767676] mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-bold text-[#1B1F1A]">Tidak ada data wilayah yang cocok</p>
+                  <p className="text-xs text-[#767676] mt-1">Coba sesuaikan kata kunci pencarian atau ubah filter wilayah di panel atas.</p>
+                </div>
+              ) : (
+                filteredRegencies.map((reg) => {
+                  const isOverload = reg.crowd_status === 'Overload';
+                  const isRamai = reg.crowd_status === 'Ramai';
+                  const isSedang = reg.crowd_status === 'Sedang';
 
-                const badgeBg = isOverload
-                  ? 'bg-red-100 text-red-800 border-red-200'
-                  : isRamai
-                  ? 'bg-[#F26B4B]/15 text-[#D95637] border-[#F26B4B]/30'
-                  : isSedang
-                  ? 'bg-[#F59E0B]/15 text-[#B45309] border-[#F59E0B]/30'
-                  : 'bg-[#1E9E5A]/15 text-[#166534] border-[#1E9E5A]/30';
+                  const badgeBg = isOverload
+                    ? 'bg-red-100 text-red-800 border-red-200'
+                    : isRamai
+                    ? 'bg-[#F26B4B]/15 text-[#D95637] border-[#F26B4B]/30'
+                    : isSedang
+                    ? 'bg-[#F59E0B]/15 text-[#B45309] border-[#F59E0B]/30'
+                    : 'bg-[#1E9E5A]/15 text-[#166534] border-[#1E9E5A]/30';
 
-                return (
-                  <div
-                    key={reg.id}
-                    className="bg-[#F6F3EC]/70 hover:bg-[#F6F3EC] p-4 rounded-2xl border border-[#CFD8BE] shadow-xs transition flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-mono font-bold text-[#767676]">
-                          {reg.code}
-                        </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeBg}`}>
-                          {reg.crowd_status}
-                        </span>
+                  const personal = selectedSegment === 'group' ? 0 : Math.round(reg.visitor_count_week * 0.66);
+                  const group = selectedSegment === 'personal' ? 0 : Math.round(reg.visitor_count_week * 0.34);
+                  const total = personal + group;
+
+                  return (
+                    <div
+                      key={reg.id}
+                      className="bg-[#F6F3EC]/70 hover:bg-[#F6F3EC] p-4 rounded-2xl border border-[#CFD8BE] shadow-xs transition flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-xs font-mono font-bold text-[#767676]">
+                            {reg.code}
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeBg}`}>
+                            {reg.crowd_status}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-extrabold text-[#1B1F1A] mt-1.5">
+                          {reg.name}
+                        </h4>
+
+                        <div className="mt-3 space-y-1.5 text-xs text-[#4A5248]">
+                          <div className="flex justify-between">
+                            <span>Total Kunjungan:</span>
+                            <strong className="text-[#234B24]">
+                              {total.toLocaleString('id-ID')}
+                            </strong>
+                          </div>
+
+                          <div className="flex justify-between text-[11px]">
+                            <span>• Personal (Mandiri):</span>
+                            <span className="font-bold text-[#234B24]">
+                              {selectedSegment === 'group' ? '-' : personal.toLocaleString('id-ID')}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between text-[11px]">
+                            <span>• Rombongan (Grup):</span>
+                            <span className="font-bold text-[#F26B4B]">
+                              {selectedSegment === 'personal' ? '-' : group.toLocaleString('id-ID')}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between pt-1 border-t border-black/5">
+                            <span>Destinasi Teratas:</span>
+                            <span className="font-semibold text-[#1B1F1A] truncate max-w-[130px]">
+                              {reg.top_destination}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <span>Interaksi WA Mitra:</span>
+                            <span className="font-bold text-[#1E9E5A]">
+                              {(reg.wa_leads_count || 120).toLocaleString('id-ID')} Klik
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
-                      <h4 className="text-sm font-extrabold text-[#1B1F1A] mt-1.5">
-                        {reg.name}
-                      </h4>
-
-                      <div className="mt-3 space-y-1.5 text-xs text-[#4A5248]">
-                        <div className="flex justify-between">
-                          <span>Total Kunjungan:</span>
-                          <strong className="text-[#234B24]">
-                            {reg.visitor_count_week.toLocaleString('id-ID')}
-                          </strong>
-                        </div>
-
-                        <div className="flex justify-between text-[11px]">
-                          <span>• Personal (Mandiri):</span>
-                          <span className="font-bold text-[#234B24]">
-                            {Math.round(reg.visitor_count_week * 0.66).toLocaleString('id-ID')}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between text-[11px]">
-                          <span>• Rombongan (Grup):</span>
-                          <span className="font-bold text-[#F26B4B]">
-                            {Math.round(reg.visitor_count_week * 0.34).toLocaleString('id-ID')}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between pt-1 border-t border-black/5">
-                          <span>Destinasi Teratas:</span>
-                          <span className="font-semibold text-[#1B1F1A] truncate max-w-[130px]">
-                            {reg.top_destination}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between">
-                          <span>Interaksi WA Mitra:</span>
-                          <span className="font-bold text-[#1E9E5A]">
-                            {(reg.wa_leads_count || 120).toLocaleString('id-ID')} Klik
-                          </span>
-                        </div>
+                      <div className="mt-4 pt-3 border-t border-[#CFD8BE]/60 text-[10px] text-[#4A5248] flex items-center justify-between">
+                        <span>Rasio: {reg.domestic_pct}% Domestik</span>
+                        <span className="font-bold text-[#234B24]">{reg.foreign_myr_pct}% Wisman</span>
                       </div>
                     </div>
-
-                    <div className="mt-4 pt-3 border-t border-[#CFD8BE]/60 text-[10px] text-[#4A5248] flex items-center justify-between">
-                      <span>Rasio: {reg.domestic_pct}% Domestik</span>
-                      <span className="font-bold text-[#234B24]">{reg.foreign_myr_pct}% Wisman</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </section>
         </div>
@@ -1329,49 +2053,57 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               </div>
 
               <div className="px-3.5 py-1.5 rounded-xl bg-[#1E9E5A]/15 text-[#166534] text-xs font-bold shrink-0">
-                Total Ekosistem: 12.580 Klik Leads WA
+                Total Ekosistem: {totalWaLeadsDisplay.toLocaleString('id-ID')} Klik Leads WA
               </div>
             </div>
 
             {/* List Bar Chart */}
             <div className="space-y-4">
-              {TOP_DESTINATIONS_WA_LEADS.map((item, idx) => {
-                return (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex flex-wrap items-center justify-between text-xs gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 font-mono font-bold text-[#767676] text-right">
-                          #{idx + 1}
-                        </span>
-                        <strong className="text-[#1B1F1A] font-bold text-sm">
-                          {item.destinationName}
-                        </strong>
-                        <span className="text-[11px] text-[#4A5248]">({item.cityRegency})</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                          {item.dominantCategory}
-                        </span>
+              {filteredTopDestinationsWaLeads.length === 0 ? (
+                <div className="p-8 text-center bg-[#F6F3EC] rounded-2xl border border-dashed border-[#CFD8BE]">
+                  <Store className="w-8 h-8 text-[#767676] mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-bold text-[#1B1F1A]">Tidak ada data interaksi leads mitra untuk filter ini</p>
+                  <p className="text-xs text-[#767676] mt-1">Silakan sesuaikan pilihan wilayah atau kategori destinasi.</p>
+                </div>
+              ) : (
+                filteredTopDestinationsWaLeads.map((item, idx) => {
+                  return (
+                    <div key={idx} className="space-y-1.5">
+                      <div className="flex flex-wrap items-center justify-between text-xs gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 font-mono font-bold text-[#767676] text-right">
+                            #{idx + 1}
+                          </span>
+                          <strong className="text-[#1B1F1A] font-bold text-sm">
+                            {item.destinationName}
+                          </strong>
+                          <span className="text-[11px] text-[#4A5248]">({item.cityRegency})</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E4E9DA] text-[#234B24]">
+                            {item.dominantCategory}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-extrabold text-[#234B24]">
+                            {item.totalClicks.toLocaleString('id-ID')} Klik
+                          </span>
+                          <span className="text-xs text-[#767676] font-mono">
+                            {item.percentage}%
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-extrabold text-[#234B24]">
-                          {item.totalClicks.toLocaleString('id-ID')} Klik
-                        </span>
-                        <span className="text-xs text-[#767676] font-mono">
-                          {item.percentage}%
-                        </span>
+                      {/* Progress Bar */}
+                      <div className="w-full h-3 rounded-full bg-[#F6F3EC] overflow-hidden border border-[#CFD8BE]">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-[#234B24] to-[#1E9E5A] transition-all duration-500"
+                          style={{ width: `${item.percentage}%` }}
+                        />
                       </div>
                     </div>
-
-                    {/* Progress Bar */}
-                    <div className="w-full h-3 rounded-full bg-[#F6F3EC] overflow-hidden border border-[#CFD8BE]">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#234B24] to-[#1E9E5A] transition-all duration-500"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {/* Ringkasan Distribusi Kategori Mitra */}
@@ -1441,73 +2173,81 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E4E9DA]">
-                  {TOP_5_GAODE_DESTINATIONS.map((d) => {
-                    return (
-                      <tr key={d.rank} className="hover:bg-[#F6F3EC]/50 transition">
-                        <td className="py-4 px-3 font-extrabold text-sm">
-                          {d.rank === 1 ? (
-                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#F59E0B] text-white font-black shadow-xs">
-                              1
+                  {filteredTop5Gaode.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-[#767676]">
+                        Tidak ada destinasi yang cocok dengan filter wilayah terpilih.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTop5Gaode.map((d) => {
+                      return (
+                        <tr key={d.rank} className="hover:bg-[#F6F3EC]/50 transition">
+                          <td className="py-4 px-3 font-extrabold text-sm">
+                            {d.rank === 1 ? (
+                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#F59E0B] text-white font-black shadow-xs">
+                                1
+                              </span>
+                            ) : d.rank === 2 ? (
+                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-400 text-white font-black shadow-xs">
+                                2
+                              </span>
+                            ) : d.rank === 3 ? (
+                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-700 text-white font-black shadow-xs">
+                                3
+                              </span>
+                            ) : (
+                              <span className="text-[#4A5248] pl-2 font-mono">#{d.rank}</span>
+                            )}
+                          </td>
+
+                          <td className="py-4 px-3">
+                            <strong className="text-sm font-extrabold text-[#1B1F1A] block">
+                              {d.name}
+                            </strong>
+                            <span className="text-xs text-[#4A5248]">{d.cityRegency}</span>
+                          </td>
+
+                          <td className="py-4 px-3 text-center">
+                            <span className="px-3 py-1 rounded-xl bg-[#234B24] text-white font-extrabold text-sm shadow-xs">
+                              {d.gaodeScore}
                             </span>
-                          ) : d.rank === 2 ? (
-                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-400 text-white font-black shadow-xs">
-                              2
+                          </td>
+
+                          <td className="py-4 px-3 text-center">
+                            <span className="font-bold text-[#1E9E5A] bg-[#1E9E5A]/15 px-2.5 py-1 rounded-full text-xs">
+                              {d.pungliFreeIndex}%
                             </span>
-                          ) : d.rank === 3 ? (
-                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-700 text-white font-black shadow-xs">
-                              3
-                            </span>
-                          ) : (
-                            <span className="text-[#4A5248] pl-2 font-mono">#{d.rank}</span>
-                          )}
-                        </td>
+                          </td>
 
-                        <td className="py-4 px-3">
-                          <strong className="text-sm font-extrabold text-[#1B1F1A] block">
-                            {d.name}
-                          </strong>
-                          <span className="text-xs text-[#4A5248]">{d.cityRegency}</span>
-                        </td>
+                          <td className="py-4 px-3 text-center font-bold text-[#1B1F1A]">
+                            {d.avgDwellHours} Jam
+                          </td>
 
-                        <td className="py-4 px-3 text-center">
-                          <span className="px-3 py-1 rounded-xl bg-[#234B24] text-white font-extrabold text-sm shadow-xs">
-                            {d.gaodeScore}
-                          </span>
-                        </td>
+                          <td className="py-4 px-3 text-center font-mono font-semibold text-[#234B24]">
+                            {d.views360Count.toLocaleString('id-ID')} views
+                          </td>
 
-                        <td className="py-4 px-3 text-center">
-                          <span className="font-bold text-[#1E9E5A] bg-[#1E9E5A]/15 px-2.5 py-1 rounded-full text-xs">
-                            {d.pungliFreeIndex}%
-                          </span>
-                        </td>
+                          <td className="py-4 px-3 text-center font-bold text-[#F26B4B]">
+                            {d.savedToItineraryCount.toLocaleString('id-ID')}x
+                          </td>
 
-                        <td className="py-4 px-3 text-center font-bold text-[#1B1F1A]">
-                          {d.avgDwellHours} Jam
-                        </td>
-
-                        <td className="py-4 px-3 text-center font-mono font-semibold text-[#234B24]">
-                          {d.views360Count.toLocaleString('id-ID')} views
-                        </td>
-
-                        <td className="py-4 px-3 text-center font-bold text-[#F26B4B]">
-                          {d.savedToItineraryCount.toLocaleString('id-ID')}x
-                        </td>
-
-                        <td className="py-4 px-3 text-center">
-                          {d.trend === 'up' ? (
-                            <span className="text-xs font-bold text-[#1E9E5A] flex items-center justify-center gap-0.5">
-                              <TrendingUp className="w-3.5 h-3.5" />
-                              <span>Naik</span>
-                            </span>
-                          ) : (
-                            <span className="text-xs font-bold text-[#767676]">
-                              Stabil
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          <td className="py-4 px-3 text-center">
+                            {d.trend === 'up' ? (
+                              <span className="text-xs font-bold text-[#1E9E5A] flex items-center justify-center gap-0.5">
+                                <TrendingUp className="w-3.5 h-3.5" />
+                                <span>Naik</span>
+                              </span>
+                            ) : (
+                              <span className="text-xs font-bold text-[#767676]">
+                                Stabil
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1527,73 +2267,57 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               <div>
                 <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-[#F26B4B]" />
-                  <span>Komposisi Laporan Insiden Bulan Ini</span>
+                  <span>Komposisi Laporan Insiden Lapangan</span>
                 </h3>
                 <p className="text-xs text-[#4A5248] mt-0.5">
-                  Distribusi 54 tiket aduan wisatawan yang masuk via Plang Smart QR &amp; Aplikasi.
+                  Distribusi {totalIncidentsCount} tiket aduan wisatawan yang masuk via Plang Smart QR &amp; Aplikasi sesuai filter aktif.
                 </p>
               </div>
 
               {/* Visual Donut Chart SVG */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-2">
-                <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
-                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                    {/* Lingkaran Background */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#F6F3EC" strokeWidth="16" />
-                    {/* Segmen 1: Parkir Liar (42.6%) -> stroke-dasharray: 101.7, 238.7 */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      fill="none"
-                      stroke="#F26B4B"
-                      strokeWidth="16"
-                      strokeDasharray="101.7 238.7"
-                      strokeDashoffset="0"
-                    />
-                    {/* Segmen 2: Tiket Liar (27.8%) -> stroke-dasharray: 66.4, 238.7 */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      fill="none"
-                      stroke="#F59E0B"
-                      strokeWidth="16"
-                      strokeDasharray="66.4 238.7"
-                      strokeDashoffset="-101.7"
-                    />
-                    {/* Segmen 3: Fasilitas Rusak (18.5%) -> stroke-dasharray: 44.2, 238.7 */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      fill="none"
-                      stroke="#3B82F6"
-                      strokeWidth="16"
-                      strokeDasharray="44.2 238.7"
-                      strokeDashoffset="-168.1"
-                    />
-                    {/* Segmen 4: SOS SAR (11.1%) -> stroke-dasharray: 26.5, 238.7 */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      fill="none"
-                      stroke="#EF4444"
-                      strokeWidth="16"
-                      strokeDasharray="26.5 238.7"
-                      strokeDashoffset="-212.3"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className="text-2xl font-black text-[#1B1F1A]">54</span>
-                    <span className="text-[10px] font-bold text-[#767676] uppercase">Total Aduan</span>
-                  </div>
-                </div>
+                {(() => {
+                  let cumulativeOffset = 0;
+                  const circ = 238.76;
+                  return (
+                    <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
+                      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                        {/* Lingkaran Background */}
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="#F6F3EC" strokeWidth="16" />
+                        {totalIncidentsCount > 0 ? (
+                          reactiveIncidentCategories.map((cat, idx) => {
+                            const strokeLen = (cat.percentage / 100) * circ;
+                            const offset = -cumulativeOffset;
+                            cumulativeOffset += strokeLen;
+                            return (
+                              <circle
+                                key={idx}
+                                cx="50"
+                                cy="50"
+                                r="38"
+                                fill="none"
+                                stroke={cat.color}
+                                strokeWidth="16"
+                                strokeDasharray={`${strokeLen.toFixed(1)} ${circ}`}
+                                strokeDashoffset={offset.toFixed(1)}
+                              />
+                            );
+                          })
+                        ) : (
+                          <circle cx="50" cy="50" r="38" fill="none" stroke="#E4E9DA" strokeWidth="16" />
+                        )}
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <span className="text-2xl font-black text-[#1B1F1A]">{totalIncidentsCount}</span>
+                        <span className="text-[10px] font-bold text-[#767676] uppercase">Total Aduan</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Legenda Komposisi */}
                 <div className="space-y-2.5 w-full">
-                  {INCIDENT_CATEGORIES.map((cat, idx) => (
+                  {reactiveIncidentCategories.map((cat, idx) => (
                     <div key={idx} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
@@ -1611,7 +2335,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               </div>
 
               <div className="text-[11px] text-[#4A5248] bg-[#F6F3EC] p-3 rounded-2xl border border-[#CFD8BE]">
-                <strong>Indeks Keamanan:</strong> Laporan pungli parkir liar terkonsentrasi di kawasan penyangga Jam Gadang dan gerbang Pantai Padang. Tim Saber Pungli telah menetapkan titik patroli tetap.
+                <strong>Indeks Keamanan:</strong> Laporan pungli dan potensi kerawanan dipantau langsung oleh Satgas Saber Pungli &amp; Armada SAR Siaga Dispar Sumbar.
               </div>
             </div>
 
@@ -1634,10 +2358,12 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                     Tingkat Penyelesaian (Resolution Rate)
                   </span>
                   <div className="mt-2 text-3xl font-black text-[#234B24]">
-                    92.6%
+                    {totalIncidentsCount > 0 ? '92.6%' : '100%'}
                   </div>
                   <span className="text-[11px] text-[#166534] font-bold mt-1 block">
-                    50 dari 54 Laporan Tuntas Ditindak
+                    {totalIncidentsCount > 0
+                      ? `${Math.round(totalIncidentsCount * 0.926)} dari ${totalIncidentsCount} Laporan Tuntas Ditindak`
+                      : '0 Laporan (Kawasan Tertib Bebas Aduan)'}
                   </span>
                 </div>
 
@@ -1658,12 +2384,20 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-bold text-[#1B1F1A]">
                   <span>Status Penanganan Tiket Saat Ini</span>
-                  <span className="text-[#1E9E5A]">50 Selesai · 3 Investigasi · 1 Menunggu</span>
+                  <span className="text-[#1E9E5A]">
+                    {totalIncidentsCount > 0
+                      ? `${Math.round(totalIncidentsCount * 0.926)} Selesai · ${Math.max(1, Math.round(totalIncidentsCount * 0.05))} Investigasi`
+                      : 'Semua Terkendali'}
+                  </span>
                 </div>
                 <div className="w-full h-3 rounded-full bg-[#F6F3EC] overflow-hidden flex border border-[#CFD8BE]">
-                  <div className="bg-[#1E9E5A] h-full" style={{ width: '92.6%' }} title="Selesai (92.6%)" />
-                  <div className="bg-[#F59E0B] h-full" style={{ width: '5.5%' }} title="Investigasi (5.5%)" />
-                  <div className="bg-[#EF4444] h-full" style={{ width: '1.9%' }} title="Menunggu (1.9%)" />
+                  <div className="bg-[#1E9E5A] h-full" style={{ width: totalIncidentsCount > 0 ? '92.6%' : '100%' }} title="Selesai" />
+                  {totalIncidentsCount > 0 && (
+                    <>
+                      <div className="bg-[#F59E0B] h-full" style={{ width: '5.5%' }} title="Investigasi" />
+                      <div className="bg-[#EF4444] h-full" style={{ width: '1.9%' }} title="Menunggu" />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -1852,19 +2586,19 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-gray-50 border border-gray-200 rounded text-center text-xs">
                   <div>
                     <span className="text-[10px] text-gray-500 block">Total Kunjungan</span>
-                    <strong className="text-sm text-black">148.920 Turis</strong>
+                    <strong className="text-sm text-black">{totalVisitorsDisplay.toLocaleString('id-ID')} Turis</strong>
                   </div>
                   <div>
                     <span className="text-[10px] text-gray-500 block">Rombongan Aktif</span>
-                    <strong className="text-sm text-black">342 Grup</strong>
+                    <strong className="text-sm text-black">{activeGroupsCount} Grup</strong>
                   </div>
                   <div>
                     <span className="text-[10px] text-gray-500 block">Leads WA Mitra</span>
-                    <strong className="text-sm text-black">12.580 Klik</strong>
+                    <strong className="text-sm text-black">{totalWaLeadsDisplay.toLocaleString('id-ID')} Klik</strong>
                   </div>
                   <div>
                     <span className="text-[10px] text-gray-500 block">Penyelesaian Pungli</span>
-                    <strong className="text-sm text-black">92.6% (18 Menit)</strong>
+                    <strong className="text-sm text-black">{totalIncidentsCount > 0 ? '92.6% (18 Menit)' : '100% (Tertib)'}</strong>
                   </div>
                 </div>
 
@@ -1883,15 +2617,23 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {TOP_5_GAODE_DESTINATIONS.slice(0, 3).map((d) => (
-                          <tr key={d.rank}>
-                            <td className="p-1.5 text-center font-bold">#{d.rank}</td>
-                            <td className="p-1.5 font-semibold">{d.name}</td>
-                            <td className="p-1.5 text-gray-600">{d.cityRegency}</td>
-                            <td className="p-1.5 text-center font-bold">{d.gaodeScore}</td>
-                            <td className="p-1.5 text-center text-green-700 font-bold">{d.pungliFreeIndex}%</td>
+                        {filteredTop5Gaode.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="p-2 text-center text-gray-500 italic">
+                              Tidak ada destinasi yang cocok dengan filter wilayah terpilih
+                            </td>
                           </tr>
-                        ))}
+                        ) : (
+                          filteredTop5Gaode.slice(0, 3).map((d) => (
+                            <tr key={d.rank}>
+                              <td className="p-1.5 text-center font-bold">#{d.rank}</td>
+                              <td className="p-1.5 font-semibold">{d.name}</td>
+                              <td className="p-1.5 text-gray-600">{d.cityRegency}</td>
+                              <td className="p-1.5 text-center font-bold">{d.gaodeScore}</td>
+                              <td className="p-1.5 text-center text-green-700 font-bold">{d.pungliFreeIndex}%</td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
