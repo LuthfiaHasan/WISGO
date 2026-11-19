@@ -27,7 +27,6 @@ import {
   fetchMinangPhrases,
   saveMinangPhrase,
 } from '../services/api';
-import { AudioDropzone } from './AudioDropzone';
 
 interface MinangDictionarySubTabProps {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -103,14 +102,10 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
     }
   }, [deletingPhrase]);
 
-  // Audio Player Handler
+  // Audio Player Handler (Text-to-Speech)
   const handleTogglePlayAudio = (phrase: MinangAudioPhrase) => {
     // If clicking on currently playing
     if (currentlyPlayingId === phrase.id) {
-      if (activeAudioRef.current) {
-        activeAudioRef.current.pause();
-        activeAudioRef.current = null;
-      }
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
@@ -118,42 +113,19 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
       return;
     }
 
-    // Stop existing audio
-    if (activeAudioRef.current) {
-      activeAudioRef.current.pause();
-      activeAudioRef.current = null;
-    }
+    // Stop existing audio / TTS
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
 
-    if (phrase.audio_url) {
-      const audio = new Audio(phrase.audio_url);
-      activeAudioRef.current = audio;
-      setCurrentlyPlayingId(phrase.id);
-
-      audio.onended = () => {
-        setCurrentlyPlayingId(null);
-        activeAudioRef.current = null;
-      };
-      audio.onerror = () => {
-        setCurrentlyPlayingId(null);
-        activeAudioRef.current = null;
-        showToast('Gagal memutar file audio. Mencoba pelafalan sintetis...', 'warning');
-        playSpeechSynthesisFallback(phrase);
-      };
-      audio.play().catch(() => {
-        playSpeechSynthesisFallback(phrase);
-      });
-    } else {
-      playSpeechSynthesisFallback(phrase);
+    const textToSpeak = phrase.voice_text || phrase.phrase || phrase.minang_text || '';
+    if (!textToSpeak.trim()) {
+      showToast('Tidak ada teks untuk diucapkan.', 'warning');
+      return;
     }
-  };
 
-  const playSpeechSynthesisFallback = (phrase: MinangAudioPhrase) => {
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(phrase.phrase);
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
       utterance.lang = 'id-ID';
       utterance.rate = 0.9;
       utterance.pitch = 1.05;
@@ -167,7 +139,7 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
       };
       window.speechSynthesis.speak(utterance);
     } else {
-      showToast('Perangkat tidak mendukung pemutaran suara otomatis.', 'warning');
+      showToast('Perangkat/browser tidak mendukung Text-to-Speech (Web Speech API).', 'warning');
     }
   };
 
@@ -202,13 +174,19 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
   const handleSaveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPhrase) return;
-    const phraseText = editingPhrase.phrase || editingPhrase.minang_text || '';
-    const meaningText = editingPhrase.meaning_id || editingPhrase.indonesian_text || '';
+    const phraseText = (editingPhrase.phrase || editingPhrase.minang_text || '').trim();
+    const meaningText = (editingPhrase.meaning_id || editingPhrase.indonesian_text || '').trim();
 
-    if (!phraseText.trim() || !meaningText.trim()) {
+    if (!phraseText || !meaningText) {
       showToast('Frasa Minang dan Arti Indonesia wajib diisi.', 'warning');
       return;
     }
+
+    const phoneticText = (editingPhrase.phonetic_guide || editingPhrase.pronunciation || phraseText).trim();
+    const voiceText = (editingPhrase.voice_text || phraseText).trim();
+    const dialectNote = (editingPhrase.dialect_note || 'Dialek Agam & Bukittinggi').trim();
+    const politeness = editingPhrase.politeness_level || 'Sopan';
+    const contextTip = (editingPhrase.usage_context_tip || editingPhrase.notes || '-').trim();
 
     try {
       const updated = await saveMinangPhrase({
@@ -217,13 +195,21 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
         minang_text: phraseText,
         meaning_id: meaningText,
         indonesian_text: meaningText,
+        phonetic_guide: phoneticText,
+        pronunciation: phoneticText,
+        voice_text: voiceText,
+        dialect_note: dialectNote,
+        politeness_level: politeness,
+        usage_context_tip: contextTip,
+        notes: contextTip,
+        audio_url: '', // Murni Text-to-Speech (TTS)
         updated_at: new Date().toISOString(),
       });
       setPhrases(updated);
       setEditingPhrase(null);
       showToast(
         isNewPhrase
-          ? `Frasa "${phraseText}" berhasil ditambahkan ke kamus audio.`
+          ? `Frasa "${phraseText}" berhasil ditambahkan ke kamus TTS.`
           : `Perubahan frasa "${phraseText}" berhasil disimpan.`,
         'success'
       );
@@ -273,8 +259,8 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
     const shopping = phrases.filter((p) => p.category === 'Belanja & Menawar').length;
     const greetings = phrases.filter((p) => p.category === 'Salam & Sapaan').length;
     const food = phrases.filter((p) => p.category === 'Kuliner').length;
-    const withAudio = phrases.filter((p) => Boolean(p.audio_url)).length;
-    return { total, shopping, greetings, food, withAudio };
+    const withTts = phrases.filter((p) => Boolean(p.voice_text || p.phrase || p.minang_text)).length;
+    return { total, shopping, greetings, food, withTts };
   }, [phrases]);
 
   const getCategoryBadge = (cat: MinangPhraseCategory) => {
@@ -338,7 +324,7 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
             </span>
           </div>
           <p className="mt-1 text-xs text-[#4A5248]">
-            {stats.withAudio} frasa memiliki rekaman audio penutur asli
+            {stats.total} frasa 100% didukung Text-to-Speech (TTS)
           </p>
         </div>
 
@@ -499,19 +485,32 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
                           {meta.icon}
                           <span>{phrase.category}</span>
                         </span>
-                        {phrase.audio_url ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#1E9E5A]/15 text-[#166534]">
-                            Audio MP3 Penutur Asli
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#E4E9DA] text-[#4A5248]">
-                            Sintesis Suara
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#1E9E5A]/15 text-[#166534] inline-flex items-center gap-1">
+                          <Volume2 className="w-3 h-3 text-[#166534]" />
+                          <span>Text-to-Speech (TTS)</span>
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-[#234B24] font-semibold italic flex flex-wrap items-center gap-2">
+                        <span>Cara Baca: {phrase.pronunciation || phrase.phonetic_guide || phrase.phrase}</span>
+                        {phrase.voice_text && phrase.voice_text !== phrase.phrase && (
+                          <span className="text-[11px] text-[#4A5248] font-normal not-italic bg-white px-2 py-0.5 rounded border border-[#CFD8BE]">
+                            Skrip TTS: &ldquo;{phrase.voice_text}&rdquo;
                           </span>
                         )}
                       </div>
 
-                      <div className="text-xs text-[#234B24] font-semibold italic">
-                        Cara Baca: {phrase.pronunciation || phrase.phrase}
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#4A5248]">
+                        {phrase.dialect_note && (
+                          <span className="px-2 py-0.5 rounded bg-white border border-[#CFD8BE] font-medium">
+                            {phrase.dialect_note}
+                          </span>
+                        )}
+                        {phrase.politeness_level && (
+                          <span className="px-2 py-0.5 rounded bg-[#234B24]/10 text-[#234B24] font-bold">
+                            Tingkat: {phrase.politeness_level}
+                          </span>
+                        )}
                       </div>
 
                       <div className="text-xs text-[#1B1F1A]">
@@ -674,60 +673,156 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#1B1F1A]">
-                  Kategori Percakapan *
-                </label>
-                <select
-                  value={editingPhrase.category}
-                  onChange={(e) =>
-                    setEditingPhrase({
-                      ...editingPhrase,
-                      category: e.target.value as MinangPhraseCategory,
-                    })
-                  }
-                  className="min-h-[46px] px-4 py-2 rounded-xl bg-white border border-[#767676] text-sm font-bold"
-                >
-                  {PHRASE_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-[#1B1F1A]">
+                    Kategori Percakapan *
+                  </label>
+                  <select
+                    value={editingPhrase.category}
+                    onChange={(e) =>
+                      setEditingPhrase({
+                        ...editingPhrase,
+                        category: e.target.value as MinangPhraseCategory,
+                        category_id: `cat-mp-${e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+                      })
+                    }
+                    className="min-h-[46px] px-4 py-2 rounded-xl bg-white border border-[#767676] text-sm font-bold"
+                  >
+                    {PHRASE_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-[#1B1F1A]">
+                    Catatan Dialek Daerah *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Agam / Bukittinggi / Padang"
+                    value={editingPhrase.dialect_note || ''}
+                    onChange={(e) =>
+                      setEditingPhrase({
+                        ...editingPhrase,
+                        dialect_note: e.target.value,
+                      })
+                    }
+                    className="min-h-[46px] px-4 py-2 rounded-xl bg-white border border-[#767676] text-sm"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-[#1B1F1A]">
+                    Tingkat Kesopanan *
+                  </label>
+                  <select
+                    value={editingPhrase.politeness_level || 'Sopan'}
+                    onChange={(e) =>
+                      setEditingPhrase({
+                        ...editingPhrase,
+                        politeness_level: e.target.value,
+                      })
+                    }
+                    className="min-h-[46px] px-4 py-2 rounded-xl bg-white border border-[#767676] text-sm font-bold"
+                  >
+                    <option value="Sopan">Sopan (Sehari-hari / Pedagang)</option>
+                    <option value="Halus / Adat">Halus / Adat (Tetua & Pemuka Nagari)</option>
+                    <option value="Biasa">Biasa / Akrab (Teman Sebaya)</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Upload File Audio dari Device */}
-              <div className="p-4 rounded-2xl bg-white border border-[#CFD8BE] space-y-3">
-                <AudioDropzone
-                  label="Upload Rekaman Suara Penutur Asli (.mp3 / .wav)"
-                  value={editingPhrase.audio_url}
-                  onChange={(audioDataUrl) =>
-                    setEditingPhrase({
-                      ...editingPhrase,
-                      audio_url: audioDataUrl,
-                    })
-                  }
-                  onClear={() =>
-                    setEditingPhrase({
-                      ...editingPhrase,
-                      audio_url: '',
-                    })
-                  }
-                  helperText="Pilih file audio penutur asli dari komputer. Jika dikosongkan, sistem otomatis menggunakan sintesis suara cerdas."
-                />
+              {/* SECTION TEXT-TO-SPEECH (TTS) */}
+              <div className="p-4 rounded-2xl bg-white border border-[#CFD8BE] space-y-3 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E4E9DA] pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center shrink-0">
+                      <Volume2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-extrabold text-[#234B24] uppercase tracking-wider">
+                        Sintesis Suara Text-To-Speech (TTS)
+                      </h4>
+                      <p className="text-[11px] text-[#4A5248]">
+                        Suara pelafalan dihasilkan otomatis dari skrip teks (Web Speech API). Tanpa perlu upload rekaman file audio.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const textToTest =
+                        editingPhrase.voice_text ||
+                        editingPhrase.phrase ||
+                        editingPhrase.minang_text;
+                      if (!textToTest || !textToTest.trim()) {
+                        showToast(
+                          'Ketik frasa atau teks suara terlebih dahulu untuk uji coba TTS.',
+                          'warning'
+                        );
+                        return;
+                      }
+                      if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(textToTest);
+                        utterance.lang = 'id-ID';
+                        utterance.rate = 0.9;
+                        utterance.pitch = 1.05;
+                        window.speechSynthesis.speak(utterance);
+                        showToast(`Memutar pelafalan TTS: "${textToTest}"`, 'info');
+                      } else {
+                        showToast(
+                          'Browser tidak mendukung Web Speech API.',
+                          'warning'
+                        );
+                      }
+                    }}
+                    className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs shrink-0 self-start sm:self-auto"
+                  >
+                    <Volume2 className="w-3.5 h-3.5 text-[#A7F3D0]" />
+                    <span>Uji Dengar Suara TTS</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-[#1B1F1A]">
+                    Teks Skrip Suara TTS (<code className="font-mono text-[#234B24]">voice_text</code>) *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Bara ko ciek, Da?"
+                    value={editingPhrase.voice_text || ''}
+                    onChange={(e) =>
+                      setEditingPhrase({
+                        ...editingPhrase,
+                        voice_text: e.target.value,
+                      })
+                    }
+                    className="min-h-[42px] px-3.5 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                  />
+                  <span className="text-[10px] text-[#4A5248]">
+                    Teks ini dilafalkan oleh mesin Text-to-Speech pada aplikasi wisatawan. Jika dikosongkan, otomatis menggunakan Frasa Bahasa Minang.
+                  </span>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-[#1B1F1A]">
-                  Catatan Konteks Budaya &amp; Etika Adat
+                  Catatan Konteks Budaya &amp; Etika Adat (<code className="font-mono text-[#234B24]">usage_context_tip</code>)
                 </label>
                 <textarea
                   rows={2}
                   placeholder="Contoh: Diucapkan saat tawar-menawar di pasar tradisional dengan intonasi ramah..."
-                  value={editingPhrase.notes || ''}
+                  value={editingPhrase.usage_context_tip || editingPhrase.notes || ''}
                   onChange={(e) =>
                     setEditingPhrase({
                       ...editingPhrase,
+                      usage_context_tip: e.target.value,
                       notes: e.target.value,
                     })
                   }
