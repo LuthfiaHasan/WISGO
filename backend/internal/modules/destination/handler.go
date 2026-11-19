@@ -170,7 +170,7 @@ func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-		if token != middleware.TokenTourist && token != middleware.TokenAdminDispar && token != middleware.TokenPokdarwis {
+		if token != middleware.TokenTourist && token != middleware.TokenAdminDispar && token != middleware.TokenPokdarwis && token != middleware.TokenVendor {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"status":  "error",
 				"code":    "UNAUTHORIZED_INVALID_TOKEN",

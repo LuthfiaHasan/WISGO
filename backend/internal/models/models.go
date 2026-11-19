@@ -6,12 +6,21 @@ import (
 
 // --- Domain Models BE-1: Core & Spasial (Pilar 1, 2, 3, 7) ---
 
+// Category tabel master kategori yang menyatukan seluruh category_id lintas modul (ERD Revisi #1)
+type Category struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 // Destination merepresentasikan destinasi wisata di Sumatera Barat
 // Dilengkapi 4 Statistik Keputusan di Depan (DistanceKm, TravelTimeMin, CrowdLevel, EstimatedCost)
 type Destination struct {
 	ID            string    `json:"id"`
 	Slug          string    `json:"slug,omitempty"`
 	Name          string    `json:"name"`
+	CategoryID    string    `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #2)
 	Category      string    `json:"category"`       // Alam, Budaya, Kuliner, Sejarah, Bahari, Geopark, Nagari
 	CityRegency   string    `json:"city_regency"`   // 19 Kab/Kota Sumbar
 	Description   string    `json:"description"`
@@ -38,7 +47,7 @@ type Destination struct {
 	MicroMap       *ScenicMicroMap  `json:"micro_map,omitempty"`
 }
 
-// MedanIndicator memuat 5 Indikator Medan Lapangan (Sprint 1)
+// MedanIndicator memuat 5 Indikator Medan Lapangan (ERD Revisi #3: indikator_medan)
 type MedanIndicator struct {
 	ID             string `json:"id"`
 	DestinationID  string `json:"destination_id"`
@@ -47,24 +56,33 @@ type MedanIndicator struct {
 	CellularSignal string `json:"cellular_signal"` // 4G Kuat, Sinyal Lemah, Blank Spot
 	Facilities     string `json:"facilities"`      // Toilet & Musala Lengkap, Terbatas, Belum Ada
 	GuideNeed      string `json:"guide_need"`       // Wajib Pemandu, Disarankan, Mandiri
-	PokdarwisName  string `json:"pokdarwis_name,omitempty"`
+	PokdarwisName  string `json:"pokdarwis_name,omitempty"` // Opsional / Dihapus di skema baru
 }
 
-// LocalTip tips etika menjaga alam & kelestarian (Sprint 1)
+// IndikatorMedan alias nama tabel ERD Revisi #3
+type IndikatorMedan = MedanIndicator
+
+// LocalTip aturan, larangan adat & tips menjaga tempat (ERD Revisi #4: aturan_destinasi)
 type LocalTip struct {
 	ID            string `json:"id"`
 	DestinationID string `json:"destination_id"`
+	CategoryID    string `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #4)
 	Title         string `json:"title,omitempty"`
-	Category      string `json:"category,omitempty"` // kelestarian_alam, etika_adat, keselamatan_medan
-	Content       string `json:"content"`
+	Category      string `json:"category,omitempty"`    // kelestarian_alam, etika_adat, keselamatan_medan
+	Aturan        string `json:"aturan,omitempty"`      // Kolom 'aturan' di tabel aturan_destinasi
+	Content       string `json:"content"`               // Kompatibel dengan frontend JSON
 	IsImportant   bool   `json:"is_important"`
 }
 
-// OfficialTariff tabel Fair-Price Barometer (Perda / Nagari - Sprint 1)
+// AturanDestinasi alias nama tabel ERD Revisi #4
+type AturanDestinasi = LocalTip
+
+// OfficialTariff tabel Fair-Price Barometer (ERD Revisi #5: official_tariffs)
 type OfficialTariff struct {
 	ID            string  `json:"id"`
 	DestinationID string  `json:"destination_id"`
-	ItemName      string  `json:"item_name"`      // Tiket Masuk, Parkir Motor, Parkir Mobil, Sewa Bendi
+	CategoryID    string  `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #5)
+	ItemName      string  `json:"item_name"`             // Tiket Masuk, Parkir Motor, Parkir Mobil, Sewa Bendi
 	Category      string  `json:"category,omitempty"`
 	Price         float64 `json:"price"`
 	Unit          string  `json:"unit"`           // per orang, per kendaraan, per jam
@@ -73,7 +91,7 @@ type OfficialTariff struct {
 
 // --- Domain Models BE-1: Sprint 2 (Hari 6â€“10: 360Â° 4-Pin, Shunlu, Peta Mikro, Lapor Pungli) ---
 
-// Scene360 representasi scene tur imersif aerial (drone 100-200m) & ground (spot utama)
+// Scene360 representasi scene tur imersif aerial (drone 100-200m) & ground (spot utama) (ERD Revisi #6: panorama_scenes)
 type Scene360 struct {
 	ID              string       `json:"id"`
 	DestinationID   string       `json:"destination_id"`
@@ -88,26 +106,46 @@ type Scene360 struct {
 	Hotspots        []Hotspot360 `json:"hotspots,omitempty"`
 }
 
-// Hotspot360 pin interaktif 4 jenis terstandarisasi pada kanvas 360Â°
+// PanoramaScene alias nama tabel ERD Revisi #6
+type PanoramaScene = Scene360
+
+// Hotspot360 pin interaktif 4 jenis terstandarisasi pada kanvas 360° (ERD Revisi #7: panorama_hotspots)
 type Hotspot360 struct {
 	ID          string  `json:"id"`
 	SceneID     string  `json:"scene_id"`
 	Type        string  `json:"type"`  // navigasi (biru), audio (emas), fasilitas (hijau), mitra (oranye)
+	ColorRadar  string  `json:"color_radar,omitempty"` // Kolom color_radar (ERD Revisi #7)
 	ColorToken  string  `json:"color_token,omitempty"`
 	Pitch       float64 `json:"pitch"` // -90.0 s/d +90.0 derajat
 	Yaw         float64 `json:"yaw"`   // 0.0 s/d 360.0 derajat
 	Title       string  `json:"title"`
 	TargetRef   string  `json:"target_ref,omitempty"` // ID Scene tujuan (dive-in) atau ID Mitra Nagari (Quick Booking)
-	AudioURL    string  `json:"audio_url,omitempty"`
+	VoiceText   string  `json:"voice_text,omitempty"` // Kolom voice_text (revisi dari audio_url)
+	AudioURL    string  `json:"audio_url,omitempty"`  // Kompatibel dengan frontend JSON
 	Description string  `json:"description,omitempty"`
 }
 
-// ShunluPOI titik singgah searah rute aktif (Along-the-Route Search "Shunlu" +X mnt detour)
+// PanoramaHotspot alias nama tabel ERD Revisi #7
+type PanoramaHotspot = Hotspot360
+
+// OfflineBundle paket JSON + tiles terkompresi untuk mode offline (ERD Revisi #8: offline_bundles)
+type OfflineBundle struct {
+	ID                 string    `json:"id"`
+	DestinationID      string    `json:"destination_id"`
+	BundleVersion      string    `json:"bundle_version"`
+	BundleSizeMB       float64   `json:"bundle_size_mb"`
+	MapTilesURL        string    `json:"map_tiles_url"`
+	CompressedPackage  string    `json:"compressed_package,omitempty"`
+	CreatedAt          time.Time `json:"created_at"`
+}
+
+// ShunluPOI titik singgah searah rute aktif (ERD Revisi #11: visit_point)
 type ShunluPOI struct {
 	ID                  string  `json:"id"`
 	Name                string  `json:"name"`
-	Category            string  `json:"category"`      // rm_padang, spbu, masjid_bersih, atm, bengkel
-	CorridorRoad        string  `json:"corridor_road"` // Lintas Padang-Bukittinggi, Lintas Bukittinggi-Harau, dll.
+	CategoryID          string  `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #11)
+	Category            string  `json:"category"`              // rm_padang, spbu, masjid_bersih, atm, bengkel
+	CorridorRoad        string  `json:"corridor_road"`         // Lintas Padang-Bukittinggi, Lintas Bukittinggi-Harau, dll.
 	CityRegency         string  `json:"city_regency"`
 	Latitude            float64 `json:"latitude"`
 	Longitude           float64 `json:"longitude"`
@@ -117,6 +155,9 @@ type ShunluPOI struct {
 	OpeningHours        string  `json:"opening_hours"`
 	IsRecommended       bool    `json:"is_recommended"`
 }
+
+// VisitPoint alias nama tabel ERD Revisi #11
+type VisitPoint = ShunluPOI
 
 // ScenicMicroMap peta mikro internal kawasan wisata luas + titik pemicu Audio GPS <=15m
 type ScenicMicroMap struct {
@@ -178,18 +219,22 @@ type PungliReport struct {
 
 // --- Domain Models BE-1: Sprint 3 (Hari 11â€“15: Gaode Ranking, Hazard Alert, SOS GPS, Kamus Minang & Kalender Budaya) ---
 
-// GaodeBehaviorRanking menyimpan metrik telemetri perilaku nyata anti-bintang palsu (Pilar 2 â€” P2.4)
+// GaodeBehaviorRanking menyimpan metrik telemetri perilaku nyata anti-bintang palsu (ERD Revisi #10: gaode_behavior_rankings)
 type GaodeBehaviorRanking struct {
 	ID                     string    `json:"id"`
 	DestinationID          string    `json:"destination_id"`
 	DestinationName        string    `json:"destination_name"`
-	Category               string    `json:"category"` // Hidden Gem, Kuliner Legendaris, Alam & Geopark, Budaya & Nagari
+	CategoryID             string    `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #10)
+	Category               string    `json:"category"`              // Hidden Gem, Kuliner Legendaris, Alam & Geopark, Budaya & Nagari
 	CityRegency            string    `json:"city_regency"`
 	RankPosition           int       `json:"rank_position"`
 	GaodeAuthenticityScore float64   `json:"gaode_authenticity_score"` // Skor 0 - 100 hasil kalkulasi telemetri GPS
+	GaodeScore             float64   `json:"gaode_score,omitempty"`    // Alias di ERD
 	ActiveNavCount30d      int       `json:"active_nav_count_30d"`     // Jumlah navigasi diselesaikan dalam 30 hari terakhir
+	ActualDwellTimeMin     int       `json:"actual_dwell_time_min,omitempty"`
 	AvgDwellTimeMin        int       `json:"avg_dwell_time_min"`       // Rata-rata waktu singgah nyata GPS (menit)
 	ReturnVisitRatePct     float64   `json:"return_visit_rate_pct"`    // Persentase kunjungan berulang wisatawan
+	ReturnVisitorRate      float64   `json:"return_visitor_rate,omitempty"`
 	AntiFakeReviewVerified bool      `json:"anti_fake_review_verified"`
 	TrendingBadge          string    `json:"trending_badge"`
 	UpdatedAt              time.Time `json:"updated_at"`
@@ -238,33 +283,70 @@ type SOSSignal struct {
 	CreatedAt           time.Time `json:"created_at"`
 }
 
-// MinangPhrase entri Kamus Saku Audio Bahasa Minang sehari-hari (Pilar 1 â€” P1.4)
+// MinangPhrase entri Kamus Saku Audio Bahasa Minang sehari-hari (ERD Revisi #14: minang_phrases)
 type MinangPhrase struct {
 	ID                string `json:"id"`
-	Category          string `json:"category"` // sapaan_adat, tawar_pasar, kuliner_rm, navigasi_darurat
+	CategoryID        string `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #14)
+	Category          string `json:"category"`              // sapaan_adat, tawar_pasar, kuliner_rm, navigasi_darurat
+	MinangPhraseText  string `json:"minang_phrase,omitempty"`
+	IndonesianMeaning string `json:"indonesian_meaning,omitempty"`
 	IndonesianText    string `json:"indonesian_text"`
 	MinangText        string `json:"minang_text"`
 	PhoneticGuide     string `json:"phonetic_guide"`
-	AudioURL          string `json:"audio_url"`
-	DialectNote       string `json:"dialect_note"` // Dialek Padang / Bukittinggi (Darek) / Pesisir
+	VoiceText         string `json:"voice_text,omitempty"` // Kolom voice_text (revisi audio_url)
+	AudioURL          string `json:"audio_url"`            // Kompatibel dengan frontend JSON
+	DialectNote       string `json:"dialect_note"`         // Dialek Padang / Bukittinggi (Darek) / Pesisir
 	UsageContextTip   string `json:"usage_context_tip"`
-	PolitenessLevel   string `json:"politeness_level"` // Kato Nan Ampek: Kato Mandaki, Katoiti, Kato Manurun, KatoMalereang
+	ContextUsage      string `json:"context_usage,omitempty"`
+	PolitenessLevel   string `json:"politeness_level"` // Kato Nan Ampek
+	KatoType          string `json:"kato_type,omitempty"`
+	CulturalEtiquette string `json:"cultural_etiquette,omitempty"`
 }
 
-// CulturalEvent agenda Kalender Budaya & Hari Pakan (Pasar Tradisional Nagari) Sumatera Barat (Pilar 1 â€” P1.4)
+// CulturalEvent agenda Kalender Budaya & Hari Pakan Sumatera Barat (ERD Revisi #15: cultural_events)
 type CulturalEvent struct {
-	ID              string  `json:"id"`
-	Title           string  `json:"title"`
-	EventType       string  `json:"event_type"` // Hari Pakan Nagari, Festival Budaya, Tradisi Adat
-	NagariLocation  string  `json:"nagari_location"`
-	CityRegency     string  `json:"city_regency"`
-	ScheduleRule    string  `json:"schedule_rule"` // Contoh: Setiap Hari Sabtu (Pakan Sabtu), Setiap Hari Rabu (Pakan Rabaa), Tahunan
-	NextEventDate   string  `json:"next_event_date"`
-	Latitude        float64 `json:"latitude"`
-	Longitude       float64 `json:"longitude"`
-	DistanceKm      float64 `json:"distance_km,omitempty"`
-	HighlightItem   string  `json:"highlight_item"`
-	CulturalEtiquette string `json:"cultural_etiquette"`
+	ID                string  `json:"id"`
+	UserID            string  `json:"user_id,omitempty"` // Penginput event oleh vendor/admin (ERD Revisi #15)
+	Title             string  `json:"title"`
+	EventName         string  `json:"event_name,omitempty"`
+	EventType         string  `json:"event_type"` // Hari Pakan Nagari, Festival Budaya, Tradisi Adat
+	NagariLocation    string  `json:"nagari_location"`
+	EventLocation     string  `json:"event_location,omitempty"`
+	CityRegency       string  `json:"city_regency"`
+	ScheduleRule      string  `json:"schedule_rule"` // Contoh: Setiap Hari Sabtu (Pakan Sabtu), Tahunan
+	NextEventDate     string  `json:"next_event_date"`
+	Latitude          float64 `json:"latitude"`
+	Longitude         float64 `json:"longitude"`
+	DistanceKm        float64 `json:"distance_km,omitempty"`
+	HighlightItem     string  `json:"highlight_item"`
+	Significance      string  `json:"significance,omitempty"`
+	CulturalEtiquette string  `json:"cultural_etiquette"`
+}
+
+// EmergencyContact master kontak darurat & pos SAR koridor ekstrem (ERD Tambahan Sistem)
+type EmergencyContact struct {
+	ID               string  `json:"id"`
+	CorridorCode     string  `json:"corridor_code"` // SITINJAU-LAUIK, LEMBAH-ANAI, KELOK-9, KELOK-44
+	AgencyType       string  `json:"agency_type"`   // BPBD, Basarnas, Kepolisian, PMI
+	AgencyName       string  `json:"agency_name"`
+	PhoneNumber      string  `json:"phone_number"`
+	WhatsAppNumber   string  `json:"whatsapp_number,omitempty"`
+	Latitude         float64 `json:"latitude,omitempty"`
+	Longitude        float64 `json:"longitude,omitempty"`
+	City             string  `json:"city"`
+	CreatedByAdminID string  `json:"created_by_admin_id,omitempty"`
+	IsActive         bool    `json:"is_active"`
+}
+
+// ApiTelemetryLog log kecepatan dan SLA performa API <100ms (ERD Tambahan Sistem)
+type ApiTelemetryLog struct {
+	ID           string    `json:"id"`
+	EndpointPath string    `json:"endpoint_path"`
+	HTTPMethod   string    `json:"http_method"`
+	LatencyMS    float64   `json:"latency_ms"`
+	StatusCode   int       `json:"status_code"`
+	CacheHit     bool      `json:"cache_hit"`
+	RecordedAt   time.Time `json:"recorded_at"`
 }
 
 // --- Domain Models BE-2: Grup, Mitra, Escrow & Komunitas (Pilar 4, 5, 6, 8) ---

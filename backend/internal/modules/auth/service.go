@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
@@ -12,7 +13,7 @@ import (
 // Service antarmuka logika bisnis murni untuk Autentikasi & Profil (tanpa Gin Context)
 type Service interface {
 	RequestOTP(phone string) (string, error)
-	VerifyOTP(phone, code string) (*models.User, string, error)
+	VerifyOTP(phone, code string, loginChoice ...string) (*models.User, string, error)
 	GetSavedPlaces(userID string) ([]models.SavedPlace, error)
 	ToggleSavedPlace(userID, destinationID string) (*ToggleSavedResponse, error)
 }
@@ -46,7 +47,7 @@ func (s *authService) RequestOTP(phone string) (string, error) {
 	return otpCode, nil
 }
 
-func (s *authService) VerifyOTP(phone, code string) (*models.User, string, error) {
+func (s *authService) VerifyOTP(phone, code string, loginChoice ...string) (*models.User, string, error) {
 	if phone == "" || code == "" {
 		return nil, "", errors.New("Nomor handphone dan kode OTP wajib diisi")
 	}
@@ -58,24 +59,43 @@ func (s *authService) VerifyOTP(phone, code string) (*models.User, string, error
 		return nil, "", errors.New("Kode OTP salah atau telah kadaluarsa")
 	}
 
+	choice := "wisata"
+	if len(loginChoice) > 0 && strings.TrimSpace(loginChoice[0]) != "" {
+		choice = strings.ToLower(strings.TrimSpace(loginChoice[0]))
+	}
+
+	role := "tourist"
+	fullName := "Wisatawan Ranah Minang"
+	if choice == "event" || choice == "vendor" {
+		role = "vendor"
+		fullName = "Vendor Event Ranah Minang"
+	}
+
 	// Cari atau buat pengguna baru otomatis jika belum terdaftar
 	user, userExists := s.repo.FindUserByPhone(phone)
 	if !userExists {
 		newUser := models.User{
 			ID:          fmt.Sprintf("usr-%d", time.Now().UnixNano()%100000),
 			PhoneNumber: phone,
-			FullName:    "Wisatawan Ranah Minang",
-			Role:        "tourist",
+			FullName:    fullName,
+			Role:        role,
 			CreatedAt:   time.Now(),
 		}
 		if err := s.repo.CreateUser(newUser); err != nil {
 			return nil, "", err
 		}
 		user = &newUser
+	} else if choice == "event" || choice == "vendor" {
+		user.Role = role
 	}
 
 	// Generate simulasi JWT Token
-	token := fmt.Sprintf("jwt-wisgo-%s-%d", user.ID, time.Now().Unix())
+	var token string
+	if user.Role == "vendor" {
+		token = fmt.Sprintf("jwt-wisgo-vendor-%s-%d", user.ID, time.Now().Unix())
+	} else {
+		token = fmt.Sprintf("jwt-wisgo-%s-%d", user.ID, time.Now().Unix())
+	}
 
 	return user, token, nil
 }

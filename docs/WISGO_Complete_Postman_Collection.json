@@ -2,12 +2,12 @@
   "info": {
     "_postman_id": "wisgo-master-api-collection",
     "description": "Koleksi lengkap seluruh 48+ endpoint WISGO (Rancak.in): BE-1 (Core, 360, Spasial, Shunlu, Pungli, Gaode, Budaya, Benchmark) dan BE-2 (Auth OTP, Itinerary, Group Room, Mitra Nagari, Escrow, Bot WA 1/0, Paspor Digital, Analitik Dispar).",
-    "name": "WISGO (Rancak.in) - Master API Collection (BE-1 \u0026 BE-2)",
+    "name": "WISGO (Rancak.in) - Master API Collection (BE-1 & BE-2)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "00. Infrastruktur \u0026 Health Check",
+      "name": "00. Infrastruktur & Health Check",
       "item": [
         {
           "name": "Health Check Server",
@@ -28,7 +28,7 @@
       ]
     },
     {
-      "name": "01. [BE-2] Autentikasi \u0026 Profil Pengguna",
+      "name": "01. [BE-2] Autentikasi & Profil Pengguna",
       "item": [
         {
           "name": "Kirim Kode OTP 4 Digit",
@@ -59,7 +59,7 @@
           }
         },
         {
-          "name": "Verifikasi Kode OTP \u0026 Cetak JWT",
+          "name": "Verifikasi Kode OTP & Cetak JWT",
           "request": {
             "method": "POST",
             "header": [
@@ -161,11 +161,67 @@
               ]
             }
           }
+        },
+        {
+          "name": "Verifikasi OTP - Pilihan Login: Input Wisata (Aktor Wisatawan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"6281234567890\",\n  \"otp_code\": \"1234\",\n  \"login_choice\": \"wisata\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verifikasi OTP - Pilihan Login: Input Event (Aktor Vendor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"6281299998888\",\n  \"otp_code\": \"1234\",\n  \"login_choice\": \"event\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "02. [BE-2] Itinerary Cerdas \u0026 Auto Generate",
+      "name": "02. [BE-2] Itinerary Cerdas & Auto Generate",
       "item": [
         {
           "name": "Auto Generate Itinerary Pintar",
@@ -243,7 +299,7 @@
       ]
     },
     {
-      "name": "03. [BE-2] Private Group Room \u0026 Rombongan",
+      "name": "03. [BE-2] Private Group Room & Rombongan",
       "item": [
         {
           "name": "Buat Group Room Baru",
@@ -273,7 +329,7 @@
           }
         },
         {
-          "name": "Detail Group Room \u0026 Anggota",
+          "name": "Detail Group Room & Anggota",
           "request": {
             "method": "GET",
             "header": null,
@@ -450,7 +506,7 @@
       ]
     },
     {
-      "name": "04. [BE-2] Mitra Nagari, Quick Booking \u0026 Escrow",
+      "name": "04. [BE-2] Mitra Nagari, Quick Booking & Escrow",
       "item": [
         {
           "name": "Katalog Mitra Nagari Minang (+ Level Pedas)",
@@ -458,7 +514,7 @@
             "method": "GET",
             "header": null,
             "url": {
-              "raw": "{{baseUrl}}/api/v1/partners?category=kuliner\u0026spicy_level=5",
+              "raw": "{{baseUrl}}/api/v1/partners?category=kuliner&spicy_level=5",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -616,10 +672,10 @@
       ]
     },
     {
-      "name": "05. [BE-2] Komunitas, Hidden Gem \u0026 Cari Barengan",
+      "name": "05. [BE-2] Komunitas, Hidden Gem & Cari Barengan",
       "item": [
         {
-          "name": "Ajukan Tempat Baru (Wajib Tips \u0026 Masking GPS)",
+          "name": "Ajukan Tempat Baru (Wajib Tips & Masking GPS)",
           "request": {
             "method": "POST",
             "header": [
@@ -715,10 +771,10 @@
       ]
     },
     {
-      "name": "06. [BE-2] Gamifikasi, Paspor Minang \u0026 Analitik Dispar",
+      "name": "06. [BE-2] Gamifikasi, Paspor Minang & Analitik Dispar",
       "item": [
         {
-          "name": "Check-in GPS Validasi Anti-Fake GPS (\u003c=200m)",
+          "name": "Check-in GPS Validasi Anti-Fake GPS (<=200m)",
           "request": {
             "method": "POST",
             "header": [
@@ -815,7 +871,7 @@
       ]
     },
     {
-      "name": "07. [BE-1] Destinasi, Tarif Perda \u0026 Offline Bundle",
+      "name": "07. [BE-1] Destinasi, Tarif Perda & Offline Bundle",
       "item": [
         {
           "name": "Direktori 20 Destinasi (+ Spasial Kelokan 1.32x)",
@@ -823,7 +879,7 @@
             "method": "GET",
             "header": null,
             "url": {
-              "raw": "{{baseUrl}}/api/v1/destinations?category=alam\u0026lat=-0.9471\u0026lng=100.4172",
+              "raw": "{{baseUrl}}/api/v1/destinations?category=alam&lat=-0.9471&lng=100.4172",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -836,7 +892,7 @@
           }
         },
         {
-          "name": "Detail Destinasi Lengkap (4 Statistik \u0026 5 Medan)",
+          "name": "Detail Destinasi Lengkap (4 Statistik & 5 Medan)",
           "request": {
             "method": "GET",
             "header": null,
@@ -941,7 +997,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Lembah Harau \u0026 Geopark Tebing Granit\"\n}"
+              "raw": "{\n  \"name\": \"Lembah Harau & Geopark Tebing Granit\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/destinations/dest-001",
@@ -956,14 +1012,80 @@
               ]
             }
           }
+        },
+        {
+          "name": "Wisatawan: Ajukan Destinasi Wisata Hidden Gem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenTourist}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Air Terjun Sarasah Barasok\",\n  \"category\": \"Hidden Gem\",\n  \"city_regency\": \"Kab. Lima Puluh Kota\",\n  \"description\": \"Air terjun alami tersembunyi dengan formasi tebing karst megah.\",\n  \"latitude\": -0.1582,\n  \"longitude\": 100.6723,\n  \"ticket_price\": 10000,\n  \"road_condition\": \"Jalan Tanah & Setapak\",\n  \"vehicle_accessibility\": \"Hanya Motor / Trail\",\n  \"cellular_signal\": \"Edge / SOS Sinyal Hilang\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/hidden-gem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "hidden-gem"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: Verifikasi / Setujui Destinasi Hidden Gem",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/destinations/dest-021/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "destinations",
+                "dest-021",
+                "verify"
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "08. [BE-1] Kanvas Tur 360 \u0026 CMS Studio 4-Pin",
+      "name": "08. [BE-1] Kanvas Tur 360 & CMS Studio 4-Pin",
       "item": [
         {
-          "name": "Ambil Scene 360 Aerial-to-Ground \u0026 Pin",
+          "name": "Ambil Scene 360 Aerial-to-Ground & Pin",
           "request": {
             "method": "GET",
             "header": null,
@@ -1069,7 +1191,7 @@
       ]
     },
     {
-      "name": "09. [BE-1] Spasial, Shunlu, Hazard \u0026 SOS",
+      "name": "09. [BE-1] Spasial, Shunlu, Hazard & SOS",
       "item": [
         {
           "name": "Pencarian Koridor Searah Rute (Shunlu Detour)",
@@ -1120,7 +1242,7 @@
           }
         },
         {
-          "name": "Pemicu Audio Narasi GPS (\u003c=15 Meter)",
+          "name": "Pemicu Audio Narasi GPS (<=15 Meter)",
           "request": {
             "method": "POST",
             "header": [
@@ -1200,7 +1322,7 @@
             "method": "GET",
             "header": null,
             "url": {
-              "raw": "{{baseUrl}}/api/v1/spatial/nearby?lat=-0.9471\u0026lng=100.4172\u0026radius=30",
+              "raw": "{{baseUrl}}/api/v1/spatial/nearby?lat=-0.9471&lng=100.4172&radius=30",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1272,7 +1394,7 @@
       ]
     },
     {
-      "name": "10. [BE-1] Smart QR Plang \u0026 Lapor Pungli",
+      "name": "10. [BE-1] Smart QR Plang & Lapor Pungli",
       "item": [
         {
           "name": "Scan Resolusi Plang Smart QR Fisik",
@@ -1382,7 +1504,7 @@
       ]
     },
     {
-      "name": "11. [BE-1] Budaya Minang \u0026 Gaode Ranking",
+      "name": "11. [BE-1] Budaya Minang & Gaode Ranking",
       "item": [
         {
           "name": "Leaderboard Gaode Behavior-Based Ranking",
@@ -1423,7 +1545,7 @@
           }
         },
         {
-          "name": "Kalender Acara Tradisi \u0026 Hari Pakan Nagari",
+          "name": "Kalender Acara Tradisi & Hari Pakan Nagari",
           "request": {
             "method": "GET",
             "header": null,
@@ -1440,11 +1562,136 @@
               ]
             }
           }
+        },
+        {
+          "name": "Vendor: Input Event Budaya / Hari Pakan Nagari",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenVendor}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Festival Tabuik Pariaman 2026\",\n  \"event_type\": \"Festival Budaya\",\n  \"nagari_location\": \"Pantai Gandoriah\",\n  \"city_regency\": \"Kota Pariaman\",\n  \"schedule_rule\": \"Setiap 10 Muharram (Puncak Hoyak Tabuik)\",\n  \"next_event_date\": \"2026-07-25\",\n  \"latitude\": -0.6264,\n  \"longitude\": 100.119,\n  \"highlight_item\": \"Prosesi Hoyak Tabuik setinggi 12 meter dibuang ke laut saat matahari terbenam.\",\n  \"cultural_etiquette\": \"Hormati jalannya prosesi arak-arakan dan jaga kebersihan pantai.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/culture/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "culture",
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: CRUD Event (Create Event Budaya Resmi)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Pacu Terbang Itik Payakumbuh\",\n  \"event_type\": \"Tradisi Adat\",\n  \"nagari_location\": \"Gelanggang Aur Kuning\",\n  \"city_regency\": \"Kota Payakumbuh\",\n  \"schedule_rule\": \"Setiap Minggu Ke-2 & Ke-4\",\n  \"next_event_date\": \"2026-12-10\",\n  \"latitude\": -0.2248,\n  \"longitude\": 100.63,\n  \"highlight_item\": \"Perlombaan itik terbang melintasi jarak 800 meter hingga 1 km.\",\n  \"cultural_etiquette\": \"Tidak bersorak saat itik dilepaskan agar fokus terbang lurus.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/culture/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "culture",
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: CRUD Event (Update Event Budaya)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Pacu Terbang Itik Payakumbuh Grand Prix\",\n  \"schedule_rule\": \"Final Tahunan Setiap Akhir Tahun\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/culture/events/cult-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "culture",
+                "events",
+                "cult-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: CRUD Event (Delete Event Budaya)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/culture/events/cult-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "culture",
+                "events",
+                "cult-001"
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "12. [BE-1] System Core, Benchmark \u0026 Cache",
+      "name": "12. [BE-1] System Core, Benchmark & Cache",
       "item": [
         {
           "name": "Katalog Kontrak 24 Endpoint BE-1",
@@ -1466,7 +1713,7 @@
           }
         },
         {
-          "name": "Live Benchmark Latensi SLA \u003c100ms",
+          "name": "Live Benchmark Latensi SLA <100ms",
           "request": {
             "method": "GET",
             "header": [
@@ -1538,6 +1785,11 @@
       "key": "tokenTourist",
       "type": "string",
       "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXRvdXJpc3QtMDEiLCJuYW1lIjoiUml6a3kgUHJhdGFtYSAoV2lzYXRhd2FuKSIsInJvbGUiOiJ0b3VyaXN0In0.rancakin_sig_tourist"
+    },
+    {
+      "key": "tokenVendor",
+      "type": "string",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXZlbmRvci0wMSIsIm5hbWUiOiJTYW5nZ2FyIEJ1ZGF5YSBNaW5hbmcgKFZlbmRvcikiLCJyb2xlIjoidmVuZG9yIn0.rancakin_sig_vendor"
     }
   ]
 }
