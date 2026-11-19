@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../saved/presentation/screens/saved_places_screen.dart';
 import '../widgets/animated_3d_route_scene.dart';
 import 'login_screen.dart';
 
@@ -14,6 +15,18 @@ class LocationOnboardingScreen extends StatefulWidget {
 class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
   bool _isLockingGps = false;
   double _spinBoost = 0.0;
+
+  void _skipToHome() {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (_, __, ___) => const SavedPlacesScreen(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
 
   void _skipToLogin() {
     Navigator.of(context).pushReplacement(
@@ -85,7 +98,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: _skipToLogin,
+                          onPressed: _skipToHome,
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -223,7 +236,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                         ),
                         const SizedBox(height: 8),
                         TextButton(
-                          onPressed: _skipToLogin,
+                          onPressed: _skipToHome,
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),

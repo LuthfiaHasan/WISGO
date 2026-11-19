@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
-import '../../../fe1_visual_map/fe1_main_shell.dart';
+import '../../../saved/presentation/screens/saved_places_screen.dart';
 import 'location_onboarding_screen.dart';
 import 'otp_verification_screen.dart';
 
@@ -363,7 +363,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: () {
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(
-                                  builder: (_) => const Fe1MainShell(),
+                                  builder: (_) => const SavedPlacesScreen(),
                                 ),
                                 (route) => false,
                               );
