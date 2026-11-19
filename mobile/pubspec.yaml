@@ -20,10 +20,12 @@ dependencies:
   # Konektivitas REST API BE-1
   http: ^1.2.0
 
-  # Peta & Tur Virtual 360° (FE-1)
+  # Peta, Tur Virtual 360° & Audio Kamus Minang (FE-1)
   panorama_viewer: ^2.0.7
   flutter_map: ^8.3.2
   latlong2: ^0.10.1
+  audioplayers: ^6.1.0
+  flutter_tts: ^4.2.2
 
 dev_dependencies:
   flutter_test:
@@ -36,3 +38,4 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/audio/

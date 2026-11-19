@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:panorama_viewer/panorama_viewer.dart';
+import '../../../../core/localization/app_locale.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
@@ -18,6 +19,7 @@ import '../../../fe1_visual_map/hazard_alert_sos/hazard_sos_screen.dart';
 import '../../../fe1_visual_map/map_explore_shunlu/map_explore_screen.dart';
 import '../../../fe1_visual_map/map_explore_shunlu/widgets/sumbar_real_map_widget.dart';
 import '../../../fe1_visual_map/models/destination_model.dart';
+import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_gallery_screen.dart';
 import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
 import '../../../booking/presentation/widgets/quick_booking_panel.dart';
 import '../../../group_room/presentation/widgets/live_group_tracking_sheet.dart';
@@ -135,26 +137,31 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   static const List<Map<String, dynamic>> _navItems = [
     {
       'label': 'Beranda',
+      'labelEn': 'Home',
       'icon': Icons.home_outlined,
       'activeIcon': Icons.home_rounded,
     },
     {
       'label': 'Open Trip',
+      'labelEn': 'Open Trip',
       'icon': Icons.groups_outlined,
       'activeIcon': Icons.groups_rounded,
     },
     {
       'label': 'Peta',
+      'labelEn': 'Map',
       'icon': Icons.map_outlined,
       'activeIcon': Icons.map_rounded,
     },
     {
       'label': 'Kamus Minang',
+      'labelEn': 'Dictionary',
       'icon': Icons.translate_rounded,
       'activeIcon': Icons.translate_rounded,
     },
     {
       'label': 'Profil',
+      'labelEn': 'Profile',
       'icon': Icons.account_circle_outlined,
       'activeIcon': Icons.account_circle_rounded,
     },
@@ -238,9 +245,32 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
 
 
+  // Profile Editable State (nullable agar aman saat Hot Reload)
+  String? _profileName = 'Ahmad Fauzi';
+  String? _profilePhone = '+62 812-7578-953';
+  String? _profileRole = 'Wisatawan Nusantara';
+  String? _profileOrigin = 'Padang, Sumatera Barat';
+
+  String get _safeProfileName =>
+      (_profileName?.trim().isNotEmpty ?? false) ? _profileName!.trim() : 'Ahmad Fauzi';
+  String get _safeProfilePhone =>
+      (_profilePhone?.trim().isNotEmpty ?? false) ? _profilePhone!.trim() : '+62 812-7578-953';
+  String get _safeProfileRole =>
+      (_profileRole?.trim().isNotEmpty ?? false) ? _profileRole!.trim() : 'Wisatawan Nusantara';
+  String get _safeProfileOrigin =>
+      (_profileOrigin?.trim().isNotEmpty ?? false) ? _profileOrigin!.trim() : 'Padang, Sumatera Barat';
+
+  String get _safeProfileInitials {
+    final parts = _safeProfileName.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    if (parts.isEmpty) return 'AF';
+    if (parts.length == 1) return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1).toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
   // Hero Landmark Slider & Explore Scroll State (nullable & lazy-init agar aman saat Hot Reload)
   PageController? _heroPageController;
   ScrollController? _exploreScrollController;
+  GlobalKey? _wisataSectionKey;
   int? _heroSliderIndex = 0;
   Timer? _heroSliderTimer;
 
@@ -249,6 +279,36 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   ScrollController get _safeExploreScrollController =>
       _exploreScrollController ??= ScrollController();
+
+  GlobalKey get _safeWisataSectionKey => _wisataSectionKey ??= GlobalKey();
+
+  void _scrollToWisataSection() {
+    setState(() {
+      _activeTabIndex = 0;
+      _currentExploreRegion = 'ALL';
+      _currentExploreType = 'ALL';
+      _searchQuery = '';
+      _searchController.clear();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final targetCtx = _safeWisataSectionKey.currentContext;
+      if (targetCtx != null) {
+        Scrollable.ensureVisible(
+          targetCtx,
+          duration: const Duration(milliseconds: 480),
+          curve: Curves.easeOutCubic,
+          alignment: 0.02,
+        );
+      } else if (_safeExploreScrollController.hasClients) {
+        _safeExploreScrollController.animateTo(
+          520,
+          duration: const Duration(milliseconds: 480),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
 
   List<SavedDestinationModel> get _heroLandmarks {
     const heroIds = [
@@ -380,36 +440,41 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.cream,
-      extendBody: true,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // Global Static Offline Notification Banner (Item 6)
-            if (_isOfflineMode)
-              OfflineBanner(
-                onRetry: () => setState(() => _isOfflineMode = false),
-              ),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocale.notifier,
+      builder: (context, _, __) {
+        return Scaffold(
+          backgroundColor: AppColors.cream,
+          extendBody: true,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // Global Static Offline Notification Banner (Item 6)
+                if (_isOfflineMode)
+                  OfflineBanner(
+                    onRetry: () => setState(() => _isOfflineMode = false),
+                  ),
 
-            // Active Main View (5 Tabs: Beranda, Open Trip, Peta, Kamus Minang, Profil)
-            Expanded(
-              child: IndexedStack(
-                index: _activeTabIndex.clamp(0, _navItems.length - 1),
-                children: [
-                  _buildExploreView(),
-                  _buildOpenTripView(),
-                  _buildPetaView(),
-                  const AudioCultureScreen(embedded: true),
-                  _buildProfileView(),
-                ],
-              ),
+                // Active Main View (5 Tabs: Beranda, Open Trip, Peta, Kamus Minang, Profil)
+                Expanded(
+                  child: IndexedStack(
+                    index: _activeTabIndex.clamp(0, _navItems.length - 1),
+                    children: [
+                      _buildExploreView(),
+                      _buildOpenTripView(),
+                      _buildPetaView(),
+                      const AudioCultureScreen(embedded: true),
+                      _buildProfileView(),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildClean4ButtonBottomNavigationBar(),
+          ),
+          bottomNavigationBar: _buildClean4ButtonBottomNavigationBar(),
+        );
+      },
     );
   }
 
@@ -419,11 +484,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   String get _activeSortLabel {
     switch (_sortMode) {
       case 'distance':
-        return 'Terdekat';
+        return AppLocale.tr('Terdekat', 'Nearest');
       case 'rating':
         return 'Top ★';
       default:
-        return 'Urutkan';
+        return AppLocale.tr('Urutkan', 'Sort');
     }
   }
 
@@ -468,9 +533,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
-                'Urutkan Destinasi',
-                style: TextStyle(
+              Text(
+                AppLocale.tr('Urutkan Destinasi', 'Sort Destinations'),
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: AppColors.ink,
@@ -481,24 +546,33 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ctx: ctx,
                 mode: 'default',
                 icon: Icons.auto_awesome_rounded,
-                title: 'Rekomendasi Utama',
-                subtitle: 'Urutan destinasi unggulan Sumatera Barat',
+                title: AppLocale.tr('Rekomendasi Utama', 'Top Recommendations'),
+                subtitle: AppLocale.tr(
+                  'Urutan destinasi unggulan Sumatera Barat',
+                  'Curated highlights of West Sumatra',
+                ),
               ),
               const SizedBox(height: 8),
               _buildSortOptionTile(
                 ctx: ctx,
                 mode: 'distance',
                 icon: Icons.near_me_rounded,
-                title: 'Jarak Terdekat (GPS)',
-                subtitle: 'Menampilkan lokasi paling dekat dari posisimu',
+                title: AppLocale.tr('Jarak Terdekat (GPS)', 'Nearest Distance (GPS)'),
+                subtitle: AppLocale.tr(
+                  'Menampilkan lokasi paling dekat dari posisimu',
+                  'Shows destinations closest to your location',
+                ),
               ),
               const SizedBox(height: 8),
               _buildSortOptionTile(
                 ctx: ctx,
                 mode: 'rating',
                 icon: Icons.star_rounded,
-                title: 'Rating Tertinggi',
-                subtitle: 'Berdasarkan ulasan wisatawan terverifikasi',
+                title: AppLocale.tr('Rating Tertinggi', 'Highest Rated'),
+                subtitle: AppLocale.tr(
+                  'Berdasarkan ulasan wisatawan terverifikasi',
+                  'Based on verified traveler reviews',
+                ),
               ),
             ],
           ),
@@ -636,13 +710,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   Widget _buildHeroLandmarkSlideItem(SavedDestinationModel hero, int idx) {
-    final badgeLabels = [
-      'LANDMARK UTAMA',
-      'TEBING GRANIT',
-      'IKON BUKITTINGGI',
-      'SURGA BAHARI',
-      'WARISAN MINANG',
-    ];
+    final badgeLabels = AppLocale.isEn
+        ? [
+            'MAIN LANDMARK',
+            'GRANITE CLIFFS',
+            'BUKITTINGGI ICON',
+            'MARINE PARADISE',
+            'MINANG HERITAGE',
+          ]
+        : [
+            'LANDMARK UTAMA',
+            'TEBING GRANIT',
+            'IKON BUKITTINGGI',
+            'SURGA BAHARI',
+            'WARISAN MINANG',
+          ];
     final temps = ['28°C', '24°C', '22°C', '29°C', '25°C'];
     final badgeText = badgeLabels[idx % badgeLabels.length];
     final tempText = temps[idx % temps.length];
@@ -803,7 +885,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     const SizedBox(width: 7),
                     Text(
-                      '${hero.distanceKm.toStringAsFixed(hero.distanceKm.truncateToDouble() == hero.distanceKm ? 0 : 1)} km dari sini',
+                      '${hero.distanceKm.toStringAsFixed(hero.distanceKm.truncateToDouble() == hero.distanceKm ? 0 : 1)} ${AppLocale.tr('km dari sini', 'km away')}',
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w600,
@@ -859,20 +941,23 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                     width: 0.9,
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Lihat Destinasi',
-                                      style: TextStyle(
+                                      AppLocale.tr(
+                                        'Lihat Destinasi',
+                                        'View Destination',
+                                      ),
+                                      style: const TextStyle(
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w700,
                                         color: Colors.white,
                                         letterSpacing: 0.1,
                                       ),
                                     ),
-                                    Icon(
+                                    const Icon(
                                       Icons.arrow_forward_rounded,
                                       size: 16,
                                       color: Colors.white,
@@ -940,49 +1025,65 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   List<Map<String, dynamic>> _allServiceCategoryItems() {
     return <Map<String, dynamic>>[
       {
-        'label': 'Wisata',
-        'fullTitle': 'Wisata Sumatera Barat',
-        'subtitle': 'Jelajahi 10 destinasi alam & budaya pilihan Sumbar',
+        'label': AppLocale.tr('Wisata', 'Explore'),
+        'fullTitle': AppLocale.tr('Wisata Sumatera Barat', 'West Sumatra Tours'),
+        'subtitle': AppLocale.tr(
+          'Jelajahi 10 destinasi alam & budaya pilihan Sumbar',
+          'Explore 10 curated nature & cultural destinations',
+        ),
         'section': 'Eksplorasi & Navigasi',
         'icon': Icons.landscape_rounded,
-        'onTap': () => setState(() {
-              _currentExploreRegion = 'ALL';
-              _currentExploreType = 'ALL';
-            }),
+        'onTap': _scrollToWisataSection,
       },
       {
-        'label': 'Peta',
-        'fullTitle': 'Peta Interaktif Sumbar',
-        'subtitle': 'Peta GPS asli, rute Shunlu & pantauan kondisi jalur',
+        'label': AppLocale.tr('Peta', 'Map'),
+        'fullTitle': AppLocale.tr('Peta Interaktif Sumbar', 'Interactive Map'),
+        'subtitle': AppLocale.tr(
+          'Peta GPS asli, rute Shunlu & pantauan kondisi jalur',
+          'Real GPS map, Shunlu routes & road monitor',
+        ),
         'section': 'Eksplorasi & Navigasi',
         'icon': Icons.map_rounded,
         'onTap': () => setState(() => _activeTabIndex = 2),
       },
       {
-        'label': 'Tur 360°',
-        'fullTitle': 'Tur Virtual 360°',
-        'subtitle': 'Pratinjau panorama 360° destinasi sebelum berangkat',
+        'label': AppLocale.tr('Tur 360°', '360° Tour'),
+        'fullTitle': AppLocale.tr('Tur Virtual 360°', '360° Virtual Tour'),
+        'subtitle': AppLocale.tr(
+          'Pratinjau panorama 360° destinasi sebelum berangkat',
+          'Preview 360° panoramas before traveling',
+        ),
         'section': 'Eksplorasi & Navigasi',
         'icon': Icons.threesixty_rounded,
         'onTap': () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const VirtualTour360Screen(),
+                builder: (_) => VirtualTour360GalleryScreen(
+                  destinations: kAllSumbarDestinations
+                      .map((d) => d.toFe1Destination())
+                      .toList(),
+                ),
               ),
             ),
       },
       {
-        'label': 'Simpan',
-        'fullTitle': 'Destinasi Tersimpan',
-        'subtitle': 'Akses cepat daftar tempat wisata favorit Anda',
+        'label': AppLocale.tr('Simpan', 'Saved'),
+        'fullTitle': AppLocale.tr('Destinasi Tersimpan', 'Saved Places'),
+        'subtitle': AppLocale.tr(
+          'Akses cepat daftar tempat wisata favorit Anda',
+          'Quick access to your bookmarked destinations',
+        ),
         'section': 'Eksplorasi & Navigasi',
         'icon': Icons.bookmark_rounded,
         'onTap': _openSavedPlacesModal,
       },
       {
-        'label': 'Darurat',
-        'fullTitle': 'Darurat & Radar SOS',
-        'subtitle': 'Lapor bahaya jalur, kontak darurat & posko terdekat',
+        'label': AppLocale.tr('Darurat', 'Emergency'),
+        'fullTitle': AppLocale.tr('Darurat & Radar SOS', 'Emergency & SOS'),
+        'subtitle': AppLocale.tr(
+          'Lapor bahaya jalur, kontak darurat & posko terdekat',
+          'Hazard alerts, emergency contacts & nearest posts',
+        ),
         'section': 'Budaya, Keamanan & Paspor',
         'icon': Icons.local_hospital_rounded,
         'onTap': () => Navigator.push(
@@ -991,25 +1092,34 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             ),
       },
       {
-        'label': 'Kamus',
-        'fullTitle': 'Kamus & Audio Minang',
-        'subtitle': 'Panduan ungkapan bahasa Minang lengkap dengan suara',
+        'label': AppLocale.tr('Kamus', 'Dictionary'),
+        'fullTitle': AppLocale.tr('Kamus & Audio Minang', 'Minang Dictionary'),
+        'subtitle': AppLocale.tr(
+          'Panduan ungkapan bahasa Minang lengkap dengan suara',
+          'Local Minang phrases with authentic voice audio',
+        ),
         'section': 'Budaya, Keamanan & Paspor',
         'icon': Icons.translate_rounded,
         'onTap': () => setState(() => _activeTabIndex = 3),
       },
       {
-        'label': 'Event',
-        'fullTitle': 'Kalender Event & Budaya',
-        'subtitle': 'Jadwal festival nagari, tradisi & acara wisata Sumbar',
+        'label': AppLocale.tr('Event', 'Events'),
+        'fullTitle': AppLocale.tr('Kalender Event & Budaya', 'Culture Calendar'),
+        'subtitle': AppLocale.tr(
+          'Jadwal festival nagari, tradisi & acara wisata Sumbar',
+          'Local village festivals & cultural events',
+        ),
         'section': 'Budaya, Keamanan & Paspor',
         'icon': Icons.calendar_month_rounded,
         'onTap': _openKalenderBudayaModal,
       },
       {
-        'label': 'Paspor',
-        'fullTitle': 'Paspor Digital Minang',
-        'subtitle': 'Kumpulkan stempel kunjungan GPS & lencana penjelajah',
+        'label': AppLocale.tr('Paspor', 'Passport'),
+        'fullTitle': AppLocale.tr('Paspor Digital Minang', 'Digital Passport'),
+        'subtitle': AppLocale.tr(
+          'Kumpulkan stempel kunjungan GPS & lencana penjelajah',
+          'Collect GPS visit stamps & explorer badges',
+        ),
         'section': 'Budaya, Keamanan & Paspor',
         'icon': Icons.badge_rounded,
         'onTap': _openDigitalPassportModal,
@@ -1043,9 +1153,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
               onPressed: () => Navigator.pop(pageCtx),
             ),
-            title: const Text(
-              'Semua Kategori Layanan',
-              style: TextStyle(
+            title: Text(
+              AppLocale.tr('Semua Kategori Layanan', 'All Service Categories'),
+              style: const TextStyle(
                 fontSize: 16.5,
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,
@@ -1066,13 +1176,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             children: [
               _buildAllCategorySection(
                 pageCtx: pageCtx,
-                title: 'Eksplorasi & Navigasi',
+                title: AppLocale.tr(
+                  'Eksplorasi & Navigasi',
+                  'Explore & Navigation',
+                ),
                 items: exploreItems,
               ),
               const SizedBox(height: 20),
               _buildAllCategorySection(
                 pageCtx: pageCtx,
-                title: 'Budaya, Keamanan & Paspor',
+                title: AppLocale.tr(
+                  'Budaya, Keamanan & Paspor',
+                  'Culture, Safety & Passport',
+                ),
                 items: cultureItems,
               ),
             ],
@@ -1170,14 +1286,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     // Tampilkan 4 kategori utama + 1 tombol "Lainnya" (total 5 item rata penuh tanpa geser)
     final primaryFour = [
       allItems[0], // Wisata
-      allItems[1], // Peta
+      allItems[3], // Simpan (Destinasi Tersimpan)
       allItems[2], // Tur 360°
       allItems[4], // Darurat
     ];
     final rowItems = <Map<String, dynamic>>[
       ...primaryFour,
       {
-        'label': 'Lainnya',
+        'label': AppLocale.tr('Lainnya', 'More'),
         'icon': Icons.grid_view_rounded,
         'onTap': _openAllCategoriesPage,
       },
@@ -1186,11 +1302,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Kategori Layanan',
+        Text(
+          AppLocale.tr('Kategori Layanan', 'Quick Services'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w800,
             color: AppColors.ink,
@@ -1259,15 +1375,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: Text(
-                'Rekomendasi Terdekat',
+                AppLocale.tr('Rekomendasi Terdekat', 'Nearby Picks'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   color: AppColors.ink,
@@ -1275,20 +1391,23 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'GPS Aktif',
-                  style: TextStyle(
+                  AppLocale.tr('GPS Aktif', 'GPS Active'),
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.forest,
                   ),
                 ),
-                SizedBox(width: 5),
-                CircleAvatar(radius: 3.5, backgroundColor: Color(0xFF16A34A)),
+                const SizedBox(width: 5),
+                const CircleAvatar(
+                  radius: 3.5,
+                  backgroundColor: Color(0xFF16A34A),
+                ),
               ],
             ),
           ],
@@ -1458,9 +1577,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       color: AppColors.sage,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: const Text(
-                                      'Ikonik Sumbar',
-                                      style: TextStyle(
+                                    child: Text(
+                                      AppLocale.tr(
+                                        'Ikonik Sumbar',
+                                        'Iconic Sumbar',
+                                      ),
+                                      style: const TextStyle(
                                         fontSize: 8.5,
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.forest,
@@ -1509,7 +1631,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       ),
       child: Column(
         children: [
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1519,18 +1641,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.wb_cloudy_rounded,
                           size: 12,
                           color: Color(0xFFFCD34D),
                         ),
-                        SizedBox(width: 5),
+                        const SizedBox(width: 5),
                         Expanded(
                           child: Text(
-                            'CUACA & KONDISI UDARA',
+                            AppLocale.tr(
+                              'CUACA & KONDISI UDARA',
+                              'WEATHER & AIR CONDITIONS',
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.9,
@@ -1540,10 +1665,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      'Kota Padang, Sumbar',
-                      style: TextStyle(
+                      AppLocale.tr(
+                        'Kota Padang, Sumbar',
+                        'Padang City, West Sumatra',
+                      ),
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -1555,7 +1683,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
+                  const Text(
                     '28°C',
                     style: TextStyle(
                       fontSize: 22,
@@ -1564,10 +1692,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       height: 1.0,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Cerah Berawan',
-                    style: TextStyle(
+                    AppLocale.tr('Cerah Berawan', 'Partly Cloudy'),
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFFD1E7D7),
@@ -1583,7 +1711,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Expanded(
                 child: _buildWeatherMiniStat(
                   icon: Icons.water_drop_outlined,
-                  label: 'Kelembaban',
+                  label: AppLocale.tr('Kelembaban', 'Humidity'),
                   value: '82%',
                 ),
               ),
@@ -1591,15 +1719,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Expanded(
                 child: _buildWeatherMiniStat(
                   icon: Icons.air_rounded,
-                  label: 'Kec. Angin',
-                  value: '11 km/j',
+                  label: AppLocale.tr('Kec. Angin', 'Wind Speed'),
+                  value: AppLocale.tr('11 km/j', '11 km/h'),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildWeatherMiniStat(
                   icon: Icons.visibility_outlined,
-                  label: 'Pandangan',
+                  label: AppLocale.tr('Pandangan', 'Visibility'),
                   value: '10 km',
                 ),
               ),
@@ -1675,22 +1803,25 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tahukah Kamu?',
-                  style: TextStyle(
+                  AppLocale.tr('Tahukah Kamu?', 'Did You Know?'),
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: AppColors.ink,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  'Atap melengkung runcing Rumah Gadang melambangkan tanduk kerbau (Gonjong) serta filosofi Adat Basandi Syarak, Syarak Basandi Kitabullah.',
-                  style: TextStyle(
+                  AppLocale.tr(
+                    'Atap melengkung runcing Rumah Gadang melambangkan tanduk kerbau (Gonjong) serta filosofi Adat Basandi Syarak, Syarak Basandi Kitabullah.',
+                    'The curved horn-shaped roof (Gonjong) of Rumah Gadang symbolizes buffalo horns and the Minangkabau philosophy of Adat Basandi Syarak, Syarak Basandi Kitabullah.',
+                  ),
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.muted,
                     height: 1.4,
@@ -1739,13 +1870,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         _currentExploreRegion != 'ALL' ||
         _currentExploreType != 'ALL';
 
-    String exploreListHeading = 'Destinasi Wisata Pilihan';
+    String exploreListHeading =
+        AppLocale.tr('Destinasi Wisata Pilihan', 'Featured Destinations');
     if (_searchQuery.isNotEmpty) {
-      exploreListHeading = 'Hasil Pencarian';
+      exploreListHeading = AppLocale.tr('Hasil Pencarian', 'Search Results');
     } else if (_sortMode == 'rating') {
-      exploreListHeading = 'Urutan Rating Tertinggi';
+      exploreListHeading =
+          AppLocale.tr('Urutan Rating Tertinggi', 'Top Rated Destinations');
     } else if (_sortMode == 'distance') {
-      exploreListHeading = 'Urutan Jarak Terdekat';
+      exploreListHeading =
+          AppLocale.tr('Urutan Jarak Terdekat', 'Nearest Destinations');
     }
 
     return Stack(
@@ -1804,11 +1938,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Jelajah Sumbar',
+                        Text(
+                          AppLocale.tr('Jelajah Sumbar', 'Explore Sumbar'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16.5,
                             fontWeight: FontWeight.w800,
                             color: AppColors.ink,
@@ -1836,8 +1970,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               Flexible(
                                 child: Text(
                                   _isOfflineMode
-                                      ? 'Luring • 10 Destinasi'
-                                      : 'Online • 10 Destinasi',
+                                      ? AppLocale.tr(
+                                          'Luring • 10 Destinasi',
+                                          'Offline • 10 Destinations',
+                                        )
+                                      : AppLocale.tr(
+                                          'Online • 10 Destinasi',
+                                          'Online • 10 Destinations',
+                                        ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -2034,7 +2174,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               ),
                               decoration: InputDecoration(
                                 isDense: true,
-                                hintText: 'Cari destinasi, daerah, fasilitas...',
+                                hintText: AppLocale.tr(
+                                  'Cari destinasi, daerah, fasilitas...',
+                                  'Search destinations, regions, facilities...',
+                                ),
                                 hintStyle: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
@@ -2146,6 +2289,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
                     // 6. Header Seksi Destinasi Wisata Pilihan / Hasil Urutan + Filter Wilayah & Kategori
                     Row(
+                      key: _safeWisataSectionKey,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
@@ -2222,7 +2366,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           )
                         else
                           Text(
-                            '${filtered.length} Lokasi',
+                            '${filtered.length} ${AppLocale.tr('Lokasi', 'Places')}',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -2240,6 +2384,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         children: _exploreRegions.map((reg) {
                           final isSelected =
                               _currentExploreRegion == reg['key'];
+                          final regLabel = reg['key'] == 'ALL'
+                              ? AppLocale.tr('Semua Daerah', 'All Regions')
+                              : reg['key'] == 'Daerah Terpencil'
+                                  ? AppLocale.tr(
+                                      'Daerah Terpencil',
+                                      'Remote Areas',
+                                    )
+                                  : reg['title']!;
                           return Padding(
                             padding: const EdgeInsets.only(right: 6),
                             child: GestureDetector(
@@ -2264,7 +2416,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   ),
                                 ),
                                 child: Text(
-                                  reg['title']!,
+                                  regLabel,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: isSelected
@@ -2289,6 +2441,26 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       child: Row(
                         children: _exploreTypes.map((type) {
                           final isSelected = _currentExploreType == type['key'];
+                          String typeLabel = type['label']!;
+                          if (AppLocale.isEn) {
+                            switch (type['key']) {
+                              case 'ALL':
+                                typeLabel = 'All Categories';
+                                break;
+                              case 'Air Terjun':
+                                typeLabel = 'Waterfalls';
+                                break;
+                              case 'Gunung & Lembah':
+                                typeLabel = 'Mountains & Valleys';
+                                break;
+                              case 'Pantai & Bahari':
+                                typeLabel = 'Beaches & Marine';
+                                break;
+                              case 'Nagari & Hutan Terpencil':
+                                typeLabel = 'Remote Villages';
+                                break;
+                            }
+                          }
                           return Padding(
                             padding: const EdgeInsets.only(right: 6),
                             child: GestureDetector(
@@ -2325,7 +2497,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      type['label']!,
+                                      typeLabel,
                                       style: TextStyle(
                                         fontSize: 10.5,
                                         fontWeight: isSelected
@@ -2471,18 +2643,18 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           width: 1.1,
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.add_rounded,
                             size: 18,
                             color: AppColors.cream,
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            'Usul Wisata',
-                            style: TextStyle(
+                            AppLocale.tr('Usul Wisata', 'Suggest Spot'),
+                            style: const TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w800,
                               color: AppColors.cream,
@@ -2524,29 +2696,37 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'KOLABORASI & CARI BARENGAN',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: Color(0xFF1E5B82),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocale.tr(
+                        'KOLABORASI & CARI BARENGAN',
+                        'COLLABORATION & TRAVEL BUDDIES',
+                      ),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.3,
+                        color: Color(0xFF1E5B82),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Open Trip Sumbar',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
-                      letterSpacing: -0.4,
+                    const SizedBox(height: 2),
+                    Text(
+                      AppLocale.tr(
+                        'Open Trip Sumbar',
+                        'West Sumatra Open Trips',
+                      ),
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                        letterSpacing: -0.4,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -2555,14 +2735,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.groups_rounded, size: 14, color: Color(0xFF1E5B82)),
-                    SizedBox(width: 4),
+                    const Icon(Icons.groups_rounded, size: 14, color: Color(0xFF1E5B82)),
+                    const SizedBox(width: 4),
                     Text(
-                      '3 Trip Aktif',
-                      style: TextStyle(
+                      AppLocale.tr('3 Trip Aktif', '3 Active Trips'),
+                      style: const TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF1E5B82),
@@ -2609,14 +2789,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.3)),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.group_add_rounded, size: 13, color: Color(0xFF1E5B82)),
-                              SizedBox(width: 4),
+                              const Icon(Icons.group_add_rounded, size: 13, color: Color(0xFF1E5B82)),
+                              const SizedBox(width: 4),
                               Text(
-                                'OPEN TRIP TERBUKA',
-                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF1E5B82)),
+                                AppLocale.tr('OPEN TRIP TERBUKA', 'OPEN GROUP TRIPS'),
+                                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF1E5B82)),
                               ),
                             ],
                           ),
@@ -2628,22 +2808,28 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
                           ),
-                          child: const Text(
-                            'Kuota Tersedia',
-                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                          child: Text(
+                            AppLocale.tr('Kuota Tersedia', 'Spots Available'),
+                            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Daftar Open Trip Terbuka (Cari Barengan)',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
+                    Text(
+                      AppLocale.tr(
+                        'Daftar Open Trip Terbuka (Cari Barengan)',
+                        'Available Open Group Trips',
+                      ),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
                     ),
                     const SizedBox(height: 3),
-                    const Text(
-                      'Gabung open trip untuk patungan sewa mobil, tour guide nagari, dan nikmati serunya jelajah Sumbar bersama wisatawan lain.',
-                      style: TextStyle(fontSize: 10.5, color: Color(0xFF5A6B5D)),
+                    Text(
+                      AppLocale.tr(
+                        'Gabung open trip untuk patungan sewa mobil, tour guide nagari, dan nikmati serunya jelajah Sumbar bersama wisatawan lain.',
+                        'Join open group trips to share car rental, local village guides, and explore West Sumatra with fellow travelers.',
+                      ),
+                      style: const TextStyle(fontSize: 10.5, color: Color(0xFF5A6B5D)),
                     ),
                     const SizedBox(height: 12),
                     // Trip 1
@@ -2687,7 +2873,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               foregroundColor: AppColors.forest,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             ),
-                            child: const Text('Gabung', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                            child: Text(AppLocale.tr('Gabung', 'Join'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                           ),
                         ],
                       ),
@@ -2734,7 +2920,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               foregroundColor: const Color(0xFF1E5B82),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             ),
-                            child: const Text('Gabung', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                            child: Text(AppLocale.tr('Gabung', 'Join'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                           ),
                         ],
                       ),
@@ -2781,7 +2967,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               foregroundColor: const Color(0xFFC89242),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             ),
-                            child: const Text('Gabung', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                            child: Text(AppLocale.tr('Gabung', 'Join'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                           ),
                         ],
                       ),
@@ -2792,9 +2978,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _openTripPlannerModal,
                         icon: const Icon(Icons.add_rounded, size: 16),
-                        label: const Text(
-                          '+ Buat Jadwal Open Trip Baru',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                        label: Text(
+                          AppLocale.tr(
+                            '+ Buat Jadwal Open Trip Baru',
+                            '+ Create New Open Trip',
+                          ),
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.forest,
@@ -2859,9 +3048,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Rencana Perjalanan Otomatis 1–7 Hari',
-                      style: TextStyle(
+                    Text(
+                      AppLocale.tr(
+                        'Rencana Perjalanan Otomatis 1–7 Hari',
+                        'Automated 1–7 Day Travel Itinerary',
+                      ),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -2869,7 +3061,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Susun jadwal liburan otomatis berdasarkan durasi hari, estimasi anggaran per orang, dan minat wisata rombongan (Alam, Kuliner, Adat).',
+                      AppLocale.tr(
+                        'Susun jadwal liburan otomatis berdasarkan durasi hari, estimasi anggaran per orang, dan minat wisata rombongan (Alam, Kuliner, Adat).',
+                        'Automatically plan your trip based on duration, estimated budget per person, and interests (Nature, Culinary, Heritage).',
+                      ),
                       style: TextStyle(
                         fontSize: 11.5,
                         color: Colors.white.withValues(alpha: 0.85),
@@ -2880,9 +3075,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ElevatedButton.icon(
                       onPressed: _openTripPlannerModal,
                       icon: const Icon(Icons.calendar_today_rounded, size: 15),
-                      label: const Text(
-                        'Buka Trip Planner & Estimasi Anggaran',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                      label: Text(
+                        AppLocale.tr(
+                          'Buka Trip Planner & Estimasi Anggaran',
+                          'Open Trip Planner & Budget Estimator',
+                        ),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.cream,
@@ -2945,18 +3143,24 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Kalender Event & Festival Budaya',
-                      style: TextStyle(
+                    Text(
+                      AppLocale.tr(
+                        'Kalender Event & Festival Budaya',
+                        'Cultural Events & Festivals Calendar',
+                      ),
+                      style: const TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Lihat jadwal festival budaya, pertunjukan kesenian randai, pacu jawi, dan agenda wisata tahunan resmi di Sumatera Barat.',
-                      style: TextStyle(
+                    Text(
+                      AppLocale.tr(
+                        'Lihat jadwal festival budaya, pertunjukan kesenian randai, pacu jawi, dan agenda wisata tahunan resmi di Sumatera Barat.',
+                        'Discover cultural festivals, Randai performances, Pacu Jawi, and official annual tourism events in West Sumatra.',
+                      ),
+                      style: const TextStyle(
                         fontSize: 11.5,
                         color: AppColors.muted,
                         height: 1.4,
@@ -2968,9 +3172,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _openKalenderBudayaModal,
                         icon: const Icon(Icons.event_note_rounded, size: 16),
-                        label: const Text(
-                          'Buka Kalender Event',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                        label: Text(
+                          AppLocale.tr(
+                            'Buka Kalender Event',
+                            'Open Events Calendar',
+                          ),
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF5A3E85),
@@ -4429,30 +4636,43 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SISTEM INFORMASI GEOGRAFIS & SPASIAL',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: AppColors.brush,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocale.tr(
+                        'SISTEM INFORMASI GEOGRAFIS & SPASIAL',
+                        'GEOGRAPHIC & SPATIAL INFORMATION',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.3,
+                        color: AppColors.brush,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Peta Wisata Interaktif Sumbar',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
-                      letterSpacing: -0.4,
+                    const SizedBox(height: 2),
+                    Text(
+                      AppLocale.tr(
+                        'Peta Wisata Interaktif Sumbar',
+                        'Interactive West Sumatra Map',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                        letterSpacing: -0.4,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -4460,14 +4680,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.sageBorder),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.gps_fixed_rounded, size: 13, color: AppColors.forest),
-                    SizedBox(width: 4),
+                    const Icon(Icons.gps_fixed_rounded, size: 13, color: AppColors.forest),
+                    const SizedBox(width: 4),
                     Text(
-                      'GPS Aktif',
-                      style: TextStyle(
+                      AppLocale.tr('GPS Aktif', 'GPS Active'),
+                      style: const TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         color: AppColors.forest,
@@ -4551,25 +4771,31 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           ),
                         ),
                         const SizedBox(width: 13),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Peta Rute & Titik Singgah',
-                                style: TextStyle(
+                                AppLocale.tr(
+                                  'Peta Rute & Titik Singgah',
+                                  'Route & Pit-Stop Map',
+                                ),
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                   letterSpacing: -0.2,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
-                                'Cari RM Padang, SPBU, Masjid & ATM searah rute',
+                                AppLocale.tr(
+                                  'Cari RM Padang, SPBU, Masjid & ATM searah rute',
+                                  'Find Padang restaurants, fuel, mosques & ATMs en route',
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: Color(0xFFD8E6D9),
                                   height: 1.3,
@@ -4588,19 +4814,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Buka',
-                                style: TextStyle(
+                                AppLocale.tr('Buka', 'Open'),
+                                style: const TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.forest,
                                 ),
                               ),
-                              SizedBox(width: 3),
-                              Icon(
+                              const SizedBox(width: 3),
+                              const Icon(
                                 Icons.arrow_forward_rounded,
                                 size: 14,
                                 color: AppColors.forest,
@@ -4623,8 +4849,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       icon: Icons.radar_rounded,
                       iconBg: const Color(0xFFE6F0FA),
                       iconColor: const Color(0xFF1E5B82),
-                      title: 'Radar Grup',
-                      subtitle: 'Pantau GPS rombongan',
+                      title: AppLocale.tr('Radar Grup', 'Group Radar'),
+                      subtitle: AppLocale.tr(
+                        'Pantau GPS rombongan',
+                        'Track group live GPS',
+                      ),
                       onTap: _openLiveGroupTrackingModal,
                     ),
                   ),
@@ -4634,8 +4863,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       icon: Icons.shield_outlined,
                       iconBg: const Color(0xFFFEF3D6),
                       iconColor: const Color(0xFFB45309),
-                      title: 'Aduan Jalur',
-                      subtitle: 'Pungli & jalan rusak',
+                      title: AppLocale.tr('Aduan Jalur', 'Route Report'),
+                      subtitle: AppLocale.tr(
+                        'Pungli & jalan rusak',
+                        'Illegal fees & road hazards',
+                      ),
                       onTap: () => _openLaporPungliModal(tab: 'pungli'),
                     ),
                   ),
@@ -4647,9 +4879,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Terdekat dari Lokasimu',
-                    style: TextStyle(
+                  Text(
+                    AppLocale.tr(
+                      'Terdekat dari Lokasimu',
+                      'Nearest to Your Location',
+                    ),
+                    style: const TextStyle(
                       fontSize: 15.5,
                       fontWeight: FontWeight.w800,
                       color: AppColors.ink,
@@ -4801,8 +5036,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   isSelected
-                                      ? 'Ditampilkan di peta'
-                                      : 'Lihat rute di peta',
+                                      ? AppLocale.tr(
+                                          'Ditampilkan di peta',
+                                          'Shown on map',
+                                        )
+                                      : AppLocale.tr(
+                                          'Lihat rute di peta',
+                                          'View route on map',
+                                        ),
                                   style: const TextStyle(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w800,
@@ -4824,9 +5065,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Pantauan Jalur Utama',
-                    style: TextStyle(
+                  Text(
+                    AppLocale.tr(
+                      'Pantauan Jalur Utama',
+                      'Main Route Monitor',
+                    ),
+                    style: const TextStyle(
                       fontSize: 15.5,
                       fontWeight: FontWeight.w800,
                       color: AppColors.ink,
@@ -5393,16 +5637,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const FittedBox(
+                        child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.threed_rotation_rounded, size: 15),
-                              SizedBox(width: 4),
+                              const Icon(Icons.threesixty_rounded, size: 15),
+                              const SizedBox(width: 4),
                               Text(
-                                '360° & Denah',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                AppLocale.tr('360° & Denah', '360° & Map'),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                               ),
                             ],
                           ),
@@ -5423,11 +5667,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const FittedBox(
+                        child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            'Detail',
-                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                            AppLocale.tr('Detail', 'Details'),
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
                           ),
                         ),
                       ),
@@ -5443,9 +5687,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   // ===========================================================================
-  // MODAL 1: 360° PANORAMA & DENAH LOKASI INTERAKTIF (REQUEST 3)
+  // MODAL 1: TUR VIRTUAL 360° TERPADU (KONSISTEN DI SEMUA TOMBOL 360°)
   // ===========================================================================
   void _open360AndDenahModal(SavedDestinationModel place) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VirtualTour360Screen(
+          destination: place.toFe1Destination(),
+          onOpenDenah: () => _openDenahLokasiModal(place),
+        ),
+      ),
+    );
+  }
+
+  void _openDenahLokasiModal(SavedDestinationModel place) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -5453,6 +5709,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       builder: (ctx) {
         return _Explore360AndDenahSheet(
           place: place,
+          initialSubTab: 'denah',
           onOpenDetail: () {
             Navigator.pop(ctx);
             _openDestinationDetailModal(place);
@@ -5979,6 +6236,312 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
+  // MODAL: EDIT PROFIL WISATAWAN
+  void _openEditProfileModal() {
+    final nameCtrl = TextEditingController(text: _safeProfileName);
+    final phoneCtrl = TextEditingController(text: _safeProfilePhone);
+    final originCtrl = TextEditingController(text: _safeProfileOrigin);
+    String selectedRole = _safeProfileRole;
+
+    const roles = [
+      'Wisatawan Nusantara',
+      'Wisatawan Lokal Sumbar',
+      'International Traveler',
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (modalCtx, setModalState) {
+            final previewName = nameCtrl.text.trim().isEmpty
+                ? 'AF'
+                : nameCtrl.text.trim();
+            final parts = previewName
+                .split(RegExp(r'\s+'))
+                .where((e) => e.isNotEmpty)
+                .toList();
+            final previewInitials = parts.length > 1
+                ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+                : parts.first
+                    .substring(0, parts.first.length >= 2 ? 2 : 1)
+                    .toUpperCase();
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(modalCtx).bottom,
+              ),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                decoration: const BoxDecoration(
+                  color: AppColors.cream,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 38,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.warmBorder,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            AppLocale.tr('Edit Profil', 'Edit Profile'),
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              size: 20,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Center(
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppColors.forest, Color(0xFF153017)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            previewInitials,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.cream,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        AppLocale.tr('Nama Lengkap', 'Full Name'),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: nameCtrl,
+                        onChanged: (_) => setModalState(() {}),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: AppLocale.tr(
+                            'Masukkan nama lengkap',
+                            'Enter full name',
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppLocale.tr('Nomor WhatsApp', 'WhatsApp Number'),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: '+62 812-xxxx-xxxx',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppLocale.tr('Kota Asal', 'Home City'),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: originCtrl,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: AppLocale.tr(
+                            'Contoh: Padang, Sumatera Barat',
+                            'e.g. Padang, West Sumatra',
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppLocale.tr('Kategori Wisatawan', 'Traveler Type'),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: roles.map((role) {
+                          final active = selectedRole == role;
+                          return ChoiceChip(
+                            label: Text(
+                              role,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: active ? AppColors.cream : AppColors.ink,
+                              ),
+                            ),
+                            selected: active,
+                            selectedColor: AppColors.forest,
+                            backgroundColor: Colors.white,
+                            side: BorderSide(
+                              color: active
+                                  ? AppColors.forest
+                                  : AppColors.warmBorder,
+                            ),
+                            onSelected: (_) {
+                              setModalState(() => selectedRole = role);
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _profileName = nameCtrl.text.trim().isEmpty
+                                  ? _safeProfileName
+                                  : nameCtrl.text.trim();
+                              _profilePhone = phoneCtrl.text.trim().isEmpty
+                                  ? _safeProfilePhone
+                                  : phoneCtrl.text.trim();
+                              _profileOrigin = originCtrl.text.trim().isEmpty
+                                  ? _safeProfileOrigin
+                                  : originCtrl.text.trim();
+                              _profileRole = selectedRole;
+                            });
+                            Navigator.pop(ctx);
+                            _showAppToast(
+                              AppLocale.tr(
+                                'Profil berhasil diperbarui',
+                                'Profile updated successfully',
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.forest,
+                            foregroundColor: AppColors.cream,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            AppLocale.tr('Simpan Perubahan', 'Save Changes'),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   // VIEW 3: PROFIL WISATAWAN & PENGATURAN AKUN
   // ===========================================================================
   Widget _buildProfileView() {
@@ -5998,23 +6561,23 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AKUN WISATAWAN',
-                      style: TextStyle(
+                      AppLocale.tr('AKUN WISATAWAN', 'TRAVELER ACCOUNT'),
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.3,
                         color: AppColors.brush,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Profil Saya',
-                      style: TextStyle(
+                      AppLocale.tr('Profil Saya', 'My Profile'),
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
@@ -6034,18 +6597,18 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.sageBorder),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.verified_rounded,
                       size: 13,
                       color: AppColors.forest,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      'Terverifikasi',
-                      style: TextStyle(
+                      AppLocale.tr('Terverifikasi', 'Verified'),
+                      style: const TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         color: AppColors.forest,
@@ -6063,7 +6626,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 116),
             children: [
-              // 1. Hero Identity Card (Clean & Modern)
+              // 1. Hero Identity Card (Clean & Modern + Tombol Edit Profil)
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -6081,6 +6644,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 child: Column(
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Stack(
                           clipBehavior: Clip.none,
@@ -6104,9 +6668,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 ],
                               ),
                               alignment: Alignment.center,
-                              child: const Text(
-                                'AF',
-                                style: TextStyle(
+                              child: Text(
+                                _safeProfileInitials,
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.cream,
@@ -6142,25 +6706,77 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Ahmad Fauzi',
-                                style: TextStyle(
-                                  fontSize: 17.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
-                                  letterSpacing: -0.3,
-                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _safeProfileName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 17.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.ink,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Material(
+                                    color: AppColors.creamSubtle,
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: InkWell(
+                                      onTap: _openEditProfileModal,
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 9,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: AppColors.warmBorder,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 13,
+                                              color: AppColors.forest,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Edit',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.forest,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 2),
-                              const Text(
-                                '+62 812-7578-953',
-                                style: TextStyle(
-                                  fontSize: 12,
+                              Text(
+                                '$_safeProfilePhone • $_safeProfileOrigin',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.muted,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 7),
                               Wrap(
                                 spacing: 6,
                                 runSpacing: 4,
@@ -6174,9 +6790,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       color: AppColors.sage,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    child: const Text(
-                                      'Wisatawan Nusantara',
-                                      style: TextStyle(
+                                    child: Text(
+                                      _safeProfileRole,
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.forest,
@@ -6217,7 +6833,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             icon: Icons.bookmark_rounded,
                             iconColor: AppColors.forest,
                             value: '${_savedIds.length}',
-                            label: 'Tersimpan',
+                            label: AppLocale.tr('Tersimpan', 'Saved'),
                             onTap: () => setState(() => _activeTabIndex = 0),
                           ),
                         ),
@@ -6227,7 +6843,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             icon: Icons.military_tech_rounded,
                             iconColor: const Color(0xFFB45309),
                             value: '4 / 10',
-                            label: 'Stempel',
+                            label: AppLocale.tr('Stempel', 'Stamps'),
                             onTap: _openDigitalPassportModal,
                           ),
                         ),
@@ -6236,7 +6852,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           child: _buildProfileMetricTile(
                             icon: Icons.gps_fixed_rounded,
                             iconColor: const Color(0xFF1E5B82),
-                            value: 'Aktif',
+                            value: AppLocale.tr('Aktif', 'Active'),
                             label: 'GPS Sumbar',
                             onTap: () => setState(() => _activeTabIndex = 2),
                           ),
@@ -6285,9 +6901,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               color: const Color(0xFFE5C07B).withValues(alpha: 0.5),
                             ),
                           ),
-                          child: const Text(
-                            'PASPOR DIGITAL MINANG',
-                            style: TextStyle(
+                          child: Text(
+                            AppLocale.tr(
+                              'PASPOR DIGITAL MINANG',
+                              'MINANG DIGITAL PASSPORT',
+                            ),
+                            style: const TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.0,
@@ -6311,9 +6930,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Stempel & Lencana Penjelajah',
-                      style: TextStyle(
+                    Text(
+                      AppLocale.tr(
+                        'Stempel & Lencana Penjelajah',
+                        'Explorer Stamps & Badges',
+                      ),
+                      style: const TextStyle(
                         fontSize: 16.5,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -6321,9 +6943,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Check-in GPS di kawasan wisata (< 500m) untuk mengumpulkan stempel resmi nagari & naik peringkat.',
-                      style: TextStyle(
+                    Text(
+                      AppLocale.tr(
+                        'Check-in GPS di kawasan wisata (< 500m) untuk mengumpulkan stempel resmi nagari & naik peringkat.',
+                        'Check in via GPS at attractions (< 500m) to collect official village stamps & level up.',
+                      ),
+                      style: const TextStyle(
                         fontSize: 11.5,
                         color: Color(0xFFD9C9BC),
                         height: 1.38,
@@ -6331,18 +6956,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     const SizedBox(height: 14),
                     // Progress bar (4/10 = 40% akurat!)
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '4 dari 10 Destinasi Nagari',
-                          style: TextStyle(
+                          AppLocale.tr(
+                            '4 dari 10 Destinasi Nagari',
+                            '4 of 10 Village Destinations',
+                          ),
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFFE5C07B),
                           ),
                         ),
-                        Text(
+                        const Text(
                           '40%',
                           style: TextStyle(
                             fontSize: 11.5,
@@ -6404,9 +7032,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           child: ElevatedButton.icon(
                             onPressed: _openDigitalPassportModal,
                             icon: const Icon(Icons.verified_rounded, size: 16),
-                            label: const Text(
-                              'Paspor Digital',
-                              style: TextStyle(
+                            label: Text(
+                              AppLocale.tr(
+                                'Paspor Digital',
+                                'Digital Passport',
+                              ),
+                              style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -6434,11 +7065,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               const SizedBox(height: 22),
 
               // 3. Pengaturan & Pintasan Fitur (Apple Settings Clean Style)
-              const Padding(
-                padding: EdgeInsets.only(left: 4, bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 8),
                 child: Text(
-                  'Pengaturan & Perangkat',
-                  style: TextStyle(
+                  AppLocale.tr('Pengaturan & Perangkat', 'Settings & Device'),
+                  style: const TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w800,
                     color: AppColors.ink,
@@ -6461,6 +7092,65 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
                 child: Column(
                   children: [
+                    // Pilihan Bahasa Sistem (ID / EN)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F1F8),
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                            child: const Icon(
+                              Icons.language_rounded,
+                              size: 20,
+                              color: Color(0xFF1E5B82),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppLocale.tr(
+                                    'Bahasa Aplikasi',
+                                    'App Language',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                Text(
+                                  AppLocale.tr(
+                                    'Bahasa Indonesia / English',
+                                    'Indonesian / English',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const LanguageTogglePill(),
+                        ],
+                      ),
+                    ),
+                    const Divider(
+                      height: 1,
+                      indent: 64,
+                      color: AppColors.warmBorder,
+                    ),
                     // Mode Luring Toggle
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -6493,9 +7183,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Mode Tanpa Sinyal (Luring)',
-                                  style: TextStyle(
+                                Text(
+                                  AppLocale.tr(
+                                    'Mode Tanpa Sinyal (Luring)',
+                                    'Offline Mode',
+                                  ),
+                                  style: const TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.ink,
@@ -6503,8 +7196,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 ),
                                 Text(
                                   _isOfflineMode
-                                      ? 'Aktif • Menggunakan cache perangkat'
-                                      : 'Siap siaga untuk area blank spot',
+                                      ? AppLocale.tr(
+                                          'Aktif • Menggunakan cache perangkat',
+                                          'Active • Using local device cache',
+                                        )
+                                      : AppLocale.tr(
+                                          'Siap siaga untuk area blank spot',
+                                          'Ready for no-signal mountain routes',
+                                        ),
                                   style: const TextStyle(
                                     fontSize: 10.5,
                                     color: AppColors.muted,
@@ -6531,14 +7230,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       icon: Icons.record_voice_over_rounded,
                       iconBg: const Color(0xFFFEF3D6),
                       iconColor: const Color(0xFFB45309),
-                      title: 'Kamus Minang & Kalender Budaya',
-                      subtitle: 'Audio frasa lokal & jadwal tradisi nagari',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AudioCultureScreen(),
-                        ),
+                      title: AppLocale.tr(
+                        'Kamus Minang & Kalender Budaya',
+                        'Minang Dictionary & Culture Calendar',
                       ),
+                      subtitle: AppLocale.tr(
+                        'Audio frasa lokal & jadwal tradisi nagari',
+                        'Local audio phrases & village festivals',
+                      ),
+                      onTap: () => setState(() => _activeTabIndex = 3),
                     ),
                     const Divider(
                       height: 1,
@@ -6549,8 +7249,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       icon: Icons.sos_rounded,
                       iconBg: const Color(0xFFFEE2E2),
                       iconColor: const Color(0xFFB91C1C),
-                      title: 'Radar Jalur Rawan & Darurat SOS',
-                      subtitle: 'Hotline 115/112 & kirim titik koordinat GPS',
+                      title: AppLocale.tr(
+                        'Radar Jalur Rawan & Darurat SOS',
+                        'Hazard Radar & Emergency SOS',
+                      ),
+                      subtitle: AppLocale.tr(
+                        'Hotline 115/112 & kirim titik koordinat GPS',
+                        '115/112 hotline & share GPS coordinates',
+                      ),
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -6571,70 +7277,155 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   onPressed: () {
                     showDialog<void>(
                       context: context,
-                      builder: (ctx) => AlertDialog(
+                      builder: (ctx) => Dialog(
+                        backgroundColor: Colors.white,
+                        surfaceTintColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        title: const Text(
-                          'Keluar dari Akun?',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink,
+                          borderRadius: BorderRadius.circular(26),
+                          side: const BorderSide(
+                            color: AppColors.warmBorder,
+                            width: 1.0,
                           ),
                         ),
-                        content: const Text(
-                          'Anda akan kembali ke halaman awal WISGO dan perlu verifikasi WhatsApp OTP untuk masuk kembali.',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: AppColors.muted,
-                            height: 1.4,
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Batal'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (_) => const SplashScreen(),
+                        insetPadding:
+                            const EdgeInsets.symmetric(horizontal: 28),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFBF4F4),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF8B2B38).withValues(alpha: 0.16),
+                                    width: 1.2,
+                                  ),
                                 ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFBE123C),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.logout_rounded,
+                                  color: Color(0xFF8B2B38),
+                                  size: 24,
+                                ),
                               ),
-                            ),
-                            child: const Text('Keluar'),
+                              const SizedBox(height: 16),
+                              Text(
+                                AppLocale.tr('Keluar dari Akun?', 'Sign Out?'),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                AppLocale.tr(
+                                  'Anda akan kembali ke halaman awal WISGO dan perlu verifikasi WhatsApp OTP untuk masuk kembali.',
+                                  'You will return to the WISGO welcome screen and need WhatsApp OTP verification to sign back in.',
+                                ),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: AppColors.muted,
+                                  height: 1.45,
+                                ),
+                              ),
+                              const SizedBox(height: 22),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 44,
+                                      child: OutlinedButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.ink,
+                                          backgroundColor: AppColors.creamSubtle,
+                                          side: const BorderSide(
+                                            color: AppColors.warmBorder,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        child: Text(
+                                          AppLocale.tr('Batal', 'Cancel'),
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 44,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(ctx);
+                                          Navigator.of(context)
+                                              .pushAndRemoveUntil(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const SplashScreen(),
+                                            ),
+                                            (route) => false,
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xFF8B2B38),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          AppLocale.tr('Keluar', 'Sign Out'),
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     );
                   },
                   icon: const Icon(Icons.logout_rounded, size: 18),
-                  label: const Text(
-                    'Keluar dari Akun',
-                    style: TextStyle(
+                  label: Text(
+                    AppLocale.tr('Keluar dari Akun', 'Sign Out'),
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFF1F2),
-                    foregroundColor: const Color(0xFFBE123C),
+                    backgroundColor: const Color(0xFFFAF2F3),
+                    foregroundColor: const Color(0xFF8B2B38),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: const Color(0xFFBE123C).withValues(alpha: 0.2),
+                        color: const Color(0xFF8B2B38).withValues(alpha: 0.18),
                       ),
                     ),
                   ),
@@ -6782,10 +7573,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final totalWidth = constraints.maxWidth;
+              const double horizontalInset = 12.0;
+              final usableWidth =
+                  (totalWidth - (horizontalInset * 2)).clamp(1.0, totalWidth);
               final safeIndex = _activeTabIndex.clamp(0, _navItems.length - 1);
-              final itemWidth = totalWidth / _navItems.length;
+              final itemWidth = usableWidth / _navItems.length;
               final targetCenterX =
-                  (itemWidth * safeIndex) + (itemWidth / 2);
+                  horizontalInset + (itemWidth * safeIndex) + (itemWidth / 2);
 
               return TweenAnimationBuilder<double>(
                 tween: Tween<double>(end: targetCenterX),
@@ -6848,7 +7642,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       // 3. 5 Navigation Columns
                       Positioned.fill(
                         child: Padding(
-                          padding: const EdgeInsets.only(top: 14, bottom: 13),
+                          padding: const EdgeInsets.fromLTRB(
+                            horizontalInset,
+                            14,
+                            horizontalInset,
+                            13,
+                          ),
                           child: Row(
                             children: List.generate(_navItems.length, (idx) {
                               final isSelected = idx == safeIndex;
@@ -6882,7 +7681,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         child: FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
-                                            item['label'] as String,
+                                            AppLocale.isEn
+                                                ? (item['labelEn'] as String)
+                                                : (item['label'] as String),
                                             maxLines: 1,
                                             style: TextStyle(
                                               fontSize: 10.5,
@@ -6948,38 +7749,52 @@ class _CurvedNotchBarPainter extends CustomPainter {
     final h = size.height;
     const double topY = 14.0;
     const double cornerRadius = 18.0;
-    const double notchHalfWidth = 38.0;
-    const double notchDepth = 46.0;
+    const double minTopCorner = 8.0;
+    const double maxNotchHalfWidth = 35.0;
+    const double notchDepth = 47.0;
 
+    // Pastikan pusat lekukan selalu tepat di tengah lingkaran aktif (termasuk Tab 0 & Tab 4)
     final double cx = notchCenterX.clamp(
-      cornerRadius + notchHalfWidth,
-      w - cornerRadius - notchHalfWidth,
+      minTopCorner + 24.0,
+      w - minTopCorner - 24.0,
     );
+    final double maxLeftHalf =
+        (cx - minTopCorner).clamp(24.0, maxNotchHalfWidth);
+    final double maxRightHalf =
+        ((w - minTopCorner) - cx).clamp(24.0, maxNotchHalfWidth);
+    final double notchHalfWidth =
+        maxLeftHalf < maxRightHalf ? maxLeftHalf : maxRightHalf;
+
     final double nStart = cx - notchHalfWidth;
     final double nEnd = cx + notchHalfWidth;
+    final double leftTopRadius = nStart < cornerRadius ? nStart : cornerRadius;
+    final double rightTopRadius =
+        (w - nEnd) < cornerRadius ? (w - nEnd) : cornerRadius;
+    final double ctrlOuter = notchHalfWidth * 0.70;
+    final double ctrlInner = notchHalfWidth * 0.68;
 
     final path = Path()
-      ..moveTo(0, topY + cornerRadius)
-      ..quadraticBezierTo(0, topY, cornerRadius, topY)
+      ..moveTo(0, topY + leftTopRadius)
+      ..quadraticBezierTo(0, topY, leftTopRadius, topY)
       ..lineTo(nStart, topY)
       ..cubicTo(
-        cx - 24.0,
+        cx - ctrlOuter,
         topY,
-        cx - 23.0,
+        cx - ctrlInner,
         notchDepth,
         cx,
         notchDepth,
       )
       ..cubicTo(
-        cx + 23.0,
+        cx + ctrlInner,
         notchDepth,
-        cx + 24.0,
+        cx + ctrlOuter,
         topY,
         nEnd,
         topY,
       )
-      ..lineTo(w - cornerRadius, topY)
-      ..quadraticBezierTo(w, topY, w, topY + cornerRadius)
+      ..lineTo(w - rightTopRadius, topY)
+      ..quadraticBezierTo(w, topY, w, topY + rightTopRadius)
       ..lineTo(w, h - cornerRadius)
       ..quadraticBezierTo(w, h, w - cornerRadius, h)
       ..lineTo(cornerRadius, h)
@@ -7093,10 +7908,12 @@ const List<_Facility360Data> _k360Facilities = [
 class _Explore360AndDenahSheet extends StatefulWidget {
   final SavedDestinationModel place;
   final VoidCallback onOpenDetail;
+  final String initialSubTab;
 
   const _Explore360AndDenahSheet({
     required this.place,
     required this.onOpenDetail,
+    this.initialSubTab = '360',
   });
 
   @override
@@ -7104,7 +7921,7 @@ class _Explore360AndDenahSheet extends StatefulWidget {
 }
 
 class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
-  String _subTab = '360'; // '360' | 'denah'
+  late String _subTab; // '360' | 'denah'
   String _selectedDenahType = 'UMKM';
   _Facility360Data? _selectedFacility360;
   bool _isQuickBookingOpen = false;
@@ -7114,6 +7931,12 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
   Timer? _voiceOverTimer;
   double _yaw = 0.0;
   double _pitch = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _subTab = widget.initialSubTab;
+  }
 
   @override
   void dispose() {

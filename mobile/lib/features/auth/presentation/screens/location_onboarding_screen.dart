@@ -16,8 +16,8 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
   bool _isLockingGps = false;
   double _spinBoost = 0.0;
 
-  void _skipToHome() {
-    Navigator.of(context).pushReplacement(
+  void _skipToBeranda() {
+    Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 400),
         pageBuilder: (_, __, ___) => const SavedPlacesScreen(),
@@ -25,6 +25,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
           return FadeTransition(opacity: animation, child: child);
         },
       ),
+      (route) => false,
     );
   }
 
@@ -98,7 +99,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: _skipToHome,
+                          onPressed: _skipToBeranda,
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -236,7 +237,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                         ),
                         const SizedBox(height: 8),
                         TextButton(
-                          onPressed: _skipToHome,
+                          onPressed: _skipToBeranda,
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),

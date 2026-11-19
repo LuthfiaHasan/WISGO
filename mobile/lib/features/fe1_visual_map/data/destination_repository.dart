@@ -86,12 +86,35 @@ class DestinationRepository {
     }
   }
 
-  /// Mengambil scene 360° untuk destinasi (`GET /api/v1/destinations/:id/scenes-360`)
-  Future<List<Scene360Model>> getScenes360(String destinationId) async {
+  /// Mencocokkan ID destinasi lokal (Beranda) dengan ID seeder BE-1 (`/scenes-360`)
+  static String resolveScenes360BackendId(DestinationModel dest) {
+    final id = dest.id.toLowerCase();
+    final name = dest.name.toLowerCase();
+    if (id == 'dest-001' || id.contains('harau') || name.contains('harau')) {
+      return 'dest-001';
+    }
+    if (id == 'dest-002' ||
+        id.contains('jam-gadang') ||
+        name.contains('jam gadang') ||
+        name.contains('ngarai sianok')) {
+      return 'dest-002';
+    }
+    if (id == 'dest-005' ||
+        id.contains('pagaruyung') ||
+        name.contains('pagaruyung')) {
+      return 'dest-005';
+    }
+    return dest.id;
+  }
+
+  /// Mengambil daftar destinasi langsung dari BE-1 beserta status koneksi
+  Future<({List<DestinationModel> items, bool fromBackend})>
+      fetchLiveDestinations() async {
     try {
       final response = await http
-          .get(Uri.parse('$baseUrl/destinations/$destinationId/scenes-360'))
-          .timeout(const Duration(milliseconds: 2500));
+          .get(Uri.parse('$baseUrl/destinations'))
+          .timeout(const Duration(milliseconds: 2200));
+
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
         final List<dynamic> list = (decoded is List)
@@ -99,17 +122,68 @@ class DestinationRepository {
             : (decoded is Map<String, dynamic> && decoded['data'] is List
                 ? decoded['data'] as List<dynamic>
                 : <dynamic>[]);
+
         if (list.isNotEmpty) {
-          return list
-              .map((item) => Scene360Model.fromJson(item as Map<String, dynamic>))
+          final parsed = list
+              .map(
+                (item) =>
+                    DestinationModel.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
+          return (items: parsed, fromBackend: true);
+        }
+      }
+    } catch (_) {
+      // Fallback mulus jika BE-1 tidak sedang berjalan
+    }
+    return (items: List<DestinationModel>.from(_mockDestinations), fromBackend: false);
+  }
+
+  /// Mengambil scene 360° langsung dari BE-1 (`GET /api/v1/destinations/:id/scenes-360`)
+  Future<({List<Scene360Model> scenes, bool fromBackend})> fetchLiveScenes360(
+    String destinationId,
+  ) async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/destinations/$destinationId/scenes-360'))
+          .timeout(const Duration(milliseconds: 2200));
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        List<dynamic> list = const [];
+        if (decoded is List) {
+          list = decoded;
+        } else if (decoded is Map<String, dynamic>) {
+          if (decoded['scenes_360'] is List) {
+            list = decoded['scenes_360'] as List<dynamic>;
+          } else if (decoded['data'] is List) {
+            list = decoded['data'] as List<dynamic>;
+          } else if (decoded['data'] is Map<String, dynamic> &&
+              (decoded['data'] as Map<String, dynamic>)['scenes_360'] is List) {
+            list = (decoded['data'] as Map<String, dynamic>)['scenes_360']
+                as List<dynamic>;
+          }
+        }
+        if (list.isNotEmpty) {
+          return (
+            scenes: list
+                .map(
+                  (item) =>
+                      Scene360Model.fromJson(item as Map<String, dynamic>),
+                )
+                .toList(),
+            fromBackend: true,
+          );
         }
       }
     } catch (_) {}
 
-    // Fallback: cari dari mock destination
-    final dest = _mockDestinations.where((d) => d.id == destinationId).firstOrNull;
-    return dest?.scenes360 ?? const [];
+    return (scenes: const <Scene360Model>[], fromBackend: false);
+  }
+
+  /// Mengambil scene 360° untuk destinasi (`GET /api/v1/destinations/:id/scenes-360`)
+  Future<List<Scene360Model>> getScenes360(String destinationId) async {
+    final res = await fetchLiveScenes360(destinationId);
+    return res.scenes;
   }
 
   /// Mengambil 4 pin hotspot pada kanvas 360° (`GET /api/v1/scenes-360/:id/hotspots`)
@@ -120,11 +194,16 @@ class DestinationRepository {
           .timeout(const Duration(milliseconds: 2500));
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> list = (decoded is List)
-            ? decoded
-            : (decoded is Map<String, dynamic> && decoded['data'] is List
-                ? decoded['data'] as List<dynamic>
-                : <dynamic>[]);
+        List<dynamic> list = const [];
+        if (decoded is List) {
+          list = decoded;
+        } else if (decoded is Map<String, dynamic>) {
+          if (decoded['hotspots'] is List) {
+            list = decoded['hotspots'] as List<dynamic>;
+          } else if (decoded['data'] is List) {
+            list = decoded['data'] as List<dynamic>;
+          }
+        }
         if (list.isNotEmpty) {
           return list
               .map((item) => Hotspot360Model.fromJson(item as Map<String, dynamic>))
@@ -471,6 +550,7 @@ class DestinationRepository {
       category: 'Pasar & Belanja',
       minangText: 'Bara haragonyo ko, Uni / Uda?',
       indonesianText: 'Berapa harganya ini, Kakak?',
+      englishText: 'How much does this cost, Sister / Brother?',
       phoneticGuide: 'ba-ra ha-ra-go-nyo ko, u-ni / u-da?',
       usageContextTip: 'Berbelanja di Pasar Atas / Los Lambuang Bukittinggi',
       dialectNote: 'Darek (Bukittinggi & Payakumbuh)',
@@ -481,6 +561,7 @@ class DestinationRepository {
       category: 'Kuliner',
       minangText: 'Tambuah ciek, Uni!',
       indonesianText: 'Tambah satu porsi nasi/lauk lagi, Kak!',
+      englishText: 'One more serving of rice/dish please, Sister!',
       phoneticGuide: 'tam-bu-ah cie-k, u-ni!',
       usageContextTip: 'Saat bersantap di Rumah Makan Padang / Los Lambuang Kapau',
       dialectNote: 'Umum Minangkabau',
@@ -491,6 +572,7 @@ class DestinationRepository {
       category: 'Sapaan Nagari',
       minangText: 'Tarimo kasih banyak, sanak.',
       indonesianText: 'Terima kasih banyak, saudara/sahabat.',
+      englishText: 'Thank you very much, my friend.',
       phoneticGuide: 'ta-ri-mo ka-sih ba-nyak, sa-nak',
       usageContextTip: 'Ucapan terima kasih santun kepada warga nagari & pemandu',
       dialectNote: 'Luhak Nan Tigo',
@@ -501,6 +583,7 @@ class DestinationRepository {
       category: 'Arah & Navigasi',
       minangText: 'Kama jalan ka Sarasah Bunta, Uda?',
       indonesianText: 'Ke mana arah jalan menuju Air Terjun Sarasah Bunta, Kak?',
+      englishText: 'Which way to Sarasah Bunta Waterfall, Brother?',
       phoneticGuide: 'ka-ma ja-lan ka sa-ra-sah bun-ta, u-da?',
       usageContextTip: 'Menanyakan rute setapak pejalan kaki di Lembah Harau',
       dialectNote: 'Luhak 50 Kota',
@@ -511,6 +594,7 @@ class DestinationRepository {
       category: 'Kuliner',
       minangText: 'Jan padeh bana yo, Da.',
       indonesianText: 'Jangan terlalu pedas ya, Kak.',
+      englishText: 'Please do not make it too spicy, Brother.',
       phoneticGuide: 'jan pa-deh ba-na yo, da',
       usageContextTip: 'Memesan dendeng lambok atau gulai dengan kepedasan sedang',
       dialectNote: 'Padang Pesisir',
@@ -521,6 +605,7 @@ class DestinationRepository {
       category: 'Pasar & Belanja',
       minangText: 'Buliah kurang saketek, Mak?',
       indonesianText: 'Boleh tawar sedikit harganya, Ibu?',
+      englishText: 'Could I get a small discount, Ma\'am?',
       phoneticGuide: 'bu-liah ku-rang sa-ke-tek, mak?',
       usageContextTip: 'Tawar-menawar santun untuk suvenir songket atau kerupuk sanjai',
       dialectNote: 'Darek & Pesisir',
@@ -531,6 +616,7 @@ class DestinationRepository {
       category: 'Sapaan Nagari',
       minangText: 'Salamaik tibo di Ranah Minang, sanak!',
       indonesianText: 'Selamat datang di Tanah Minangkabau, sahabat!',
+      englishText: 'Welcome to Minangkabau Land, friend!',
       phoneticGuide: 'sa-la-maik ti-bo di ra-nah mi-nang, sa-nak!',
       usageContextTip: 'Ucapan salam pembuka saat tiba di desa wisata / homestay',
       dialectNote: 'Resmi Ranah Minang',
@@ -541,6 +627,7 @@ class DestinationRepository {
       category: 'Arah & Navigasi',
       minangText: 'Lai jauah lai ka posko pemandu nagari?',
       indonesianText: 'Apakah masih jauh menuju posko pemandu nagari?',
+      englishText: 'Is it still far to the village guide post?',
       phoneticGuide: 'lai jau-ah lai ka pos-ko pe-man-du na-ga-ri?',
       usageContextTip: 'Mengecek jarak trekking di kawasan hutan Lubuk Nyarai / Harau',
       dialectNote: 'Padang Pariaman',
