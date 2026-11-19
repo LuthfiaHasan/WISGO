@@ -401,7 +401,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   _buildExploreView(),
                   _buildOpenTripView(),
                   _buildPetaView(),
-                  const AudioCultureScreen(embedded: true),
+                  AudioCultureScreen(
+                    embedded: true,
+                    remindedFestivalIds: _remindedFestivalIds,
+                    onToggleReminder: _toggleFestivalReminder,
+                    onNavigateToGps: _navigateToGpsLocation,
+                    festivals: _budayaFestivals,
+                  ),
                   _buildProfileView(),
                 ],
               ),
@@ -2524,29 +2530,31 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'KOLABORASI & CARI BARENGAN',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                      color: Color(0xFF1E5B82),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'KOLABORASI & CARI BARENGAN',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.3,
+                        color: Color(0xFF1E5B82),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Open Trip Sumbar',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.ink,
-                      letterSpacing: -0.4,
+                    SizedBox(height: 2),
+                    Text(
+                      'Open Trip Sumbar',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                        letterSpacing: -0.4,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -2897,92 +2905,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ],
                 ),
               ),
-
-              // 3. Feature Card: Kalender Event & Budaya Sumbar
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.sageBorder),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.ink.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3E8FF),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.event_available_rounded, size: 13, color: Color(0xFF5A3E85)),
-                              SizedBox(width: 4),
-                              Text(
-                                'Agenda & Event',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF5A3E85),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF5A3E85)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Kalender Event & Festival Budaya',
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Lihat jadwal festival budaya, pertunjukan kesenian randai, pacu jawi, dan agenda wisata tahunan resmi di Sumatera Barat.',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.muted,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _openKalenderBudayaModal,
-                        icon: const Icon(Icons.event_note_rounded, size: 16),
-                        label: const Text(
-                          'Buka Kalender Event',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF5A3E85),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -3087,7 +3009,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   // Data Master: Kalender Acara & Festival Budaya Minang
-  static final List<Map<String, dynamic>> _budayaFestivals = [
+  static final List<Map<String, dynamic>> budayaFestivals = [
     {
       'id': 'ev_harau',
       'title': 'Festival Pasa Harau 2026',
@@ -3207,6 +3129,42 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       'tips': 'Wajib mengenakan pakaian sopan dan tertutup. Hormati prosesi sakral dan ikuti arahan tetua adat saat jamuan berlangsung.',
     },
   ];
+
+  static List<Map<String, dynamic>> get _budayaFestivals => budayaFestivals;
+
+  void _toggleFestivalReminder(Map<String, dynamic> ev) {
+    setState(() {
+      final id = ev['id'] as String;
+      if (_remindedFestivalIds.contains(id)) {
+        _remindedFestivalIds.remove(id);
+      } else {
+        _remindedFestivalIds.add(id);
+        _appNotifications.insert(0, {
+          'id': 'notif_${DateTime.now().millisecondsSinceEpoch}',
+          'title': 'Pengingat Aktif: ${ev['title']}',
+          'message': 'Jadwal acara ${ev['date']} di ${ev['location']} telah dipasang. Ketuk untuk panduan rute GPS.',
+          'time': 'Baru saja',
+          'isRead': false,
+          'type': 'festival',
+          'eventId': ev['id'],
+        });
+      }
+    });
+    final isReminded = _remindedFestivalIds.contains(ev['id']);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isReminded
+              ? 'Pengingat aktif! Notifikasi pengingat untuk ${ev['title']} telah dijadwalkan.'
+              : 'Pengingat untuk ${ev['title']} telah dinonaktifkan.',
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+        backgroundColor: isReminded ? AppColors.forest : AppColors.ink,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 
   // Modal: Kalender Acara & Festival Budaya Minang (Dibuka lewat icon kalender di header Beranda)
   void _openKalenderBudayaModal() {
@@ -3865,37 +3823,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 height: 40,
                                 child: OutlinedButton.icon(
                                   onPressed: () {
-                                    setState(() {
-                                      if (isReminded) {
-                                        _remindedFestivalIds.remove(ev['id']);
-                                      } else {
-                                        _remindedFestivalIds.add(ev['id'] as String);
-                                        // Tambahkan notifikasi pengingat ke daftar notifikasi aplikasi
-                                        _appNotifications.insert(0, {
-                                          'id': 'notif_${DateTime.now().millisecondsSinceEpoch}',
-                                          'title': 'Pengingat Aktif: ${ev['title']}',
-                                          'message': 'Jadwal acara ${ev['date']} di ${ev['location']} telah dipasang. Ketuk untuk panduan rute GPS.',
-                                          'time': 'Baru saja',
-                                          'isRead': false,
-                                          'type': 'festival',
-                                          'eventId': ev['id'],
-                                        });
-                                      }
-                                    });
+                                    _toggleFestivalReminder(ev);
                                     setDetailState(() {});
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          isReminded
-                                              ? 'Pengingat untuk ${ev['title']} telah dinonaktifkan.'
-                                              : 'Pengingat aktif! Notifikasi pengingat untuk ${ev['title']} telah dijadwalkan.',
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                                        ),
-                                        backgroundColor: isReminded ? AppColors.ink : AppColors.forest,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
-                                    );
                                   },
                                   icon: Icon(
                                     isReminded ? Icons.check_circle_rounded : Icons.add_alert_rounded,
