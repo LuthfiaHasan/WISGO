@@ -256,3 +256,23 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 		}
 	}
 }
+
+func (r *postgresRepository) FindPending() []models.Destination {
+	return r.FindAllWithSpatial(SpatialFilterParams{
+		IncludePending:     true,
+		VerificationStatus: "pending",
+	})
+}
+
+func (r *postgresRepository) VerifyDestination(id string, status string) (*models.Destination, error) {
+	d, err := r.FindByID(id, false, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	d.VerificationStatus = status
+	d.UpdatedAt = time.Now()
+	_, _ = r.db.Exec(`UPDATE destinations SET updated_at = NOW() WHERE id = $1;`, d.ID)
+
+	return d, nil
+}

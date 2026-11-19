@@ -23,8 +23,9 @@ type Destination struct {
 	DistanceKm    float64   `json:"distance_km"`     // Statistik Keputusan #1 (Jarak dari posisi user / Padang)
 	TravelTimeMin int       `json:"travel_time_min"` // Statistik Keputusan #2 (Estimasi waktu tempuh menit)
 	EstimatedCost float64   `json:"estimated_cost"`  // Statistik Keputusan #4 (Biaya tiket dasar resmi Perda)
-	IsHiddenGem   bool      `json:"is_hidden_gem"`   // Penanda wajib tampil kartu Tips Menjaga Tempat
-	QRPlacardCode string    `json:"qr_placard_code,omitempty"`
+	IsHiddenGem        bool      `json:"is_hidden_gem"`   // Penanda wajib tampil kartu Tips Menjaga Tempat
+	VerificationStatus string    `json:"verification_status,omitempty"` // verified (default), pending (menunggu kurasi admin), rejected
+	QRPlacardCode      string    `json:"qr_placard_code,omitempty"`
 	OpeningHours  string    `json:"opening_hours,omitempty"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
