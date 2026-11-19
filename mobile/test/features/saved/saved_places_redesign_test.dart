@@ -85,4 +85,26 @@ void main() {
     // - Official Perda Fees (REQUEST 1 & 4)
     expect(find.text('RINCIAN BIAYA RESMI'), findsOneWidget);
   });
+
+  testWidgets('Usul Wisata modal opens and renders without unbounded layout error', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 932));
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SavedPlacesScreen(
+          initialTabIndex: 0,
+          initialLoading: false,
+          initialOfflineMode: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Usul Wisata'), findsOneWidget);
+    await tester.tap(find.text('Usul Wisata'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('USUL DESTINASI WISATA BARU'), findsOneWidget);
+    expect(find.text('Isi Contoh Narasi'), findsOneWidget);
+  });
 }

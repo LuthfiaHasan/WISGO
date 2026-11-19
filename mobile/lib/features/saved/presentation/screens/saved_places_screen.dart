@@ -131,7 +131,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // View 2: Real Interactive Sumbar Map State
   String? _selectedPetaDestinationId;
 
-  // Navigation Items
+  // Navigation Items (5 Tabs: Beranda, Open Trip, Peta, Kamus Minang, Profil)
   static const List<Map<String, dynamic>> _navItems = [
     {
       'label': 'Beranda',
@@ -147,6 +147,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       'label': 'Peta',
       'icon': Icons.map_outlined,
       'activeIcon': Icons.map_rounded,
+    },
+    {
+      'label': 'Kamus Minang',
+      'icon': Icons.translate_rounded,
+      'activeIcon': Icons.translate_rounded,
     },
     {
       'label': 'Profil',
@@ -388,14 +393,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 onRetry: () => setState(() => _isOfflineMode = false),
               ),
 
-            // Active Main View (4 Tabs: Beranda, Peta Rute, Tarif Resmi, Profil)
+            // Active Main View (5 Tabs: Beranda, Open Trip, Peta, Kamus Minang, Profil)
             Expanded(
               child: IndexedStack(
-                index: _activeTabIndex,
+                index: _activeTabIndex.clamp(0, _navItems.length - 1),
                 children: [
                   _buildExploreView(),
                   _buildOpenTripView(),
                   _buildPetaView(),
+                  const AudioCultureScreen(embedded: true),
                   _buildProfileView(),
                 ],
               ),
@@ -989,11 +995,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         'fullTitle': 'Kamus & Audio Minang',
         'subtitle': 'Panduan ungkapan bahasa Minang lengkap dengan suara',
         'section': 'Budaya, Keamanan & Paspor',
-        'icon': Icons.menu_book_rounded,
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AudioCultureScreen()),
-            ),
+        'icon': Icons.translate_rounded,
+        'onTap': () => setState(() => _activeTabIndex = 3),
       },
       {
         'label': 'Event',
@@ -6779,9 +6782,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final totalWidth = constraints.maxWidth;
-              final itemWidth = totalWidth / 4;
+              final safeIndex = _activeTabIndex.clamp(0, _navItems.length - 1);
+              final itemWidth = totalWidth / _navItems.length;
               final targetCenterX =
-                  (itemWidth * _activeTabIndex) + (itemWidth / 2);
+                  (itemWidth * safeIndex) + (itemWidth / 2);
 
               return TweenAnimationBuilder<double>(
                 tween: Tween<double>(end: targetCenterX),
@@ -6832,7 +6836,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                             alignment: Alignment.center,
                             child: Icon(
-                              _navItems[_activeTabIndex]['activeIcon']
+                              _navItems[safeIndex]['activeIcon']
                                   as IconData,
                               size: 20,
                               color: AppColors.forest,
@@ -6841,13 +6845,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                       ),
 
-                      // 3. 4 Navigation Columns
+                      // 3. 5 Navigation Columns
                       Positioned.fill(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 14, bottom: 13),
                           child: Row(
                             children: List.generate(_navItems.length, (idx) {
-                              final isSelected = idx == _activeTabIndex;
+                              final isSelected = idx == safeIndex;
                               final item = _navItems[idx];
 
                               return Expanded(
@@ -6866,23 +6870,30 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         opacity: isSelected ? 0.0 : 1.0,
                                         child: Icon(
                                           item['icon'] as IconData,
-                                          size: 21,
+                                          size: 20,
                                           color: AppColors.muted,
                                         ),
                                       ),
                                       const SizedBox(height: 3),
-                                      Text(
-                                        item['label'] as String,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w800
-                                              : FontWeight.w600,
-                                          color: isSelected
-                                              ? AppColors.forest
-                                              : AppColors.muted,
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 2,
+                                        ),
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            item['label'] as String,
+                                            maxLines: 1,
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w600,
+                                              color: isSelected
+                                                  ? AppColors.forest
+                                                  : AppColors.muted,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],

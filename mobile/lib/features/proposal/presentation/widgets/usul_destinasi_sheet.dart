@@ -224,7 +224,13 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildFieldHeader('2. DESKRIPSI & SEJARAH (VOICE OVER):', Icons.record_voice_over_rounded),
+                          Expanded(
+                            child: _buildFieldHeader(
+                              '2. DESKRIPSI & SEJARAH (VOICE OVER):',
+                              Icons.record_voice_over_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           GestureDetector(
                             onTap: _fillSampleNarrative,
                             child: Container(
@@ -304,7 +310,13 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildFieldHeader('6. TITIK KOORDINAT GPS (SPASIAL):', Icons.my_location_rounded),
+                          Expanded(
+                            child: _buildFieldHeader(
+                              '6. TITIK KOORDINAT GPS (SPASIAL):',
+                              Icons.my_location_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           GestureDetector(
                             onTap: _detectCurrentGpsLocation,
                             child: Container(
