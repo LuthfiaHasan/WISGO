@@ -7573,7 +7573,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                             Row(
                               children: [
                                 Text(
-                                  _isPlayingVoiceOver ? 'MEMUTAR SUARA AI SEJARAH' : 'AUDIO NARASI AI SEJARAH',
+                                  _isPlayingVoiceOver ? 'MEMUTAR NARASI BUDAYA' : 'AUDIO NARASI BUDAYA',
                                   style: TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w800,
@@ -7829,7 +7829,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                         Icon(Icons.flash_on_rounded, size: 16, color: AppColors.cream),
                         SizedBox(width: 6),
                         Text(
-                          'Pesan Layanan Cepat 360° (Setengah Layar)',
+                          'Pesan Layanan Cepat',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
@@ -8659,10 +8659,10 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppColors.sageBorder),
                     ),
                     child: const Row(
@@ -8704,10 +8704,10 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     widget.onToggleBookmark();
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: _bookmarked ? AppColors.sage : Colors.white,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _bookmarked ? AppColors.forest : AppColors.sageBorder,
                       ),
@@ -8909,9 +8909,9 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           backgroundColor: AppColors.sage,
                           foregroundColor: AppColors.forest,
                           side: const BorderSide(color: AppColors.sageBorder),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         icon: const Icon(Icons.threed_rotation_rounded, size: 16),
@@ -8923,11 +8923,11 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
-                // Geode Ranking Banner in Detail
+                // Papan Peringkat Penjelajah
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFBF4E4),
                     borderRadius: BorderRadius.circular(14),
@@ -8942,7 +8942,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           color: const Color(0xFFC89242),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.leaderboard_rounded, color: Colors.white, size: 20),
+                        child: const Icon(Icons.leaderboard_rounded, color: Colors.white, size: 18),
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
@@ -8950,11 +8950,11 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Geode Ranking & Papan Peringkat Spasial',
+                              'Papan Peringkat Penjelajah',
                               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8C5C1E)),
                             ),
                             Text(
-                              'Pantau posisi penjelajah & skor geospasial Minang',
+                              'Pantau peringkat & capaian penjelajah',
                               style: TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
                             ),
                           ],
@@ -8973,7 +8973,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           backgroundColor: const Color(0xFF193D22),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
                         child: const Text('Buka', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
@@ -8981,7 +8981,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 8),
 
                 // 1. Lingkup Fasilitas Kawasan Wisata (REQUEST 1)
                 Container(
@@ -9005,14 +9005,14 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                       ),
                       const SizedBox(height: 8),
                       Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: widget.place.facilities.map((fac) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: AppColors.cream,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(color: AppColors.warmBorder),
                             ),
                             child: ConstrainedBox(
@@ -9025,12 +9025,12 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     size: 13,
                                     color: AppColors.forest,
                                   ),
-                                  const SizedBox(width: 4.5),
+                                  const SizedBox(width: 5),
                                   Flexible(
                                     child: Text(
                                       fac,
                                       style: const TextStyle(
-                                        fontSize: 10.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.forest,
                                       ),
@@ -9042,20 +9042,20 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           );
                         }).toList(),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppColors.cream,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.warmBorder),
                         ),
                         child: RichText(
                           text: TextSpan(
                             style: const TextStyle(
                               fontSize: 11,
-                              height: 1.4,
+                              height: 1.45,
                               color: AppColors.muted,
                             ),
                             children: [
@@ -9071,7 +9071,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       GestureDetector(
                         onTap: () {
                           Navigator.pop(context);
@@ -9086,23 +9086,23 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
                             color: AppColors.forest,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.terrain_rounded, color: AppColors.cream, size: 15),
-                              SizedBox(width: 6),
+                              Icon(Icons.terrain_rounded, color: AppColors.cream, size: 16),
+                              SizedBox(width: 8),
                               Flexible(
                                 child: Text(
-                                  'Panduan Medan (Layar 02 FE-1)',
+                                  'Panduan Lengkap Medan & Rute',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.cream,
                                   ),

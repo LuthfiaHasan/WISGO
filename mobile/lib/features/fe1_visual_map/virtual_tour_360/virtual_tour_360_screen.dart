@@ -361,7 +361,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
               ]
               else if (hotspot.type == 'mitra')
                 PillButton(
-                  text: 'Buka Quick Booking Mitra (FE-2 Escrow)',
+                  text: 'Pesan Layanan Mitra Terverifikasi',
                   icon: const Icon(
                     Icons.verified_user_outlined,
                     color: Colors.white,
@@ -373,7 +373,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Titik integrasi dengan Quick Booking Drawer (FE-2).',
+                          'Layanan mitra lokal terverifikasi siap dipesan.',
                         ),
                       ),
                     );

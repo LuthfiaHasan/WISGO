@@ -71,7 +71,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
           'orderItems': widget.orderItems,
           'paymentMethod': _selectedMethod,
           'date': '16 Nov 2026 • 14:15 WIB',
-          'status': 'LUNAS (ESCROW TERVERIFIKASI)',
+          'status': 'LUNAS (TERVERIFIKASI)',
         });
       }
     });
@@ -670,8 +670,8 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '*** LUNAS VIA ESCROW RESMI ***\nTunjukkan struk ini pada petugas loket resmi nagari',
-                      style: TextStyle(fontSize: 8.5, color: AppColors.brush, height: 1.3),
+                      'LUNAS TERVERIFIKASI RESMI\nTunjukkan bukti pembayaran ini pada petugas loket resmi nagari',
+                      style: TextStyle(fontSize: 9, color: AppColors.brush, height: 1.3),
                       textAlign: TextAlign.center,
                     ),
                   ],

@@ -139,11 +139,11 @@ class _LiveGroupTrackingSheetState extends State<LiveGroupTrackingSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'PANTAU LOKASI ROMBONGAN (LIVE GPS)',
+                      'PANTAU LOKASI ROMBONGAN',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 1.4,
+                        letterSpacing: 1.0,
                         color: AppColors.brush,
                       ),
                     ),
