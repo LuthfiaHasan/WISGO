@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/constants/colors.dart';
 import '../data/destination_repository.dart';
+import 'widgets/sumbar_real_map_widget.dart';
 
 /// Layar 03 · Jelajah Peta Interaktif, Cari Searah Rute (Shunlu), Peta Mikro & Kompas Gunung
 /// Pilar 2: Navigasi Cerdas & Algoritma Amap
@@ -20,6 +21,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
   String _selectedMicroFilter = 'Semua';
   final MapController _mapController = MapController();
   Map<String, dynamic>? _selectedPoi;
+  SumbarMapLayer _activeMapLayer = SumbarMapLayer.jalan;
 
   // Geofence GPS Simulation (Pilar 2 — Radius <= 15m)
   bool _isGeofenceActive = false;
@@ -681,9 +683,16 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate: _activeMapLayer.tileUrl,
                       userAgentPackageName: 'com.wisgo.rancakin',
+                      maxZoom: 18,
                     ),
+                    if (_activeMapLayer.labelOverlayUrl != null)
+                      TileLayer(
+                        urlTemplate: _activeMapLayer.labelOverlayUrl!,
+                        userAgentPackageName: 'com.wisgo.rancakin',
+                        maxZoom: 18,
+                      ),
                     PolylineLayer(
                       polylines: [
                         if (!_isMicroMapMode)
@@ -748,6 +757,63 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                       }).toList(),
                     ),
                   ],
+                ),
+                // Map Layer Switcher (Jalan / Satelit / Medan)
+                Positioned(
+                  top: 56,
+                  right: 14,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.16),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: SumbarMapLayer.values.map((layer) {
+                        final active = _activeMapLayer == layer;
+                        return GestureDetector(
+                          onTap: () => setState(() => _activeMapLayer = layer),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: active ? AppColors.green800 : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  layer.icon,
+                                  size: 12,
+                                  color: active ? Colors.white : AppColors.green800,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  layer.label,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: active ? Colors.white : AppColors.ink900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
                 Positioned(
                   top: 12,

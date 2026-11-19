@@ -7,6 +7,7 @@ class QrisPaymentSheet extends StatefulWidget {
   final List<Map<String, dynamic>> orderItems;
   final String destinationTitle;
   final VoidCallback onPaymentSuccess;
+  final void Function(Map<String, dynamic> receipt)? onReceiptGenerated;
 
   const QrisPaymentSheet({
     super.key,
@@ -14,6 +15,7 @@ class QrisPaymentSheet extends StatefulWidget {
     required this.orderItems,
     required this.destinationTitle,
     required this.onPaymentSuccess,
+    this.onReceiptGenerated,
   });
 
   @override
@@ -62,6 +64,15 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
           _isPaid = true;
         });
         widget.onPaymentSuccess();
+        widget.onReceiptGenerated?.call({
+          'transactionId': _escrowCode,
+          'destinationTitle': widget.destinationTitle,
+          'totalAmount': widget.totalAmount,
+          'orderItems': widget.orderItems,
+          'paymentMethod': _selectedMethod,
+          'date': '16 Nov 2026 • 14:15 WIB',
+          'status': 'LUNAS (ESCROW TERVERIFIKASI)',
+        });
       }
     });
   }
@@ -378,7 +389,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
+              const Text(
                 'Dana aman di Rekening Escrow Wisgo Nagari',
                 style: TextStyle(fontSize: 11, color: AppColors.muted),
               ),
@@ -394,10 +405,44 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.sageBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.sage,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.verified_rounded, size: 12, color: AppColors.forest),
+                        SizedBox(width: 4),
+                        Text(
+                          'STRUK RESMI PEMDA',
+                          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Text(
+                    '16 Nov 2026 • 14:15 WIB',
+                    style: TextStyle(fontSize: 10, color: AppColors.muted, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -410,19 +455,27 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Tujuan Wisata', style: TextStyle(fontSize: 11, color: AppColors.muted)),
-                  Text(widget.destinationTitle, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink)),
+                  Expanded(
+                    child: Text(
+                      widget.destinationTitle,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               const Divider(height: 14),
-              const Text('Rincian Layanan:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink)),
+              const Text('Rincian Layanan Resmi:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink)),
               const SizedBox(height: 6),
               ...widget.orderItems.map((item) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${item['name']} x${item['qty']}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
-                        Text('Rp ${_formatNumber(item['total'] as int)}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.forest)),
+                        Text(' x', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        Text('Rp ', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.forest)),
                       ],
                     ),
                   )),
@@ -431,28 +484,297 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Total Pembayaran', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink)),
-                  Text('Rp ${_formatNumber(widget.totalAmount)}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.forest)),
+                  Text('Rp ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.forest)),
                 ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F5F1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Terlindungi Rekening Escrow Nagari. Dijamin bebas pungutan liar di pintu gerbang.',
+                  style: TextStyle(fontSize: 9.5, color: AppColors.brush),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
 
+        // Action Buttons: Print Struk and Close
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+          child: ElevatedButton.icon(
+            onPressed: () => _showPrintOptionsDialog(context),
+            icon: const Icon(Icons.print_rounded, size: 18),
+            label: const Text('Cetak / Print Struk Resmi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.forest,
-              foregroundColor: AppColors.cream,
+              backgroundColor: const Color(0xFF193D22),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
             ),
-            child: const Text('Selesai & Tutup Bukti Bayar', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.creamSubtle,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.sageBorder),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 15, color: AppColors.forest),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Struk ini tersimpan di Profil Anda dan dapat dibuka kembali serta dicetak kapan saja.',
+                  style: TextStyle(fontSize: 10, color: AppColors.forest, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.forest,
+              side: const BorderSide(color: AppColors.forest, width: 1.2),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Selesai & Tutup Bukti Bayar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           ),
         ),
       ],
+    );
+  }
+
+  void _showPrintOptionsDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.print_rounded, color: AppColors.forest, size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        'Cetak Struk Resmi Wisgo',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Thermal Receipt Preview Box
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.warmBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      '=== STRUK RESMI TIKET NAGARI ===',
+                      style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                    ),
+                    const Text(
+                      'DINAS PARIWISATA PROV. SUMATERA BARAT',
+                      style: TextStyle(fontSize: 9, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'No: ',
+                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Destinasi: ',
+                      style: const TextStyle(fontSize: 9.5),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Divider(height: 12, thickness: 0.8, color: Colors.black26),
+                    ...widget.orderItems.map((item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 1.5),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(' x', style: const TextStyle(fontSize: 9)),
+                              Text('Rp ', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        )),
+                    const Divider(height: 12, thickness: 0.8, color: Colors.black26),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('TOTAL PEMBAYARAN:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text('Rp ', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.forest)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '*** LUNAS VIA ESCROW RESMI ***\nTunjukkan struk ini pada petugas loket resmi nagari',
+                      style: TextStyle(fontSize: 8.5, color: AppColors.brush, height: 1.3),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'PILIH METODE PENCETAKAN:',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+              ),
+              const SizedBox(height: 8),
+              _buildPrintOptionTile(
+                icon: Icons.bluetooth_audio_rounded,
+                title: 'Printer Kasir Thermal Bluetooth (POS)',
+                subtitle: 'Koneksikan ke printer thermal 58mm / 80mm petugas',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showPrintSuccessFeedback('Mengirim struk ke Printer Thermal Bluetooth... Berhasil dicetak!');
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildPrintOptionTile(
+                icon: Icons.picture_as_pdf_rounded,
+                title: 'Simpan / Cetak Dokumen PDF Resmi',
+                subtitle: 'Unduh file PDF struk resmi dengan QR Code Perda',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showPrintSuccessFeedback('Berkas PDF Struk Resmi berhasil dibuat & siap dicetak.');
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildPrintOptionTile(
+                icon: Icons.share_rounded,
+                title: 'Bagikan Bukti Struk ke WhatsApp',
+                subtitle: 'Kirim tautan struk resmi ke kontak rombongan',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showPrintSuccessFeedback('Tautan struk resmi siap dibagikan via WhatsApp!');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPrintOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.warmBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.sage,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 20, color: AppColors.forest),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.ink)),
+                  Text(subtitle, style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: AppColors.muted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPrintSuccessFeedback(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message, style: const TextStyle(fontSize: 11.5))),
+          ],
+        ),
+        backgroundColor: AppColors.forest,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 

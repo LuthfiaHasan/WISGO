@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:panorama_viewer/panorama_viewer.dart';
 import '../../../core/constants/colors.dart';
@@ -39,6 +42,75 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   bool _isVrMode = false;
   double _yawAngle = 20.0;
   double _pitchAngle = -5.0;
+  double _voiceOverProgress = 0.0;
+  Timer? _voiceOverTimer;
+  bool _isNarrationExpanded = false;
+
+  @override
+  void dispose() {
+    _voiceOverTimer?.cancel();
+    super.dispose();
+  }
+
+  void _toggleAudioNarration([Hotspot360Model? hotspot]) {
+    setState(() {
+      _isSpatialAudioPlaying = !_isSpatialAudioPlaying;
+      if (_isSpatialAudioPlaying) {
+        if (hotspot != null) {
+          _yawAngle = hotspot.yaw.toDouble();
+          _pitchAngle = hotspot.pitch.toDouble();
+        }
+        _voiceOverTimer?.cancel();
+        _voiceOverTimer = Timer.periodic(const Duration(milliseconds: 200), (t) {
+          if (!mounted) return;
+          setState(() {
+            _voiceOverProgress += 0.015;
+            if (_voiceOverProgress >= 1.0) {
+              _voiceOverProgress = 0.0;
+              _isSpatialAudioPlaying = false;
+              t.cancel();
+            }
+          });
+        });
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.pinAudioEmas,
+            duration: const Duration(seconds: 2),
+            content: Row(
+              children: [
+                const Icon(Icons.graphic_eq, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Memutar Suara AI: Sejarah ${_dest.name}...',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        _voiceOverTimer?.cancel();
+      }
+    });
+  }
+
+  String _getHistoricalNarration() {
+    final title = _dest.name.toLowerCase();
+    if (title.contains('lubuk hitam') || title.contains('cindakir')) {
+      return 'Air Terjun Lubuk Hitam (Cindakir) memiliki formasi langka tiga tingkatan air terjun alami di kawasan hutan lindung Bungus Teluk Kabung. Berdasarkan penuturan tetua adat nagari, kolam alami pada tingkatan ketiga konon merupakan tempat pemandian dan meditasi para pemuka adat sebelum menempuh jalur maritim pesisir barat Sumatera pada abad ke-16.';
+    } else if (title.contains('harau')) {
+      return 'Lembah Harau merupakan lembah cadas subur di Kabupaten Lima Puluh Kota yang dikelilingi tebing granit raksasa setinggi 100 hingga 500 meter. Penelitian geologis membuktikan lembah ini jutaan tahun lalu merupakan dasar samudera purba yang terangkat. Dalam sejarah lisan Minangkabau, lembah ini menjadi benteng alam pertahanan nagari yang kokoh dan pusat permukiman suku-suku Luhak Limopuluah.';
+    } else if (title.contains('sianok')) {
+      return 'Ngarai Sianok adalah lembah patahan curam sepanjang 15 kilometer dengan dinding vertikal hingga 120 meter yang terbentuk dari sesar geser aktif Semangko. Dalam sejarah perjuangan masyarakat Bukittinggi, ngarai ini menjadi jalur persembunyian rahasia dan penghubung peradaban nagari Koto Gadang yang melegenda.';
+    } else if (title.contains('singkarak')) {
+      return 'Danau Singkarak terbentang luas di antara Solok dan Tanah Datar, menjadi habitat alami ikan bilih endemik dunia. Danau tektonik ini menyimpan sejarah jalur perdagangan tradisional garam dan rempah-rempah dari pedalaman Minangkabau menuju pesisir Selat Malaka sejak masa kerajaan Melayu Dharmasraya.';
+    } else {
+      return '${_dest.name} di wilayah ${_dest.cityRegency}: ${_dest.description} Tempat ini menyimpan cerita turun-temurun masyarakat lokal mengenai kearifan menjaga hutan adat, kelestarian mata air pegunungan, serta filosofi adat Minangkabau "Alam Takambang Jadi Guru".';
+    }
+  }
 
   Image _buildPanoramaImage() {
     final scenes = _dest.scenes360;
@@ -233,24 +305,60 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                 ),
               ),
               const SizedBox(height: 20),
-              if (hotspot.type == 'audio')
+              if (hotspot.type == 'audio') ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCF5E5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.pinAudioEmas.withValues(alpha: 0.4)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.record_voice_over_rounded, color: AppColors.pinAudioEmas, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isSpatialAudioPlaying ? 'Sedang Memutar Narasi AI' : 'Narasi AI Budaya Minang',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.pinAudioEmas,
+                            ),
+                          ),
+                          if (_isSpatialAudioPlaying) ...[
+                            const SizedBox(width: 8),
+                            const Icon(Icons.graphic_eq, color: AppColors.pinAudioEmas, size: 16),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _getHistoricalNarration(),
+                        style: const TextStyle(fontSize: 12.5, color: AppColors.ink900, height: 1.45),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 PillButton(
                   text: _isSpatialAudioPlaying
-                      ? 'Hentikan Audio Budaya 360°'
-                      : 'Putar Narasi & Saluang 360°',
+                      ? 'Hentikan Audio Suara AI'
+                      : 'Putar Suara AI Sejarah Tempat',
                   icon: Icon(
-                    _isSpatialAudioPlaying ? Icons.stop : Icons.volume_up,
+                    _isSpatialAudioPlaying ? Icons.pause_circle_filled_rounded : Icons.play_arrow_rounded,
                     color: Colors.white,
-                    size: 18,
+                    size: 20,
                   ),
                   backgroundColor: AppColors.pinAudioEmas,
                   onPressed: () {
-                    setState(() {
-                      _isSpatialAudioPlaying = !_isSpatialAudioPlaying;
-                    });
+                    _toggleAudioNarration(hotspot);
                     Navigator.pop(ctx);
                   },
-                )
+                ),
+              ]
               else if (hotspot.type == 'mitra')
                 PillButton(
                   text: 'Buka Quick Booking Mitra (FE-2 Escrow)',
@@ -353,6 +461,79 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     );
   }
 
+  Widget _buildDesktopPanoramaFallback() {
+    final double alignX = (_yawAngle % 360 - 180) / 180.0;
+    return GestureDetector(
+      onPanUpdate: (details) {
+        setState(() {
+          _yawAngle += details.delta.dx * 0.45;
+          _pitchAngle = (_pitchAngle - details.delta.dy * 0.25).clamp(-45.0, 45.0);
+        });
+      },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/panorama_sumbar_default.jpg',
+              fit: BoxFit.cover,
+              alignment: Alignment(alignX, (_pitchAngle / 45.0).clamp(-1.0, 1.0)),
+              errorBuilder: (_, __, ___) => Container(
+                color: AppColors.ink900,
+                child: const Center(
+                  child: Icon(Icons.panorama_photosphere, color: Colors.white24, size: 80),
+                ),
+              ),
+            ),
+          ),
+          ..._currentHotspots.map((hotspot) {
+            double diff = (hotspot.yaw - _yawAngle) % 360;
+            if (diff > 180) diff -= 360;
+            if (diff < -180) diff += 360;
+            if (diff.abs() > 65) return const SizedBox.shrink();
+
+            final w = MediaQuery.of(context).size.width;
+            final h = MediaQuery.of(context).size.height;
+            final double posX = (w / 2) + (diff / 65.0) * (w / 2 * 0.85);
+            final double posY = (h * 0.38) + (_pitchAngle * 2.0);
+            final color = _pinColor(hotspot.type);
+
+            return Positioned(
+              left: posX - 22,
+              top: posY - 22,
+              child: GestureDetector(
+                onTap: () {
+                  if (hotspot.type == 'audio') {
+                    _toggleAudioNarration(hotspot);
+                  } else {
+                    _showHotspotSheet(hotspot);
+                  }
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(_pinIcon(hotspot.type), color: Colors.white, size: 20),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -418,8 +599,11 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
           : Stack(
               fit: StackFit.expand,
               children: [
-                // 1. VIEWER PANORAMA 360° SUNGGUHAN (EQUIRECTANGULAR + GYROSCOPE)
-                PanoramaViewer(
+                // 1. VIEWER PANORAMA 360° SUNGGUHAN (EQUIRECTANGULAR + GYROSCOPE + DESKTOP RESILIENT)
+                if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux))
+                  _buildDesktopPanoramaFallback()
+                else
+                  PanoramaViewer(
                   sensorControl:
                       _isGyroEnabled ? SensorControl.orientation : SensorControl.none,
                   animSpeed: 0.2,
@@ -534,6 +718,135 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                   ),
                 ),
 
+          // 2.5 FLOATING AI VOICE OVER HISTORICAL STORYTELLING BAR
+          if (_isSpatialAudioPlaying)
+            Positioned(
+              top: 72,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.ink900.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.pinAudioEmas, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _toggleAudioNarration(),
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: const BoxDecoration(
+                              color: AppColors.pinAudioEmas,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.pause_rounded, color: Colors.white, size: 22),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Text(
+                                    'MEMUTAR SUARA AI SEJARAH',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
+                                      color: AppColors.pinAudioEmas,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Icon(Icons.graphic_eq_rounded, size: 14, color: AppColors.pinAudioEmas),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Sejarah ${_dest.name}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(() => _isNarrationExpanded = !_isNarrationExpanded),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              _isNarrationExpanded ? 'Tutup' : 'Teks',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: _voiceOverProgress,
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.pinAudioEmas),
+                        minHeight: 3.5,
+                      ),
+                    ),
+                    if (_isNarrationExpanded) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 120),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.40),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: SingleChildScrollView(
+                          child: Text(
+                            _getHistoricalNarration(),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.white70,
+                              height: 1.45,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
           // 3. PANEL DAFTAR 4 PIN INTERAKTIF
           Positioned(
             left: 16,
@@ -583,11 +896,20 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                   const SizedBox(height: 12),
                   ..._currentHotspots.map((hotspot) {
                     final color = _pinColor(hotspot.type);
+                    final isAudio = hotspot.type == 'audio';
+                    final isAudioPlaying = isAudio && _isSpatialAudioPlaying;
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(14),
-                        onTap: () => _showHotspotSheet(hotspot),
+                        onTap: () {
+                          if (isAudio) {
+                            _toggleAudioNarration(hotspot);
+                          } else {
+                            _showHotspotSheet(hotspot);
+                          }
+                        },
                         child: Container(
                           constraints: const BoxConstraints(minHeight: 44),
                           padding: const EdgeInsets.symmetric(
@@ -595,9 +917,12 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: isAudioPlaying ? const Color(0xFFFCF5E5) : Colors.white,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: color.withValues(alpha: 0.35)),
+                            border: Border.all(
+                              color: isAudioPlaying ? AppColors.pinAudioEmas : color.withValues(alpha: 0.35),
+                              width: isAudioPlaying ? 2 : 1,
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -605,7 +930,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                                 radius: 16,
                                 backgroundColor: color,
                                 child: Icon(
-                                  _pinIcon(hotspot.type),
+                                  isAudioPlaying ? Icons.graphic_eq : _pinIcon(hotspot.type),
                                   color: Colors.white,
                                   size: 16,
                                 ),
@@ -617,23 +942,35 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                                   children: [
                                     Text(
                                       hotspot.title,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.ink900,
+                                        color: isAudioPlaying ? AppColors.pinAudioEmas : AppColors.ink900,
                                       ),
                                     ),
                                     Text(
-                                      '${_pinBadgeLabel(hotspot.type)} · Pitch ${hotspot.pitch}°, Yaw ${hotspot.yaw}°',
-                                      style: const TextStyle(
+                                      isAudioPlaying
+                                          ? 'Sedang Memutar: Suara AI Sejarah Tempat (Ketuk Jeda)'
+                                          : (isAudio
+                                              ? 'Pin Audio Budaya (Emas) · Suara AI Sejarah Tempat'
+                                              : '${_pinBadgeLabel(hotspot.type)} · Pitch ${hotspot.pitch}°, Yaw ${hotspot.yaw}°'),
+                                      style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.black54,
+                                        fontWeight: isAudioPlaying ? FontWeight.w600 : FontWeight.normal,
+                                        color: isAudioPlaying ? AppColors.pinAudioEmas : Colors.black54,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Icon(Icons.chevron_right, color: color),
+                              if (isAudio)
+                                Icon(
+                                  isAudioPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
+                                  color: AppColors.pinAudioEmas,
+                                  size: 24,
+                                )
+                              else
+                                Icon(Icons.chevron_right, color: color),
                             ],
                           ),
                         ),

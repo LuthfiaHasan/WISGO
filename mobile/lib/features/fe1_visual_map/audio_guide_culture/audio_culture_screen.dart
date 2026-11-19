@@ -3,9 +3,11 @@ import '../../../core/constants/colors.dart';
 import '../data/destination_repository.dart';
 import '../models/destination_model.dart';
 
-/// Modul FE-1: Kamus Saku Audio Minang, Kalender Budaya & Katalog Pakaian Adat (Pilar 1)
+/// Modul FE-1: Kamus Saku Audio Minang & Kalender Budaya (Pilar 1)
 class AudioCultureScreen extends StatefulWidget {
-  const AudioCultureScreen({super.key});
+  final bool embedded;
+
+  const AudioCultureScreen({super.key, this.embedded = false});
 
   @override
   State<AudioCultureScreen> createState() => _AudioCultureScreenState();
@@ -24,7 +26,6 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
 
   List<MinangPhraseModel> _phrases = [];
   List<CulturalEventModel> _culturalEvents = [];
-  List<TraditionalAttireModel> _attires = [];
   bool _isLoading = true;
 
   static const List<String> _phraseCategories = [
@@ -38,7 +39,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _loadCultureData();
   }
 
@@ -52,13 +53,11 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
     setState(() => _isLoading = true);
     final phrases = await _repository.getCulturePhrases();
     final events = await _repository.getCulturalEvents();
-    final attires = _repository.getTraditionalAttires();
 
     if (!mounted) return;
     setState(() {
       _phrases = phrases;
       _culturalEvents = events;
-      _attires = attires;
       _isLoading = false;
     });
   }
@@ -137,7 +136,12 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
     return Scaffold(
       backgroundColor: AppColors.cream100,
       appBar: AppBar(
-        title: const Text('Kamus Saku Audio & Budaya Minang'),
+        automaticallyImplyLeading: !widget.embedded,
+        title: Text(
+          widget.embedded
+              ? 'Kamus Minang & Budaya'
+              : 'Kamus Saku Audio & Budaya Minang',
+        ),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.green800,
@@ -146,9 +150,8 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
           unselectedLabelColor: Colors.black54,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
-            Tab(text: 'Kamus Audio'),
+            Tab(text: 'Kamus Audio Minang'),
             Tab(text: 'Kalender Budaya'),
-            Tab(text: 'Pakaian Adat'),
           ],
         ),
       ),
@@ -159,7 +162,6 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
               children: [
                 _buildKamusAudioTab(),
                 _buildKalenderBudayaTab(),
-                _buildPakaianAdatTab(),
               ],
             ),
     );
@@ -181,7 +183,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
     }).toList();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, widget.embedded ? 124 : 32),
       children: [
         // BANNER INTRODUKSI
         Container(
@@ -477,7 +479,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
   // ===========================================================================
   Widget _buildKalenderBudayaTab() {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, widget.embedded ? 124 : 32),
       children: [
         Container(
           padding: const EdgeInsets.all(16),
@@ -604,155 +606,6 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                   Text(
                     evt.description,
                     style: const TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.4),
-                  ),
-                ],
-              ),
-            )),
-      ],
-    );
-  }
-
-  // ===========================================================================
-  // TAB 3: KATALOG PAKAIAN ADAT MINANGKABAU (MINGGU 4)
-  // ===========================================================================
-  Widget _buildPakaianAdatTab() {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.checkroom_rounded, color: AppColors.indigo500, size: 30),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Katalog Falsafah Pakaian Adat',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.ink900,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Simbol kebesaran adat Minangkabau: Tengkuluk Tanduk, Saluak Deta, Baju Kurung Basiba & Suntiang.',
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        ..._attires.map((attire) => Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Foto Pakaian Adat
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    child: Image.network(
-                      attire.imageUrl,
-                      height: 150,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 120,
-                        color: AppColors.sage100,
-                        child: const Center(
-                          child: Icon(Icons.image, color: AppColors.green800, size: 40),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              attire.userType,
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.coral500,
-                              ),
-                            ),
-                            Text(
-                              attire.regency,
-                              style: const TextStyle(fontSize: 11, color: Colors.black54),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          attire.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.ink900,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          attire.philosophy,
-                          style: const TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.4),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Unsur Pakaian Adat:',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54),
-                        ),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: attire.elements.map((el) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                              decoration: BoxDecoration(
-                                color: AppColors.sage100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                el,
-                                style: const TextStyle(fontSize: 11, color: AppColors.green800, fontWeight: FontWeight.w600),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),

@@ -53,12 +53,18 @@ class UserReview {
   final double rating;
   final String date;
   final String comment;
+  final String? photoUrl;
+  final String? realLocation;
+  final bool isGpsVerified;
 
   const UserReview({
     required this.author,
     required this.rating,
     required this.date,
     required this.comment,
+    this.photoUrl,
+    this.realLocation,
+    this.isGpsVerified = true,
   });
 }
 
@@ -171,6 +177,10 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
         date: '2 hari lalu',
         comment:
             'Air terjun 3 tingkat sangat asri dan sejuk. Parkir motor resmi 5 ribu aman dijaga warga pemuda setempat.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.9982, 100.4321 • Spot Tingkat 2 (< 100m)',
+        isGpsVerified: true,
       ),
       UserReview(
         author: 'Nurul Aisyah',
@@ -178,6 +188,10 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
         date: '1 minggu lalu',
         comment:
             'Warung UMKM dekat pos 1 menyajikan goreng pisang dan kopi hangat dengan harga wajar tanpa getok.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.9985, 100.4325 • Pos Retribusi 1',
+        isGpsVerified: true,
       ),
       UserReview(
         author: 'Fajar Pratama',
@@ -185,6 +199,10 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
         date: '2 minggu lalu',
         comment:
             'Tersedia toilet dan bilas air bersih setelah bermain air. Sangat membantu melihat denah lokasi sebelum naik.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.9980, 100.4318 • Gazebo Bilas Air',
+        isGpsVerified: true,
       ),
     ],
     denahPoints: [
@@ -1236,6 +1254,294 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
         official: 'Rp 25.000 / set',
         fairMax: 'Rp 35.000',
         type: 'Batas Wajar',
+      ),
+    ],
+  ),
+  SavedDestinationModel(
+    id: 'istano-basa-pagaruyung',
+    baroIndex: 8,
+    region: 'Tanah Datar',
+    subRegion: 'Batusangkar, Kabupaten Tanah Datar',
+    natureType: 'Budaya & Sejarah',
+    categoryTag: 'Ikon Budaya • Istana Megah Minangkabau',
+    title: 'Istano Basa Pagaruyung & Budaya Minang',
+    distance: '98 km Timur Laut Kota Padang',
+    distanceKm: 98.0,
+    duration: '2 jam 30 mnt via Lembah Anai & Padang Panjang',
+    terrainNote:
+        'Akses jalan raya aspal mulus utama Padang-Batusangkar, area pelataran datar dan ramah disabilitas.',
+    imageUrl:
+        'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=900&q=80',
+    perdaRef: 'Perda Kab. Tanah Datar No. 2 Tahun 2024',
+    rating: 4.9,
+    reviewsCount: 420,
+    facilities: [
+      'Pelataran Parkir Bus & Mobil Luas',
+      'Sentra UMKM Sewa Baju Adat Minang',
+      'Toilet Bersih Kompleks Istana',
+      'Musholla Megah Kawasan Istano',
+      'Loket Karcis Resmi Pemkab Tanah Datar',
+    ],
+    reviews: [
+      UserReview(
+        author: 'Syahrul Ramadhan',
+        rating: 5.0,
+        date: '3 hari lalu',
+        comment:
+            'Istana kayu berukir megah 3 lantai! Sewa baju adat lengkap suntiang hanya Rp 35.000 resmi tertera di loket.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1596402184320-417e7178b2cd?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.4712, 100.6214 • Pelataran Utama (<50m)',
+        isGpsVerified: true,
+      ),
+      UserReview(
+        author: 'Rina Marlina',
+        rating: 4.8,
+        date: '1 minggu lalu',
+        comment:
+            'Sangat edukatif untuk keluarga. Karcis masuk Rp 15.000 sudah termasuk asuransi Jasa Raharja resmi.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.4715, 100.6218 • Loket Gerbang Barat',
+        isGpsVerified: true,
+      ),
+    ],
+    denahPoints: [
+      DenahPoint(
+        category: 'PARKIR',
+        title: 'Area Parkir Bus Wisata & Mobil Pribadi',
+        description: 'Kawasan parkir aspal luas dengan petugas Dishub Tanah Datar',
+        x: 20,
+        y: 82,
+      ),
+      DenahPoint(
+        category: 'LOKET',
+        title: 'Loket Karcis Gerbang Utama Istana',
+        description: 'Pembayaran tiket resmi Perda Kab. Tanah Datar',
+        x: 35,
+        y: 72,
+      ),
+      DenahPoint(
+        category: 'UMKM',
+        title: 'Sentra Pakaian Adat & Cenderamata Minang',
+        description: 'Sewa baju Kurung Basiba, Deta, dan Songket Pandai Sikek',
+        x: 55,
+        y: 60,
+      ),
+      DenahPoint(
+        category: 'TOILET',
+        title: 'Toilet Bersih Kompleks Istana',
+        description: 'Fasilitas sanitasi resmi pengelola Dispar',
+        x: 45,
+        y: 68,
+      ),
+      DenahPoint(
+        category: 'MUSHOLLA',
+        title: 'Musholla Istano Basa',
+        description: 'Tempat ibadah bersih di samping taman istana',
+        x: 65,
+        y: 48,
+      ),
+    ],
+    verticalFees: [
+      VerticalFeeItem(
+        label: 'Tiket Masuk Dewasa Domestik',
+        sub: 'Perda Kab. Tanah Datar No. 2/2024',
+        price: 'Rp 15.000',
+      ),
+      VerticalFeeItem(
+        label: 'Retribusi Parkir Mobil (Roda 4)',
+        sub: 'Karcis resmi Dishub Batusangkar',
+        price: 'Rp 5.000',
+      ),
+      VerticalFeeItem(
+        label: 'Retribusi Parkir Motor (Roda 2)',
+        sub: 'Area parkir berpagar gerbang',
+        price: 'Rp 3.000',
+      ),
+      VerticalFeeItem(
+        label: 'Sewa Pakaian Adat Minang Lengkap',
+        sub: 'Baju Kurung / Deta + Aksesoris Berfoto',
+        price: 'Rp 35.000',
+      ),
+    ],
+    calcRates: CalcRates(tiket: 15000, motor: 3000, mobil: 5000),
+    tariffs: [
+      TariffItem(
+        cat: 'TIKET',
+        name: 'Tiket Masuk Kawasan Istano Basa Pagaruyung',
+        note: 'Termasuk akses lantai 1–3 dan anjungan',
+        official: 'Rp 15.000 / org',
+        fairMax: 'Rp 15.000',
+        type: 'Resmi Pemda',
+      ),
+      TariffItem(
+        cat: 'PARKIR',
+        name: 'Retribusi Parkir Mobil Pribadi (Roda 4)',
+        note: 'Halaman parkir aspal pelataran',
+        official: 'Rp 5.000 / unit',
+        fairMax: 'Rp 5.000',
+        type: 'Karcis Dishub',
+      ),
+      TariffItem(
+        cat: 'PARKIR',
+        name: 'Retribusi Parkir Sepeda Motor (Roda 2)',
+        note: 'Area parkir motor berpaving',
+        official: 'Rp 3.000 / unit',
+        fairMax: 'Rp 3.000',
+        type: 'Karcis Dishub',
+      ),
+      TariffItem(
+        cat: 'FASILITAS',
+        name: 'Sewa Pakaian Adat Minang Lengkap Suntiyang',
+        note: 'Termasuk aksesoris lengkap untuk foto',
+        official: 'Rp 35.000 / stel',
+        fairMax: 'Rp 45.000',
+        type: 'Standar Pokdarwis',
+      ),
+    ],
+  ),
+  SavedDestinationModel(
+    id: 'danau-maninjau',
+    baroIndex: 9,
+    region: 'Kabupaten Agam',
+    subRegion: 'Tanjung Raya, Kabupaten Agam',
+    natureType: 'Danau & Pegunungan',
+    categoryTag: 'Danau Vulkanik • Panorama Kelok 44',
+    title: 'Danau Maninjau & Panorama Kelok 44',
+    distance: '115 km Barat Laut Kota Padang',
+    distanceKm: 115.0,
+    duration: '3 jam perjalanan via Bukittinggi / Matur',
+    terrainNote:
+        'Turunan 44 tikungan legendaris dengan view kaldera danau, jalan aspal mulus berdinding tebing pengaman.',
+    imageUrl:
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80',
+    perdaRef: 'Perda Kab. Agam No. 3 Tahun 2024',
+    rating: 4.8,
+    reviewsCount: 380,
+    facilities: [
+      'Gardu Pandang Panorama Puncak Lawang',
+      'Pusat Kuliner Palai Rinuak & Pensi UMKM',
+      'Toilet & Kamar Bilas Dermaga Danau',
+      'Musholla Tepi Danau Maninjau',
+      'Area Parkir Wisata Kelok 44',
+    ],
+    reviews: [
+      UserReview(
+        author: 'Hendra Saputra',
+        rating: 5.0,
+        date: '2 hari lalu',
+        comment:
+            'Pemandangan dari Puncak Lawang ke arah danau luar biasa magis saat berkabut! Kuliner palai rinuak Rp 15.000 sangat gurih.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.3124, 100.1982 • Puncak Lawang Viewpoint',
+        isGpsVerified: true,
+      ),
+      UserReview(
+        author: 'Dewi Anggraini',
+        rating: 4.7,
+        date: '5 hari lalu',
+        comment:
+            'Menuruni Kelok 44 sangat berkesan. Parkir di gardu pandang kelok 37 resmi Rp 3.000 dijaga warga ramah.',
+        photoUrl:
+            'https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?auto=format&fit=crop&w=600&q=80',
+        realLocation: 'GPS Terverifikasi: -0.3150, 100.2010 • Gardu Pandang Kelok 37',
+        isGpsVerified: true,
+      ),
+    ],
+    denahPoints: [
+      DenahPoint(
+        category: 'PARKIR',
+        title: 'Area Parkir Gardu Pandang Puncak Lawang',
+        description: 'Parkir kendaraan roda 2 dan 4 menghadap danau',
+        x: 22,
+        y: 78,
+      ),
+      DenahPoint(
+        category: 'LOKET',
+        title: 'Loket Tiket Retribusi Panorama Agam',
+        description: 'Karcis resmi Perda Agam untuk pemeliharaan kawasan',
+        x: 36,
+        y: 68,
+      ),
+      DenahPoint(
+        category: 'UMKM',
+        title: 'Warung Kuliner Palai Rinuak & Ikan Danau',
+        description: 'Kuliner endemik Danau Maninjau khas Nagari Maninjau',
+        x: 52,
+        y: 58,
+      ),
+      DenahPoint(
+        category: 'TOILET',
+        title: 'Toilet Bersih Gardu Pandang',
+        description: 'Fasilitas sanitasi mata air pegunungan Matur',
+        x: 44,
+        y: 64,
+      ),
+      DenahPoint(
+        category: 'MUSHOLLA',
+        title: 'Musholla Panorama Lawang',
+        description: 'Tempat ibadah sejuk di ketinggian 1.200 mdpl',
+        x: 64,
+        y: 50,
+      ),
+    ],
+    verticalFees: [
+      VerticalFeeItem(
+        label: 'Retribusi Masuk Kawasan Wisata Panorama',
+        sub: 'Perda Kab. Agam No. 3/2024',
+        price: 'Rp 10.000',
+      ),
+      VerticalFeeItem(
+        label: 'Retribusi Parkir Mobil (Roda 4)',
+        sub: 'Karcis resmi Dishub Kab. Agam',
+        price: 'Rp 5.000',
+      ),
+      VerticalFeeItem(
+        label: 'Retribusi Parkir Motor (Roda 2)',
+        sub: 'Area parkir gardu pandang',
+        price: 'Rp 3.000',
+      ),
+      VerticalFeeItem(
+        label: 'Paket Kuliner Palai Rinuak & Nasi Hangat',
+        sub: 'Standar harga UMKM Nagari Maninjau',
+        price: 'Rp 20.000',
+      ),
+    ],
+    calcRates: CalcRates(tiket: 10000, motor: 3000, mobil: 5000),
+    tariffs: [
+      TariffItem(
+        cat: 'TIKET',
+        name: 'Retribusi Masuk Panorama Puncak Lawang & Danau',
+        note: 'Akses gardu pandang dan spot foto kaldera',
+        official: 'Rp 10.000 / org',
+        fairMax: 'Rp 10.000',
+        type: 'Resmi Pemda',
+      ),
+      TariffItem(
+        cat: 'PARKIR',
+        name: 'Retribusi Parkir Mobil Pribadi (Roda 4)',
+        note: 'Area parkir gardu pandang Kelok 44',
+        official: 'Rp 5.000 / unit',
+        fairMax: 'Rp 5.000',
+        type: 'Karcis Dishub',
+      ),
+      TariffItem(
+        cat: 'PARKIR',
+        name: 'Retribusi Parkir Sepeda Motor (Roda 2)',
+        note: 'Spot parkir motor panorama',
+        official: 'Rp 3.000 / unit',
+        fairMax: 'Rp 3.000',
+        type: 'Karcis Dishub',
+      ),
+      TariffItem(
+        cat: 'FASILITAS',
+        name: 'Paket Paralayang Tandem Puncak Lawang',
+        note: 'Pemandu sertifikasi FASI + dokumentasi gopro',
+        official: 'Rp 350.000 / org',
+        fairMax: 'Rp 400.000',
+        type: 'Standar Pokdarwis',
       ),
     ],
   ),
