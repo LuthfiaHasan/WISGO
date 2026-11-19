@@ -55,15 +55,24 @@ func (h *Handler) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	user, token, err := h.service.VerifyOTP(req.PhoneNumber, req.OTPCode)
+	choice := req.LoginChoice
+	if choice == "" && req.Role != "" {
+		choice = req.Role
+	}
+	if choice == "" {
+		choice = "wisata"
+	}
+
+	user, token, err := h.service.VerifyOTP(req.PhoneNumber, req.OTPCode, choice)
 	if err != nil {
 		common.Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 
 	common.Success(c, http.StatusOK, "Verifikasi OTP berhasil, selamat datang di Rancak.in!", AuthResponse{
-		Token: token,
-		User:  *user,
+		Token:       token,
+		User:        *user,
+		LoginChoice: choice,
 	})
 }
 

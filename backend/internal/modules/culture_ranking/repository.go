@@ -2,6 +2,7 @@ package culture_ranking
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -17,6 +18,11 @@ type Repository interface {
 	ListMinangPhrases(category, searchQuery string) []models.MinangPhrase
 	ListCulturalEvents(eventType, cityFilter string, hasGPS bool, userLat, userLng float64) []models.CulturalEvent
 	RecordNavigationTelemetry(destinationID string, dwellTimeMinutes int, isRepeatVisit bool) (*models.GaodeBehaviorRanking, error)
+	// Fitur Input Event (Vendor) & CRUD Event (Admin Dispar)
+	CreateCulturalEvent(event models.CulturalEvent) (*models.CulturalEvent, error)
+	UpdateCulturalEvent(id string, event models.CulturalEvent) (*models.CulturalEvent, error)
+	DeleteCulturalEvent(id string) error
+	FindCulturalEventByID(id string) (*models.CulturalEvent, bool)
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -150,4 +156,55 @@ func (r *inMemoryRepository) ListCulturalEvents(eventType, cityFilter string, ha
 		list = append(list, item)
 	}
 	return list
+}
+
+func (r *inMemoryRepository) CreateCulturalEvent(event models.CulturalEvent) (*models.CulturalEvent, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if event.ID == "" {
+		event.ID = fmt.Sprintf("cult-%03d", len(r.culturalEvents)+1)
+	}
+	r.culturalEvents = append(r.culturalEvents, event)
+	return &event, nil
+}
+
+func (r *inMemoryRepository) UpdateCulturalEvent(id string, event models.CulturalEvent) (*models.CulturalEvent, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i, ev := range r.culturalEvents {
+		if strings.EqualFold(ev.ID, id) {
+			event.ID = ev.ID
+			r.culturalEvents[i] = event
+			return &event, nil
+		}
+	}
+	return nil, errors.New("EVENT_NOT_FOUND")
+}
+
+func (r *inMemoryRepository) DeleteCulturalEvent(id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i, ev := range r.culturalEvents {
+		if strings.EqualFold(ev.ID, id) {
+			r.culturalEvents = append(r.culturalEvents, r.culturalEvents[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("EVENT_NOT_FOUND")
+}
+
+func (r *inMemoryRepository) FindCulturalEventByID(id string) (*models.CulturalEvent, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, ev := range r.culturalEvents {
+		if strings.EqualFold(ev.ID, id) {
+			item := ev
+			return &item, true
+		}
+	}
+	return nil, false
 }

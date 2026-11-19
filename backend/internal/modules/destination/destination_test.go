@@ -163,4 +163,96 @@ func TestDestinationSuite(t *testing.T) {
 			t.Fatalf("expected 200 OK on tariff sync, got %d", rec.Code)
 		}
 	})
+
+	t.Run("TC-09: POST /api/v1/destinations/hidden-gem berhasil diinput oleh Wisatawan (Role Tourist)", func(t *testing.T) {
+		hiddenGemPayload := []byte(`{
+			"name": "Air Terjun Lubuk Hitam",
+			"city_regency": "Kota Padang",
+			"description": "Air terjun alami tiga tingkat yang tersembunyi di perbukitan Bungus Teluk Kabung.",
+			"latitude": -1.025,
+			"longitude": 100.415,
+			"tips_menjaga": "Bawa kantong sampah sendiri dan dilarang membuat api unggun di area hutan lindung.",
+			"vehicle_access": "Hanya Motor / Jalan Kaki",
+			"cellular_signal": "Blank Spot",
+			"trekking_level": "Curam / Ekstrem"
+		}`)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/destinations/hidden-gem", bytes.NewBuffer(hiddenGemPayload))
+		req.Header.Set("Authorization", "Bearer "+middleware.TokenTourist)
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created for tourist hidden gem, got %d: %s", rec.Code, rec.Body.String())
+		}
+
+		var res struct {
+			Status  string             `json:"status"`
+			Message string             `json:"message"`
+			Data    models.Destination `json:"data"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
+			t.Fatalf("failed to parse response: %v", err)
+		}
+
+		if !res.Data.IsHiddenGem {
+			t.Fatal("expected IsHiddenGem to be true")
+		}
+		if res.Data.VerificationStatus != "pending" {
+			t.Fatalf("expected VerificationStatus 'pending', got '%s'", res.Data.VerificationStatus)
+		}
+		if res.Data.Category != "Hidden Gem" {
+			t.Fatalf("expected Category 'Hidden Gem', got '%s'", res.Data.Category)
+		}
+		if len(res.Data.Tips) == 0 {
+			t.Fatal("expected Tips Menjaga to be auto-populated")
+		}
+		if res.Data.MedanIndicator == nil || res.Data.MedanIndicator.CellularSignal != "Blank Spot" {
+			t.Fatal("expected MedanIndicator cellular_signal to be 'Blank Spot'")
+		}
+	})
+
+	t.Run("TC-10: Kurasi & Verifikasi Input Hidden Gem oleh Admin Dispar", func(t *testing.T) {
+		// 1. Wisatawan mencoba verifikasi sendiri -> Ditolak 403 Forbidden
+		verifyPayload := []byte(`{"status":"approved"}`)
+		reqTouristVerify := httptest.NewRequest(http.MethodPatch, "/api/v1/admin/destinations/dest-021/verify", bytes.NewBuffer(verifyPayload))
+		reqTouristVerify.Header.Set("Authorization", "Bearer "+middleware.TokenTourist)
+		recTouristVerify := httptest.NewRecorder()
+		r.ServeHTTP(recTouristVerify, reqTouristVerify)
+
+		if recTouristVerify.Code != http.StatusForbidden {
+			t.Fatalf("expected 403 Forbidden for tourist verify, got %d", recTouristVerify.Code)
+		}
+
+		// 2. Admin Dispar melihat daftar pending
+		reqPending := httptest.NewRequest(http.MethodGet, "/api/v1/admin/destinations/pending", nil)
+		reqPending.Header.Set("Authorization", "Bearer "+middleware.TokenAdminDispar)
+		recPending := httptest.NewRecorder()
+		r.ServeHTTP(recPending, reqPending)
+
+		if recPending.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on admin pending list, got %d", recPending.Code)
+		}
+
+		// 3. Admin Dispar menyetujui destinasi hidden gem -> 200 OK
+		reqAdminVerify := httptest.NewRequest(http.MethodPatch, "/api/v1/admin/destinations/dest-021/verify", bytes.NewBuffer(verifyPayload))
+		reqAdminVerify.Header.Set("Authorization", "Bearer "+middleware.TokenAdminDispar)
+		recAdminVerify := httptest.NewRecorder()
+		r.ServeHTTP(recAdminVerify, reqAdminVerify)
+
+		if recAdminVerify.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on admin verify, got %d: %s", recAdminVerify.Code, recAdminVerify.Body.String())
+		}
+
+		var verifyRes struct {
+			Status  string             `json:"status"`
+			Message string             `json:"message"`
+			Data    models.Destination `json:"data"`
+		}
+		_ = json.Unmarshal(recAdminVerify.Body.Bytes(), &verifyRes)
+		if verifyRes.Data.VerificationStatus != "verified" {
+			t.Fatalf("expected VerificationStatus 'verified' after admin approval, got '%s'", verifyRes.Data.VerificationStatus)
+		}
+	})
 }

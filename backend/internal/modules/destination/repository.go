@@ -19,6 +19,8 @@ type Repository interface {
 	UpdateCMS(id string, payload models.Destination) (*models.Destination, error)
 	DeleteCMS(id string) (string, error)
 	SyncTariffsCMS(id string, tariffs []models.OfficialTariff) (*models.Destination, error)
+	FindPending() []models.Destination
+	VerifyDestination(id string, status string) (*models.Destination, error)
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -62,6 +64,15 @@ func (r *inMemoryRepository) FindAllWithSpatial(params SpatialFilterParams) []mo
 
 	var results []models.Destination
 	for _, d := range r.destinations {
+		// Filter status verifikasi: Default publik hanya menampilkan yang terverifikasi (bukan pending / rejected)
+		if !params.IncludePending {
+			if d.VerificationStatus == "pending" || d.VerificationStatus == "rejected" {
+				continue
+			}
+		} else if params.VerificationStatus != "" && d.VerificationStatus != params.VerificationStatus {
+			continue
+		}
+
 		if qCat != "" && !strings.Contains(strings.ToLower(d.Category), qCat) {
 			continue
 		}
@@ -203,4 +214,33 @@ func (r *inMemoryRepository) SyncTariffsCMS(id string, tariffs []models.Official
 		}
 	}
 	return nil, fmt.Errorf("Destinasi '%s' tidak ditemukan", id)
+}
+
+func (r *inMemoryRepository) FindPending() []models.Destination {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var results []models.Destination
+	for _, d := range r.destinations {
+		if d.VerificationStatus == "pending" {
+			results = append(results, d)
+		}
+	}
+	return results
+}
+
+func (r *inMemoryRepository) VerifyDestination(id string, status string) (*models.Destination, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	key := strings.ToLower(strings.TrimSpace(id))
+	for i, d := range r.destinations {
+		if strings.ToLower(d.ID) == key || strings.ToLower(d.Slug) == key {
+			r.destinations[i].VerificationStatus = status
+			r.destinations[i].UpdatedAt = time.Now()
+			res := r.destinations[i]
+			return &res, nil
+		}
+	}
+	return nil, fmt.Errorf("Destinasi '%s' tidak ditemukan untuk diverifikasi", id)
 }

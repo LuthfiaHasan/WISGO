@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
@@ -33,6 +34,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/destinations/:id/tariffs", h.GetDestinationTariffs)
 	rg.GET("/destinations/:id/offline-bundle", h.GetOfflineBundle)
 
+	// Wisatawan (Role: tourist): Input Wisata Hidden Gem (BE-1 Pilar 2 & 6)
+	rg.POST("/destinations/hidden-gem", h.CreateHiddenGemTourist)
+
 	// CMS Admin (Diproteksi Middleware JWT RBAC)
 	cmsDisparOrPokdarwis := middleware.RequireRoles("admin_dispar", "pokdarwis")
 	cmsDisparOnly := middleware.RequireRoles("admin_dispar")
@@ -47,6 +51,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.PUT("/admin/destinations/:id", cmsDisparOrPokdarwis, h.UpdateDestination)
 	rg.PUT("/admin/destinations/:id/tariffs", cmsDisparOrPokdarwis, h.UpdateDestinationTariffsCMS)
 	rg.DELETE("/admin/destinations/:id", cmsDisparOnly, h.DeleteDestination)
+
+	// Kurasi & Verifikasi Input Wisata Hidden Gem oleh Admin Dispar (FS-1)
+	rg.GET("/admin/destinations/pending", cmsDisparOrPokdarwis, h.GetPendingDestinationsAdmin)
+	rg.PATCH("/admin/destinations/:id/verify", cmsDisparOrPokdarwis, h.VerifyDestinationAdmin)
+	rg.PUT("/admin/destinations/:id/verify", cmsDisparOrPokdarwis, h.VerifyDestinationAdmin)
 }
 
 func parseGPS(c *gin.Context) (bool, float64, float64) {
@@ -153,6 +162,97 @@ func (h *Handler) GetOfflineBundle(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, res)
+}
+
+// CreateHiddenGemTourist menangani POST /api/v1/destinations/hidden-gem oleh Wisatawan (Role: tourist / publik)
+func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
+	// Validasi opsional token jika Authorization header disertakan
+	authHeader := c.GetHeader("Authorization")
+	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		if token != middleware.TokenTourist && token != middleware.TokenAdminDispar && token != middleware.TokenPokdarwis && token != middleware.TokenVendor {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"code":    "UNAUTHORIZED_INVALID_TOKEN",
+				"message": "Token JWT tidak valid atau tidak dikenali oleh server WISGO.",
+			})
+			return
+		}
+	}
+
+	var input CreateHiddenGemInput
+	if err := c.ShouldBindJSON(&input); err != nil || strings.TrimSpace(input.Name) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"code":    "INVALID_HIDDEN_GEM_PAYLOAD",
+			"message": "Field 'name' wajib diisi untuk menginput wisata hidden gem.",
+		})
+		return
+	}
+
+	created, err := h.service.CreateHiddenGem(input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	if h.cache != nil {
+		h.cache.FlushAll()
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Wisata Hidden Gem berhasil diajukan dan sedang menunggu verifikasi oleh Admin Dispar sebelum dipublikasikan ke direktori publik.",
+		"data":    created,
+	})
+}
+
+// GetPendingDestinationsAdmin menangani GET /api/v1/admin/destinations/pending
+func (h *Handler) GetPendingDestinationsAdmin(c *gin.Context) {
+	list := h.service.GetPendingSubmissions()
+	c.JSON(http.StatusOK, gin.H{
+		"status":       "success",
+		"total":        len(list),
+		"destinations": list,
+	})
+}
+
+// VerifyDestinationAdmin menangani PATCH/PUT /api/v1/admin/destinations/:id/verify
+func (h *Handler) VerifyDestinationAdmin(c *gin.Context) {
+	id := c.Param("id")
+	var req VerifyDestinationRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Status == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"code":    "INVALID_VERIFY_PAYLOAD",
+			"message": "Field 'status' wajib diisi dengan nilai 'verified', 'approved', atau 'rejected'.",
+		})
+		return
+	}
+
+	updated, err := h.service.VerifySubmission(id, req.Status)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status":  "error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	if h.cache != nil {
+		h.cache.FlushAll()
+	}
+
+	msg := "Destinasi hidden gem berhasil disetujui dan dipublikasikan resmi ke direktori publik WISGO."
+	if strings.ToLower(req.Status) == "rejected" {
+		msg = "Pengajuan destinasi hidden gem telah ditolak oleh Admin Dispar."
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": msg,
+		"data":    updated,
+	})
 }
 
 // CreateDestination menangani POST /api/v1/admin/destinations dan POST /api/v1/destinations

@@ -1,0 +1,28 @@
+{
+  "clientName": "Thunder Client",
+  "environmentName": "WISGO Local Dev",
+  "dateExported": "2026-11-19T08:20:02.191Z",
+  "version": "1.1",
+  "variables": [
+    {
+      "name": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "name": "tokenAdminDispar",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+    },
+    {
+      "name": "tokenTourist",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXRvdXJpc3QtMDEiLCJuYW1lIjoiUml6a3kgUHJhdGFtYSAoV2lzYXRhd2FuKSIsInJvbGUiOiJ0b3VyaXN0In0.rancakin_sig_tourist"
+    },
+    {
+      "name": "tokenVendor",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXZlbmRvci0wMSIsIm5hbWUiOiJTYW5nZ2FyIEJ1ZGF5YSBNaW5hbmcgKFZlbmRvcikiLCJyb2xlIjoidmVuZG9yIn0.rancakin_sig_vendor"
+    },
+    {
+      "name": "tokenPokdarwis",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXBva2Rhcndpcy0wMSIsIm5hbWUiOiJVZGEgWnVsIChQb2tkYXJ3aXMgTmFnYXJpKSIsInJvbGUiOiJwb2tkYXJ3aXMifQ.rancakin_sig_pokdarwis"
+    }
+  ]
+}

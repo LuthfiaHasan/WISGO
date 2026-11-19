@@ -91,6 +91,58 @@ func TestVerifyOTP_SuccessAndWrongCode(t *testing.T) {
 	}
 }
 
+func TestVerifyOTP_WisatawanVsVendorChoices(t *testing.T) {
+	r, _ := setupTestRouter()
+
+	// 1. Wisatawan Login dengan opsi input wisata
+	verifyWisatawan, _ := json.Marshal(OTPVerifyRequest{
+		PhoneNumber: "6281299990001",
+		OTPCode:     "1234",
+		LoginChoice: "wisata",
+	})
+	wWisatawan := httptest.NewRecorder()
+	r.ServeHTTP(wWisatawan, httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify-otp", bytes.NewReader(verifyWisatawan)))
+
+	if wWisatawan.Code != http.StatusOK {
+		t.Fatalf("Expected 200 OK for Wisatawan OTP, got %d", wWisatawan.Code)
+	}
+
+	var resWisatawan struct {
+		Data AuthResponse `json:"data"`
+	}
+	_ = json.Unmarshal(wWisatawan.Body.Bytes(), &resWisatawan)
+	if resWisatawan.Data.User.Role != "tourist" {
+		t.Fatalf("Expected role tourist, got %s", resWisatawan.Data.User.Role)
+	}
+	if resWisatawan.Data.LoginChoice != "wisata" {
+		t.Fatalf("Expected login_choice wisata, got %s", resWisatawan.Data.LoginChoice)
+	}
+
+	// 2. Vendor Login dengan opsi input event
+	verifyVendor, _ := json.Marshal(OTPVerifyRequest{
+		PhoneNumber: "6281299990002",
+		OTPCode:     "1234",
+		LoginChoice: "event",
+	})
+	wVendor := httptest.NewRecorder()
+	r.ServeHTTP(wVendor, httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify-otp", bytes.NewReader(verifyVendor)))
+
+	if wVendor.Code != http.StatusOK {
+		t.Fatalf("Expected 200 OK for Vendor OTP, got %d", wVendor.Code)
+	}
+
+	var resVendor struct {
+		Data AuthResponse `json:"data"`
+	}
+	_ = json.Unmarshal(wVendor.Body.Bytes(), &resVendor)
+	if resVendor.Data.User.Role != "vendor" {
+		t.Fatalf("Expected role vendor, got %s", resVendor.Data.User.Role)
+	}
+	if resVendor.Data.LoginChoice != "event" {
+		t.Fatalf("Expected login_choice event, got %s", resVendor.Data.LoginChoice)
+	}
+}
+
 func TestSavedPlaces_GetAndToggle(t *testing.T) {
 	r, _ := setupTestRouter()
 

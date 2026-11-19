@@ -45,3 +45,21 @@ type CulturalEventsResponse struct {
 	Total       int                    `json:"total"`
 	Events      []models.CulturalEvent `json:"events"`
 }
+
+// CreateCulturalEventRequest payload untuk input event oleh Vendor atau Admin Dispar (ERD Revisi #15)
+type CreateCulturalEventRequest struct {
+	Title             string  `json:"title"`
+	EventName         string  `json:"event_name,omitempty"`
+	EventType         string  `json:"event_type"` // Hari Pakan Nagari, Festival Budaya, Tradisi Adat
+	NagariLocation    string  `json:"nagari_location"`
+	EventLocation     string  `json:"event_location,omitempty"`
+	CityRegency       string  `json:"city_regency"`
+	ScheduleRule      string  `json:"schedule_rule"`
+	NextEventDate     string  `json:"next_event_date"`
+	Latitude          float64 `json:"latitude"`
+	Longitude         float64 `json:"longitude"`
+	HighlightItem     string  `json:"highlight_item"`
+	Significance      string  `json:"significance,omitempty"`
+	CulturalEtiquette string  `json:"cultural_etiquette"`
+	UserID            string  `json:"user_id,omitempty"` // ID vendor/user penginput
+}
