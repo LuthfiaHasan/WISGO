@@ -70,14 +70,20 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
   const filteredTrips = useMemo(() => {
     return trips.filter((t) => {
       const q = searchQuery.trim().toLowerCase();
+      const tripCode = t.trip_code || t.id || '';
+      const leaderName = t.leader_name || t.contact_wa || '';
+      const partner = t.pokdarwis_partner || 'Pokdarwis Nagari';
+      const city = t.city_regency || 'Sumatera Barat';
+      const routes = t.destination_routes || (t.destination_route ? t.destination_route.split('|').map((s) => s.trim()) : []);
+
       const matchQuery =
         !q ||
-        t.trip_code.toLowerCase().includes(q) ||
+        tripCode.toLowerCase().includes(q) ||
         t.title.toLowerCase().includes(q) ||
-        t.leader_name.toLowerCase().includes(q) ||
-        t.pokdarwis_partner.toLowerCase().includes(q) ||
-        t.city_regency.toLowerCase().includes(q) ||
-        t.destination_routes.some((r) => r.toLowerCase().includes(q));
+        leaderName.toLowerCase().includes(q) ||
+        partner.toLowerCase().includes(q) ||
+        city.toLowerCase().includes(q) ||
+        routes.some((r: string) => r.toLowerCase().includes(q));
 
       const matchStatus =
         statusFilter === 'all' || t.status === statusFilter;
@@ -119,6 +125,12 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
           bg: 'bg-red-100',
           text: 'text-red-700',
           border: 'border-red-300',
+        };
+      default:
+        return {
+          bg: 'bg-[#1E9E5A]/15',
+          text: 'text-[#166534]',
+          border: 'border-[#1E9E5A]/30',
         };
     }
   };
@@ -263,14 +275,19 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
             </thead>
             <tbody className="divide-y divide-[#E4E9DA]">
               {filteredTrips.map((trip) => {
-                const statusMeta = getStatusBadge(trip.status);
-                const isFull = trip.quota_filled >= trip.quota_max;
+                const statusMeta = getStatusBadge(trip.status || 'Terkonfirmasi & Siaga');
+                const qFilled = trip.quota_filled ?? (trip.total_quota ? trip.total_quota - trip.available_seats : 6);
+                const qMax = trip.quota_max ?? (trip.total_quota || 10);
+                const isFull = qFilled >= qMax;
+                const tripRoutes = trip.destination_routes || (trip.destination_route ? trip.destination_route.split('|').map((s) => s.trim()) : []);
+                const splitIdr = trip.split_bill_idr ?? trip.cost_per_person ?? 350000;
+                const splitMyr = trip.split_bill_myr ?? Math.round(splitIdr / 3500);
 
                 return (
                   <tr key={trip.id} className="hover:bg-[#F6F3EC]/70 transition">
                     {/* Kode Trip */}
                     <td className="py-3.5 px-4 font-mono font-bold text-[#234B24]">
-                      {trip.trip_code}
+                      {trip.trip_code || trip.id}
                     </td>
 
                     {/* Judul & Rute */}
@@ -280,21 +297,21 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                       </div>
                       <div className="text-[11px] text-[#4A5248] flex items-center gap-1.5 flex-wrap mt-0.5">
                         <MapPin className="w-3 h-3 text-[#234B24] shrink-0" />
-                        <span>{trip.destination_routes.join(' → ')}</span>
+                        <span>{tripRoutes.join(' → ')}</span>
                       </div>
                     </td>
 
                     {/* Ketua & Pokdarwis */}
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-[#1B1F1A]">
-                        {trip.leader_name}
+                        {trip.leader_name || trip.contact_wa}
                       </div>
                       <div className="text-[11px] text-[#234B24] font-semibold flex items-center gap-1 mt-0.5">
                         <Building2 className="w-3 h-3" />
-                        <span>{trip.pokdarwis_partner}</span>
+                        <span>{trip.pokdarwis_partner || 'Pokdarwis Nagari'}</span>
                       </div>
                       <div className="text-[10px] text-[#767676]">
-                        {trip.leader_phone}
+                        {trip.leader_phone || trip.contact_wa}
                       </div>
                     </td>
 
@@ -304,14 +321,14 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                         {trip.departure_date}
                       </div>
                       <div className="text-[10px] text-[#767676]">
-                        {trip.duration_days} Hari
+                        {trip.duration_days || 3} Hari
                       </div>
                     </td>
 
                     {/* Kuota */}
                     <td className="py-3.5 px-4 text-center">
                       <div className="font-bold text-[#1B1F1A]">
-                        {trip.quota_filled} / {trip.quota_max} Orang
+                        {qFilled} / {qMax} Orang
                       </div>
                       <div className="w-20 mx-auto bg-neutral-200 h-1.5 rounded-full overflow-hidden mt-1">
                         <div
@@ -321,7 +338,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                           style={{
                             width: `${Math.min(
                               100,
-                              (trip.quota_filled / trip.quota_max) * 100
+                              (qFilled / qMax) * 100
                             )}%`,
                           }}
                         />
@@ -331,10 +348,10 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                     {/* Split-Bill */}
                     <td className="py-3.5 px-4 text-right">
                       <div className="font-mono font-bold text-[#234B24]">
-                        Rp {trip.split_bill_idr.toLocaleString('id-ID')}
+                        Rp {splitIdr.toLocaleString('id-ID')}
                       </div>
                       <div className="text-[10px] font-mono text-[#767676]">
-                        ≈ MYR {trip.split_bill_myr}
+                        ≈ MYR {splitMyr}
                       </div>
                     </td>
 
@@ -415,7 +432,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
               <div className="p-3 rounded-xl bg-white border border-[#CFD8BE] space-y-1">
                 <span className="font-bold text-[#4A5248]">Rute Destinasi:</span>
                 <p className="font-extrabold text-[#234B24]">
-                  {selectedTrip.destination_routes.join(' → ')}
+                  {(selectedTrip.destination_routes || (selectedTrip.destination_route ? selectedTrip.destination_route.split('|').map((s) => s.trim()) : [])).join(' → ')}
                 </p>
               </div>
 
@@ -423,20 +440,20 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                 <div className="p-3 rounded-xl bg-white border border-[#CFD8BE]">
                   <span className="text-[#4A5248] font-bold">Ketua Rombongan:</span>
                   <p className="font-extrabold text-[#1B1F1A] mt-0.5">
-                    {selectedTrip.leader_name}
+                    {selectedTrip.leader_name || selectedTrip.contact_wa}
                   </p>
                   <p className="text-[11px] text-[#234B24] mt-0.5">
-                    {selectedTrip.leader_phone}
+                    {selectedTrip.leader_phone || selectedTrip.contact_wa}
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-white border border-[#CFD8BE]">
                   <span className="text-[#4A5248] font-bold">Mitra Pokdarwis:</span>
                   <p className="font-extrabold text-[#1B1F1A] mt-0.5">
-                    {selectedTrip.pokdarwis_partner}
+                    {selectedTrip.pokdarwis_partner || 'Pokdarwis Nagari'}
                   </p>
                   <p className="text-[11px] text-[#767676] mt-0.5">
-                    {selectedTrip.city_regency}
+                    {selectedTrip.city_regency || 'Sumatera Barat'}
                   </p>
                 </div>
               </div>
@@ -445,13 +462,13 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                 <div>
                   <span className="text-[#4A5248] font-bold">Estimasi Split-Bill:</span>
                   <p className="font-mono font-extrabold text-base text-[#234B24]">
-                    Rp {selectedTrip.split_bill_idr.toLocaleString('id-ID')}
+                    Rp {(selectedTrip.split_bill_idr ?? selectedTrip.cost_per_person ?? 350000).toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div className="text-right">
                   <span className="text-[#4A5248] font-bold">Kuota Terisi:</span>
                   <p className="font-bold text-[#1B1F1A]">
-                    {selectedTrip.quota_filled} / {selectedTrip.quota_max} Orang
+                    {selectedTrip.quota_filled ?? 6} / {selectedTrip.quota_max ?? selectedTrip.total_quota ?? 10} Orang
                   </p>
                 </div>
               </div>

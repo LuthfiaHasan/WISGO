@@ -113,6 +113,7 @@ export const TariffsAndQRPage: React.FC<TariffsAndQRPageProps> = ({
     setEditingTariff({
       id: `trf-${activeDestination.id}-${Date.now()}-${nextIdx}`,
       destination_id: activeDestination.id,
+      category_id: 'cat-tar-tiket',
       item_name: '',
       category: 'Tiket Masuk',
       price: 15000,

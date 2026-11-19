@@ -106,11 +106,20 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
     setIsNewEvent(true);
     setEditingEvent({
       id: `evt-${Date.now()}`,
+      user_id: 'usr-admin-01',
       title: '',
+      event_type: 'Atraksi Adat',
+      nagari_location: '',
       city_regency: 'Kota Bukittinggi',
       location: '',
+      schedule_rule: 'Tahunan',
+      next_event_date: new Date().toISOString().slice(0, 10),
       start_date: new Date().toISOString().slice(0, 10),
       end_date: new Date().toISOString().slice(0, 10),
+      latitude: -0.305,
+      longitude: 100.369,
+      highlight_item: '',
+      cultural_etiquette: 'Berpakaian sopan',
       category: 'Atraksi Adat',
       description: '',
       poster_url: '',
@@ -128,7 +137,8 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
   const handleSaveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingEvent) return;
-    if (!editingEvent.title.trim() || !editingEvent.location.trim()) {
+    const loc = editingEvent.location || editingEvent.nagari_location || '';
+    if (!editingEvent.title.trim() || !loc.trim()) {
       showToast('Nama festival dan lokasi spesifik wajib diisi.', 'warning');
       return;
     }
@@ -136,6 +146,16 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
     try {
       const updated = await saveCultureEvent({
         ...editingEvent,
+        location: loc,
+        nagari_location: editingEvent.nagari_location || loc,
+        user_id: editingEvent.user_id || 'usr-admin-01',
+        event_type: editingEvent.event_type || editingEvent.category || 'Festival Seni & Musik',
+        schedule_rule: editingEvent.schedule_rule || 'Tahunan',
+        next_event_date: editingEvent.next_event_date || editingEvent.start_date || '2026-11-25',
+        latitude: editingEvent.latitude || -0.471180,
+        longitude: editingEvent.longitude || 100.621250,
+        highlight_item: editingEvent.highlight_item || 'Pawai Budaya Adat',
+        cultural_etiquette: editingEvent.cultural_etiquette || 'Berpakaian sopan dan tertib.',
         updated_at: new Date().toISOString(),
       });
       setEvents(updated);
@@ -170,9 +190,10 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
       const matchQuery =
         !q ||
         e.title.toLowerCase().includes(q) ||
-        e.location.toLowerCase().includes(q) ||
+        (e.location && e.location.toLowerCase().includes(q)) ||
+        (e.nagari_location && e.nagari_location.toLowerCase().includes(q)) ||
         e.city_regency.toLowerCase().includes(q) ||
-        e.description.toLowerCase().includes(q);
+        (e.description && e.description.toLowerCase().includes(q));
 
       const matchReg =
         selectedRegency === 'Semua Kab/Kota' || e.city_regency === selectedRegency;
@@ -194,7 +215,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
     return { total, upcoming, ongoing, finished, uniqueRegencies };
   }, [events]);
 
-  const getStatusBadge = (status: CultureEventStatus) => {
+  const getStatusBadge = (status?: CultureEventStatus | string) => {
     switch (status) {
       case 'Sedang Berlangsung':
         return {
@@ -211,6 +232,12 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
       case 'Selesai':
         return {
           bg: 'bg-neutral-500',
+          text: 'text-white',
+          pulse: false,
+        };
+      default:
+        return {
+          bg: 'bg-[#234B24]',
           text: 'text-white',
           pulse: false,
         };

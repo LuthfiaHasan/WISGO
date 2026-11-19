@@ -175,6 +175,14 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
     setIsNewPhrase(true);
     setEditingPhrase({
       id: `phr-${Date.now()}`,
+      category_id: 'cat-phr-belanja',
+      indonesian_text: '',
+      minang_text: '',
+      phonetic_guide: '',
+      voice_text: '',
+      dialect_note: 'Agam / Bukittinggi',
+      usage_context_tip: 'Gunakan saat bertransaksi di pasar',
+      politeness_level: 'Sopan',
       phrase: '',
       pronunciation: '',
       meaning_id: '',
@@ -194,7 +202,10 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
   const handleSaveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPhrase) return;
-    if (!editingPhrase.phrase.trim() || !editingPhrase.meaning_id.trim()) {
+    const phraseText = editingPhrase.phrase || editingPhrase.minang_text || '';
+    const meaningText = editingPhrase.meaning_id || editingPhrase.indonesian_text || '';
+
+    if (!phraseText.trim() || !meaningText.trim()) {
       showToast('Frasa Minang dan Arti Indonesia wajib diisi.', 'warning');
       return;
     }
@@ -202,14 +213,18 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
     try {
       const updated = await saveMinangPhrase({
         ...editingPhrase,
+        phrase: phraseText,
+        minang_text: phraseText,
+        meaning_id: meaningText,
+        indonesian_text: meaningText,
         updated_at: new Date().toISOString(),
       });
       setPhrases(updated);
       setEditingPhrase(null);
       showToast(
         isNewPhrase
-          ? `Frasa "${editingPhrase.phrase}" berhasil ditambahkan ke kamus audio.`
-          : `Perubahan frasa "${editingPhrase.phrase}" berhasil disimpan.`,
+          ? `Frasa "${phraseText}" berhasil ditambahkan ke kamus audio.`
+          : `Perubahan frasa "${phraseText}" berhasil disimpan.`,
         'success'
       );
     } catch {
@@ -222,7 +237,7 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
     try {
       const updated = await deleteMinangPhrase(deletingPhrase.id);
       setPhrases(updated);
-      showToast(`Frasa "${deletingPhrase.phrase}" berhasil dihapus.`, 'info');
+      showToast(`Frasa "${deletingPhrase.phrase || deletingPhrase.minang_text}" berhasil dihapus.`, 'info');
     } catch {
       showToast('Gagal menghapus frasa.', 'error');
     } finally {
@@ -233,12 +248,17 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
   const filteredPhrases = useMemo(() => {
     return phrases.filter((p) => {
       const q = searchQuery.trim().toLowerCase();
+      const pPhrase = p.phrase || p.minang_text || '';
+      const pMeaningId = p.meaning_id || p.indonesian_text || '';
+      const pMeaningEn = p.meaning_en || '';
+      const pPron = p.pronunciation || p.phonetic_guide || '';
+
       const matchQuery =
         !q ||
-        p.phrase.toLowerCase().includes(q) ||
-        p.meaning_id.toLowerCase().includes(q) ||
-        p.meaning_en.toLowerCase().includes(q) ||
-        p.pronunciation.toLowerCase().includes(q) ||
+        pPhrase.toLowerCase().includes(q) ||
+        pMeaningId.toLowerCase().includes(q) ||
+        pMeaningEn.toLowerCase().includes(q) ||
+        pPron.toLowerCase().includes(q) ||
         (p.notes && p.notes.toLowerCase().includes(q));
 
       const matchCat =
@@ -288,6 +308,12 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
           bg: 'bg-red-100',
           text: 'text-red-700',
           icon: <AlertTriangle className="w-3.5 h-3.5" />,
+        };
+      default:
+        return {
+          bg: 'bg-emerald-100',
+          text: 'text-[#234B24]',
+          icon: <HeartHandshake className="w-3.5 h-3.5" />,
         };
     }
   };
@@ -435,7 +461,7 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
         ) : (
           <div className="divide-y divide-[#E4E9DA]">
             {filteredPhrases.map((phrase) => {
-              const meta = getCategoryBadge(phrase.category);
+              const meta = getCategoryBadge(phrase.category || 'Belanja & Menawar');
               const isPlaying = currentlyPlayingId === phrase.id;
 
               return (

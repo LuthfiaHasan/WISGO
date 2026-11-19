@@ -140,7 +140,8 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
 
   // Setujui Usulan (Approve) -> Tambah ke Direktori Utama Destinasi
   const handleApproveSubmission = async (sub: TouristDestinationSubmission) => {
-    const slugName = sub.title
+    const subTitle = sub.title || sub.name || 'Destinasi Wisata';
+    const slugName = subTitle
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
@@ -158,23 +159,23 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
       signal_score: 4,
       facilities_score: 3,
       guide_score: 4,
-      readiness_notes: `Usulan dari wisatawan (${sub.submitter_name}). Diverifikasi oleh Admin Dispar Sumbar.`,
+      readiness_notes: `Usulan dari wisatawan (${sub.submitter_name || 'Wisatawan'}). Diverifikasi oleh Admin Dispar Sumbar.`,
     };
 
     const newDest: Destination = {
       id: defaultMedan.destination_id,
       slug: slugName,
-      name: sub.title.trim(),
+      name: subTitle.trim(),
       city_regency: sub.city_regency,
       category: sub.category,
-      description: sub.description,
+      description: sub.description || '',
       cover_image: sub.photo_url || 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1200&q=80',
       crowd_level: 'Sedang',
       latitude: -0.22,
       longitude: 100.63,
       estimated_distance_km: 75,
       estimated_duration_min: 90,
-      ticket_price_summary: sub.estimated_price || 'Rp 10.000',
+      ticket_price_summary: (sub as any).estimated_price || 'Rp 10.000',
       is_blank_spot: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -288,10 +289,13 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
 
   // Filtered Submissions
   const filtered = submissions.filter((sub) => {
+    const sTitle = sub.title || sub.name || '';
+    const sName = sub.submitter_name || '';
+    const sDesc = sub.description || '';
     const matchesSearch =
-      sub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.submitter_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.description.toLowerCase().includes(searchTerm.toLowerCase());
+      sTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sDesc.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
       statusFilter === 'ALL' || sub.status === statusFilter;

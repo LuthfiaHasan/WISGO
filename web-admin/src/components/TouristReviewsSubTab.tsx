@@ -179,10 +179,13 @@ export const TouristReviewsSubTab: React.FC<TouristReviewsSubTabProps> = ({
 
   // Filtered Reviews
   const filtered = reviews.filter((rev) => {
+    const tName = rev.tourist_name || rev.user_name || '';
+    const tComment = rev.comment || rev.review_comment || '';
+    const dName = rev.destination_name || '';
     const matchesSearch =
-      rev.tourist_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rev.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rev.destination_name.toLowerCase().includes(searchTerm.toLowerCase());
+      tName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tComment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dName.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRating =
       ratingFilter === 'ALL' || rev.rating === ratingFilter;
@@ -346,11 +349,11 @@ export const TouristReviewsSubTab: React.FC<TouristReviewsSubTabProps> = ({
                       <strong>{rev.destination_name}</strong>
                     </span>
                     <span className="text-[10px] text-[#767676]">
-                      • {new Date(rev.created_at).toLocaleDateString('id-ID', {
+                      • {rev.created_at ? new Date(rev.created_at).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
-                      })}
+                      }) : '-'}
                     </span>
                   </div>
 

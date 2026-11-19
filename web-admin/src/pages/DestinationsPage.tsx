@@ -164,7 +164,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
       const matchesSearch =
         !q ||
         item.name.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q) ||
+        (item.category || item.category_id || '').toLowerCase().includes(q) ||
         item.city_regency.toLowerCase().includes(q) ||
         item.description.toLowerCase().includes(q) ||
         item.tariffs?.some(
@@ -316,14 +316,22 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
       id: newId,
       slug: '',
       name: '',
+      category_id: 'cat-dest-alam',
       category: 'Alam & Tebing',
       city_regency: 'Kota Bukittinggi',
       description: '',
       latitude: -0.3056,
       longitude: 100.3692,
+      elevation_m: 930,
       cover_image:
         'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
       crowd_level: 'Sepi',
+      distance_km: 85,
+      travel_time_min: 120,
+      estimated_cost: 15000,
+      is_hidden_gem: false,
+      qr_placard_code: `WISGO-${newId.toUpperCase()}`,
+      opening_hours: '08:00 - 18:00 WIB',
       estimated_distance_km: 85,
       estimated_duration_min: 120,
       ticket_price_summary: 'Rp 15.000 / orang',
@@ -363,6 +371,8 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
         {
           id: `tip-${newId}-1`,
           destination_id: newId,
+          category_id: 'cat-rule-lingkungan',
+          title: 'Tips Menjaga Tempat',
           content:
             'Patuhi etika adat basandi syarak, syarak basandi Kitabullah dan jaga kebersihan lingkungan wisata.',
           is_important: true,
@@ -421,6 +431,8 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               {
                 id: `tip-${dest.id}-1`,
                 destination_id: dest.id,
+                category_id: 'cat-rule-lingkungan',
+                title: 'Tips Menjaga Tempat',
                 content: 'Jaga kebersihan dan patuhi kearifan lokal Nagari.',
                 is_important: true,
               },
@@ -457,6 +469,8 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
     const newTip: DestinationTip = {
       id: `tip-${editingDest.id}-${Date.now()}`,
       destination_id: editingDest.id,
+      category_id: 'cat-rule-lingkungan',
+      title: 'Tips Menjaga Tempat',
       content: '',
       is_important: false,
     };

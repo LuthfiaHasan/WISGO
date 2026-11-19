@@ -319,7 +319,11 @@ export const GaodeRankingSubTab: React.FC<GaodeRankingSubTabProps> = ({
             </thead>
             <tbody className="divide-y divide-[#E4E9DA]">
               {rankings.map((item) => {
-                const isTop3 = item.current_rank <= 3;
+                const rank = item.current_rank ?? item.rank_position ?? 1;
+                const isTop3 = rank <= 3;
+                const score = item.calculated_gaode_score ?? Number(item.gaode_authenticity_score) ?? 0;
+                const visits = item.weekly_visits ?? item.active_nav_count_30d ?? 0;
+                const trend = item.trend || 'same';
 
                 return (
                   <tr
@@ -332,32 +336,32 @@ export const GaodeRankingSubTab: React.FC<GaodeRankingSubTabProps> = ({
                     <td className="py-3.5 px-4 text-center font-extrabold">
                       <span
                         className={`inline-flex items-center justify-center w-7 h-7 rounded-xl font-extrabold text-xs ${
-                          item.current_rank === 1
+                          rank === 1
                             ? 'bg-[#EAB308] text-white shadow-xs'
-                            : item.current_rank === 2
+                            : rank === 2
                             ? 'bg-neutral-400 text-white'
-                            : item.current_rank === 3
+                            : rank === 3
                             ? 'bg-[#B45309] text-white'
                             : 'bg-[#F6F3EC] text-[#1B1F1A] border border-[#CFD8BE]'
                         }`}
                       >
-                        #{item.current_rank}
+                        #{rank}
                       </span>
                     </td>
 
                     {/* Tren */}
                     <td className="py-3.5 px-4 text-center">
-                      {item.trend === 'up' && (
+                      {trend === 'up' && (
                         <span className="inline-flex items-center text-[#1E9E5A] font-bold gap-0.5">
                           <ArrowUp className="w-3.5 h-3.5" />
                         </span>
                       )}
-                      {item.trend === 'down' && (
+                      {trend === 'down' && (
                         <span className="inline-flex items-center text-[#D95637] font-bold gap-0.5">
                           <ArrowDown className="w-3.5 h-3.5" />
                         </span>
                       )}
-                      {item.trend === 'same' && (
+                      {trend === 'same' && (
                         <span className="inline-flex items-center text-[#767676]">
                           <Minus className="w-3.5 h-3.5" />
                         </span>
@@ -367,7 +371,7 @@ export const GaodeRankingSubTab: React.FC<GaodeRankingSubTabProps> = ({
                     {/* Nama & Wilayah */}
                     <td className="py-3.5 px-4">
                       <div className="font-extrabold text-[#1B1F1A] text-sm">
-                        {item.name}
+                        {item.name || item.destination_name}
                       </div>
                       <div className="text-[11px] text-[#4A5248] flex items-center gap-2 mt-0.5">
                         <span>{item.city_regency}</span>
@@ -380,29 +384,29 @@ export const GaodeRankingSubTab: React.FC<GaodeRankingSubTabProps> = ({
 
                     {/* Kunjungan */}
                     <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1B1F1A]">
-                      {item.weekly_visits.toLocaleString('id-ID')}
+                      {visits.toLocaleString('id-ID')}
                     </td>
 
                     {/* Dwell Time */}
                     <td className="py-3.5 px-4 text-center font-medium text-[#4A5248]">
-                      ± {item.avg_dwell_hours} Jam
+                      ± {item.avg_dwell_hours ?? ((item.avg_dwell_time_min ?? 60) / 60).toFixed(1)} Jam
                     </td>
 
                     {/* Kepuasan */}
                     <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1E9E5A]">
-                      {item.satisfaction_rate}%
+                      {item.satisfaction_rate ?? 90}%
                     </td>
 
                     {/* Bebas Pungli */}
                     <td className="py-3.5 px-4 text-right font-mono font-bold text-[#234B24]">
-                      {item.pungli_free_index}%
+                      {item.pungli_free_index ?? 95}%
                     </td>
 
                     {/* Medan Score */}
                     <td className="py-3.5 px-4 text-center">
                       <span className="inline-flex items-center gap-1 font-bold text-[#1B1F1A]">
                         <Star className="w-3.5 h-3.5 text-[#EAB308] fill-[#EAB308]" />
-                        <span>{item.medan_score}/5</span>
+                        <span>{item.medan_score ?? 4.5}/5</span>
                       </span>
                     </td>
 
@@ -410,10 +414,10 @@ export const GaodeRankingSubTab: React.FC<GaodeRankingSubTabProps> = ({
                     <td className="py-3.5 px-4 text-right">
                       <span
                         className={`inline-block px-3 py-1 rounded-xl text-xs font-mono font-extrabold shadow-xs ${getScoreBadge(
-                          item.calculated_gaode_score
+                          score
                         )}`}
                       >
-                        {item.calculated_gaode_score}
+                        {score}
                       </span>
                     </td>
                   </tr>

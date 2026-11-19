@@ -518,11 +518,16 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
       id: editingScene ? editingScene.id : `scene-${Date.now().toString(36)}`,
       destination_id: selectedDestination.id,
       title: sceneFormTitle.trim(),
+      scene_type: sceneFormType,
       type: sceneFormType,
       panorama_url: sceneFormPanoUrl.trim(),
+      upload_format: 'equirectangular',
+      spatial_audio_url: sceneFormAudioUrl.trim() || '',
       ambient_audio_url: sceneFormAudioUrl.trim() || undefined,
       initial_pitch: sceneFormPitch,
       initial_yaw: sceneFormYaw,
+      is_default_scene: editingScene ? editingScene.is_default_scene || false : false,
+      created_at: editingScene?.created_at || new Date().toISOString(),
       hotspots: editingScene ? editingScene.hotspots : [],
     };
 
@@ -558,14 +563,39 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
       return;
     }
 
+    const colorTokenMap: Record<string, string> = {
+      fasilitas_umum: 'teal',
+      mitra_umkm: 'coral',
+      loket_info: 'amber',
+      navigasi_arah: 'blue',
+      info_adat: 'amber',
+      navigasi: 'blue',
+      audio_budaya: 'teal',
+    };
+
+    let targetRef = '';
+    if (pinFormCategory === 'mitra_umkm' && pinFormWhatsapp.trim()) {
+      targetRef = pinFormWhatsapp.trim().startsWith('http')
+        ? pinFormWhatsapp.trim()
+        : `https://wa.me/${pinFormWhatsapp.trim().replace(/[^0-9]/g, '')}`;
+    } else if (pinFormCategory === 'navigasi_arah' || pinFormCategory === 'navigasi') {
+      targetRef = pinFormTargetScene || '';
+    }
+
     const newPin: HotspotPin = {
       id: editingPin ? editingPin.id : `pin-${Date.now().toString(36)}`,
       scene_id: activeScene.id,
-      category: pinFormCategory,
-      title: pinFormTitle.trim(),
-      description: pinFormDesc.trim(),
+      pin_type: pinFormCategory,
+      color_token: colorTokenMap[pinFormCategory] || 'teal',
       pitch: pinFormPitch,
       yaw: pinFormYaw,
+      title: pinFormTitle.trim(),
+      target_ref: targetRef,
+      voice_text: pinFormAudioUrl ? pinFormAudioUrl.trim() : '',
+      description: pinFormDesc.trim(),
+      created_at: editingPin?.created_at || new Date().toISOString(),
+
+      category: pinFormCategory,
       target_scene_id:
         pinFormCategory === 'navigasi_arah' || pinFormCategory === 'navigasi'
           ? pinFormTargetScene
@@ -816,9 +846,9 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                 onClick={() => {
                   setEditingScene(activeScene);
                   setSceneFormTitle(activeScene.title);
-                  setSceneFormType(activeScene.type);
+                  setSceneFormType(((activeScene.scene_type || activeScene.type || 'ground') as 'aerial' | 'ground'));
                   setSceneFormPanoUrl(activeScene.panorama_url);
-                  setSceneFormAudioUrl(activeScene.ambient_audio_url || '');
+                  setSceneFormAudioUrl(activeScene.spatial_audio_url || activeScene.ambient_audio_url || '');
                   setSceneFormPitch(activeScene.initial_pitch);
                   setSceneFormYaw(activeScene.initial_yaw);
                   setIsSceneModalOpen(true);
@@ -1005,17 +1035,17 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                 <div className="flex items-start gap-3 min-w-0">
                   <div
                     style={{
-                      backgroundColor: getCategoryMeta(selectedPin.category).bg,
-                      color: getCategoryMeta(selectedPin.category).color,
+                      backgroundColor: getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').bg,
+                      color: getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').color,
                     }}
                     className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-current shadow-xs"
                   >
-                    {getCategoryMeta(selectedPin.category).icon}
+                    {getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').icon}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-[#234B24]">
-                        {getCategoryMeta(selectedPin.category).label}
+                        {getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').label}
                       </span>
                       <span className="text-[11px] text-[#4A5248] font-mono">
                         Yaw: {selectedPin.yaw}° · Pitch: {selectedPin.pitch}°
@@ -1116,7 +1146,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                     type="button"
                     onClick={() => {
                       setEditingPin(selectedPin);
-                      setPinFormCategory(selectedPin.category);
+                      setPinFormCategory(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum');
                       setPinFormTitle(selectedPin.title);
                       setPinFormDesc(selectedPin.description || '');
                       setPinFormPitch(selectedPin.pitch);
@@ -1217,7 +1247,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                 </div>
               ) : (
                 filteredHotspots.map((pin) => {
-                  const meta = getCategoryMeta(pin.category);
+                  const meta = getCategoryMeta(pin.pin_type || pin.category || 'fasilitas_umum');
                   const isSelected = selectedPin?.id === pin.id;
 
                   return (
@@ -1271,7 +1301,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingPin(pin);
-                            setPinFormCategory(pin.category);
+                            setPinFormCategory(pin.pin_type || pin.category || 'fasilitas_umum');
                             setPinFormTitle(pin.title);
                             setPinFormDesc(pin.description || '');
                             setPinFormPitch(pin.pitch);

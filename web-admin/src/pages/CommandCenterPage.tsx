@@ -198,41 +198,50 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
 
   // Filtered Pungli Reports
   const filteredPungli = pungliReports.filter((r) => {
+    const destName = r.destination_name || '';
+    const repName = r.reporter_name || '';
+    const kab = r.kab_kota || '';
+    const desc = r.description || r.admin_action_notes || '';
+    const cat = r.category || r.incident_category || '';
+
     const matchQuery =
-      r.destination_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.reporter_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.kab_kota.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.description.toLowerCase().includes(searchQuery.toLowerCase());
+      destName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      repName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      kab.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      desc.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchStatus =
       statusFilter === 'all' ? true : r.status === statusFilter;
     const matchCat =
-      categoryFilter === 'all' ? true : r.category === categoryFilter;
+      categoryFilter === 'all' ? true : cat === categoryFilter;
 
     return matchQuery && matchStatus && matchCat;
   });
 
   // Active SOS Tickets
   const activeSosCount = sosTickets.filter(
-    (t) => t.status !== 'Penanganan Selesai'
+    (t) => t.status !== 'Penanganan Selesai' && t.status !== 'BERHASIL_DIEVAKUASI'
   ).length;
 
   // Pungli Status Style
   const getPungliStatusMeta = (status: PungliStatus) => {
     switch (status) {
       case 'Laporan Baru':
+      case 'Masuk':
         return {
           bg: 'bg-[#F26B4B]/15',
           text: 'text-[#D95637]',
           border: 'border-[#F26B4B]/30',
         };
       case 'Sedang Diverifikasi':
+      case 'Diverifikasi':
         return {
           bg: 'bg-[#FEF08A]/80',
           text: 'text-[#854D0E]',
           border: 'border-[#EAB308]/40',
         };
       case 'Ditindaklanjuti Lapangan':
+      case 'Ditindaklanjuti':
         return {
           bg: 'bg-[#BFDBFE]/80',
           text: 'text-[#1E40AF]',
@@ -244,6 +253,12 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           text: 'text-[#166534]',
           border: 'border-[#22C55E]/40',
         };
+      default:
+        return {
+          bg: 'bg-[#E4E9DA]',
+          text: 'text-[#234B24]',
+          border: 'border-[#234B24]/30',
+        };
     }
   };
 
@@ -251,12 +266,14 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   const getSosStatusMeta = (status: SosEmergencyStatus) => {
     switch (status) {
       case 'Sinyal SOS Masuk':
+      case 'SIAGA_DARURAT':
         return {
           bg: 'bg-[#F26B4B]',
           text: 'text-white',
           pulse: true,
         };
       case 'Tim SAR Dikerahkan':
+      case 'TIM_DIKERAHKAN':
         return {
           bg: 'bg-[#EA580C]',
           text: 'text-white',
@@ -269,8 +286,15 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           pulse: false,
         };
       case 'Penanganan Selesai':
+      case 'BERHASIL_DIEVAKUASI':
         return {
           bg: 'bg-[#16A34A]',
+          text: 'text-white',
+          pulse: false,
+        };
+      default:
+        return {
+          bg: 'bg-[#234B24]',
           text: 'text-white',
           pulse: false,
         };
@@ -281,16 +305,19 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   const getHazardSeverityMeta = (sev: HazardSeverity) => {
     switch (sev) {
       case 'Aman Terkendali':
+      case 'Aman':
         return {
           badge: 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC]',
           dot: 'bg-[#16A34A]',
         };
       case 'Waspada Bencana':
+      case 'Waspada':
         return {
           badge: 'bg-[#FEF08A] text-[#854D0E] border-[#FDE047]',
           dot: 'bg-[#CA8A04]',
         };
       case 'Buka-Tutup Jalur':
+      case 'Buka-Tutup':
         return {
           badge: 'bg-[#FFEDD5] text-[#C2410C] border-[#FDBA74]',
           dot: 'bg-[#EA580C]',
@@ -299,6 +326,11 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
         return {
           badge: 'bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]',
           dot: 'bg-[#DC2626]',
+        };
+      default:
+        return {
+          badge: 'bg-[#E4E9DA] text-[#234B24] border-[#234B24]/30',
+          dot: 'bg-[#234B24]',
         };
     }
   };
@@ -543,8 +575,9 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                   ) : (
                     filteredPungli.map((report) => {
                       const statusMeta = getPungliStatusMeta(report.status);
-                      const isOvercharge =
-                        report.reported_amount > report.official_amount;
+                      const repAmt = report.reported_amount ?? report.charged_amount_idr ?? 0;
+                      const offAmt = report.official_amount ?? report.official_perda_price_idr ?? 0;
+                      const isOvercharge = repAmt > offAmt;
 
                       return (
                         <tr
@@ -553,10 +586,10 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                         >
                           <td className="py-3.5 px-4 whitespace-nowrap">
                             <span className="font-mono font-bold text-[#234B24]">
-                              {report.id.toUpperCase()}
+                              {(report.ticket_code || report.id).toUpperCase()}
                             </span>
                             <div className="text-[10px] text-[#767676] mt-0.5">
-                              {new Date(report.created_at).toLocaleDateString(
+                              {report.created_at ? new Date(report.created_at).toLocaleDateString(
                                 'id-ID',
                                 {
                                   day: '2-digit',
@@ -565,7 +598,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 }
-                              )}
+                              ) : '-'}
                             </div>
                           </td>
 
@@ -591,7 +624,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
 
                           <td className="py-3.5 px-4 whitespace-nowrap">
                             <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                              {report.category}
+                              {report.category || report.incident_category}
                             </span>
                           </td>
 
@@ -603,17 +636,15 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                             ) : (
                               <div>
                                 <div className="font-extrabold text-[#D95637]">
-                                  Rp {report.reported_amount.toLocaleString('id-ID')}
+                                  Rp {repAmt.toLocaleString('id-ID')}
                                 </div>
                                 <div className="text-[10px] text-[#166534]">
-                                  Resmi: Rp {report.official_amount.toLocaleString('id-ID')}
+                                  Resmi: Rp {offAmt.toLocaleString('id-ID')}
                                 </div>
                                 {isOvercharge && (
                                   <div className="text-[9px] font-bold text-[#D95637]">
                                     (Selisih +Rp{' '}
-                                    {(
-                                      report.reported_amount - report.official_amount
-                                    ).toLocaleString('id-ID')}
+                                    {(repAmt - offAmt).toLocaleString('id-ID')}
                                     )
                                   </div>
                                 )}
@@ -746,7 +777,8 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {sosTickets.map((ticket) => {
                 const statusMeta = getSosStatusMeta(ticket.status);
-                const isBatteryLow = ticket.battery_level < 20;
+                const bat = ticket.battery_level ?? ticket.battery_percent ?? 100;
+                const isBatteryLow = bat < 20;
 
                 return (
                   <div
@@ -758,14 +790,14 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <span className="font-mono text-xs font-bold text-[#234B24]">
-                            {ticket.id.toUpperCase()}
+                            {(ticket.sos_code || ticket.id).toUpperCase()}
                           </span>
                           <h3 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
                             {ticket.tourist_name}
                           </h3>
                           <div className="text-xs text-[#4A5248] flex items-center gap-1.5 mt-0.5">
                             <Phone className="w-3.5 h-3.5 text-[#234B24]" aria-hidden="true" />
-                            <span>{ticket.tourist_phone}</span>
+                            <span>{ticket.tourist_phone || ticket.phone_number}</span>
                           </div>
                         </div>
 
@@ -846,10 +878,10 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                     <div className="pt-3 border-t border-[#CFD8BE] flex items-center justify-between gap-2">
                       <span className="text-[10px] text-[#767676]">
                         Dilaporkan:{' '}
-                        {new Date(ticket.created_at).toLocaleTimeString('id-ID', {
+                        {ticket.created_at ? new Date(ticket.created_at).toLocaleTimeString('id-ID', {
                           hour: '2-digit',
                           minute: '2-digit',
-                        })}
+                        }) : '-'}
                       </span>
                       <button
                         type="button"
@@ -1048,7 +1080,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                       </div>
                       <div className="text-[11px] text-[#767676] mt-0.5">
                         Dilaporkan:{' '}
-                        {new Date(selectedPungli.created_at).toLocaleString('id-ID')}
+                        {selectedPungli.created_at ? new Date(selectedPungli.created_at).toLocaleString('id-ID') : '-'}
                       </div>
                     </div>
                   </div>
@@ -1059,10 +1091,10 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                     </span>
                     <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs flex items-center justify-between">
                       <span className="font-mono text-[#234B24]">
-                        {selectedPungli.lat.toFixed(4)}, {selectedPungli.lng.toFixed(4)}
+                        {(selectedPungli.lat ?? -0.9492).toFixed(4)}, {(selectedPungli.lng ?? 100.3543).toFixed(4)}
                       </span>
                       <a
-                        href={`https://maps.google.com/?q=${selectedPungli.lat},${selectedPungli.lng}`}
+                        href={`https://maps.google.com/?q=${selectedPungli.lat ?? -0.9492},${selectedPungli.lng ?? 100.3543}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[11px] font-bold text-[#1D4ED8] flex items-center gap-1"
@@ -1076,34 +1108,38 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </div>
 
               {/* Rincian Pelanggaran & Selisih Tarif */}
-              <div className="p-4 rounded-2xl bg-[#FFEDD5]/60 border border-[#FDBA74]">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-[#C2410C]">
-                    Kategori: {selectedPungli.category}
-                  </span>
-                  <span className="text-xs font-bold text-[#D95637]">
-                    Nominal Dipungut: Rp{' '}
-                    {selectedPungli.reported_amount.toLocaleString('id-ID')}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-[#166534] font-bold pt-1 border-t border-[#FDBA74]">
-                  <span>Standar Tarif Resmi Perda:</span>
-                  <span>
-                    Rp {selectedPungli.official_amount.toLocaleString('id-ID')}
-                  </span>
-                </div>
-                {selectedPungli.reported_amount > selectedPungli.official_amount && (
-                  <div className="mt-1 text-right text-xs font-extrabold text-[#D95637]">
-                    Selisih Pungli Oknum: +Rp{' '}
-                    {(
-                      selectedPungli.reported_amount - selectedPungli.official_amount
-                    ).toLocaleString('id-ID')}
+              {(() => {
+                const repAmount = selectedPungli.reported_amount ?? selectedPungli.charged_amount_idr ?? 0;
+                const offAmount = selectedPungli.official_amount ?? selectedPungli.official_perda_price_idr ?? 0;
+                return (
+                  <div className="p-4 rounded-2xl bg-[#FFEDD5]/60 border border-[#FDBA74]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-[#C2410C]">
+                        Kategori: {selectedPungli.category || selectedPungli.incident_category}
+                      </span>
+                      <span className="text-xs font-bold text-[#D95637]">
+                        Nominal Dipungut: Rp{' '}
+                        {repAmount.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-[#166534] font-bold pt-1 border-t border-[#FDBA74]">
+                      <span>Standar Tarif Resmi Perda:</span>
+                      <span>
+                        Rp {offAmount.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    {repAmount > offAmount && (
+                      <div className="mt-1 text-right text-xs font-extrabold text-[#D95637]">
+                        Selisih Pungli Oknum: +Rp{' '}
+                        {(repAmount - offAmount).toLocaleString('id-ID')}
+                      </div>
+                    )}
+                    <p className="mt-2 text-xs text-[#1B1F1A] leading-relaxed">
+                      &quot;{selectedPungli.description || selectedPungli.admin_action_notes || 'Laporan tiket ' + selectedPungli.ticket_code}&quot;
+                    </p>
                   </div>
-                )}
-                <p className="mt-2 text-xs text-[#1B1F1A] leading-relaxed">
-                  &quot;{selectedPungli.description}&quot;
-                </p>
-              </div>
+                );
+              })()}
 
               {/* Form Input Catatan Tindakan Resmi Admin */}
               <div>
@@ -1207,7 +1243,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                   Catatan Medis: <em>&quot;{selectedSos.medical_notes}&quot;</em>
                 </div>
                 <div className="font-mono text-[#234B24] font-bold">
-                  GPS: {selectedSos.lat.toFixed(5)}, {selectedSos.lng.toFixed(5)} · Baterai: {selectedSos.battery_level}%
+                  GPS: {(selectedSos.lat ?? selectedSos.latitude ?? 0).toFixed(5)}, {(selectedSos.lng ?? selectedSos.longitude ?? 0).toFixed(5)} · Baterai: {selectedSos.battery_level ?? selectedSos.battery_percent ?? 100}%
                 </div>
               </div>
 

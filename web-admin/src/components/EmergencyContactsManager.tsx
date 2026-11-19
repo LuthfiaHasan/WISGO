@@ -77,13 +77,15 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
 
   // Filtered Contacts
   const filteredContacts = contacts.filter((c) => {
+    const phone = c.call_number || c.phone_number || '';
+    const cat = c.category || c.agency_type || '';
     const matchesSearch =
       c.agency_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.call_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.city_regency.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesCategory = categoryFilter === 'all' || c.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || cat === categoryFilter;
     const matchesRegency =
       regencyFilter === 'all' ||
       c.city_regency.toLowerCase().includes(regencyFilter.toLowerCase());
@@ -109,12 +111,12 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
   const handleOpenEdit = (contact: EmergencyContactNumber) => {
     setEditingContact(contact);
     setFormAgencyName(contact.agency_name);
-    setFormCallNumber(contact.call_number);
-    setFormCategory(contact.category);
+    setFormCallNumber(contact.call_number || contact.phone_number || '');
+    setFormCategory(contact.category || contact.agency_type || 'SAR & Basarnas');
     setFormRegency(contact.city_regency);
     setFormAddress(contact.address || '');
-    setFormIs24Hours(contact.is_24_hours);
-    setFormIsActive(contact.is_active);
+    setFormIs24Hours(contact.is_24_hours ?? true);
+    setFormIsActive(contact.is_active ?? true);
     setFormDescription(contact.description || '');
     setIsModalOpen(true);
   };
@@ -130,12 +132,17 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
     const contactData: EmergencyContactNumber = {
       id: editingContact ? editingContact.id : `emg-${Date.now().toString(36)}`,
       agency_name: formAgencyName.trim(),
+      agency_type: formCategory,
+      phone_number: formCallNumber.trim(),
+      whatsapp_number: editingContact?.whatsapp_number || null,
       call_number: formCallNumber.trim(),
       category: formCategory,
       city_regency: formRegency,
       address: formAddress.trim() || undefined,
       is_24_hours: formIs24Hours,
       is_active: formIsActive,
+      geog: editingContact?.geog || 'SRID=4326;POINT(100.354270 -0.949240)',
+      created_by_admin_id: editingContact?.created_by_admin_id || 'usr-admin-01',
       description: formDescription.trim() || undefined,
       updated_at: new Date().toISOString(),
     };
@@ -336,8 +343,10 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
           </div>
         ) : (
           filteredContacts.map((contact) => {
-            const meta = getCategoryMeta(contact.category);
+            const cat = contact.category || contact.agency_type || 'SAR & Basarnas';
+            const meta = getCategoryMeta(cat);
             const IconComponent = meta.icon;
+            const phone = contact.call_number || contact.phone_number || '';
 
             return (
               <div
@@ -353,7 +362,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
                       className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border flex items-center gap-1.5 ${meta.bg}`}
                     >
                       <IconComponent className="w-3.5 h-3.5" />
-                      <span>{contact.category}</span>
+                      <span>{cat}</span>
                     </span>
 
                     <div className="flex items-center gap-1.5">
@@ -389,12 +398,12 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-[#F26B4B]" />
                         <span className="font-mono text-base font-extrabold text-[#234B24]">
-                          {contact.call_number}
+                          {phone}
                         </span>
                       </div>
 
                       <a
-                        href={`tel:${contact.call_number.replace(/\D/g, '')}`}
+                        href={phone ? `tel:${phone.replace(/\D/g, '')}` : '#'}
                         className="px-3 py-1 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white text-[11px] font-bold inline-flex items-center gap-1 shadow-xs transition"
                         title="Uji Panggilan Cepat"
                       >

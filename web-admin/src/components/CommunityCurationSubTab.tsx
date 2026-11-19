@@ -130,10 +130,10 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
       const q = searchQuery.trim().toLowerCase();
       const matchQuery =
         !q ||
-        s.title.toLowerCase().includes(q) ||
-        s.pokdarwis_name.toLowerCase().includes(q) ||
-        s.city_regency.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q);
+        (s.title || s.name || '').toLowerCase().includes(q) ||
+        (s.pokdarwis_name || s.submitter_name || '').toLowerCase().includes(q) ||
+        (s.city_regency || '').toLowerCase().includes(q) ||
+        (s.description || '').toLowerCase().includes(q);
 
       const matchStatus =
         statusFilter === 'all' || s.status === statusFilter;
@@ -319,7 +319,7 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
                       </span>
                       <span>•</span>
                       <span className="font-mono text-[11px]">
-                        GPS: {sub.latitude.toFixed(4)}, {sub.longitude.toFixed(4)}
+                        GPS: {(sub.latitude ?? -0.9492).toFixed(4)}, {(sub.longitude ?? 100.3543).toFixed(4)}
                       </span>
                     </div>
 
@@ -339,14 +339,14 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
                     {/* Sakelar Masking Lokasi Sensitif */}
                     <button
                       type="button"
-                      onClick={() => handleToggleMasking(sub.id, sub.is_masked)}
+                      onClick={() => handleToggleMasking(sub.id, !!(sub.is_masked ?? sub.is_sensitive))}
                       className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition shadow-xs ${
-                        sub.is_masked
+                        (sub.is_masked ?? sub.is_sensitive)
                           ? 'bg-[#E4E9DA] text-[#234B24] border-[#234B24]/30'
                           : 'bg-white text-[#767676] border-[#CFD8BE]'
                       }`}
                     >
-                      {sub.is_masked ? (
+                      {(sub.is_masked ?? sub.is_sensitive) ? (
                         <>
                           <EyeOff className="w-4 h-4 text-[#234B24]" />
                           <span>Masking Aktif (Wajib Pemandu)</span>

@@ -95,7 +95,21 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
       const officialAmt = matchedTariff ? matchedTariff.price : 5000;
 
       await submitPungliReport({
+        ticket_code: `PGL-${Date.now().toString().slice(-6)}`,
+        user_id: 'usr-tourist-01',
         destination_id: currentDest.id,
+        tariff_id: matchedTariff?.id || null,
+        incident_category: reportCategory,
+        charged_amount_idr: reportAmount,
+        official_perda_price_idr: officialAmt,
+        overcharge_amount_idr: Math.max(0, reportAmount - officialAmt),
+        photo_evidence:
+          reportPhoto ||
+          'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80',
+        incident_geog: `SRID=4326;POINT(${currentDest.longitude} ${currentDest.latitude})`,
+        status: 'Masuk',
+        verified_by_admin_id: null,
+        admin_action_notes: null,
         destination_name: currentDest.name,
         kab_kota: currentDest.city_regency,
         reporter_name: reportName.trim(),
@@ -109,7 +123,6 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
           'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80',
         lat: currentDest.latitude,
         lng: currentDest.longitude,
-        status: 'Laporan Baru',
       });
 
       setReportSuccess(true);
@@ -135,7 +148,21 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
     setSubmittingSos(true);
     try {
       await submitSosEmergency({
+        sos_code: `SOS-${Date.now().toString().slice(-6)}`,
         tourist_name: sosName.trim(),
+        phone_number: sosPhone.trim(),
+        emergency_type: 'Medis & Evakuasi Lapangan',
+        latitude: currentDest.latitude,
+        longitude: currentDest.longitude,
+        geog: `SRID=4326;POINT(${currentDest.longitude} ${currentDest.latitude})`,
+        battery_percent: 45,
+        passengers_count: 1,
+        nearest_corridor: 'CORR-SITINJAU',
+        nearest_rescue_post: 'Posko Siaga SAR Padang',
+        distance_to_rescue_km: 2.5,
+        eta_rescue_minutes: 15,
+        status: 'SIAGA_DARURAT',
+        notes: sosNotes.trim() || 'Sinyal darurat aktif dari wisatawan di lokasi destinasi.',
         tourist_phone: sosPhone.trim(),
         destination_name: currentDest.name,
         kab_kota: currentDest.city_regency,
@@ -147,7 +174,6 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
           : '4G Aktif',
         medical_notes:
           sosNotes.trim() || 'Sinyal darurat aktif dari wisatawan di lokasi destinasi.',
-        status: 'Sinyal SOS Masuk',
       });
 
       setSosSuccess(true);

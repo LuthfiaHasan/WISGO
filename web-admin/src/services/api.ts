@@ -167,6 +167,7 @@ export async function loginAdminJWT(
       phone_number: '6281166002026',
       full_name: 'Administrator Utama — Pusat Komando Terpadu',
       role: 'admin_utama',
+      jenis_input: 'web_admin',
       email: emailLower,
       agency:
         'Pusat Komando Terpadu WISGO (Dispar Sumbar • Penindakan Pungli • Siaga SAR)',
@@ -1068,11 +1069,11 @@ export async function recalculateGaodeRankings(config: GaodeWeightConfig): Promi
   // Hitung ulang skor setiap destinasi berdasarkan formula berbobot
   const recalculated = current.map((item) => {
     // normalisasi komponen ke skala 0 - 100
-    const satScore = item.satisfaction_rate; // 0 - 100
-    const pungliScore = item.pungli_free_index; // 0 - 100
-    const medanScore = (item.medan_score / 5) * 100; // 0 - 100
+    const satScore = item.satisfaction_rate ?? 95; // 0 - 100
+    const pungliScore = item.pungli_free_index ?? 98; // 0 - 100
+    const medanScore = ((item.medan_score ?? 4) / 5) * 100; // 0 - 100
     // visit score logaritmik (maksimal 15.000 kunjungan)
-    const visitScore = Math.min(100, (item.weekly_visits / 12500) * 100);
+    const visitScore = Math.min(100, ((item.weekly_visits ?? 5000) / 12500) * 100);
 
     const totalWeight =
       config.satisfaction_weight +
@@ -1093,19 +1094,20 @@ export async function recalculateGaodeRankings(config: GaodeWeightConfig): Promi
     return {
       ...item,
       calculated_gaode_score: finalScore,
-      previous_rank: item.current_rank,
+      previous_rank: item.current_rank ?? item.previous_rank ?? 1,
     };
   });
 
   // Urutkan menurun berdasarkan skor akhir
-  recalculated.sort((a, b) => b.calculated_gaode_score - a.calculated_gaode_score);
+  recalculated.sort((a, b) => (b.calculated_gaode_score || 0) - (a.calculated_gaode_score || 0));
 
   // Perbarui current_rank dan tren
   const finalized = recalculated.map((item, index) => {
     const rank = index + 1;
     let trend: 'up' | 'down' | 'same' = 'same';
-    if (rank < item.previous_rank) trend = 'up';
-    else if (rank > item.previous_rank) trend = 'down';
+    const prevRank = item.previous_rank ?? rank;
+    if (rank < prevRank) trend = 'up';
+    else if (rank > prevRank) trend = 'down';
 
     return {
       ...item,
@@ -1143,7 +1145,7 @@ export async function fetchOpenTrips(): Promise<OpenTripItem[]> {
 
 export async function updateOpenTripStatus(tripId: string, status: OpenTripStatus): Promise<OpenTripItem[]> {
   const current = await fetchOpenTrips();
-  const updated = current.map((t) => (t.id === tripId ? { ...t, status } : t));
+  const updated: OpenTripItem[] = current.map((t) => (t.id === tripId ? { ...t, status } : t));
   safeSetLocalStorage(OPENTRIPS_STORAGE_KEY, JSON.stringify(updated));
   try {
     await apiClient.put(`/trips/open/${tripId}/status`, { status });
@@ -1182,23 +1184,20 @@ export async function runSystemBenchmark(concurrency: number = 20): Promise<Syst
   const spatialMs = Math.floor(32 + Math.random() * 25); // 32-57 ms (<100ms)
 
   const newRun: BenchmarkRunResult = {
-    total_requests: 100,
-    concurrency,
-    latency_p50_ms: latencyP50,
-    latency_p95_ms: latencyP95,
-    latency_p99_ms: latencyP99,
-    error_rate_pct: 0,
-    throughput_qps: throughput,
+    run_id: `run-${Date.now()}`,
     timestamp: new Date().toISOString(),
+    latency_ms: latencyP50,
+    memory_usage_mb: 128,
+    active_sessions: concurrency,
+    status: 'OPTIMAL',
+    total_requests: 100,
   };
 
   const updated: SystemBenchmarkMetrics = {
     ...current,
     server_status: 'ONLINE',
-    go_engine_latency_ms: latencyP50,
-    postgres_spatial_query_ms: spatialMs,
-    requests_per_second: throughput,
-    last_benchmark_time: newRun.timestamp,
+    system_status: 'OPERATIONAL',
+    api_response_time_ms: latencyP50,
     benchmark_history: [newRun, ...(current.benchmark_history || []).slice(0, 4)],
   };
 

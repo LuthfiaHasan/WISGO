@@ -320,10 +320,10 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
     setEditingChallenge(ch);
     setFormTitle(ch.title);
     setFormDescription(ch.description);
-    setFormCategory(ch.category);
-    setFormTargetCount(ch.target_count);
-    setFormReward(ch.reward_description);
-    setFormDuration(ch.duration_days);
+    setFormCategory(ch.category || 'Penakluk Medan Ekstrem');
+    setFormTargetCount(ch.target_count ?? ch.target_destination_count ?? 3);
+    setFormReward(ch.reward_description || ch.reward_title || '');
+    setFormDuration(ch.duration_days ?? 30);
     setFormSelectedDests(ch.target_destinations || []);
     setIsModalOpen(true);
   };
@@ -429,16 +429,19 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
 
   // Macro Metrics
   const totalActiveChallenges = challenges.filter((c) => c.is_active).length;
-  const totalParticipants = challenges.reduce((sum, c) => sum + c.participant_count, 0);
+  const totalParticipants = challenges.reduce((sum, c) => sum + (c.participant_count || 0), 0);
   const totalReadyToClaim = claims.filter((c) => c.status === 'SIAP_KLAIM').length;
   const totalRewardSent = claims.filter((c) => c.status === 'HADIAH_TERKIRIM').length;
 
   // Filtered Claims
   const filteredClaims = claims.filter((clm) => {
+    const tName = clm.tourist_name || '';
+    const tPhone = clm.tourist_phone || '';
+    const cTitle = clm.challenge_title || clm.reward || '';
     const matchesSearch =
-      clm.tourist_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      clm.tourist_phone.includes(searchTerm) ||
-      clm.challenge_title.toLowerCase().includes(searchTerm.toLowerCase());
+      tName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tPhone.includes(searchTerm) ||
+      cTitle.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
       claimStatusFilter === 'ALL' || clm.status === claimStatusFilter;
@@ -764,31 +767,31 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                   </tr>
                 ) : (
                   filteredClaims.map((clm) => {
-                    const progressPercent = Math.round(
-                      (clm.completed_count / clm.target_count) * 100
-                    );
-                    const is100Percent = clm.completed_count >= clm.target_count;
+                    const completed = clm.completed_count ?? clm.progress_count ?? 0;
+                    const target = clm.target_count ?? clm.target_destination_count ?? 1;
+                    const progressPercent = Math.round((completed / target) * 100);
+                    const is100Percent = completed >= target;
 
                     return (
                       <tr key={clm.id} className="hover:bg-[#F6F3EC]/40 transition">
                         <td className="py-3.5 px-4 font-bold text-[#1B1F1A]">
-                          <div>{clm.tourist_name}</div>
+                          <div>{clm.tourist_name || 'Wisatawan'}</div>
                           <div className="text-[11px] font-mono text-[#767676]">
-                            {clm.tourist_phone}
+                            {clm.tourist_phone || '-'}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
                           <div className="font-semibold text-[#1B1F1A] line-clamp-1 max-w-xs">
-                            {clm.challenge_title}
+                            {clm.challenge_title || clm.reward}
                           </div>
                           <div className="text-[10px] text-[#767676] mt-0.5">
-                            Target {clm.target_count} Lokasi
+                            Target {target} Lokasi
                           </div>
                         </td>
                         <td className="py-3.5 px-4 min-w-[180px]">
                           <div className="flex items-center justify-between text-[11px] mb-1">
                             <span className="font-extrabold text-[#234B24]">
-                              {clm.completed_count}/{clm.target_count} Tempat
+                              {completed}/{target} Tempat
                             </span>
                             <span className="font-bold text-[#4A5248]">
                               {progressPercent}%
@@ -804,7 +807,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                           </div>
                           {/* Mini Tooltip Tempat Ceklis */}
                           <div className="text-[10px] text-[#767676] mt-1 line-clamp-1">
-                            {clm.completed_destinations.join(', ')}
+                            {(clm.completed_destinations || []).join(', ')}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
@@ -863,7 +866,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                             </button>
                           ) : (
                             <span className="text-[11px] text-[#767676] italic">
-                              Menunggu {clm.target_count - clm.completed_count} tempat lagi
+                              Menunggu {Math.max(0, (clm.target_count ?? clm.target_destination_count ?? 3) - (clm.completed_count ?? clm.progress_count ?? 0))} tempat lagi
                             </span>
                           )}
                         </td>
