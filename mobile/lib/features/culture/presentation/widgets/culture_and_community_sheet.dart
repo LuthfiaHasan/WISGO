@@ -230,7 +230,7 @@ class _CultureAndCommunitySheetState extends State<CultureAndCommunitySheet> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSel ? AppColors.forest : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: isSel ? AppColors.forest : AppColors.sageBorder),
           ),
           child: Row(
