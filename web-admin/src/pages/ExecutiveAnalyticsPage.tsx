@@ -14,7 +14,6 @@ import {
   Calendar,
   Flame,
   Activity,
-  Award,
   Sparkles,
   Star,
   FileText,
@@ -42,7 +41,6 @@ import {
   fetchRegencyHeatmap,
 } from '../services/api';
 import { SystemHealthBenchmarkSubTab } from '../components/SystemHealthBenchmarkSubTab';
-import { ChallengesRewardsSubTab } from '../components/ChallengesRewardsSubTab';
 
 export type AnalyticsSubTab =
   | 'heatmap_prediction'
@@ -50,8 +48,7 @@ export type AnalyticsSubTab =
   | 'incident_recap'
   | 'export_report'
   | 'intel_heatmap' // Backwards compatibility with App.tsx
-  | 'system_benchmark'
-  | 'challenges_rewards';
+  | 'system_benchmark';
 
 interface ExecutiveAnalyticsPageProps {
   destinations: Destination[];
@@ -901,26 +898,11 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           <span>4. Ekspor Laporan Resmi (PDF/CSV)</span>
         </button>
 
-        {/* Tab 5: Buat Tantangan & Reward (Use Case 15) */}
-        <button
-          type="button"
-          onClick={() => setActiveTab('challenges_rewards')}
-          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ml-auto ${
-            activeTab === 'challenges_rewards'
-              ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-              : 'bg-white hover:bg-[#F6F3EC] text-[#4A5248] border border-[#CFD8BE]'
-          }`}
-          title="Manajemen Tantangan & Reward Wisatawan"
-        >
-          <Award className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-          <span>Tantangan &amp; Reward</span>
-        </button>
-
-        {/* Tab 6: Health & Benchmark SLA (Use Case 11) */}
+        {/* Tab 5: Health & Benchmark SLA (Use Case 10) */}
         <button
           type="button"
           onClick={() => setActiveTab('system_benchmark')}
-          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ml-auto ${
             activeTab === 'system_benchmark'
               ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
               : 'bg-white hover:bg-[#F6F3EC] text-[#4A5248] border border-[#CFD8BE]'
@@ -1898,16 +1880,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* 8. TAB 5: BUAT TANTANGAN & REWARD (USE CASE 15)                       */}
-      {/* ==================================================================== */}
-      {activeTab === 'challenges_rewards' && (
-        <div className="no-print">
-          <ChallengesRewardsSubTab destinations={destinations} showToast={showToast} />
-        </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 9. TAB 6: HEALTH & BENCHMARK SLA SISTEM (USE CASE 11)                 */}
+      {/* 8. TAB 5: HEALTH & BENCHMARK SLA SISTEM (USE CASE 10)                 */}
       {/* ==================================================================== */}
       {activeTab === 'system_benchmark' && (
         <div className="no-print">
