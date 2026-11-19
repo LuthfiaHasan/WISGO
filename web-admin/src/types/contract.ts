@@ -1,5 +1,5 @@
 // ============================================================================
-// SKEMA DATABASE RESMI WISGO (RANCAK.IN) — 26 TABEL POSTGRESQL 16 + POSTGIS 3.4
+// SKEMA DATABASE RESMI WISGO — 26 TABEL POSTGRESQL 16 + POSTGIS 3.4
 // Dinas Pariwisata Provinsi Sumatera Barat • Ekosistem Wisata Pintar Sumbar
 // ============================================================================
 

@@ -1,5 +1,5 @@
 // ============================================================================
-// MOCK & SEED DATA RESMI WISGO (RANCAK.IN) — 26 TABEL POSTGRESQL 16 + POSTGIS 3.4
+// MOCK & SEED DATA RESMI WISGO — 26 TABEL POSTGRESQL 16 + POSTGIS 3.4
 // Memenuhi integritas relasional (Foreign Key) dan nama kolom tepat persis
 // ============================================================================
 

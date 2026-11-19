@@ -149,16 +149,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg tracking-tight text-[#FAF3E6] truncate">
-                  WISGO
-                </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#E65F2B] text-white">
-                  Rancak.in
-                </span>
-              </div>
+              <span className="font-extrabold text-lg tracking-tight text-[#FAF3E6] truncate block">
+                WISGO Sumbar
+              </span>
               <p className="text-[11px] text-[#DFECE2]/85 truncate">
-                Pusat Komando Dinas Pariwisata Sumbar
+                Pusat Komando Dinas Pariwisata
               </p>
             </div>
           </div>

@@ -113,7 +113,6 @@ dialog::backdrop {
   container-type: inline-size;
 }
 
-.rancak-table,
 .wisgo-table {
   border-collapse: separate;
   border-spacing: 0;
@@ -127,17 +126,17 @@ dialog::backdrop {
   --label-7: "Tindakan";
 }
 
-.rancak-table thead {
+.wisgo-table thead {
   position: sticky;
   inset-block-start: 0;
   z-index: 2;
 }
 
-.rancak-table thead th:has(> button) {
+.wisgo-table thead th:has(> button) {
   padding: 0;
 }
 
-.rancak-table thead th > button {
+.wisgo-table thead th > button {
   width: 100%;
   min-height: 48px;
   padding: 0.875rem 1rem;
@@ -152,40 +151,40 @@ dialog::backdrop {
   cursor: pointer;
 }
 
-.rancak-table thead th > button:hover {
+.wisgo-table thead th > button:hover {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-.rancak-table tbody th {
+.wisgo-table tbody th {
   position: sticky;
   inset-inline-start: 0;
   z-index: 1;
   background-color: #FFFFFF;
 }
 
-.rancak-table tbody tr:hover th {
+.wisgo-table tbody tr:hover th {
   background-color: #FAF8F3;
 }
 
 @container (width < 640px) {
-  .rancak-table {
+  .wisgo-table {
     min-inline-size: 100%;
   }
 
-  .rancak-table,
-  .rancak-table thead,
-  .rancak-table tbody,
-  .rancak-table tr,
-  .rancak-table th,
-  .rancak-table td {
+  .wisgo-table,
+  .wisgo-table thead,
+  .wisgo-table tbody,
+  .wisgo-table tr,
+  .wisgo-table th,
+  .wisgo-table td {
     display: block;
   }
 
-  .rancak-table thead {
+  .wisgo-table thead {
     display: none;
   }
 
-  .rancak-table tbody tr {
+  .wisgo-table tbody tr {
     margin-block-end: 1rem;
     border: 1px solid #CFD8BE;
     border-radius: 16px;
@@ -193,14 +192,14 @@ dialog::backdrop {
     background: #FFFFFF;
   }
 
-  .rancak-table tbody th {
+  .wisgo-table tbody th {
     position: sticky;
     inset-block-start: 0;
     z-index: 2;
     background: var(--sage-100);
   }
 
-  .rancak-table td:nth-child(2)::before {
+  .wisgo-table td:nth-child(2)::before {
     content: var(--label-2) ": ";
     font-weight: 700;
     display: block;
@@ -209,7 +208,7 @@ dialog::backdrop {
     margin-bottom: 0.25rem;
   }
 
-  .rancak-table td:nth-child(3)::before {
+  .wisgo-table td:nth-child(3)::before {
     content: var(--label-3) ": ";
     font-weight: 700;
     display: block;
@@ -218,7 +217,7 @@ dialog::backdrop {
     margin-bottom: 0.25rem;
   }
 
-  .rancak-table td:nth-child(4)::before {
+  .wisgo-table td:nth-child(4)::before {
     content: var(--label-4) ": ";
     font-weight: 700;
     display: block;
@@ -227,7 +226,7 @@ dialog::backdrop {
     margin-bottom: 0.25rem;
   }
 
-  .rancak-table td:nth-child(5)::before {
+  .wisgo-table td:nth-child(5)::before {
     content: var(--label-5) ": ";
     font-weight: 700;
     display: block;
@@ -236,7 +235,7 @@ dialog::backdrop {
     margin-bottom: 0.25rem;
   }
 
-  .rancak-table td:nth-child(6)::before {
+  .wisgo-table td:nth-child(6)::before {
     content: var(--label-6) ": ";
     font-weight: 700;
     display: block;
@@ -245,7 +244,7 @@ dialog::backdrop {
     margin-bottom: 0.25rem;
   }
 
-  .rancak-table td:nth-child(7)::before {
+  .wisgo-table td:nth-child(7)::before {
     content: var(--label-7) ": ";
     font-weight: 700;
     display: block;

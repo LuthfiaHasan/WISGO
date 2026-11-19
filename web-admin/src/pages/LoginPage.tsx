@@ -122,10 +122,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
             <div>
               <span className="font-extrabold text-2xl tracking-tight text-[#FAF3E6]">
-                WISGO
-              </span>
-              <span className="ml-2 text-xs font-bold px-2 py-0.5 rounded-full bg-[#E65F2B] text-white">
-                Rancak.in
+                WISGO Sumbar
               </span>
             </div>
           </div>
