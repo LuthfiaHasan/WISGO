@@ -151,20 +151,19 @@ class _SplashScreenState extends State<SplashScreen> {
                       fit: BoxFit.cover,
                       alignment: Alignment.center,
                     ),
-                    // Top gradient overlay for logo readability
+                    // Subtle top vignette to ensure status bar contrast while preserving bright HD sky
                     Positioned(
                       top: 0,
                       left: 0,
                       right: 0,
-                      height: 240,
+                      height: 140,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withValues(alpha: 0.72),
-                              Colors.black.withValues(alpha: 0.35),
+                              Colors.black.withValues(alpha: 0.28),
                               Colors.transparent,
                             ],
                           ),
@@ -176,7 +175,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      height: 480,
+                      height: 460,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -184,11 +183,11 @@ class _SplashScreenState extends State<SplashScreen> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.40),
-                              Colors.black.withValues(alpha: 0.78),
-                              Colors.black.withValues(alpha: 0.94),
+                              Colors.black.withValues(alpha: 0.38),
+                              Colors.black.withValues(alpha: 0.76),
+                              Colors.black.withValues(alpha: 0.95),
                             ],
-                            stops: const [0.0, 0.32, 0.68, 1.0],
+                            stops: const [0.0, 0.28, 0.65, 1.0],
                           ),
                         ),
                       ),
@@ -198,27 +197,44 @@ class _SplashScreenState extends State<SplashScreen> {
               },
             ),
 
-            // 2. Fixed Top Bar: Real WISGO Logo & Lewati Button
+            // 2. Fixed Top Bar: Authentic WISGO Logo in Frosted Cream Pill & Lewati Button
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Invisible spacer to balance the Lewati button
-                      const SizedBox(width: 60),
+                      // Invisible spacer to mathematically balance the Lewati button
+                      const SizedBox(width: 72),
 
-                      // Real WISGO Logo in pure crisp white
-                      const Hero(
+                      // Authentic WISGO Logo with official green colors in clean frosted cream pill
+                      Hero(
                         tag: 'wisgo_app_logo',
-                        child: WisgoLogo(
-                          width: 140,
-                          color: Colors.white,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.cream.withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.90),
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.16),
+                                blurRadius: 14,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const WisgoLogo(
+                            width: 120,
+                          ),
                         ),
                       ),
 
@@ -227,12 +243,12 @@ class _SplashScreenState extends State<SplashScreen> {
                         onTap: _goToOnboarding,
                         behavior: HitTestBehavior.opaque,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
+                            color: Colors.black.withValues(alpha: 0.32),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.32),
+                              color: Colors.white.withValues(alpha: 0.38),
                               width: 1.0,
                             ),
                             boxShadow: [
@@ -246,7 +262,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           child: const Text(
                             'Lewati',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                               letterSpacing: 0.2,
@@ -279,12 +295,14 @@ class _SplashScreenState extends State<SplashScreen> {
                           final isActive = _currentPage == idx;
                           return AnimatedContainer(
                             duration: const Duration(milliseconds: 280),
-                            margin: const EdgeInsets.symmetric(horizontal: 3.5),
-                            width: isActive ? 24 : 7,
-                            height: 7,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: isActive ? 24 : 6,
+                            height: 6,
                             decoration: BoxDecoration(
-                              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.36),
-                              borderRadius: BorderRadius.circular(99),
+                              color: isActive
+                                  ? AppColors.terracotta
+                                  : Colors.white.withValues(alpha: 0.38),
+                              borderRadius: BorderRadius.circular(3),
                             ),
                           );
                         }),
@@ -299,11 +317,11 @@ class _SplashScreenState extends State<SplashScreen> {
                           key: ValueKey<int>(_currentPage),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 28,
+                            fontSize: 30,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            height: 1.22,
-                            letterSpacing: -0.3,
+                            height: 1.20,
+                            letterSpacing: -0.4,
                           ),
                         ),
                       ),
@@ -317,8 +335,8 @@ class _SplashScreenState extends State<SplashScreen> {
                           key: ValueKey<String>('sub_$_currentPage'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
                             color: Colors.white.withValues(alpha: 0.88),
                             height: 1.45,
                           ),
@@ -326,23 +344,19 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                       const SizedBox(height: 26),
 
-                      // Primary Action Button (Warna Khas WisGo: Forest Green dengan aksen lembut)
+                      // Primary Action Button (Warna Khas WisGo: Terracotta)
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
                           onPressed: _handleButtonPress,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.forest,
+                            backgroundColor: AppColors.terracotta,
                             foregroundColor: Colors.white,
-                            elevation: 3,
-                            shadowColor: Colors.black.withValues(alpha: 0.4),
+                            elevation: 4,
+                            shadowColor: AppColors.terracotta.withValues(alpha: 0.40),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(26),
-                              side: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.18),
-                                width: 1.2,
-                              ),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           child: AnimatedSwitcher(
@@ -351,8 +365,8 @@ class _SplashScreenState extends State<SplashScreen> {
                               _slides[_currentPage].buttonText,
                               key: ValueKey<String>(_slides[_currentPage].buttonText),
                               style: const TextStyle(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
                               ),
                             ),
