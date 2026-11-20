@@ -232,19 +232,40 @@ class _SplashScreenState extends State<SplashScreen>
                         alignment: Alignment.center,
                       ),
                     ),
-                    // Subtle top vignette to protect status bar while keeping bright natural sky
+                    // Gradiasi warna ivory lembut di bagian atas layar sesuai arahan
                     Positioned(
                       top: 0,
                       left: 0,
                       right: 0,
-                      height: 140,
+                      height: 180,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withValues(alpha: 0.32),
+                              AppColors.cream.withValues(alpha: 0.25),
+                              AppColors.cream.withValues(alpha: 0.08),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.45, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Subtle dark vignette to protect status bar icons
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 90,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.20),
                               Colors.transparent,
                             ],
                           ),
