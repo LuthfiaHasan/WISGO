@@ -21,10 +21,10 @@ class OnboardingSlideData {
 
 /// Screen 1: Splash Screen & Onboarding Visual Showcase
 /// - Menggunakan 3 foto lanskap otentik Sumatera Barat HD 1080x1920
-/// - Menampilkan Logo Asli WISGO (100% transparan, floating bebas tanpa background ivory/kotak)
-/// - Menggunakan warna hijau resmi WISGO (AppColors.forest #193D22) serasi dengan tombol Izinkan Akses Lokasi
-/// - Animasi lengkap: Ken Burns slow zoom, logo entrance & breathing float, transisi teks halus, dan micro-interaction
-/// - Alur navigasi tetap terjaga ke LocationOnboardingScreen
+/// - Gradiasi bawah menggunakan warna IVORY (AppColors.cream #FAF3E6), bukan hitam
+/// - Logo WISGO ikut bergerak bersama slide saat berpindah (tidak diam/statis)
+/// - Tipografi serasi dengan teks hijau hutan resmi (AppColors.forest) di atas ivory
+/// - Tombol Lewati presisi dan seragam dengan halaman Izinkan Akses Lokasi
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -44,12 +44,7 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _bgAnimationController;
   late final Animation<double> _bgScaleAnimation;
 
-  // 2. Logo entrance animation (fade + slide down)
-  late final AnimationController _logoEntranceController;
-  late final Animation<double> _logoFadeAnimation;
-  late final Animation<Offset> _logoSlideAnimation;
-
-  // 3. Logo subtle floating/hovering animation
+  // 2. Logo subtle floating/hovering animation
   late final AnimationController _logoFloatController;
   late final Animation<double> _logoFloatAnimation;
 
@@ -92,27 +87,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Inisialisasi animasi masuk Logo
-    _logoEntranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-
-    _logoFadeAnimation = CurvedAnimation(
-      parent: _logoEntranceController,
-      curve: const Interval(0.0, 0.8, curve: Curves.easeOut),
-    );
-
-    _logoSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, -0.22),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _logoEntranceController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
-
     // Inisialisasi floating logo halus
     _logoFloatController = AnimationController(
       vsync: this,
@@ -126,7 +100,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _logoEntranceController.forward();
     _startAutoSlide();
   }
 
@@ -188,7 +161,6 @@ class _SplashScreenState extends State<SplashScreen>
     _autoSlideTimer?.cancel();
     _pageController.dispose();
     _bgAnimationController.dispose();
-    _logoEntranceController.dispose();
     _logoFloatController.dispose();
     super.dispose();
   }
@@ -196,13 +168,13 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.cream,
       body: Listener(
         onPointerDown: (_) => _onUserInteraction(),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 1. Full-bleed Scenic Photography Backgrounds with Ken Burns Animated Zoom
+            // 1. Full-bleed Scenic Photography Backgrounds with Ken Burns Animated Zoom & Moving Logo per Slide
             PageView.builder(
               controller: _pageController,
               itemCount: _slides.length,
@@ -232,7 +204,8 @@ class _SplashScreenState extends State<SplashScreen>
                         alignment: Alignment.center,
                       ),
                     ),
-                    // Gradiasi warna ivory lembut di bagian atas layar sesuai arahan
+
+                    // Gradiasi warna ivory lembut di bagian atas layar
                     Positioned(
                       top: 0,
                       left: 0,
@@ -244,8 +217,8 @@ class _SplashScreenState extends State<SplashScreen>
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              AppColors.cream.withValues(alpha: 0.25),
-                              AppColors.cream.withValues(alpha: 0.08),
+                              AppColors.cream.withValues(alpha: 0.32),
+                              AppColors.cream.withValues(alpha: 0.10),
                               Colors.transparent,
                             ],
                             stops: const [0.0, 0.45, 1.0],
@@ -253,26 +226,8 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                     ),
-                    // Subtle dark vignette to protect status bar icons
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 90,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: 0.20),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Bottom dark gradient overlay for text readability
+
+                    // Gradiasi IVORY di bagian bawah layar (BUKAN BLACK!)
                     Positioned(
                       bottom: 0,
                       left: 0,
@@ -285,50 +240,33 @@ class _SplashScreenState extends State<SplashScreen>
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.36),
-                              Colors.black.withValues(alpha: 0.78),
-                              Colors.black.withValues(alpha: 0.95),
+                              AppColors.cream.withValues(alpha: 0.50),
+                              AppColors.cream.withValues(alpha: 0.90),
+                              AppColors.cream,
                             ],
                             stops: const [0.0, 0.28, 0.65, 1.0],
                           ),
                         ),
                       ),
                     ),
-                  ],
-                );
-              },
-            ),
 
-            // 2. Fixed Top Bar: Authentic WISGO Logo (NO Ivory Background) & Lewati Button
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Invisible spacer to mathematically balance the Lewati button
-                      const SizedBox(width: 72),
-
-                      // Logo Resmi WISGO floating bebas (Tanpa background kotak / ivory)
-                      SlideTransition(
-                        position: _logoSlideAnimation,
-                        child: FadeTransition(
-                          opacity: _logoFadeAnimation,
-                          child: AnimatedBuilder(
-                            animation: _logoFloatAnimation,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(0, _logoFloatAnimation.value),
-                                child: child,
-                              );
-                            },
-                            child: Hero(
-                              tag: 'wisgo_app_logo',
+                    // Logo Resmi WISGO (Floating di atas slide - Bergerak bersama perpindahan slide!)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 14),
+                          child: Center(
+                            child: AnimatedBuilder(
+                              animation: _logoFloatAnimation,
+                              builder: (context, child) {
+                                return Transform.translate(
+                                  offset: Offset(0, _logoFloatAnimation.value),
+                                  child: child,
+                                );
+                              },
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
@@ -338,7 +276,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     child: Image.asset(
                                       'assets/images/logo_primary.png',
                                       width: 135,
-                                      color: Colors.black.withValues(alpha: 0.35),
+                                      color: Colors.black.withValues(alpha: 0.30),
                                       colorBlendMode: BlendMode.srcIn,
                                     ),
                                   ),
@@ -352,46 +290,55 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
+                    ),
+                  ],
+                );
+              },
+            ),
 
-                      // Tombol Lewati (Pill Glassmorphic Transparan)
-                      GestureDetector(
-                        onTap: _goToOnboarding,
-                        behavior: HitTestBehavior.opaque,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.30),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.36),
-                              width: 1.0,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+            // 2. Fixed Top Bar: Tombol Lewati di Kanan Atas (Seragam dengan Izinkan Akses Lokasi)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: GestureDetector(
+                    onTap: _goToOnboarding,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.sageBorder.withValues(alpha: 0.9),
+                          width: 1.0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          child: const Text(
-                            'Lewati',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'Lewati',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.forest,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
 
-            // 3. Bottom Content: Indicator, Title, Subtitle, CTA Button (HIJAU RESMI WISGO)
+            // 3. Bottom Content: Indicator, Title, Subtitle, CTA Button di atas Gradiasi IVORY
             Positioned(
               left: 0,
               right: 0,
@@ -403,7 +350,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Dots Indicator (Animasi Lebar & Warna Lembut)
+                      // Dots Indicator (Warna Hijau Forest Khas WisGo & Sage)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(_slides.length, (idx) {
@@ -416,13 +363,13 @@ class _SplashScreenState extends State<SplashScreen>
                             height: 7,
                             decoration: BoxDecoration(
                               color: isActive
-                                  ? Colors.white
-                                  : Colors.white.withValues(alpha: 0.36),
+                                  ? AppColors.forest
+                                  : AppColors.sageBorder,
                               borderRadius: BorderRadius.circular(4),
                               boxShadow: isActive
                                   ? [
                                       BoxShadow(
-                                        color: Colors.white.withValues(alpha: 0.40),
+                                        color: AppColors.forest.withValues(alpha: 0.25),
                                         blurRadius: 6,
                                         offset: const Offset(0, 1),
                                       ),
@@ -434,7 +381,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 22),
 
-                      // Animated Title (Slide-up + Fade)
+                      // Animated Title (Slide-up + Fade) dalam warna Hijau Forest di atas Ivory
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 360),
                         transitionBuilder: (child, animation) {
@@ -460,7 +407,7 @@ class _SplashScreenState extends State<SplashScreen>
                           style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: AppColors.forest,
                             height: 1.20,
                             letterSpacing: -0.4,
                           ),
@@ -491,17 +438,17 @@ class _SplashScreenState extends State<SplashScreen>
                           _slides[_currentPage].subtitle,
                           key: ValueKey<String>('sub_$_currentPage'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
-                            color: Colors.white.withValues(alpha: 0.88),
+                            color: AppColors.muted,
                             height: 1.45,
                           ),
                         ),
                       ),
                       const SizedBox(height: 26),
 
-                      // Primary Action Button (HIJAU RESMI WISGO: AppColors.forest #193D22, SESUAI TOMBOL LOKASI)
+                      // Primary Action Button (HIJAU RESMI WISGO: AppColors.forest #193D22)
                       GestureDetector(
                         onTapDown: (_) => setState(() => _isButtonPressed = true),
                         onTapUp: (_) => setState(() => _isButtonPressed = false),
@@ -516,14 +463,14 @@ class _SplashScreenState extends State<SplashScreen>
                             child: ElevatedButton(
                               onPressed: _handleButtonPress,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.forest, // HIJAU RESMI WISGO #193D22
-                                foregroundColor: Colors.white,
+                                backgroundColor: AppColors.forest,
+                                foregroundColor: AppColors.cream,
                                 elevation: 3,
                                 shadowColor: Colors.black.withValues(alpha: 0.35),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28), // Bentuk Pill serasi
+                                  borderRadius: BorderRadius.circular(28),
                                   side: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.18),
+                                    color: Colors.white.withValues(alpha: 0.20),
                                     width: 1.2,
                                   ),
                                 ),
