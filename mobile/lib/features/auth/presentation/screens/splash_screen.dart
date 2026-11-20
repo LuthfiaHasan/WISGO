@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
@@ -19,10 +20,11 @@ class OnboardingSlideData {
 }
 
 /// Screen 1: Splash Screen & Onboarding Visual Showcase
-/// - Menggunakan 3 foto lanskap otentik Sumatera Barat kiriman pengguna
-/// - Menampilkan Logo Asli WISGO (100% transparan, tajam, dan elegan)
-/// - Menjaga palet warna identitas resmi WISGO (AppColors.forest & AppColors.cream)
-/// - Mempertahankan alur navigasi aplikasi ke LocationOnboardingScreen
+/// - Menggunakan 3 foto lanskap otentik Sumatera Barat HD 1080x1920
+/// - Menampilkan Logo Asli WISGO (100% transparan, floating bebas tanpa background ivory/kotak)
+/// - Menggunakan warna hijau resmi WISGO (AppColors.forest #193D22) serasi dengan tombol Izinkan Akses Lokasi
+/// - Animasi lengkap: Ken Burns slow zoom, logo entrance & breathing float, transisi teks halus, dan micro-interaction
+/// - Alur navigasi tetap terjaga ke LocationOnboardingScreen
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -30,11 +32,26 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   late final PageController _pageController;
   int _currentPage = 0;
   Timer? _autoSlideTimer;
   bool _userInteracted = false;
+  bool _isButtonPressed = false;
+
+  // 1. Ken Burns background breathing zoom
+  late final AnimationController _bgAnimationController;
+  late final Animation<double> _bgScaleAnimation;
+
+  // 2. Logo entrance animation (fade + slide down)
+  late final AnimationController _logoEntranceController;
+  late final Animation<double> _logoFadeAnimation;
+  late final Animation<Offset> _logoSlideAnimation;
+
+  // 3. Logo subtle floating/hovering animation
+  late final AnimationController _logoFloatController;
+  late final Animation<double> _logoFloatAnimation;
 
   static const List<OnboardingSlideData> _slides = [
     OnboardingSlideData(
@@ -61,6 +78,55 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
+
+    // Inisialisasi Ken Burns Zoom halus
+    _bgAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+
+    _bgScaleAnimation = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(
+        parent: _bgAnimationController,
+        curve: Curves.easeInOutSine,
+      ),
+    );
+
+    // Inisialisasi animasi masuk Logo
+    _logoEntranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _logoFadeAnimation = CurvedAnimation(
+      parent: _logoEntranceController,
+      curve: const Interval(0.0, 0.8, curve: Curves.easeOut),
+    );
+
+    _logoSlideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, -0.22),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _logoEntranceController,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // Inisialisasi floating logo halus
+    _logoFloatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    )..repeat(reverse: true);
+
+    _logoFloatAnimation = Tween<double>(begin: -2.5, end: 2.5).animate(
+      CurvedAnimation(
+        parent: _logoFloatController,
+        curve: Curves.easeInOutSine,
+      ),
+    );
+
+    _logoEntranceController.forward();
     _startAutoSlide();
   }
 
@@ -121,6 +187,9 @@ class _SplashScreenState extends State<SplashScreen> {
   void dispose() {
     _autoSlideTimer?.cancel();
     _pageController.dispose();
+    _bgAnimationController.dispose();
+    _logoEntranceController.dispose();
+    _logoFloatController.dispose();
     super.dispose();
   }
 
@@ -133,7 +202,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 1. Full-bleed Scenic Photography Backgrounds with PageView
+            // 1. Full-bleed Scenic Photography Backgrounds with Ken Burns Animated Zoom
             PageView.builder(
               controller: _pageController,
               itemCount: _slides.length,
@@ -146,12 +215,24 @@ class _SplashScreenState extends State<SplashScreen> {
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(
-                      slide.imageAsset,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.center,
+                    // Animated Ken Burns slow zoom
+                    AnimatedBuilder(
+                      animation: _bgScaleAnimation,
+                      builder: (context, child) {
+                        final isCurrent = _currentPage == index;
+                        return Transform.scale(
+                          scale: isCurrent ? _bgScaleAnimation.value : 1.0,
+                          alignment: Alignment.center,
+                          child: child,
+                        );
+                      },
+                      child: Image.asset(
+                        slide.imageAsset,
+                        fit: BoxFit.cover,
+                        alignment: Alignment.center,
+                      ),
                     ),
-                    // Subtle top vignette to ensure status bar contrast while preserving bright HD sky
+                    // Subtle top vignette to protect status bar while keeping bright natural sky
                     Positioned(
                       top: 0,
                       left: 0,
@@ -163,7 +244,7 @@ class _SplashScreenState extends State<SplashScreen> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withValues(alpha: 0.28),
+                              Colors.black.withValues(alpha: 0.32),
                               Colors.transparent,
                             ],
                           ),
@@ -175,7 +256,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      height: 460,
+                      height: 480,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -183,8 +264,8 @@ class _SplashScreenState extends State<SplashScreen> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.38),
-                              Colors.black.withValues(alpha: 0.76),
+                              Colors.black.withValues(alpha: 0.36),
+                              Colors.black.withValues(alpha: 0.78),
                               Colors.black.withValues(alpha: 0.95),
                             ],
                             stops: const [0.0, 0.28, 0.65, 1.0],
@@ -197,14 +278,14 @@ class _SplashScreenState extends State<SplashScreen> {
               },
             ),
 
-            // 2. Fixed Top Bar: Authentic WISGO Logo in Frosted Cream Pill & Lewati Button
+            // 2. Fixed Top Bar: Authentic WISGO Logo (NO Ivory Background) & Lewati Button
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -212,43 +293,56 @@ class _SplashScreenState extends State<SplashScreen> {
                       // Invisible spacer to mathematically balance the Lewati button
                       const SizedBox(width: 72),
 
-                      // Authentic WISGO Logo with official green colors in clean frosted cream pill
-                      Hero(
-                        tag: 'wisgo_app_logo',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.cream.withValues(alpha: 0.94),
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.90),
-                              width: 1.2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.16),
-                                blurRadius: 14,
-                                offset: const Offset(0, 3),
+                      // Logo Resmi WISGO floating bebas (Tanpa background kotak / ivory)
+                      SlideTransition(
+                        position: _logoSlideAnimation,
+                        child: FadeTransition(
+                          opacity: _logoFadeAnimation,
+                          child: AnimatedBuilder(
+                            animation: _logoFloatAnimation,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, _logoFloatAnimation.value),
+                                child: child,
+                              );
+                            },
+                            child: Hero(
+                              tag: 'wisgo_app_logo',
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Soft contour drop shadow directly behind logo strokes
+                                  ImageFiltered(
+                                    imageFilter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                    child: Image.asset(
+                                      'assets/images/logo_primary.png',
+                                      width: 135,
+                                      color: Colors.black.withValues(alpha: 0.35),
+                                      colorBlendMode: BlendMode.srcIn,
+                                    ),
+                                  ),
+                                  // Logo Asli dengan warna hijau asli
+                                  const WisgoLogo(
+                                    width: 135,
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: const WisgoLogo(
-                            width: 120,
+                            ),
                           ),
                         ),
                       ),
 
-                      // Tombol Lewati (Pill Glassmorphic)
+                      // Tombol Lewati (Pill Glassmorphic Transparan)
                       GestureDetector(
                         onTap: _goToOnboarding,
                         behavior: HitTestBehavior.opaque,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.32),
+                            color: Colors.black.withValues(alpha: 0.30),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.38),
+                              color: Colors.white.withValues(alpha: 0.36),
                               width: 1.0,
                             ),
                             boxShadow: [
@@ -276,7 +370,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
 
-            // 3. Bottom Content: Indicator, Title, Subtitle, CTA Button
+            // 3. Bottom Content: Indicator, Title, Subtitle, CTA Button (HIJAU RESMI WISGO)
             Positioned(
               left: 0,
               right: 0,
@@ -288,30 +382,56 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Dots Indicator
+                      // Dots Indicator (Animasi Lebar & Warna Lembut)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(_slides.length, (idx) {
                           final isActive = _currentPage == idx;
                           return AnimatedContainer(
-                            duration: const Duration(milliseconds: 280),
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
                             margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: isActive ? 24 : 6,
-                            height: 6,
+                            width: isActive ? 26 : 7,
+                            height: 7,
                             decoration: BoxDecoration(
                               color: isActive
-                                  ? AppColors.terracotta
-                                  : Colors.white.withValues(alpha: 0.38),
-                              borderRadius: BorderRadius.circular(3),
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.36),
+                              borderRadius: BorderRadius.circular(4),
+                              boxShadow: isActive
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.white.withValues(alpha: 0.40),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                           );
                         }),
                       ),
                       const SizedBox(height: 22),
 
-                      // Title
+                      // Animated Title (Slide-up + Fade)
                       AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 360),
+                        transitionBuilder: (child, animation) {
+                          final curved = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          );
+                          return FadeTransition(
+                            opacity: curved,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.0, 0.25),
+                                end: Offset.zero,
+                              ).animate(curved),
+                              child: child,
+                            ),
+                          );
+                        },
                         child: Text(
                           _slides[_currentPage].title,
                           key: ValueKey<int>(_currentPage),
@@ -327,9 +447,25 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Subtitle
+                      // Animated Subtitle (Slide-up + Fade)
                       AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 360),
+                        transitionBuilder: (child, animation) {
+                          final curved = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          );
+                          return FadeTransition(
+                            opacity: curved,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.0, 0.20),
+                                end: Offset.zero,
+                              ).animate(curved),
+                              child: child,
+                            ),
+                          );
+                        },
                         child: Text(
                           _slides[_currentPage].subtitle,
                           key: ValueKey<String>('sub_$_currentPage'),
@@ -344,30 +480,45 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                       const SizedBox(height: 26),
 
-                      // Primary Action Button (Warna Khas WisGo: Terracotta)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: _handleButtonPress,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.terracotta,
-                            foregroundColor: Colors.white,
-                            elevation: 4,
-                            shadowColor: AppColors.terracotta.withValues(alpha: 0.40),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Text(
-                              _slides[_currentPage].buttonText,
-                              key: ValueKey<String>(_slides[_currentPage].buttonText),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.3,
+                      // Primary Action Button (HIJAU RESMI WISGO: AppColors.forest #193D22, SESUAI TOMBOL LOKASI)
+                      GestureDetector(
+                        onTapDown: (_) => setState(() => _isButtonPressed = true),
+                        onTapUp: (_) => setState(() => _isButtonPressed = false),
+                        onTapCancel: () => setState(() => _isButtonPressed = false),
+                        child: AnimatedScale(
+                          scale: _isButtonPressed ? 0.96 : 1.0,
+                          duration: const Duration(milliseconds: 120),
+                          curve: Curves.easeInOut,
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: ElevatedButton(
+                              onPressed: _handleButtonPress,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.forest, // HIJAU RESMI WISGO #193D22
+                                foregroundColor: Colors.white,
+                                elevation: 3,
+                                shadowColor: Colors.black.withValues(alpha: 0.35),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28), // Bentuk Pill serasi
+                                  side: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                    width: 1.2,
+                                  ),
+                                ),
+                              ),
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: Text(
+                                  _slides[_currentPage].buttonText,
+                                  key: ValueKey<String>(_slides[_currentPage].buttonText),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.3,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
