@@ -33,6 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showError = false;
   String _errorMessage = '';
   bool _isButtonPressed = false;
+  bool _isGoogleLoading = false;
+  bool _isGoogleButtonPressed = false;
 
   @override
   void initState() {
@@ -133,6 +135,56 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
+  }
+
+  void _handleGoogleSignIn() {
+    if (_isGoogleLoading) return;
+    setState(() => _isGoogleLoading = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.forest,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Menghubungkan akun Google...',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(milliseconds: 900),
+      ),
+    );
+
+    Future.delayed(const Duration(milliseconds: 750), () {
+      if (!mounted) return;
+      setState(() => _isGoogleLoading = false);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => const SavedPlacesScreen(),
+        ),
+        (route) => false,
+      );
+    });
   }
 
   @override
@@ -623,7 +675,110 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
+
+                          // Pembatas Atau
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: AppColors.sageBorder.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 14),
+                                child: Text(
+                                  'atau',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: AppColors.sageBorder.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Tombol Masuk / Daftar dengan Google (Pill Seragam & Modern)
+                          GestureDetector(
+                            onTapDown: (_) =>
+                                setState(() => _isGoogleButtonPressed = true),
+                            onTapUp: (_) =>
+                                setState(() => _isGoogleButtonPressed = false),
+                            onTapCancel: () =>
+                                setState(() => _isGoogleButtonPressed = false),
+                            child: AnimatedScale(
+                              scale: _isGoogleButtonPressed ? 0.96 : 1.0,
+                              duration: const Duration(milliseconds: 120),
+                              curve: Curves.easeInOut,
+                              child: SizedBox(
+                                height: 52,
+                                child: OutlinedButton(
+                                  onPressed: _handleGoogleSignIn,
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor:
+                                        Colors.white.withValues(alpha: 0.95),
+                                    foregroundColor: AppColors.forest,
+                                    elevation: 1,
+                                    shadowColor:
+                                        Colors.black.withValues(alpha: 0.06),
+                                    side: BorderSide(
+                                      color: AppColors.sageBorder
+                                          .withValues(alpha: 0.9),
+                                      width: 1.2,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                  ),
+                                  child: _isGoogleLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: AppColors.forest,
+                                          ),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/google_logo.png',
+                                              width: 20,
+                                              height: 20,
+                                              fit: BoxFit.contain,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              _isSignUp
+                                                  ? 'Daftar dengan Google'
+                                                  : 'Lanjutkan dengan Google',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.forest,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
 
                           // 6. Pengalih Sign In <-> Sign Up (Sesuai Referensi Gambar 3)
                           Center(
