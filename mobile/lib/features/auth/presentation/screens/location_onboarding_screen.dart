@@ -15,6 +15,7 @@ class LocationOnboardingScreen extends StatefulWidget {
 class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
   bool _isLockingGps = false;
   double _spinBoost = 0.0;
+  bool _isButtonPressed = false;
 
   void _skipToBeranda() {
     Navigator.of(context).pushAndRemoveUntil(
@@ -62,239 +63,253 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 32,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Photographic Architectural Background (Rumah Gadang Gonjong Megah HD)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.56,
+            child: Image.asset(
+              'assets/images/onboarding_location_bg.jpg',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+
+          // 2. Gradiasi Warna Ivory Otentik WISGO
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.cream.withValues(alpha: 0.28), // Langit biru & gonjong terlihat jelas
+                    AppColors.cream.withValues(alpha: 0.60), // Kabut ivory lembut
+                    AppColors.cream.withValues(alpha: 0.90), // Transisi mulus di sekitar 3D model
+                    AppColors.cream,                         // Solid ivory penuh untuk teks & kontrol aksi
+                    AppColors.cream,
+                  ],
+                  stops: const [0.0, 0.22, 0.44, 0.68, 1.0],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // 1. Header Langkah
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.sage,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.sageBorder),
-                          ),
-                          child: const Text(
-                            'Langkah 1 dari 2',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.forest,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: _skipToBeranda,
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Lewati',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.muted,
-                            ),
-                          ),
+              ),
+            ),
+          ),
+
+          // 3. Tombol Lewati di Kanan Atas (SAMA PERSIS DENGAN SPLASHSCREEN)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: GestureDetector(
+                  onTap: _skipToBeranda,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.sageBorder.withValues(alpha: 0.9),
+                        width: 1.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 12),
-
-                    // 2. Panggung 3D Rumah Gadang Interaktif
-                    Center(
-                      child: Animated3DRouteScene(spinBoost: _spinBoost),
+                    child: const Text(
+                      'Lewati',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.forest,
+                        letterSpacing: 0.2,
+                      ),
                     ),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
-                    const SizedBox(height: 16),
-
-                    // 3. Penjelasan & 3 Kolom Manfaat Bersih
-                    Column(
+          // 4. Konten Utama Layar
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(28, 16, 28, 28),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight - 32,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'Izinkan Akses Lokasi',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 23,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.forest,
-                            letterSpacing: -0.4,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Aktifkan lokasi perangkat Anda untuk navigasi rute Sumatera Barat yang akurat dan informasi destinasi terdekat.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.muted,
-                            height: 1.45,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+                        // Spacer atas untuk memberi ruang bagi tombol Lewati
+                        const SizedBox(height: 36),
 
-                        Row(
+                        // Panggung 3D Rumah Gadang Interaktif (Tetap Asli dengan Ambient Glow)
+                        Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 250,
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.forest.withValues(alpha: 0.08),
+                                      blurRadius: 28,
+                                      spreadRadius: 4,
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.white.withValues(alpha: 0.70),
+                                      blurRadius: 18,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Animated3DRouteScene(spinBoost: _spinBoost),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Tipografi Judul & Subjudul (FONT SAMA PERSIS DENGAN 3 SPLASHSCREEN)
+                        Column(
+                          children: const [
+                            Text(
+                              'Izinkan Akses Lokasi',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.forest,
+                                height: 1.20,
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              'Aktifkan lokasi perangkat Anda untuk navigasi rute Sumatera Barat yang akurat dan informasi destinasi terdekat.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.muted,
+                                height: 1.45,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Tombol Aksi Bawah (HIJAU RESMI WISGO DENGAN BENTUK PILL SAMA DENGAN SPLASHSCREEN)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(
-                              child: _buildFeatureCard(
-                                title: 'Rute Akurat',
-                                subtitle: 'Bebas salah jalan',
+                            GestureDetector(
+                              onTapDown: (_) => setState(() => _isButtonPressed = true),
+                              onTapUp: (_) => setState(() => _isButtonPressed = false),
+                              onTapCancel: () => setState(() => _isButtonPressed = false),
+                              child: AnimatedScale(
+                                scale: _isButtonPressed ? 0.96 : 1.0,
+                                duration: const Duration(milliseconds: 120),
+                                curve: Curves.easeInOut,
+                                child: SizedBox(
+                                  height: 54,
+                                  child: ElevatedButton(
+                                    onPressed: _activateLocationAndContinue,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.forest,
+                                      foregroundColor: AppColors.cream,
+                                      elevation: 3,
+                                      shadowColor: Colors.black.withValues(alpha: 0.35),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(28),
+                                        side: BorderSide(
+                                          color: Colors.white.withValues(alpha: 0.20),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: _isLockingGps
+                                        ? const Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2.2,
+                                                  color: AppColors.cream,
+                                                ),
+                                              ),
+                                              SizedBox(width: 10),
+                                              Flexible(
+                                                child: Text(
+                                                  'Menyesuaikan Titik Lokasi Sumatera Barat...',
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.cream,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : const Text(
+                                            'Izinkan Akses Lokasi',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                  ),
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildFeatureCard(
-                                title: 'Wisata Sekitar',
-                                subtitle: 'Alam & kuliner',
+                            const SizedBox(height: 10),
+                            TextButton(
+                              onPressed: _skipToBeranda,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildFeatureCard(
-                                title: 'Privasi Terjaga',
-                                subtitle: 'Hanya saat aktif',
+                              child: const Text(
+                                'Lewati untuk Sekarang',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.muted,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // 4. Tombol Aksi Bawah
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: _activateLocationAndContinue,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.forest,
-                              foregroundColor: AppColors.cream,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: _isLockingGps
-                                ? const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.2,
-                                          color: AppColors.cream,
-                                        ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Flexible(
-                                        child: Text(
-                                          'Menyesuaikan Titik Lokasi Sumatera Barat...',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.cream,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : const Text(
-                                    'Izinkan Akses Lokasi',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.cream,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: _skipToBeranda,
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                          child: const Text(
-                            'Lewati untuk Sekarang',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.sageBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w800,
-              color: AppColors.forest,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w500,
-              color: AppColors.muted,
+                  ),
+                );
+              },
             ),
           ),
         ],

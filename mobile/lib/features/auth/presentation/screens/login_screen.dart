@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
@@ -5,7 +6,11 @@ import '../../../saved/presentation/screens/saved_places_screen.dart';
 import 'location_onboarding_screen.dart';
 import 'otp_verification_screen.dart';
 
-/// Layar 3: Masuk ke Akun WISGO (Khusus WhatsApp OTP, Bahasa Indonesia Bersih).
+/// Layar 3: Masuk (Sign In) & Daftar (Sign Up) Akun WISGO
+/// - Desain Modern Frosted Glassmorphic Card (Terinspirasi Referensi Gambar 3)
+/// - Background Pemandangan Alam Sumatera Barat HD
+/// - Tipografi & Tombol Hijau Selaras dengan Splashscreen (AppColors.forest #193D22)
+/// - Mendukung Sign In & Sign Up dengan verifikasi Kode OTP via WhatsApp
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -14,10 +19,22 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Mode autentikasi: false = Sign In (Masuk), true = Sign Up (Daftar)
+  bool _isSignUp = false;
+
   final TextEditingController _phoneController =
       TextEditingController(text: '812-7578-953');
+  final TextEditingController _nameController = TextEditingController();
   final FocusNode _phoneFocus = FocusNode();
+  final FocusNode _nameFocus = FocusNode();
+
+  bool _rememberMe = true;
+  bool _agreeTerms = true;
   bool _showError = false;
+  String _errorMessage = '';
+  bool _isButtonPressed = false;
+  bool _isGoogleLoading = false;
+  bool _isGoogleButtonPressed = false;
 
   @override
   void initState() {
@@ -25,12 +42,17 @@ class _LoginScreenState extends State<LoginScreen> {
     _phoneFocus.addListener(() {
       if (mounted) setState(() {});
     });
+    _nameFocus.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _nameController.dispose();
     _phoneFocus.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -62,6 +84,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _fillDemoPhone() {
     _phoneController.text = '812-7578-953';
+    if (_isSignUp && _nameController.text.isEmpty) {
+      _nameController.text = 'Sutan Rangkayo';
+    }
     setState(() => _showError = false);
   }
 
@@ -71,10 +96,29 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _showError = false);
   }
 
-  void _submitPhoneAndSendOtp() {
-    final raw = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    if (raw.length < 8) {
-      setState(() => _showError = true);
+  void _submitAuthAndSendOtp() {
+    final rawPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    if (_isSignUp && _nameController.text.trim().isEmpty) {
+      setState(() {
+        _showError = true;
+        _errorMessage = 'Silakan masukkan nama lengkap Anda.';
+      });
+      return;
+    }
+
+    if (rawPhone.length < 8) {
+      setState(() {
+        _showError = true;
+        _errorMessage = 'Masukkan minimal 9 digit nomor WhatsApp yang aktif.';
+      });
+      return;
+    }
+
+    if (_isSignUp && !_agreeTerms) {
+      setState(() {
+        _showError = true;
+        _errorMessage = 'Harap setujui syarat & ketentuan layanan WISGO.';
+      });
       return;
     }
 
@@ -82,8 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 380),
-        pageBuilder: (_, __, ___) =>
-            OtpVerificationScreen(phoneNumber: formattedPhone),
+        pageBuilder: (_, __, ___) => OtpVerificationScreen(
+          phoneNumber: formattedPhone,
+          userName: _isSignUp ? _nameController.text.trim() : null,
+        ),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -91,333 +137,175 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _handleGoogleSignIn() {
+    if (_isGoogleLoading) return;
+    setState(() => _isGoogleLoading = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.forest,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Menghubungkan akun Google...',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(milliseconds: 900),
+      ),
+    );
+
+    Future.delayed(const Duration(milliseconds: 750), () {
+      if (!mounted) return;
+      setState(() => _isGoogleLoading = false);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => const SavedPlacesScreen(),
+        ),
+        (route) => false,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isFocused = _phoneFocus.hasFocus;
-
     return Scaffold(
       backgroundColor: AppColors.cream,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 32,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Photographic Scenic Background (Minangkabau Landscape HD)
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/splash_bg_1.jpg',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+            ),
+          ),
+
+          // 2. Gradiasi Ivory Ambient Transparan
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.cream.withValues(alpha: 0.35),
+                    AppColors.cream.withValues(alpha: 0.65),
+                    AppColors.cream.withValues(alpha: 0.88),
+                  ],
+                  stops: const [0.0, 0.40, 1.0],
                 ),
-                child: Column(
+              ),
+            ),
+          ),
+
+          // 3. Top Navigation Bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // 1. Navigasi Atas
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const LocationOnboardingScreen(),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                backgroundColor: AppColors.sage,
-                                foregroundColor: AppColors.forest,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  side: const BorderSide(
-                                    color: AppColors.sageBorder,
-                                  ),
-                                ),
-                              ),
-                              child: const Text(
-                                'Kembali',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.sage,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppColors.sageBorder),
-                              ),
-                              child: const Text(
-                                'Langkah 2 dari 2',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.forest,
-                                ),
-                              ),
+                    // Tombol Kembali (Pill Glassmorphic Seragam)
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const LocationOnboardingScreen(),
+                          ),
+                        );
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.sageBorder.withValues(alpha: 0.9),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: 22),
-
-                        // 2. Identitas Logo WISGO
-                        const Center(
-                          child: WisgoLogo(compact: true),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // 3. Judul & Penjelasan
-                        const Text(
-                          'Masuk ke Akun WISGO',
+                        child: const Text(
+                          'Kembali',
                           style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.forest,
-                            letterSpacing: -0.3,
+                            letterSpacing: 0.2,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Simpan destinasi favorit Sumatera Barat, cek standar tarif resmi Perda, dan nikmati perjalanan yang nyaman.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.muted,
-                            height: 1.45,
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // 4. Input Nomor WhatsApp
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Nomor WhatsApp Aktif',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.forest,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: _fillDemoPhone,
-                              child: const Text(
-                                'Isi Nomor Contoh',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.brush,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isFocused
-                                  ? AppColors.forest
-                                  : AppColors.sageBorder,
-                              width: 1.8,
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
-                                ),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.cream,
-                                  border: Border(
-                                    right: BorderSide(
-                                      color: AppColors.sageBorder,
-                                      width: 1.0,
-                                    ),
-                                  ),
-                                ),
-                                child: const Text(
-                                  '+62',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.forest,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _phoneController,
-                                  focusNode: _phoneFocus,
-                                  keyboardType: TextInputType.number,
-                                  cursorColor: AppColors.forest,
-                                  onChanged: _handlePhoneInput,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.forest,
-                                    letterSpacing: 0.4,
-                                  ),
-                                  decoration: const InputDecoration(
-                                    hintText: '812-xxxx-xxxx',
-                                    hintStyle: TextStyle(
-                                      color: AppColors.textMuted,
-                                      fontSize: 14.5,
-                                    ),
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                    ),
-                                  ),
-                                  onFieldSubmitted: (_) =>
-                                      _submitPhoneAndSendOtp(),
-                                ),
-                              ),
-                              if (_phoneController.text.isNotEmpty)
-                                GestureDetector(
-                                  onTap: _clearPhoneInput,
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    child: Text(
-                                      'Hapus',
-                                      style: TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.muted,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-
-                        if (_showError) ...[
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Masukkan minimal 9 digit nomor WhatsApp yang valid.',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.terracotta,
-                            ),
-                          ),
-                        ],
-
-                        const SizedBox(height: 20),
-
-                        // 5. Tombol Utama
-                        SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: _submitPhoneAndSendOtp,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.forest,
-                              foregroundColor: AppColors.cream,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: const Text(
-                              'Kirim Kode OTP 4 Digit',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.cream,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 48,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                  builder: (_) => const SavedPlacesScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppColors.forest, width: 1.5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: const Text(
-                              'Jelajah Langsung sebagai Tamu',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.forest,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // 6. Keterangan Pengiriman WhatsApp Bersih
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.sage.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.sageBorder),
-                          ),
-                          child: const Text(
-                            'Kode verifikasi 4 digit dikirimkan langsung melalui WhatsApp resmi WISGO tanpa biaya pulsa operator.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.forest,
-                              height: 1.45,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
 
-                    // 7. Catatan Keamanan Bawah
-                    const Padding(
-                      padding: EdgeInsets.only(top: 16),
-                      child: Center(
-                        child: Text(
-                          'Dilindungi sistem keamanan transaksi resmi WISGO Sumatera Barat',
-                          textAlign: TextAlign.center,
+                    // Tombol Lewati / Tamu
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const SavedPlacesScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.sageBorder.withValues(alpha: 0.9),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'Lewati',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.muted,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.forest,
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
@@ -425,9 +313,585 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          ),
+
+          // 4. Kartu Glassmorphic Utama (Sesuai Referensi Gambar 3)
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(22, 60, 22, 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 26),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.90),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.forest.withValues(alpha: 0.10),
+                            blurRadius: 28,
+                            offset: const Offset(0, 10),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Identitas Logo WISGO Kompak
+                          const Center(
+                            child: WisgoLogo(
+                              width: 105,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+
+                          // Judul & Subjudul (FONT SAMA PERSIS DENGAN SPLASHSCREEN)
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 280),
+                            child: Column(
+                              key: ValueKey<bool>(_isSignUp),
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _isSignUp ? 'Daftar Akun Baru' : 'Masuk ke Akun',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.forest,
+                                    letterSpacing: -0.4,
+                                    height: 1.20,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _isSignUp
+                                      ? 'Lengkapi data untuk mulai eksplorasi wisata Ranah Minang.'
+                                      : 'Selamat datang kembali, nikmati perjalanan nyaman di Sumatera Barat.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.muted,
+                                    height: 1.45,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 22),
+
+                          // Input Nama Lengkap (Khusus Mode Sign Up)
+                          if (_isSignUp) ...[
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: _nameFocus.hasFocus
+                                      ? AppColors.forest
+                                      : AppColors.sageBorder,
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: TextFormField(
+                                controller: _nameController,
+                                focusNode: _nameFocus,
+                                textCapitalization: TextCapitalization.words,
+                                style: const TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.forest,
+                                ),
+                                decoration: const InputDecoration(
+                                  prefixIcon: Icon(
+                                    Icons.person_outline_rounded,
+                                    color: AppColors.forest,
+                                    size: 21,
+                                  ),
+                                  hintText: 'Nama Lengkap Anda',
+                                  hintStyle: TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          // Input Nomor WhatsApp Aktif (Sign In & Sign Up)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _phoneFocus.hasFocus
+                                    ? AppColors.forest
+                                    : AppColors.sageBorder,
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.sage,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(14),
+                                      bottomLeft: Radius.circular(14),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.chat_bubble_outline_rounded,
+                                        size: 16,
+                                        color: AppColors.forest,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        '+62',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.forest,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _phoneController,
+                                    focusNode: _phoneFocus,
+                                    keyboardType: TextInputType.number,
+                                    cursorColor: AppColors.forest,
+                                    onChanged: _handlePhoneInput,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.forest,
+                                      letterSpacing: 0.4,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: '812-xxxx-xxxx',
+                                      hintStyle: TextStyle(
+                                        color: AppColors.textMuted,
+                                        fontSize: 14,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                      ),
+                                    ),
+                                    onFieldSubmitted: (_) =>
+                                        _submitAuthAndSendOtp(),
+                                  ),
+                                ),
+                                if (_phoneController.text.isNotEmpty)
+                                  GestureDetector(
+                                    onTap: _clearPhoneInput,
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      child: Text(
+                                        'Hapus',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.muted,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+
+                          // Baris Opsi Tambahan (Isi Contoh & Remember Me / Checkbox)
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    if (_isSignUp) {
+                                      _agreeTerms = !_agreeTerms;
+                                    } else {
+                                      _rememberMe = !_rememberMe;
+                                    }
+                                  });
+                                },
+                                behavior: HitTestBehavior.opaque,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      (_isSignUp ? _agreeTerms : _rememberMe)
+                                          ? Icons.check_circle_rounded
+                                          : Icons.circle_outlined,
+                                      size: 18,
+                                      color: (_isSignUp ? _agreeTerms : _rememberMe)
+                                          ? AppColors.forest
+                                          : AppColors.muted,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _isSignUp ? 'Setujui syarat & ketentuan' : 'Ingat saya',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: _fillDemoPhone,
+                                child: const Text(
+                                  'Isi Nomor Contoh',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.brush,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          if (_showError) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.coralTint,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                _errorMessage,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.terracotta,
+                                ),
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 22),
+
+                          // 5. Tombol Aksi Utama (HIJAU RESMI WISGO, BENTUK PILL SAMA PERSIS)
+                          GestureDetector(
+                            onTapDown: (_) =>
+                                setState(() => _isButtonPressed = true),
+                            onTapUp: (_) =>
+                                setState(() => _isButtonPressed = false),
+                            onTapCancel: () =>
+                                setState(() => _isButtonPressed = false),
+                            child: AnimatedScale(
+                              scale: _isButtonPressed ? 0.96 : 1.0,
+                              duration: const Duration(milliseconds: 120),
+                              curve: Curves.easeInOut,
+                              child: SizedBox(
+                                height: 54,
+                                child: ElevatedButton(
+                                  onPressed: _submitAuthAndSendOtp,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.forest,
+                                    foregroundColor: AppColors.cream,
+                                    elevation: 3,
+                                    shadowColor:
+                                        Colors.black.withValues(alpha: 0.35),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
+                                      side: BorderSide(
+                                        color: Colors.white.withValues(alpha: 0.20),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _isSignUp
+                                        ? 'Daftar & Kirim Kode OTP'
+                                        : 'Kirim Kode OTP WhatsApp',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Pembatas Atau
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: AppColors.sageBorder.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 14),
+                                child: Text(
+                                  'atau',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: AppColors.sageBorder.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Tombol Masuk / Daftar dengan Google (Pill Seragam & Modern)
+                          GestureDetector(
+                            onTapDown: (_) =>
+                                setState(() => _isGoogleButtonPressed = true),
+                            onTapUp: (_) =>
+                                setState(() => _isGoogleButtonPressed = false),
+                            onTapCancel: () =>
+                                setState(() => _isGoogleButtonPressed = false),
+                            child: AnimatedScale(
+                              scale: _isGoogleButtonPressed ? 0.96 : 1.0,
+                              duration: const Duration(milliseconds: 120),
+                              curve: Curves.easeInOut,
+                              child: SizedBox(
+                                height: 52,
+                                child: OutlinedButton(
+                                  onPressed: _handleGoogleSignIn,
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor:
+                                        Colors.white.withValues(alpha: 0.95),
+                                    foregroundColor: AppColors.forest,
+                                    elevation: 1,
+                                    shadowColor:
+                                        Colors.black.withValues(alpha: 0.06),
+                                    side: BorderSide(
+                                      color: AppColors.sageBorder
+                                          .withValues(alpha: 0.9),
+                                      width: 1.2,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                  ),
+                                  child: _isGoogleLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: AppColors.forest,
+                                          ),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/google_logo.png',
+                                              width: 20,
+                                              height: 20,
+                                              fit: BoxFit.contain,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              _isSignUp
+                                                  ? 'Daftar dengan Google'
+                                                  : 'Lanjutkan dengan Google',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.forest,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // 6. Pengalih Sign In <-> Sign Up (Sesuai Referensi Gambar 3)
+                          Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isSignUp = !_isSignUp;
+                                  _showError = false;
+                                });
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.muted,
+                                      fontFamily: 'Inter',
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: _isSignUp
+                                            ? 'Sudah punya akun? '
+                                            : 'Belum punya akun? ',
+                                      ),
+                                      TextSpan(
+                                        text: _isSignUp
+                                            ? 'Masuk Sekarang'
+                                            : 'Daftar Baru',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.forest,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // 7. Opsi Jelajah sebagai Tamu
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (_) => const SavedPlacesScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                              ),
+                              child: const Text(
+                                'Jelajah Langsung sebagai Tamu',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.muted,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // 8. Info Keamanan WhatsApp Resmi
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.sage.withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: AppColors.sageBorder.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.verified_user_outlined,
+                                  size: 16,
+                                  color: AppColors.forest,
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Kode verifikasi 4 digit dikirimkan langsung melalui WhatsApp resmi WISGO.',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: AppColors.forest,
+                                      height: 1.35,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

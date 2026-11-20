@@ -8,6 +8,7 @@ class WisgoLogo extends StatelessWidget {
   final bool showTagline;
   final bool compact;
   final double strokeProgress;
+  final Color? color;
 
   const WisgoLogo({
     super.key,
@@ -15,6 +16,7 @@ class WisgoLogo extends StatelessWidget {
     this.showTagline = true,
     this.compact = false,
     this.strokeProgress = 1.0,
+    this.color,
   });
 
   @override
@@ -28,6 +30,8 @@ class WisgoLogo extends StatelessWidget {
         child: Image.asset(
           'assets/images/logo_primary.png',
           width: effectiveWidth,
+          color: color,
+          colorBlendMode: color != null ? BlendMode.srcIn : null,
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
           isAntiAlias: true,
