@@ -1,12 +1,14 @@
 package culture_ranking
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
 )
 
 func setupTestRouter() *gin.Engine {
@@ -172,6 +174,130 @@ func TestCultureRankingSuite(t *testing.T) {
 		maxScore := ComputeGaodeScore(10000, 300, 100)
 		if maxScore > 99.8 {
 			t.Fatalf("expected max score <= 99.8, got %v", maxScore)
+		}
+	})
+
+	t.Run("TC-S6-09: POST /api/v1/culture/events berhasil diinput oleh Aktor Vendor", func(t *testing.T) {
+		payload := []byte(`{
+			"title": "Festival Tabuik Pariaman 2026",
+			"event_type": "Festival Budaya",
+			"nagari_location": "Pantai Gandoriah",
+			"city_regency": "Kota Pariaman",
+			"schedule_rule": "Setiap 10 Muharram (Puncak Hoyak Tabuik)",
+			"next_event_date": "2026-07-25",
+			"latitude": -0.6264,
+			"longitude": 100.1190,
+			"highlight_item": "Prosesi Hoyak Tabuik setinggi 12 meter dibuang ke laut saat matahari terbenam.",
+			"cultural_etiquette": "Hormati jalannya prosesi arak-arakan dan jaga kebersihan pantai."
+		}`)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/culture/events", bytes.NewBuffer(payload))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+middleware.TokenVendor)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created for Vendor event input, got %d: %s", rec.Code, rec.Body.String())
+		}
+
+		var res struct {
+			Status string `json:"status"`
+			Data   struct {
+				ID        string `json:"id"`
+				Title     string `json:"title"`
+				UserID    string `json:"user_id"`
+				EventType string `json:"event_type"`
+			} `json:"data"`
+		}
+		_ = json.Unmarshal(rec.Body.Bytes(), &res)
+		if res.Status != "success" || res.Data.Title != "Festival Tabuik Pariaman 2026" {
+			t.Fatalf("unexpected response data: %+v", res)
+		}
+		if res.Data.UserID != "user-vendor-01" {
+			t.Fatalf("expected user_id user-vendor-01, got %s", res.Data.UserID)
+		}
+	})
+
+	t.Run("TC-S6-10: RBAC Guard pada /api/v1/admin/culture/events menolak tanpa token dan role tourist", func(t *testing.T) {
+		payload := []byte(`{"title": "Event Ilegal"}`)
+
+		// 1. Tanpa token -> 401 Unauthorized
+		reqNoToken := httptest.NewRequest(http.MethodPost, "/api/v1/admin/culture/events", bytes.NewBuffer(payload))
+		reqNoToken.Header.Set("Content-Type", "application/json")
+		recNoToken := httptest.NewRecorder()
+		r.ServeHTTP(recNoToken, reqNoToken)
+		if recNoToken.Code != http.StatusUnauthorized {
+			t.Fatalf("expected 401 Unauthorized, got %d", recNoToken.Code)
+		}
+
+		// 2. Token tourist -> 403 Forbidden
+		reqTourist := httptest.NewRequest(http.MethodPost, "/api/v1/admin/culture/events", bytes.NewBuffer(payload))
+		reqTourist.Header.Set("Content-Type", "application/json")
+		reqTourist.Header.Set("Authorization", "Bearer "+middleware.TokenTourist)
+		recTourist := httptest.NewRecorder()
+		r.ServeHTTP(recTourist, reqTourist)
+		if recTourist.Code != http.StatusForbidden {
+			t.Fatalf("expected 403 Forbidden for tourist role, got %d", recTourist.Code)
+		}
+	})
+
+	t.Run("TC-S6-11: Admin Dispar CRUD Event Budaya (Create, Update, Delete)", func(t *testing.T) {
+		// 1. Admin Create Event
+		createPayload := []byte(`{
+			"title": "Pacu Terbang Itik Payakumbuh",
+			"event_type": "Tradisi Adat",
+			"nagari_location": "Gelanggang Aur Kuning",
+			"city_regency": "Kota Payakumbuh",
+			"schedule_rule": "Setiap Minggu Ke-2 & Ke-4",
+			"next_event_date": "2026-12-10",
+			"latitude": -0.2248,
+			"longitude": 100.6300,
+			"highlight_item": "Perlombaan itik terbang melintasi jarak 800 meter hingga 1 km.",
+			"cultural_etiquette": "Tidak bersorak saat itik dilepaskan agar fokus terbang lurus."
+		}`)
+
+		reqCreate := httptest.NewRequest(http.MethodPost, "/api/v1/admin/culture/events", bytes.NewBuffer(createPayload))
+		reqCreate.Header.Set("Content-Type", "application/json")
+		reqCreate.Header.Set("Authorization", "Bearer "+middleware.TokenAdminDispar)
+		recCreate := httptest.NewRecorder()
+		r.ServeHTTP(recCreate, reqCreate)
+
+		if recCreate.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created on Admin create event, got %d: %s", recCreate.Code, recCreate.Body.String())
+		}
+
+		var createRes struct {
+			Data struct {
+				ID string `json:"id"`
+			} `json:"data"`
+		}
+		_ = json.Unmarshal(recCreate.Body.Bytes(), &createRes)
+		createdID := createRes.Data.ID
+
+		// 2. Admin Update Event
+		updatePayload := []byte(`{
+			"title": "Pacu Terbang Itik Payakumbuh Grand Prix",
+			"schedule_rule": "Final Tahunan Setiap Akhir Tahun"
+		}`)
+		reqUpdate := httptest.NewRequest(http.MethodPut, "/api/v1/admin/culture/events/"+createdID, bytes.NewBuffer(updatePayload))
+		reqUpdate.Header.Set("Content-Type", "application/json")
+		reqUpdate.Header.Set("Authorization", "Bearer "+middleware.TokenAdminDispar)
+		recUpdate := httptest.NewRecorder()
+		r.ServeHTTP(recUpdate, reqUpdate)
+
+		if recUpdate.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on Admin update event, got %d: %s", recUpdate.Code, recUpdate.Body.String())
+		}
+
+		// 3. Admin Delete Event
+		reqDelete := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/culture/events/"+createdID, nil)
+		reqDelete.Header.Set("Authorization", "Bearer "+middleware.TokenAdminDispar)
+		recDelete := httptest.NewRecorder()
+		r.ServeHTTP(recDelete, reqDelete)
+
+		if recDelete.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on Admin delete event, got %d: %s", recDelete.Code, recDelete.Body.String())
 		}
 	})
 }

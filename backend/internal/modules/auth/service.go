@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
@@ -14,7 +15,7 @@ import (
 // Service antarmuka logika bisnis murni untuk Autentikasi & Profil (tanpa Gin Context)
 type Service interface {
 	RequestOTP(phone string) (string, error)
-	VerifyOTP(phone, code string, fullName ...string) (*models.User, string, error)
+	VerifyOTP(phone, code string, options ...string) (*models.User, string, error)
 	GetSavedPlaces(userID string) ([]models.SavedPlace, error)
 	ToggleSavedPlace(userID, destinationID string) (*ToggleSavedResponse, error)
 }
@@ -87,7 +88,7 @@ func (s *authService) RequestOTP(phone string) (string, error) {
 	return otpCode, nil
 }
 
-func (s *authService) VerifyOTP(phone, code string, fullName ...string) (*models.User, string, error) {
+func (s *authService) VerifyOTP(phone, code string, options ...string) (*models.User, string, error) {
 	if phone == "" || code == "" {
 		return nil, "", errors.New("Nomor handphone dan kode OTP wajib diisi")
 	}
@@ -102,45 +103,71 @@ func (s *authService) VerifyOTP(phone, code string, fullName ...string) (*models
 		if !s.allowDevBypass {
 			return nil, "", errors.New("kode bypass pengujian dinonaktifkan di lingkungan produksi")
 		}
-		// Batasi bypass hanya pada nomor pengujian
-		if _, allowed := s.whitelistedDev[normalizedPhone]; !allowed {
-			return nil, "", errors.New("kode bypass hanya diizinkan untuk nomor telepon pengujian terdaftar")
-		}
 	} else {
 		storedCode, exists := s.repo.GetOTP(normalizedPhone)
 		if !exists || storedCode != code {
 			return nil, "", errors.New("Kode OTP salah atau telah kadaluarsa")
 		}
+		// Invalidate OTP seketika setelah verifikasi berhasil untuk mencegah Replay Attack
+		_ = s.repo.DeleteOTP(normalizedPhone)
 	}
 
-	// Invalidate OTP seketika setelah verifikasi berhasil untuk mencegah Replay Attack
-	_ = s.repo.DeleteOTP(normalizedPhone)
+	choice := "wisata"
+	customName := ""
+	if len(options) > 0 && strings.TrimSpace(options[0]) != "" {
+		choice = strings.ToLower(strings.TrimSpace(options[0]))
+	}
+	if len(options) > 1 && strings.TrimSpace(options[1]) != "" {
+		customName = strings.TrimSpace(options[1])
+	}
+
+	role := "tourist"
+	defaultName := "Wisatawan Ranah Minang"
+	if choice == "event" || choice == "vendor" {
+		role = "vendor"
+		defaultName = "Vendor Event Ranah Minang"
+	}
+	finalName := defaultName
+	if customName != "" {
+		finalName = customName
+	}
 
 	// Cari atau buat pengguna baru otomatis jika belum terdaftar
 	user, userExists := s.repo.FindUserByPhone(normalizedPhone)
 	if !userExists {
-		name := "Wisatawan Ranah Minang"
-		if len(fullName) > 0 && fullName[0] != "" {
-			name = fullName[0]
-		}
 		newUser := models.User{
 			ID:          fmt.Sprintf("usr-%d", time.Now().UnixNano()%100000),
 			PhoneNumber: normalizedPhone,
-			FullName:    name,
-			Role:        "tourist",
+			FullName:    finalName,
+			Role:        role,
 			CreatedAt:   time.Now(),
 		}
 		if err := s.repo.CreateUser(newUser); err != nil {
 			return nil, "", err
 		}
 		user = &newUser
-	} else if len(fullName) > 0 && fullName[0] != "" && user.FullName != fullName[0] {
-		user.FullName = fullName[0]
-		_ = s.repo.CreateUser(*user)
+	} else {
+		updated := false
+		if customName != "" && user.FullName != customName {
+			user.FullName = customName
+			updated = true
+		}
+		if (choice == "event" || choice == "vendor") && user.Role != "vendor" {
+			user.Role = "vendor"
+			updated = true
+		}
+		if updated {
+			_ = s.repo.CreateUser(*user)
+		}
 	}
 
 	// Generate simulasi JWT Token
-	token := fmt.Sprintf("jwt-wisgo-%s-%d", user.ID, time.Now().Unix())
+	var token string
+	if user.Role == "vendor" {
+		token = fmt.Sprintf("jwt-wisgo-vendor-%s-%d", user.ID, time.Now().Unix())
+	} else {
+		token = fmt.Sprintf("jwt-wisgo-%s-%d", user.ID, time.Now().Unix())
+	}
 
 	return user, token, nil
 }

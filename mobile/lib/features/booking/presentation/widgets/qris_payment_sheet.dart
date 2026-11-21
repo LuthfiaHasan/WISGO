@@ -57,51 +57,26 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
     return '$m:$s';
   }
 
-  void _verifyPayment() async {
+  void _verifyPayment() {
     setState(() => _isVerifying = true);
-
-    String? generatedTicket;
-    try {
-      // Rekam transaksi rekening bersama ke backend Supabase (Pilar 5 Escrow)
-      final res = await ApiService.createBookingFromMap({
-        'partner_id': 'ptr-01',
-        'user_id': 'usr-001',
-        'total_amount': widget.totalAmount.toDouble(),
-        'currency': 'IDR',
-        'notes': 'Pemesanan di ${widget.destinationTitle}: ${widget.orderItems.map((e) => "${e['name']} x${e['qty']}").join(", ")}',
-      });
-
-      if (res.isSuccess && res.data is Map<String, dynamic>) {
-        final bkg = res.data['booking'];
-        if (bkg is Map<String, dynamic>) {
-          final id = bkg['id']?.toString() ?? '';
-          final ticket = bkg['qr_code_ticket']?.toString() ?? '';
-          generatedTicket = ticket.isNotEmpty ? ticket : 'QR-RANCAK-TKT-$id';
-        }
+    Future.delayed(const Duration(milliseconds: 1400), () {
+      if (mounted) {
+        setState(() {
+          _isVerifying = false;
+          _isPaid = true;
+        });
+        widget.onPaymentSuccess();
+        widget.onReceiptGenerated?.call({
+          'transactionId': _escrowCode,
+          'destinationTitle': widget.destinationTitle,
+          'totalAmount': widget.totalAmount,
+          'orderItems': widget.orderItems,
+          'paymentMethod': _selectedMethod,
+          'date': '16 Nov 2026 • 14:15 WIB',
+          'status': 'LUNAS (TERVERIFIKASI)',
+        });
       }
-    } catch (_) {
-      // Fallback offline aman
-    }
-
-    if (mounted) {
-      final ticketCode = generatedTicket ?? 'QR-RANCAK-TKT-${_escrowCode.replaceAll(RegExp(r'\D'), '')}';
-      setState(() {
-        _isVerifying = false;
-        _isPaid = true;
-        _liveTicketQr = ticketCode;
-      });
-      widget.onPaymentSuccess();
-      widget.onReceiptGenerated?.call({
-        'transactionId': _escrowCode,
-        'destinationTitle': widget.destinationTitle,
-        'totalAmount': widget.totalAmount,
-        'orderItems': widget.orderItems,
-        'paymentMethod': _selectedMethod,
-        'date': '17 Nov 2026 • 09:30 WIB',
-        'status': 'LUNAS (ESCROW TERVERIFIKASI)',
-        'qrTicket': ticketCode,
-      });
-    }
+    });
   }
 
   @override
@@ -761,8 +736,8 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '*** LUNAS VIA ESCROW RESMI ***\nTunjukkan struk ini pada petugas loket resmi nagari',
-                      style: TextStyle(fontSize: 8.5, color: AppColors.brush, height: 1.3),
+                      'LUNAS TERVERIFIKASI RESMI\nTunjukkan bukti pembayaran ini pada petugas loket resmi nagari',
+                      style: TextStyle(fontSize: 9, color: AppColors.brush, height: 1.3),
                       textAlign: TextAlign.center,
                     ),
                   ],

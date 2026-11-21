@@ -359,7 +359,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.forest : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected ? AppColors.forest : AppColors.sageBorder,
                       ),
@@ -559,7 +559,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   ),

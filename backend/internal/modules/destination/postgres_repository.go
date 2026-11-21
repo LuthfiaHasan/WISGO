@@ -214,47 +214,121 @@ func (r *postgresRepository) SyncTariffsCMS(id string, tariffs []models.Official
 }
 
 func (r *postgresRepository) populateRelations(d *models.Destination) {
-	// 1. Medan indicator (Migrated to v2: indikator_medan)
+	// 1. Indikator Medan (Mencoba tabel indikator_medan sesuai ERD Revisi #3, fallback medan_indicators)
 	var m models.MedanIndicator
 	err := r.db.QueryRow(`
-		SELECT id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need, ''
+		SELECT id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need
 		FROM indikator_medan WHERE destination_id = $1;
 	`, d.ID).Scan(
-		&m.ID, &m.DestinationID, &m.VehicleAccess, &m.TrekkingLevel, &m.CellularSignal, &m.Facilities, &m.GuideNeed, &m.PokdarwisName,
+		&m.ID, &m.DestinationID, &m.VehicleAccess, &m.TrekkingLevel, &m.CellularSignal, &m.Facilities, &m.GuideNeed,
 	)
-	if err == nil {
+	if err != nil {
+		_ = r.db.QueryRow(`
+			SELECT id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need, pokdarwis_name
+			FROM medan_indicators WHERE destination_id = $1;
+		`, d.ID).Scan(
+			&m.ID, &m.DestinationID, &m.VehicleAccess, &m.TrekkingLevel, &m.CellularSignal, &m.Facilities, &m.GuideNeed, &m.PokdarwisName,
+		)
+	}
+	if m.ID != "" {
 		d.MedanIndicator = &m
 	}
 
-	// 2. Tips (Migrated to v2: aturan_destinasi)
+	// 2. Aturan Destinasi / Tips (Mencoba tabel aturan_destinasi sesuai ERD Revisi #4, fallback local_tips)
 	tipRows, err := r.db.Query(`
-		SELECT a.id, a.destination_id, a.title, COALESCE(c.slug, 'kelestarian_alam'), a.content, TRUE
-		FROM aturan_destinasi a
-		LEFT JOIN categories c ON a.category_id = c.id
-		WHERE a.destination_id = $1;
+		SELECT id, destination_id, category_id, title, aturan
+		FROM aturan_destinasi WHERE destination_id = $1;
 	`, d.ID)
+	if err != nil {
+		// Fallback jika skema aturan_destinasi menggunakan nama kolom content
+		tipRows, err = r.db.Query(`
+			SELECT id, destination_id, category_id, title, content
+			FROM aturan_destinasi WHERE destination_id = $1;
+		`, d.ID)
+	}
 	if err == nil {
 		defer tipRows.Close()
 		for tipRows.Next() {
 			var t models.LocalTip
-			if err := tipRows.Scan(&t.ID, &t.DestinationID, &t.Title, &t.Category, &t.Content, &t.IsImportant); err == nil {
+			var catID sql.NullString
+			if err := tipRows.Scan(&t.ID, &t.DestinationID, &catID, &t.Title, &t.Aturan); err == nil {
+				if catID.Valid {
+					t.CategoryID = catID.String
+					t.Category = catID.String
+				}
+				t.Content = t.Aturan
+				t.IsImportant = true
 				d.Tips = append(d.Tips, t)
+			}
+		}
+	} else {
+		legacyRows, err2 := r.db.Query(`
+			SELECT id, destination_id, title, category, content, is_important
+			FROM local_tips WHERE destination_id = $1;
+		`, d.ID)
+		if err2 == nil {
+			defer legacyRows.Close()
+			for legacyRows.Next() {
+				var t models.LocalTip
+				if err := legacyRows.Scan(&t.ID, &t.DestinationID, &t.Title, &t.Category, &t.Content, &t.IsImportant); err == nil {
+					t.Aturan = t.Content
+					d.Tips = append(d.Tips, t)
+				}
 			}
 		}
 	}
 
-	// 3. Tariffs
+	// 3. Official Tariffs (+ category_id)
 	trfRows, err := r.db.Query(`
-		SELECT id, destination_id, item_name, category, price, unit, regulation_ref
+		SELECT id, destination_id, category_id, item_name, price, unit, regulation_ref
 		FROM official_tariffs WHERE destination_id = $1;
 	`, d.ID)
 	if err == nil {
 		defer trfRows.Close()
 		for trfRows.Next() {
 			var trf models.OfficialTariff
-			if err := trfRows.Scan(&trf.ID, &trf.DestinationID, &trf.ItemName, &trf.Category, &trf.Price, &trf.Unit, &trf.RegulationRef); err == nil {
+			var catID sql.NullString
+			if err := trfRows.Scan(&trf.ID, &trf.DestinationID, &catID, &trf.ItemName, &trf.Price, &trf.Unit, &trf.RegulationRef); err == nil {
+				if catID.Valid {
+					trf.CategoryID = catID.String
+					trf.Category = catID.String
+				}
 				d.Tariffs = append(d.Tariffs, trf)
 			}
 		}
+	} else {
+		legacyTrf, err2 := r.db.Query(`
+			SELECT id, destination_id, item_name, category, price, unit, regulation_ref
+			FROM official_tariffs WHERE destination_id = $1;
+		`, d.ID)
+		if err2 == nil {
+			defer legacyTrf.Close()
+			for legacyTrf.Next() {
+				var trf models.OfficialTariff
+				if err := legacyTrf.Scan(&trf.ID, &trf.DestinationID, &trf.ItemName, &trf.Category, &trf.Price, &trf.Unit, &trf.RegulationRef); err == nil {
+					d.Tariffs = append(d.Tariffs, trf)
+				}
+			}
+		}
 	}
+}
+
+func (r *postgresRepository) FindPending() []models.Destination {
+	return r.FindAllWithSpatial(SpatialFilterParams{
+		IncludePending:     true,
+		VerificationStatus: "pending",
+	})
+}
+
+func (r *postgresRepository) VerifyDestination(id string, status string) (*models.Destination, error) {
+	d, err := r.FindByID(id, false, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	d.VerificationStatus = status
+	d.UpdatedAt = time.Now()
+	_, _ = r.db.Exec(`UPDATE destinations SET updated_at = NOW() WHERE id = $1;`, d.ID)
+
+	return d, nil
 }
