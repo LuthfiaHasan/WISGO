@@ -214,11 +214,11 @@ func (r *postgresRepository) SyncTariffsCMS(id string, tariffs []models.Official
 }
 
 func (r *postgresRepository) populateRelations(d *models.Destination) {
-	// 1. Medan indicator
+	// 1. Medan indicator (Migrated to v2: indikator_medan)
 	var m models.MedanIndicator
 	err := r.db.QueryRow(`
-		SELECT id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need, pokdarwis_name
-		FROM medan_indicators WHERE destination_id = $1;
+		SELECT id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need, ''
+		FROM indikator_medan WHERE destination_id = $1;
 	`, d.ID).Scan(
 		&m.ID, &m.DestinationID, &m.VehicleAccess, &m.TrekkingLevel, &m.CellularSignal, &m.Facilities, &m.GuideNeed, &m.PokdarwisName,
 	)
@@ -226,10 +226,12 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 		d.MedanIndicator = &m
 	}
 
-	// 2. Tips
+	// 2. Tips (Migrated to v2: aturan_destinasi)
 	tipRows, err := r.db.Query(`
-		SELECT id, destination_id, title, category, content, is_important
-		FROM local_tips WHERE destination_id = $1;
+		SELECT a.id, a.destination_id, a.title, COALESCE(c.slug, 'kelestarian_alam'), a.content, TRUE
+		FROM aturan_destinasi a
+		LEFT JOIN categories c ON a.category_id = c.id
+		WHERE a.destination_id = $1;
 	`, d.ID)
 	if err == nil {
 		defer tipRows.Close()

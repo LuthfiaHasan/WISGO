@@ -12,14 +12,10 @@ import (
 	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/analytics"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/auth"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/booking_escrow"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/community"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/culture_ranking"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/destination"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/gamification"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/group"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/itinerary"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/partner"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/pungli"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/scenes360"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/spatial"
@@ -119,51 +115,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	authHandler := auth.NewHandler(authService)
 	authHandler.RegisterRoutes(v1)
 
-	// Modul B2: Mitra Nagari Minang & Filter Level Pedas (Pilar 5)
-	var partnerRepo partner.Repository
-	if db != nil && database.IsConnected() {
-		partnerRepo = partner.NewPostgresRepository(db)
-	} else {
-		partnerRepo = partner.NewRepository()
-	}
-	partnerService := partner.NewService(partnerRepo)
-	partnerHandler := partner.NewHandler(partnerService)
-	partnerHandler.RegisterRoutes(v1)
-
-	// Modul B3: Rencana Perjalanan 7 Hari — AI & Manual (Pilar 4)
-	var itineraryRepo itinerary.Repository
-	if db != nil && database.IsConnected() {
-		itineraryRepo = itinerary.NewPostgresRepository(db)
-	} else {
-		itineraryRepo = itinerary.NewRepository()
-	}
-	itineraryService := itinerary.NewService(itineraryRepo)
-	itineraryHandler := itinerary.NewHandler(itineraryService)
-	itineraryHandler.RegisterRoutes(v1)
-
-	// Modul B4: Private Group Room, Live Voting, Split-Bill & Live Radar (Pilar 4)
-	var groupRepo group.Repository
-	if db != nil && database.IsConnected() {
-		groupRepo = group.NewPostgresRepository(db)
-	} else {
-		groupRepo = group.NewRepository()
-	}
-	groupService := group.NewService(groupRepo)
-	groupHandler := group.NewHandler(groupService)
-	groupHandler.RegisterRoutes(v1)
-
-	// Modul B5: Quick Booking 360°, Escrow State Machine, Bot WA & E-Ticket QR (Pilar 5)
-	var bookingRepo booking_escrow.Repository
-	if db != nil && database.IsConnected() {
-		bookingRepo = booking_escrow.NewPostgresRepository(db)
-	} else {
-		bookingRepo = booking_escrow.NewRepository()
-	}
-	bookingService := booking_escrow.NewService(bookingRepo)
-	bookingHandler := booking_escrow.NewHandler(bookingService)
-	bookingHandler.RegisterRoutes(v1)
-
-	// Modul B6: Komunitas, Hidden Gem, Masking GPS, & Shared Trips (Pilar 6)
+	// Modul B2: Komunitas, Hidden Gem, Masking GPS, & Open Trips (Pilar 6 - eks B6)
 	var communityRepo community.Repository
 	if db != nil && database.IsConnected() {
 		communityRepo = community.NewPostgresRepository(db)

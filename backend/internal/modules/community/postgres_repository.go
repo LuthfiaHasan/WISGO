@@ -29,25 +29,46 @@ func (r *postgresRepository) SaveCommunityPlace(p models.CommunityPlace) error {
 		ON CONFLICT (id) DO NOTHING;
 	`, p.UserID)
 
+	categoryID := "cat_dst_alam"
+	if p.Category != "" {
+		if len(p.Category) > 4 && p.Category[:4] == "cat_" {
+			categoryID = p.Category
+		} else {
+			switch p.Category {
+			case "Budaya", "budaya":
+				categoryID = "cat_dst_budaya"
+			case "Kuliner", "kuliner":
+				categoryID = "cat_dst_kuliner"
+			case "Bahari", "bahari":
+				categoryID = "cat_dst_bahari"
+			default:
+				categoryID = "cat_dst_alam"
+			}
+		}
+	}
+
+	// Migrated to v2: new_tour
 	_, err := r.db.Exec(`
-		INSERT INTO community_places (
-			id, user_id, name, category, city_regency, description,
+		INSERT INTO new_tour (
+			id, user_id, name, category_id, city_regency, description,
 			latitude, longitude, tips_menjaga, is_sensitive, status, created_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name, description = EXCLUDED.description;
-	`, p.ID, p.UserID, p.Name, p.Category, p.CityRegency, p.Description,
+	`, p.ID, p.UserID, p.Name, categoryID, p.CityRegency, p.Description,
 		p.Latitude, p.Longitude, p.TipsMenjaga, p.IsSensitive, p.Status, p.CreatedAt)
 
 	return err
 }
 
 func (r *postgresRepository) GetCommunityPlaces() []models.CommunityPlace {
+	// Migrated to v2: new_tour with categories join
 	query := `
-		SELECT id, user_id, name, category, city_regency, COALESCE(description, ''),
-		       latitude, longitude, tips_menjaga, is_sensitive, status, created_at
-		FROM community_places
-		ORDER BY created_at DESC;
+		SELECT n.id, n.user_id, n.name, COALESCE(c.name, 'Alam & Geopark'), n.city_regency, COALESCE(n.description, ''),
+		       n.latitude, n.longitude, n.tips_menjaga, n.is_sensitive, n.status, n.created_at
+		FROM new_tour n
+		LEFT JOIN categories c ON n.category_id = c.id
+		ORDER BY n.created_at DESC;
 	`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -81,8 +102,9 @@ func (r *postgresRepository) SaveSharedTrip(trip models.SharedTrip) error {
 		ON CONFLICT (id) DO NOTHING;
 	`, trip.UserID)
 
+	// Migrated to v2: open_trips
 	_, err := r.db.Exec(`
-		INSERT INTO shared_trips (
+		INSERT INTO open_trips (
 			id, user_id, title, destination_route, departure_date,
 			available_seats, cost_per_person, contact_wa, created_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -94,10 +116,11 @@ func (r *postgresRepository) SaveSharedTrip(trip models.SharedTrip) error {
 }
 
 func (r *postgresRepository) GetSharedTrips() []models.SharedTrip {
+	// Migrated to v2: open_trips
 	query := `
 		SELECT id, user_id, title, destination_route, departure_date,
 		       available_seats, cost_per_person, contact_wa, created_at
-		FROM shared_trips
+		FROM open_trips
 		ORDER BY departure_date ASC;
 	`
 	rows, err := r.db.Query(query)
