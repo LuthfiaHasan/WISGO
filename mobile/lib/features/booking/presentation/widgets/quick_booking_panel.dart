@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/api_service.dart';
+import '../../data/booking_adapter.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
 
 class QuickBookingItem {
@@ -158,6 +160,9 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
     'atrak-1': 1, // Default 1 tiket masuk resmi
   };
 
+  // Daftar layanan mitra nagari (Sinkron dengan Supabase & Fallback Mock)
+  List<QuickBookingItem> _items = List<QuickBookingItem>.from(kOfficial5CategoryCatalog);
+
   final List<String> _categories = [
     'Atraksi',
     'Penginapan',
@@ -165,6 +170,42 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
     'Pakaian Adat',
     'Kuliner',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPartnersFromApi();
+  }
+
+  /// Memuat katalog mitra lokal secara live dari database Supabase
+  Future<void> _loadPartnersFromApi() async {
+    try {
+      final res = await ApiService.getPartners();
+      if (res.isSuccess && res.data is List && (res.data as List).isNotEmpty) {
+        final list = (res.data as List)
+            .map((j) => BookingAdapter.fromBackendPartner(j as Map<String, dynamic>))
+            .toList();
+        if (mounted && list.isNotEmpty) {
+          setState(() {
+            _items = list;
+          });
+        }
+      }
+    } catch (_) {
+      // Fallback aman ke kOfficial5CategoryCatalog jika offline
+    }
+  }
+
+  QuickBookingItem _getItemById(String id) {
+    try {
+      return _items.firstWhere((it) => it.id == id);
+    } catch (_) {
+      return kOfficial5CategoryCatalog.firstWhere(
+        (it) => it.id == id,
+        orElse: () => kOfficial5CategoryCatalog.first,
+      );
+    }
+  }
 
   IconData _getCategoryIcon(String cat) {
     switch (cat) {
@@ -186,7 +227,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
   int get _totalAmount {
     int sum = 0;
     _cart.forEach((id, qty) {
-      final item = kOfficial5CategoryCatalog.firstWhere((it) => it.id == id);
+      final item = _getItemById(id);
       sum += item.price * qty;
     });
     return sum;
@@ -212,9 +253,14 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredItems = kOfficial5CategoryCatalog
+    var filteredItems = _items
         .where((item) => item.category == _selectedCategory)
         .toList();
+    if (filteredItems.isEmpty) {
+      filteredItems = kOfficial5CategoryCatalog
+          .where((item) => item.category == _selectedCategory)
+          .toList();
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -510,7 +556,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                         ? () {
                             final List<Map<String, dynamic>> items = [];
                             _cart.forEach((id, qty) {
-                              final item = kOfficial5CategoryCatalog.firstWhere((it) => it.id == id);
+                              final item = _getItemById(id);
                               items.add({
                                 'name': item.name,
                                 'qty': qty,

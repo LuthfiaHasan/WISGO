@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/api_service.dart';
 
 class QrisPaymentSheet extends StatefulWidget {
   final int totalAmount;
@@ -28,6 +29,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
   Timer? _countdownTimer;
   bool _isPaid = false;
   bool _isVerifying = false;
+  String? _liveTicketQr;
 
   final String _escrowCode = 'WG-ESCROW-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
@@ -396,7 +398,71 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+
+        // E-Tiket QR Digital Resmi Escrow
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.forest.withOpacity(0.4), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.forest.withOpacity(0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.qr_code_2_rounded, size: 20, color: AppColors.forest),
+                  SizedBox(width: 6),
+                  Text(
+                    'E-TIKET QR DIGITAL RESMI',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: AppColors.forest,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.cream,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Text(
+                  _liveTicketQr ?? 'QR-RANCAK-TKT-LIVE',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.4,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Tunjukkan kode QR ini ke mitra nagari saat tiba di lokasi untuk validasi kedatangan & pencairan dana escrow.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 10, color: AppColors.muted, height: 1.3),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
 
         // Receipt details card
         Container(

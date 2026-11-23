@@ -13,6 +13,7 @@ type OTPRequest struct {
 type OTPVerifyRequest struct {
 	PhoneNumber string `json:"phone_number" binding:"required"`
 	OTPCode     string `json:"otp_code" binding:"required"`
+	FullName    string `json:"full_name,omitempty"`
 	LoginChoice string `json:"login_choice,omitempty"` // "wisata" (Wisatawan: input wisata) atau "event" (Vendor: input event)
 	Role        string `json:"role,omitempty"`         // "tourist" atau "vendor"
 }

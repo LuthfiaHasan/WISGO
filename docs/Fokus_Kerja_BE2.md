@@ -2,7 +2,7 @@
 # Ekosistem Wisata Pintar Sumatera Barat (Rancak.in)
 
 > **Status Dokumen**: *Living Document* (Dapat diperbarui sewaktu-waktu mengikuti kesepakatan integrasi tim).  
-> **Terakhir Diperbarui**: 2026-11-15  
+> **Terakhir Diperbarui**: 2026-11-23  
 > **Pemegang Peran**: **BE-2 (Backend 2 — Grup, Mitra, Escrow & Gamifikasi)**  
 > **Branch Git**: `Backend-2`  
 > **Direktori Kerja Utama**: [`backend/internal/modules/`](file:///D:/WISGO/backend/internal/modules/) (Clean Architecture Vertical Slices)  
@@ -37,65 +37,102 @@ Untuk menjaga prinsip zero merge conflict dan konsistensi arsitektur sistem:
 | 2026-11-15 | Refactoring Menyeluruh Modul BE-1 ke Clean 3-Layer Gin (Tahap 1 - 8) | BE-1 & BE-2 | Eksekusi bertahap migrasi BE-1: Tahap 1 (Security/JWT/Rate-Limiter/Cache ETag), Tahap 2 (`destination`), Tahap 3 (`scenes360`), Tahap 4 (`spatial`/Shunlu/Hazard/SOS), Tahap 5 (`pungli`), Tahap 6 (`culture_ranking`/Gaode/Kato Nan Ampek), Tahap 7 (`system_core`/Benchmark SLA/Catalog), Tahap 8 (Pembersihan legacy `be1_core/` & migrasi DDL). 100% Unit Tests PASS di seluruh package (`go test ./...`) dan `go build ./...` Exit Code 0. | **Selesai 100% (Production-Ready)** |
 | 2026-11-15 | Audit Menyeluruh Fitur Backend & Sinkronisasi Kontrak API Lengkap | Tim BE & FE | Pengujian komprehensif end-to-end seluruh 48 endpoint BE-1 dan BE-2. Menemukan dan menuntaskan 17 potensi ketidaksesuaian/bug (route alias kontrak, anti-fake GPS validator bug pada equator 0.0, perbaikan ID mapping, dan implementasi endpoint hilang seperti /nearby & /optimize-tsp). Seluruh unit test PASS 100% (0 errors). | **Selesai 100% (Verified)** |
 | 2026-11-16 | Sentralisasi Database ke Supabase PostgreSQL + PostGIS Cloud & Strict Guard | Tim 5 Dev | Migrasi penuh seluruh 27 tabel BE-1 & BE-2 ke Supabase PostgreSQL Cloud terpusat (Singapore ap-southeast-1 Pooler). Implementasi PostgreSQL Repository Layer untuk seluruh modul BE-2 (`auth`, `booking_escrow`, `partner`, `itinerary`, `group`, `community`, `gamification`) dan modul utama BE-1 (`destination`). Menambahkan `DatabaseGuardMiddleware` strictly offline handler (HTTP 503 jika koneksi terputus, no phantom mock). `go build ./...` Exit Code 0 & 100% PASS Unit Test. | **Selesai 100% (Production-Ready)** |
+| 2026-11-18 | Fondasi Auth WhatsApp OTP, In-Memory Session, & Profile Reactivity | BE-2 & FE-2 | Implementasi multi-agent teamwork fondasi autentikasi: (1) Backend Go normalisasi nomor Indonesia E.164 (`628...`), cryptographic random 4-digit OTP dengan TTL 300s & anti-replay, visual console banner `[AUTH OTP]`, bypass whitelist QA (`1234` & `2486`); (2) Flutter in-memory zero-dependency session (`ApiConfig.authNotifier` & `UserProfile`); (3) Integrasi UI `LoginScreen` & `OtpVerificationScreen` tap-to-autofill banner; (4) Surgical wrap reaktif di `SavedPlacesScreen._buildProfileView()` (Guest Mode vs Mode Terverifikasi tanpa reload). 100% PASS Unit & Widget Tests di backend dan mobile. | **Selesai 100% (Production-Ready)** |
+| 2026-11-21 | Penerapan Skema DBML v2 Baru (Safe Evolutionary Migration) ke Supabase Cloud | BE-1 & BE-2 | Sukses menerapkan migrasi `000003_v2_new_schema.sql` ke Supabase Cloud: (1) Master `categories` terpusat (22 core categories seeded across 5 modules); (2) Ulasan terverifikasi GPS `destination_reviews` dengan integritas `stemp_visit_id`; (3) Sistem misi gamifikasi dinamis `challenges` & `challenge_destinations` & `user_challenge_rewards`; (4) Tabel offline `offline_bundles`, `api_telemetry_logs`, `emergency_contacts`, `notifikasi`, `visit_point`, `open_trips`, `new_tour`, `aturan_destinasi`, `indikator_medan`; (5) Backward-compatible penuh, 0 broken code di Go (100% PASS Unit Tests) dan 0 breaking changes untuk Frontend. Total 42 tabel terverifikasi di Supabase. | **Selesai 100% (Live on Supabase)** |
+| 2026-11-21 | Eksekusi Fase 2: Migrasi Kueri Repositori Backend Go ke Tabel Baru v2 | BE-2 | Sukses mengalihkan kueri repositori backend Go ke tabel-tabel baru v2 di Supabase: (1) `community`: kueri dialihkan dari `community_places` ke `new_tour` (dengan JOIN `categories`) & `shared_trips` ke `open_trips`; (2) `gamification`: kueri dialihkan dari `digital_passports` ke `stemp_visit`; (3) `destination`: relasi dialihkan dari `medan_indicators` ke `indikator_medan` & `local_tips` ke `aturan_destinasi` (dengan JOIN `categories`); (4) Seeder destinasi menyinkronkan kedua versi tabel. Seluruh 22/22 unit tests PASS 100% dan `go build ./...` Exit Code 0. | **Selesai 100% (Production-Ready)** |
+| 2026-11-21 | Eksekusi Fase 3: Contract & Cleanup Tabel Legacy di Supabase Cloud | BE-1 & BE-2 | Sukses mengeksekusi migrasi `000004_v2_contract_cleanup.sql` di Supabase Cloud: Menghapus 7 tabel legacy (`medan_indicators`, `local_tips`, `shunlu_pois`, `digital_passports`, `community_places`, `shared_trips`, `scenic_micro_maps`) secara bersih (CASCADE). Skema Supabase kini ramping, terstruktur rapi dengan 35 tabel aktif (26 tabel DBML baru + tabel relasi + klaster rombongan & escrow BE-2). Seluruh unit tests 100% PASS dan `go build ./...` Exit Code 0. | **Selesai 100% (Production-Clean)** |
+| 2026-11-21 | Penyesuaian Scope Proyek: Penghapusan Klaster Rombongan & Escrow (Presisi 26 Tabel DBML) | Tim 5 Dev | Sesuai kesepakatan tim, Klaster Rombongan (`group_rooms`, `group_members`, `group_votes`), Itinerary (`itineraries`, `itinerary_items`), dan Escrow & Mitra (`partners`, `booking_escrows`) resmi ditiadakan dari scope proyek. Tabel di-drop dari Supabase dan rutenya dinonaktifkan di API. Database Supabase kini 100% presisi menyisakan 26 tabel murni DBML (+1 tabel sistem PostGIS). `go build ./...` Exit Code 0 & 100% PASS Unit Tests. | **Selesai 100% (Aligned 26 Tables)** |
+| 2026-11-21 | Penggabungan (Merge) origin/dev ke Backend-2 & Penyelarasan Penuh ERD v2 | Tim 5 Dev | Berhasil menggabungkan branch `origin/dev` ke `Backend-2` (Commit `348e05b`). Menyelesaikan seluruh 8 titik merge conflict: (1) `auth` (DTO, Handler, Service dengan variadic options, support role tourist/vendor, dev bypass QA & anti-replay); (2) `destination` (resilient query indikator_medan & aturan_destinasi v2 dengan fallback); (3) `mobile` (UI Frosted Glassmorphism, Google Sign-In, OtpVerification, QrisPayment offline fallback, dan SavedPlaces multi-bahasa Minang dari FE). Verifikasi kompilasi `go build ./...` Exit Code 0 dan 100% Unit Tests PASS. | **Selesai 100% (Merged & Synchronized)** |
+| 2026-11-21 | Peresmian Squad 8 Agen Terpadu BE-2 & Single File Ownership Matrix | BE-2 | Sukses mendefinisikan dan mengaktifkan protokol 8 Agen Terpadu BE-2 (PM Analyst, Architect, Logic Engineer, DB Specialist, Shadow FE, QA Bug Hunter, Security Guard, Tech Lead) dengan Single File Ownership Matrix dan Staged Wave Pipeline untuk menjamin Zero Merge Conflict & Zero Bug. Protokol tersimpan di `docs/BE2_Squad_8_Agents_Protocol.md`. | **Aktif & Siap Tempur** |
+| 2026-11-22 | Penyelarasan Final Endpoint & Database (Scope Cleanup) | BE-2 & Tim | Konfirmasi resmi kesepakatan tim atas penghapusan 3 klaster fitur (Private Group Room, Smart Trip Planner 7 Hari, Mitra Nagari & Escrow). Merapikan router `backend/cmd/api/main.go` dan matriks dokumen BE-2: mengklasifikasikan secara tegas 10 Endpoint Aktif (Live di Supabase 26 tabel) vs 14 Endpoint Non-Aktif / Archived (kode Go utuh di internal/modules/ tetapi tabel di-drop via 000004_v2_contract_cleanup.sql). | **Selesai 100% (Terdokumentasi Rapi)** |
+| 2026-11-22 | Integrasi Tahap 1: Autentikasi OTP WhatsApp & Sesi JWT Flutter ↔ Go | BE-2 & FE-2 | Eksekusi Squad Multi-Agen (VICTORY CONFIRMED): (1) `login_screen.dart` terhubung ke `ApiService.requestOtp()` dengan mode Strict Real-Only & anti-double-tap loading; (2) `otp_verification_screen.dart` terhubung ke `ApiService.verifyOtp()` dengan mode manual terminal log OTP, penyimpanan token JWT/profil ke `ApiConfig.setAuthSession()`, dan SnackBar sukses ke `SavedPlacesScreen`; (3) Zero boundary conflict (web-admin & be1_core 100% clean); (4) 100% PASS Go tests (16/16), Flutter analyze (0 issues), & Flutter tests (19/19). | **Selesai 100% (Production-Verified)** |
+| 2026-11-23 | Perbaikan Alur Logout & Guest Mode Flutter (Anti-App-Termination di Windows Desktop) | BE-2 & FE-2 | Eksekusi Squad Multi-Agen: (1) Dialog konfirmasi 'Keluar' di `saved_places_screen.dart` memanggil `ApiService.logout()` secara atomik untuk membersihkan `ApiConfig.authToken` dan `currentUser`; (2) Menghilangkan navigasi destruktif `pushAndRemoveUntil(SplashScreen)` yang menyebabkan crash/exit pada desktop Windows; (3) State Profil beralih mulus ke Guest Mode (`_isGuestMode = true`) dengan menampilkan floating SnackBar sukses dan tombol 'Masuk ke Akun WISGO' menuju `LoginScreen`; (4) Menghilangkan 2 warning linter (`qris_payment_sheet.dart` & `destination_adapter.dart`), `flutter analyze` exit 0 (0 issues); (5) Verifikasi menyeluruh: 100% PASS Go backend build & tests, serta 22/22 Flutter tests lulus tanpa regresi. | **Selesai 100% (Production-Verified)** |
+| 2026-11-23 | Pemetaan Kerja BE-1 & BE-2 Sinkron FE Terbaru (13 Catatan Revisi) | BE-1 & BE-2 | Perumusan dokumen teknis panduan resmi `docs/Pemetaan_Kerja_BE1_BE2_Sinkron_FE.md` yang menyinkronkan 13 Catatan Revisi dengan 4 Tab FE Flutter (`SavedPlacesScreen`), matriks kepemilikan tabel DBML v2 Supabase, kontrak sinergi data BE-1 ➔ BE-2, dan acceptance criteria terukur. 100% Zero Merge Conflict. | **Dokumen Resmi Aktif** |
+| 2026-11-23 | Auth Guard Interaktif Flutter & Hardening Sesi Backend Go | BE-2 & FE-2 | Implementasi Auth Guard Interaktif (`AuthGuard.check()` bottom sheet khas Minangkabau radius 28px palet forest/cream/terracotta) pada 3 fitur kunci Flutter: (1) Paspor Minang (GPS check-in & Sertifikat Gubernur); (2) Usulan Destinasi (autofill nama/kontak & submit guard); (3) Saved Places (bookmark offline instant, notifikasi ajakan cloud sync, & reaktivitas sesi). Serta hardening backend Go (`/gamification/checkin`, `/users/saved`, `/destinations/hidden-gem`) menolak request tanpa `user_id` yang valid. Zero merge conflict, 15/15 Go test packages PASS, `flutter analyze` 0 issues, dan 28/28 Flutter tests PASS. | **Selesai 100% (VICTORY CONFIRMED)** |
+| 2026-11-23 | Perbaikan Crash Fatal Siklus "Login -> Logout -> Re-Login" Flutter | BE-2 & FE-2 | Investigasi & perbaikan tuntas crash saat re-login: (1) Mengganti destruktif `pushAndRemoveUntil((route) => false)` di `otp_verification_screen.dart` dan `login_screen.dart` dengan alur pop gracefully `canPop() ? pop(true) : pushReplacement()`, menjaga integritas root navigation tree; (2) Menambahkan safety guard `if (!mounted) return;` pada callback async `DigitalPassportSheet` (`_verifyGpsCheckIn` & `_showDigitalCertificateModal`) dan `UsulDestinasiSheet` untuk mencegah `setState() called after dispose`; (3) Menjaga navigator context di `AuthGuardDialog`; (4) Menambahkan test suite `relogin_crash_test.dart` (3 cycles PASS). 100% PASS Go backend (15 pkgs), `flutter analyze` 0 issues, dan 31/31 Flutter tests PASS. | **Selesai 100% (Production-Verified)** |
+| 2026-11-24 | Penyelesaian Siklus Penuh Open Trip (`GET`, `POST`, `JOIN`, `DELETE`) | BE-2 & FE-2 | Menambahkan endpoint `POST /api/v1/community/shared-trips/:id/join` (pengurangan `available_seats` atomik di PostgreSQL & in-memory mutex, validasi user_id/host/kuota) dan `DELETE /api/v1/community/shared-trips/:id` (penghapusan khusus host dengan validasi 400/403/404) beserta unit test lengkap di modul `community`. | **Selesai 100% (Verified)** |
 
 ---
 
-## 03. Kepemilikan 12 Tabel Database PostgreSQL
+## 03. Kepemilikan 12 Tabel Database PostgreSQL & Status Supabase v2
 
-| No | Nama Tabel | Deskripsi & Keterangan Kunci | Relasi Luar | Status Migrasi |
-| :---: | :--- | :--- | :--- | :---: |
-| 1 | `users` | Akun wisatawan & nomor HP untuk OTP | - | ✅ Live on Supabase |
-| 2 | `saved_places` | Bookmark/favorit destinasi wisatawan | `destinations(id)` [BE-1] | ✅ Live on Supabase |
-| 3 | `itineraries` | Master rencana perjalanan 7 hari | `users(id)` | ✅ Live on Supabase |
-| 4 | `itinerary_items` | Rincian per jam, hari ke-N & destinasi | `itineraries(id)`, `destinations(id)` | ✅ Live on Supabase |
-| 5 | `group_rooms` | Ruang koordinasi rombongan (`room_code` unik) | `users(leader_id)` | ✅ Live on Supabase |
-| 6 | `group_members` | Daftar anggota dalam group room | `group_rooms(id)`, `users(id)` | ✅ Live on Supabase |
-| 7 | `group_votes` | Hasil voting live destinasi/homestay | `group_rooms(id)`, `destinations(id)` | ✅ Live on Supabase |
-| 8 | `partners` | 5 Kategori Mitra Minang (+ `spicy_level` 0-5) | - | ✅ Live on Supabase |
-| 9 | `booking_escrows` | Ledger rekening bersama & status tiket QR | `partners(id)`, `users(id)` | ✅ Live on Supabase |
-| 10 | `community_places`| Tempat baru usulan wisatawan (masking radius) | `users(id)` | ✅ Live on Supabase |
-| 11 | `shared_trips` | Papan cari barengan / patungan sewa mobil | `users(id)` | ✅ Live on Supabase |
-| 12 | `digital_passports`| Stempel check-in GPS $\le 200\text{ m}$ & sertifikat | `users(id)`, `destinations(id)` | ✅ Live on Supabase |
+| No | Nama Tabel Asal | Status di Supabase Cloud v2 | Keterangan & Tindakan Arsitektural |
+| :---: | :--- | :---: | :--- |
+| 1 | `users` | ✅ **Aktif (Live)** | Tabel akun wisatawan, nomor HP, peran, dan kolom baru `jenis_input`. |
+| 2 | `saved_places` | ✅ **Aktif (Live)** | Tabel destinasi favorit/bookmark wisatawan. |
+| 3 | `community_places`| 🔄 **Berevolusi ke v2** | Digantikan oleh tabel PostGIS [`new_tour`](file:///d:/WISGO/backend/migrations/000003_v2_new_schema.sql) & `destination_reviews`. |
+| 4 | `shared_trips` | 🔄 **Berevolusi ke v2** | Digantikan oleh tabel [`open_trips`](file:///d:/WISGO/backend/migrations/000003_v2_new_schema.sql) untuk papan cari barengan / tebengan. |
+| 5 | `digital_passports`| 🔄 **Berevolusi ke v2** | Digantikan oleh tabel [`stemp_visit`](file:///d:/WISGO/backend/migrations/000003_v2_new_schema.sql), `challenges`, dan `user_challenge_rewards`. |
+| 6 | `itineraries` | ❌ **Non-Aktif / Di-Drop** | Di-drop dari Supabase via `000004_v2_contract_cleanup.sql` per konsensus 26 tabel murni DBML. |
+| 7 | `itinerary_items` | ❌ **Non-Aktif / Di-Drop** | Di-drop dari Supabase via `000004_v2_contract_cleanup.sql` per konsensus 26 tabel murni DBML. |
+| 8 | `group_rooms` | ❌ **Non-Aktif / Di-Drop** | Di-drop dari Supabase via `000004_v2_contract_cleanup.sql` per konsensus 26 tabel murni DBML. |
+| 9 | `group_members` | ❌ **Non-Aktif / Di-Drop** | Di-drop dari Supabase via `000004_v2_contract_cleanup.sql` per konsensus 26 tabel murni DBML. |
+| 10 | `group_votes` | ❌ **Non-Aktif / Di-Drop** | Di-drop dari Supabase via `000004_v2_contract_cleanup.sql` per konsensus 26 tabel murni DBML. |
+| 11 | `partners` | ❌ **Non-Aktif / Di-Drop** | Di-drop dari Supabase via `000004_v2_contract_cleanup.sql` per konsensus 26 tabel murni DBML. |
+| 12 | `booking_escrows` | ❌ **Non-Aktif / Di-Drop** | Di-drop dari Supabase via `000004_v2_contract_cleanup.sql` per konsensus 26 tabel murni DBML. |
+
+> **Catatan Integritas Data**: Seluruh kode Go DTO, repository, service, handler, dan unit test untuk ke-7 tabel yang di-drop tetap tersimpan utuh di [`backend/internal/modules/`](file:///d:/WISGO/backend/internal/modules/) untuk kemudahan reaktivasi jika scope diaktifkan kembali.
 
 ---
 
-## 04. Matriks 24 Endpoint REST API (Kontrak Kerja BE-2)
+## 04. Matriks Status 24 Endpoint REST API (Kontrak Kerja BE-2)
 
-### A. Klaster Autentikasi & Pengguna (Partner: FE-2)
-- [x] `POST /api/v1/auth/request-otp` — Kirim 4 digit OTP via SMS/WA simulasi.
-- [x] `POST /api/v1/auth/verify-otp` — Validasi OTP & cetak token JWT.
-- [x] `GET /api/v1/users/saved` — Ambil daftar tempat tersimpan wisatawan.
-- [x] `POST /api/v1/users/saved` — Toggle simpan/hapus tempat favorit.
+### 🟢 KELOMPOK 1: ENDPOINT AKTIF (Live di Router `main.go` & Supabase Cloud)
+*Seluruh endpoint ini berstatus produksi, aktif terdaftar di router Gin, dan terhubung langsung ke skema 26 tabel Supabase v2:*
 
-### B. Klaster Trip Planner & Private Group Room (Pilar 4 — Partner: FE-2)
-- [x] `GET /api/v1/itineraries` — Riwayat rencana trip pengguna.
-- [x] `POST /api/v1/itineraries` — Simpan rencana trip 7 hari manual.
-- [x] `POST /api/v1/itineraries/auto-generate` — Generator itinerary pintar sesuai preferensi rombongan.
-- [x] `POST /api/v1/groups` — Buat Group Room baru & terbitkan `room_code` tautan WhatsApp.
-- [x] `GET /api/v1/groups/{code}` — Ambil info rombongan, leader, dan anggota.
-- [x] `POST /api/v1/groups/{code}/join` — Gabung ke ruang rombongan via tautan link WA.
-- [x] `POST /api/v1/groups/{code}/vote` — Submit voting destinasi/homestay live.
-- [x] `GET /api/v1/groups/{code}/results` — Rekapitulasi voting persentase real-time.
-- [x] `POST /api/v1/groups/{code}/split-bill` — Kalkulator bagi rata tagihan (homestay/sewa mobil).
-- [x] `POST & GET /api/v1/groups/{code}/radar` — Menerima ping lokasi koordinat anggota & monitor Group Radar.
+#### A. Klaster Autentikasi & Simpan Tempat (Pilar 4 & 5 — Modul `auth`)
+- [x] `POST /api/v1/auth/request-otp` — Normalisasi nomor E.164 (`628...`), cryptographic random 4-digit OTP dengan TTL 300s & anti-replay.
+- [x] `POST /api/v1/auth/verify-otp` — Verifikasi kode OTP, pemusnahan kode, dan cetak JWT Bearer token (tourist/vendor).
+- [x] `POST /api/v1/auth/refresh-token` — Perpanjang masa berlaku token autentikasi JWT wisatawan.
+- [x] `GET /api/v1/auth/me` — Ambil profil lengkap wisatawan aktif dari tabel `users`.
+- [x] `GET /api/v1/users/saved` — Ambil daftar destinasi tersimpan wisatawan dari tabel `saved_places`.
+- [x] `POST /api/v1/users/saved` & `POST /api/v1/users/saved/:destination_id` — Toggle simpan/hapus tempat favorit.
 
-### C. Klaster Mitra Nagari, Quick Booking & Escrow (Pilar 5 — Partner: FE-2 & FS-1)
-- [x] `GET /api/v1/partners` — Katalog mitra 5 kategori (+ level pedas kuliner).
-- [x] `GET /api/v1/partners/detail` — Detail profil mitra & tarif resmi paket.
-- [x] `POST /api/v1/bookings/create` — Booking via Quick Drawer 360° (Dana dikunci di Escrow).
-- [x] `POST /api/v1/bookings/wa-webhook` — Simulator respon WhatsApp mitra (`1` Terima, `0` Tolak).
-- [x] `GET /api/v1/bookings/{id}/ticket-qr` — Terbitkan QR E-Ticket setelah dikonfirmasi mitra.
-- [x] `POST /api/v1/escrow/scan-redeem` — Scan QR oleh mitra saat tamu tiba untuk pencairan dana.
-- [x] `GET /api/v1/escrow/currency/myr-rate` — Kurs konversi MYR ke IDR (Wisatawan Malaysia).
+#### B. Klaster Komunitas & Cari Barengan (Pilar 6 — Modul `community`)
+- [x] `POST /api/v1/community/places` — Pengajuan tempat wisata baru / hidden gem ke tabel `new_tour` (PostGIS `geom_point` + sanitasi).
+- [x] `GET /api/v1/community/places` — Ambil daftar tempat wisata komunitas terkurasi.
+- [x] `POST /api/v1/shared-trips` (alias `/api/v1/community/shared-trips`) — Pasang ajakan tebengan armada ke tabel `open_trips`.
+- [x] `GET /api/v1/shared-trips` (alias `/api/v1/community/shared-trips`) — Ambil feed tebengan armada aktif.
 
-### D. Klaster Komunitas, Gamifikasi & Analitik Dispar (Pilar 6 & 8 — Partner: FE-2 & FS-1)
-- [x] `POST /api/v1/community/places` — Pengajuan tempat baru (wajib tips & masking koordinat).
-- [x] `GET /api/v1/community/places` — Daftar tempat komunitas dalam antrean kurasi Pokdarwis.
-- [x] `GET & POST /api/v1/community/shared-trips` — Papan "Cari Barengan" untuk patungan transportasi.
-- [x] `POST /api/v1/gamification/checkin` — Validasi check-in GPS $\le 200\text{ m}$ (Anti-Fake GPS).
-- [x] `GET /api/v1/gamification/passport` — Rekap stempel Paspor Digital Minang (10 titik ikonik).
-- [x] `POST /api/v1/gamification/certificate` — Generator Sertifikat Digital resmi Gubernur Sumbar.
-- [x] `GET /api/v1/analytics/dispar/summary` — Agregasi metrik kunjungan & ekonomi UMKM nagari.
+#### C. Klaster Gamifikasi Paspor Minang & Sertifikat (Pilar 6 — Modul `gamification`)
+- [x] `GET /api/v1/gamification/spots` — Ambil daftar spot bersejarah untuk misi stempel Paspor Minang.
+- [x] `POST /api/v1/gamification/check-in` — Validasi stempel check-in GPS $\le 200\text{ m}$ (Anti-Fake GPS) ke tabel `stemp_visit`.
+- [x] `GET /api/v1/gamification/passport/:userId` — Rekapitulasi perolehan stempel digital paspor wisatawan.
+- [x] `GET /api/v1/gamification/certificate/:userId` — Penerbitan dan klaim Sertifikat Digital Resmi Gubernur Sumbar.
+
+#### D. Klaster Analitik Eksekutif Dispar (Pilar 8 — Modul `analytics`)
+- [x] `GET /api/v1/analytics/dispar/heatmaps` (alias `/api/v1/analytics/dispar/summary`) — Agregasi metrik kepadatan wisatawan 19 Kab/Kota dan perputaran ekonomi UMKM.
+
+---
+
+### ⚪ KELOMPOK 2: ENDPOINT NON-AKTIF / ARCHIVED (Ditiadakan Mengikuti Kesepakatan Scope DBML v2)
+*Seluruh logika Go telah selesai 100% dan lulus unit test di `backend/internal/modules/*`, namun rutenya sengaja dinonaktifkan di `main.go` karena tabel fisiknya di-drop dari Supabase Cloud untuk memenuhi kuota presisi 26 tabel murni:*
+
+#### E. Klaster Private Group Room (Pilar 4 — Modul `group`) — Non-Aktif
+*Tabel terkait (`group_rooms`, `group_members`, `group_votes`) telah di-drop via `000004_v2_contract_cleanup.sql`.*
+- [ ] `POST /api/v1/groups` — Buat Group Room baru & terbitkan `room_code` tautan WhatsApp.
+- [ ] `GET /api/v1/groups/{code}` — Ambil info rombongan, leader, dan anggota.
+- [ ] `POST /api/v1/groups/{code}/join` — Gabung ke ruang rombongan via tautan link WA.
+- [ ] `POST /api/v1/groups/{code}/vote` — Submit voting destinasi/homestay live.
+- [ ] `GET /api/v1/groups/{code}/results` (alias `/votes`) — Rekapitulasi voting persentase real-time.
+- [ ] `POST /api/v1/groups/{code}/split-bill` — Kalkulator bagi rata tagihan (homestay/sewa mobil).
+- [ ] `POST & GET /api/v1/groups/{code}/radar` — Menerima ping lokasi koordinat anggota & monitor Group Radar.
+
+#### F. Klaster Smart Trip Planner 7 Hari (Pilar 4 — Modul `itinerary`) — Non-Aktif
+*Tabel terkait (`itineraries`, `itinerary_items`) telah di-drop via `000004_v2_contract_cleanup.sql`.*
+- [ ] `POST /api/v1/itineraries/auto-generate` — Generator itinerary pintar sesuai preferensi rombongan.
+- [ ] `GET /api/v1/itineraries` — Riwayat rencana trip pengguna.
+- [ ] `POST /api/v1/itineraries` — Simpan rencana trip 7 hari manual.
+
+#### G. Klaster Mitra Nagari, Quick Booking & Escrow (Pilar 5 — Modul `partner` & `booking_escrow`) — Non-Aktif
+*Tabel terkait (`partners`, `booking_escrows`) telah di-drop via `000004_v2_contract_cleanup.sql`.*
+- [ ] `GET /api/v1/partners` — Katalog mitra 5 kategori (+ level pedas kuliner).
+- [ ] `GET /api/v1/partners/detail` (alias `/:id`) — Detail profil mitra & tarif resmi paket.
+- [ ] `POST /api/v1/bookings/create` (alias `/api/v1/escrow/bookings`) — Booking via Quick Drawer 360° (Dana dikunci di Escrow).
+- [ ] `POST /api/v1/bookings/wa-webhook` — Simulator respon WhatsApp mitra (`1` Terima, `0` Tolak).
+- [ ] `GET /api/v1/bookings/{id}/ticket-qr` — Terbitkan QR E-Ticket setelah dikonfirmasi mitra.
+- [ ] `POST /api/v1/escrow/scan-redeem` — Scan QR oleh mitra saat tamu tiba untuk pencairan dana.
+- [ ] `GET /api/v1/escrow/currency/myr-rate` — Kurs konversi MYR ke IDR (Wisatawan Malaysia).
 
 ---
 

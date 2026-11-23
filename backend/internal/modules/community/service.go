@@ -9,21 +9,37 @@ import (
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
 
+// DestinationLookup antarmuka read-only minimal untuk mencocokkan destinasi BE-1 (dipenuhi destination.Repository)
+type DestinationLookup interface {
+	FindByID(idOrSlugOrQR string, hasUserGPS bool, userLat, userLng float64) (*models.Destination, error)
+}
+
 // Service antarmuka logika bisnis tempat komunitas dan shared trips
 type Service interface {
 	CreateCommunityPlace(req CreateCommunityPlaceRequest) (*CreateCommunityPlaceResponse, error)
 	GetCommunityPlaces() ([]models.CommunityPlace, error)
 	CreateSharedTrip(req CreateSharedTripRequest) (*models.SharedTrip, error)
 	GetSharedTrips() ([]models.SharedTrip, error)
+	JoinSharedTrip(id, userID string) (*models.SharedTrip, error)
+	DeleteSharedTrip(id, userID string) error
 }
 
 type service struct {
-	repo Repository
+	repo       Repository
+	destLookup DestinationLookup
 }
 
-// NewService membuat instance service baru
+// NewService membuat instance service baru (backward compatible tanpa lookup destinasi BE-1)
 func NewService(repo Repository) Service {
 	return &service{repo: repo}
+}
+
+// NewServiceWithDestinations membuat instance service dengan lookup read-only ke katalog destinasi BE-1
+func NewServiceWithDestinations(repo Repository, destLookup DestinationLookup) Service {
+	return &service{
+		repo:       repo,
+		destLookup: destLookup,
+	}
 }
 
 func (s *service) CreateCommunityPlace(req CreateCommunityPlaceRequest) (*CreateCommunityPlaceResponse, error) {
@@ -88,11 +104,32 @@ func (s *service) GetCommunityPlaces() ([]models.CommunityPlace, error) {
 }
 
 func (s *service) CreateSharedTrip(req CreateSharedTripRequest) (*models.SharedTrip, error) {
-	if strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.DestinationRoute) == "" {
-		return nil, errors.New("Payload tidak valid: title dan destination_route wajib diisi")
+	title := strings.TrimSpace(req.Title)
+	destID := strings.TrimSpace(req.DestinationID)
+	destRoute := strings.TrimSpace(req.DestinationRoute)
+	category := strings.TrimSpace(req.Category)
+
+	if title == "" {
+		return nil, errors.New("Payload tidak valid: title wajib diisi")
+	}
+	if destID == "" && destRoute == "" {
+		return nil, errors.New("Payload tidak valid: destination_id atau destination_route wajib diisi")
 	}
 
-	userID := req.UserID
+	// Kunci 1 destinasi dari katalog BE-1 dan isi kategori + rute otomatis bila destination_id dikirim
+	if destID != "" && s.destLookup != nil {
+		dest, err := s.destLookup.FindByID(destID, false, 0, 0)
+		if err != nil || dest == nil {
+			return nil, fmt.Errorf("Destinasi '%s' tidak ditemukan di katalog BE-1", destID)
+		}
+		destID = dest.ID
+		category = dest.Category
+		if destRoute == "" {
+			destRoute = dest.Name
+		}
+	}
+
+	userID := strings.TrimSpace(req.UserID)
 	if userID == "" {
 		userID = "usr-001"
 	}
@@ -120,8 +157,10 @@ func (s *service) CreateSharedTrip(req CreateSharedTripRequest) (*models.SharedT
 	newTrip := models.SharedTrip{
 		ID:               fmt.Sprintf("st-%d", time.Now().UnixNano()%100000),
 		UserID:           userID,
-		Title:            req.Title,
-		DestinationRoute: req.DestinationRoute,
+		Title:            title,
+		DestinationID:    destID,
+		Category:         category,
+		DestinationRoute: destRoute,
 		DepartureDate:    depDate,
 		AvailableSeats:   seats,
 		CostPerPerson:    req.CostPerPerson,
@@ -138,5 +177,29 @@ func (s *service) CreateSharedTrip(req CreateSharedTripRequest) (*models.SharedT
 
 func (s *service) GetSharedTrips() ([]models.SharedTrip, error) {
 	return s.repo.GetSharedTrips(), nil
+}
+
+func (s *service) JoinSharedTrip(id, userID string) (*models.SharedTrip, error) {
+	tripID := strings.TrimSpace(id)
+	uid := strings.TrimSpace(userID)
+	if uid == "" {
+		return nil, ErrJoinUserIDRequired
+	}
+	if tripID == "" {
+		return nil, ErrSharedTripNotFound
+	}
+	return s.repo.JoinSharedTrip(tripID, uid)
+}
+
+func (s *service) DeleteSharedTrip(id, userID string) error {
+	tripID := strings.TrimSpace(id)
+	uid := strings.TrimSpace(userID)
+	if uid == "" {
+		return ErrDeleteUserIDRequired
+	}
+	if tripID == "" {
+		return ErrSharedTripNotFound
+	}
+	return s.repo.DeleteSharedTrip(tripID, uid)
 }
 
