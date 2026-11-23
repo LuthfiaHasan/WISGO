@@ -102,8 +102,10 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	systemHandler.RegisterRoutes(v1)
 
 	// ==========================================
-	// 3. MODUL BE-2 (GROUP, ESCROW, ITINERARY, DLL)
+	// 3. MODUL BE-2 (WISGO / RANCAK.IN)
 	// ==========================================
+	// --- A. MODUL AKTIF (Terhubung ke Skema Presisi 26 Tabel DBML v2 di Supabase Cloud) ---
+
 	// Modul B1: Autentikasi OTP & Simpan Tempat Favorit (Pilar 4 & 5)
 	var authRepo auth.Repository
 	if db != nil && database.IsConnected() {
@@ -122,7 +124,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	} else {
 		communityRepo = community.NewRepository()
 	}
-	communityService := community.NewService(communityRepo)
+	communityService := community.NewServiceWithDestinations(communityRepo, destRepo)
 	communityHandler := community.NewHandler(communityService)
 	communityHandler.RegisterRoutes(v1)
 
@@ -142,6 +144,16 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	analyticsService := analytics.NewService(analyticsRepo)
 	analyticsHandler := analytics.NewHandler(analyticsService)
 	analyticsHandler.RegisterRoutes(v1)
+
+	// --- B. MODUL NON-AKTIF / ARCHIVED (Ditiadakan Mengikuti Kesepakatan Scope DBML v2) ---
+	// Modul berikut telah selesai 100% di 'backend/internal/modules/*', namun rutenya sengaja
+	// dinonaktifkan (dormant) karena 7 tabel fisiknya di-drop dari Supabase Cloud melalui
+	// migrasi '000004_v2_contract_cleanup.sql' untuk menjaga batas presisi 26 tabel murni:
+	//   1. Modul Group (Private Group Room, Voting, Split Bill, Radar) -> tabel: group_rooms, group_members, group_votes
+	//   2. Modul Itinerary (Smart Trip Planner 7 Hari)                -> tabel: itineraries, itinerary_items
+	//   3. Modul Partner & Booking Escrow (Mitra & Rekening Bersama)    -> tabel: partners, booking_escrows
+	// Jika tim di masa mendatang memutuskan mengaktifkan kembali, jalankan migrasi '000002_be2_schema.sql'
+	// untuk memulihkan tabel terkait, lalu daftarkan rutenya di sini.
 
 	return r
 }

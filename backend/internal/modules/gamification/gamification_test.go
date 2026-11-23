@@ -202,3 +202,38 @@ func TestGovernorCertificate_RequirementAndIssuance(t *testing.T) {
 	}
 }
 
+func TestValidateGPSCheckIn_RejectMissingOrEmptyUserId(t *testing.T) {
+	r, _ := setupTestRouter()
+
+	// 1. Missing user_id field
+	noUserPayload := []byte(`{
+		"destination_id": "spot-jam-gadang",
+		"latitude": -0.3051,
+		"longitude": 100.3695
+	}`)
+	reqNoUser := httptest.NewRequest(http.MethodPost, "/api/v1/gamification/checkin", bytes.NewReader(noUserPayload))
+	reqNoUser.Header.Set("Content-Type", "application/json")
+	wNoUser := httptest.NewRecorder()
+	r.ServeHTTP(wNoUser, reqNoUser)
+
+	if wNoUser.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request for check-in with missing user_id, got %d. Body: %s", wNoUser.Code, wNoUser.Body.String())
+	}
+
+	// 2. Whitespace user_id
+	emptyUserPayload := []byte(`{
+		"user_id": "   ",
+		"destination_id": "spot-jam-gadang",
+		"latitude": -0.3051,
+		"longitude": 100.3695
+	}`)
+	reqEmptyUser := httptest.NewRequest(http.MethodPost, "/api/v1/gamification/checkin", bytes.NewReader(emptyUserPayload))
+	reqEmptyUser.Header.Set("Content-Type", "application/json")
+	wEmptyUser := httptest.NewRecorder()
+	r.ServeHTTP(wEmptyUser, reqEmptyUser)
+
+	if wEmptyUser.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request for check-in with whitespace user_id, got %d. Body: %s", wEmptyUser.Code, wEmptyUser.Body.String())
+	}
+}
+

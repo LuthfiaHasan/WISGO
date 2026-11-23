@@ -33,7 +33,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) ValidateGPSCheckIn(c *gin.Context) {
 	var req CheckInRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Error(c, http.StatusBadRequest, "Payload check-in tidak valid")
+		common.Error(c, http.StatusBadRequest, "Payload check-in tidak valid atau user_id belum diisi")
+		return
+	}
+
+	if strings.TrimSpace(req.UserID) == "" {
+		common.Error(c, http.StatusBadRequest, "user_id wajib disertakan untuk melakukan check-in GPS paspor digital", gin.H{
+			"code": "MISSING_USER_ID",
+		})
 		return
 	}
 

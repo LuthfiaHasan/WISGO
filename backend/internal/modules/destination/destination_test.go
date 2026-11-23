@@ -255,4 +255,53 @@ func TestDestinationSuite(t *testing.T) {
 			t.Fatalf("expected VerificationStatus 'verified' after admin approval, got '%s'", verifyRes.Data.VerificationStatus)
 		}
 	})
+
+	t.Run("TC-11: Validasi Sesi & Penolakan Usulan Hidden Gem Anonim", func(t *testing.T) {
+		payload := []byte(`{
+			"name": "Lembah Harau View Point Rahasia",
+			"city_regency": "Kabupaten Lima Puluh Kota",
+			"description": "Tebing tersembunyi dengan pemandangan lembah memukau.",
+			"latitude": -0.098,
+			"longitude": 100.672
+		}`)
+
+		// 1. Submit tanpa Bearer token dan tanpa user_id -> 400 Bad Request
+		reqAnon := httptest.NewRequest(http.MethodPost, "/api/v1/destinations/hidden-gem", bytes.NewBuffer(payload))
+		reqAnon.Header.Set("Content-Type", "application/json")
+		recAnon := httptest.NewRecorder()
+		r.ServeHTTP(recAnon, reqAnon)
+
+		if recAnon.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 Bad Request for anonymous hidden gem submission, got %d: %s", recAnon.Code, recAnon.Body.String())
+		}
+
+		// 2. Submit dengan invalid token -> 401 Unauthorized
+		reqInvalidToken := httptest.NewRequest(http.MethodPost, "/api/v1/destinations/hidden-gem", bytes.NewBuffer(payload))
+		reqInvalidToken.Header.Set("Authorization", "Bearer invalid-random-token")
+		reqInvalidToken.Header.Set("Content-Type", "application/json")
+		recInvalidToken := httptest.NewRecorder()
+		r.ServeHTTP(recInvalidToken, reqInvalidToken)
+
+		if recInvalidToken.Code != http.StatusUnauthorized {
+			t.Fatalf("expected 401 Unauthorized for invalid token, got %d: %s", recInvalidToken.Code, recInvalidToken.Body.String())
+		}
+
+		// 3. Submit dengan user_id valid di payload -> 201 Created
+		userPayload := []byte(`{
+			"user_id": "usr-001",
+			"name": "Lembah Harau View Point Rahasia Terverifikasi",
+			"city_regency": "Kabupaten Lima Puluh Kota",
+			"description": "Tebing tersembunyi dengan pemandangan lembah memukau.",
+			"latitude": -0.098,
+			"longitude": 100.672
+		}`)
+		reqUser := httptest.NewRequest(http.MethodPost, "/api/v1/destinations/hidden-gem", bytes.NewBuffer(userPayload))
+		reqUser.Header.Set("Content-Type", "application/json")
+		recUser := httptest.NewRecorder()
+		r.ServeHTTP(recUser, reqUser)
+
+		if recUser.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created for hidden gem with user_id, got %d: %s", recUser.Code, recUser.Body.String())
+		}
+	})
 }

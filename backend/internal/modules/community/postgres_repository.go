@@ -2,6 +2,7 @@ package community
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
@@ -13,6 +14,10 @@ type postgresRepository struct {
 
 // NewPostgresRepository membuat instance repository komunitas berbasis PostgreSQL (Supabase)
 func NewPostgresRepository(db *sql.DB) Repository {
+	if db != nil {
+		_, _ = db.Exec(`ALTER TABLE open_trips ADD COLUMN IF NOT EXISTS destination_id VARCHAR(100) DEFAULT '';`)
+		_, _ = db.Exec(`ALTER TABLE open_trips ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT '';`)
+	}
 	return &postgresRepository{db: db}
 }
 
@@ -105,11 +110,11 @@ func (r *postgresRepository) SaveSharedTrip(trip models.SharedTrip) error {
 	// Migrated to v2: open_trips
 	_, err := r.db.Exec(`
 		INSERT INTO open_trips (
-			id, user_id, title, destination_route, departure_date,
+			id, user_id, title, destination_id, category, destination_route, departure_date,
 			available_seats, cost_per_person, contact_wa, created_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		ON CONFLICT (id) DO NOTHING;
-	`, trip.ID, trip.UserID, trip.Title, trip.DestinationRoute, trip.DepartureDate,
+	`, trip.ID, trip.UserID, trip.Title, trip.DestinationID, trip.Category, trip.DestinationRoute, trip.DepartureDate,
 		trip.AvailableSeats, trip.CostPerPerson, trip.ContactWA, trip.CreatedAt)
 
 	return err
@@ -118,7 +123,7 @@ func (r *postgresRepository) SaveSharedTrip(trip models.SharedTrip) error {
 func (r *postgresRepository) GetSharedTrips() []models.SharedTrip {
 	// Migrated to v2: open_trips
 	query := `
-		SELECT id, user_id, title, destination_route, departure_date,
+		SELECT id, user_id, title, COALESCE(destination_id, ''), COALESCE(category, ''), destination_route, departure_date,
 		       available_seats, cost_per_person, contact_wa, created_at
 		FROM open_trips
 		ORDER BY departure_date ASC;
@@ -133,11 +138,86 @@ func (r *postgresRepository) GetSharedTrips() []models.SharedTrip {
 	for rows.Next() {
 		var t models.SharedTrip
 		if err := rows.Scan(
-			&t.ID, &t.UserID, &t.Title, &t.DestinationRoute, &t.DepartureDate,
+			&t.ID, &t.UserID, &t.Title, &t.DestinationID, &t.Category, &t.DestinationRoute, &t.DepartureDate,
 			&t.AvailableSeats, &t.CostPerPerson, &t.ContactWA, &t.CreatedAt,
 		); err == nil {
 			results = append(results, t)
 		}
 	}
 	return results
+}
+
+func (r *postgresRepository) JoinSharedTrip(id, userID string) (*models.SharedTrip, error) {
+	var ownerID string
+	var seats int
+	err := r.db.QueryRow(`
+		SELECT user_id, available_seats
+		FROM open_trips
+		WHERE id = $1;
+	`, id).Scan(&ownerID, &seats)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrSharedTripNotFound
+		}
+		return nil, err
+	}
+
+	if ownerID == userID {
+		return nil, ErrHostCannotJoinOwnTrip
+	}
+	if seats <= 0 {
+		return nil, ErrSharedTripFull
+	}
+
+	var updated models.SharedTrip
+	err = r.db.QueryRow(`
+		UPDATE open_trips
+		SET available_seats = available_seats - 1
+		WHERE id = $1 AND available_seats > 0
+		RETURNING id, user_id, title, COALESCE(destination_id, ''), COALESCE(category, ''), destination_route, departure_date,
+		          available_seats, cost_per_person, contact_wa, created_at;
+	`, id).Scan(
+		&updated.ID, &updated.UserID, &updated.Title, &updated.DestinationID, &updated.Category,
+		&updated.DestinationRoute, &updated.DepartureDate, &updated.AvailableSeats,
+		&updated.CostPerPerson, &updated.ContactWA, &updated.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrSharedTripFull
+		}
+		return nil, err
+	}
+
+	return &updated, nil
+}
+
+func (r *postgresRepository) DeleteSharedTrip(id, userID string) error {
+	var ownerID string
+	err := r.db.QueryRow(`
+		SELECT user_id
+		FROM open_trips
+		WHERE id = $1;
+	`, id).Scan(&ownerID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrSharedTripNotFound
+		}
+		return err
+	}
+
+	if ownerID != userID {
+		return ErrUnauthorizedDelete
+	}
+
+	res, err := r.db.Exec(`
+		DELETE FROM open_trips
+		WHERE id = $1 AND user_id = $2;
+	`, id, userID)
+	if err != nil {
+		return err
+	}
+	if rows, err := res.RowsAffected(); err == nil && rows == 0 {
+		return ErrSharedTripNotFound
+	}
+	return nil
 }

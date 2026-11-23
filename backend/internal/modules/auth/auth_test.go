@@ -245,3 +245,38 @@ func TestSavedPlaces_GetAndToggle(t *testing.T) {
 		t.Fatalf("Expected 200 OK for ToggleSavedPlace (Delete), got %d", wToggle2.Code)
 	}
 }
+
+func TestSavedPlaces_RejectMissingUserId(t *testing.T) {
+	r, _ := setupTestRouter()
+
+	// 1. Post tanpa user_id di body maupun query
+	reqNoUser, _ := json.Marshal(map[string]string{
+		"destination_id": "dest-02",
+	})
+	wNoUser := httptest.NewRecorder()
+	r.ServeHTTP(wNoUser, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved", bytes.NewReader(reqNoUser)))
+
+	if wNoUser.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request when user_id is missing, got %d. Body: %s", wNoUser.Code, wNoUser.Body.String())
+	}
+
+	// 2. Post dengan user_id kosong / spasi
+	reqEmptyUser, _ := json.Marshal(map[string]string{
+		"user_id":        "   ",
+		"destination_id": "dest-02",
+	})
+	wEmptyUser := httptest.NewRecorder()
+	r.ServeHTTP(wEmptyUser, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved", bytes.NewReader(reqEmptyUser)))
+
+	if wEmptyUser.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request when user_id is whitespace, got %d. Body: %s", wEmptyUser.Code, wEmptyUser.Body.String())
+	}
+
+	// 3. Post via URL param tanpa user_id
+	wUrlParam := httptest.NewRecorder()
+	r.ServeHTTP(wUrlParam, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved/dest-02", nil))
+
+	if wUrlParam.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request when user_id is omitted on URL param route, got %d. Body: %s", wUrlParam.Code, wUrlParam.Body.String())
+	}
+}
