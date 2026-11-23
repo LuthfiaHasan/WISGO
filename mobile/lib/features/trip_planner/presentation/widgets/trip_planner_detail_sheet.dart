@@ -171,6 +171,266 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     );
   }
 
+  void _showAddOrEditItineraryRundownDialog({int? editIndex, TripItineraryStep? editingStep}) {
+    final isEditing = editIndex != null && editingStep != null;
+
+    final activityCtrl = TextEditingController(text: editingStep?.activity ?? '');
+    final locationCtrl = TextEditingController(
+      text: editingStep != null ? editingStep.location : widget.trip.singleDestination,
+    );
+    final notesCtrl = TextEditingController(text: editingStep?.notes ?? '');
+
+    // Waktu yang disediakan sistem (slot jam)
+    String selectedTimeRange = editingStep?.time ?? '08.00 - 09.30 WIB';
+    TimeOfDay startTime = const TimeOfDay(hour: 8, minute: 0);
+    TimeOfDay endTime = const TimeOfDay(hour: 9, minute: 30);
+
+    // Preset jam rundown yang disediakan sistem
+    final systemPresetHours = [
+      '06.00 - 07.00 WIB',
+      '06.30 - 07.30 WIB',
+      '07.00 - 08.30 WIB',
+      '07.30 - 09.30 WIB',
+      '08.00 - 09.30 WIB',
+      '08.30 - 10.30 WIB',
+      '09.30 - 11.30 WIB',
+      '11.30 - 13.00 WIB',
+      '13.00 - 14.30 WIB',
+      '13.00 - 16.30 WIB',
+      '14.30 - 16.00 WIB',
+      '16.00 - 17.30 WIB',
+      '17.30 - 19.00 WIB',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.schedule_rounded, color: AppColors.forest, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isEditing ? 'Ubah Item Rundown' : 'Tambah Rundown Baru',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.forest),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, color: Color(0xFF1D4ED8), size: 15),
+                          SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Sistem menyediakan pilihan jam. Silakan pilih jam lalu isi kegiatan manual di bawah.',
+                              style: TextStyle(fontSize: 10, color: Color(0xFF1E40AF)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 1. JAM / WAKTU (DISEDIAKAN SISTEM)
+                    const Text(
+                      'PILIHAN JAM / WAKTU (DARI SISTEM):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.cream,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.sageBorder),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: systemPresetHours.contains(selectedTimeRange)
+                              ? selectedTimeRange
+                              : null,
+                          hint: Text(selectedTimeRange, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.forest)),
+                          isExpanded: true,
+                          icon: const Icon(Icons.arrow_drop_down_rounded, color: AppColors.forest),
+                          items: systemPresetHours.map((h) {
+                            return DropdownMenuItem<String>(
+                              value: h,
+                              child: Text(h, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDialogState(() {
+                                selectedTimeRange = val;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Opsi Custom Jam Manual
+                    Row(
+                      children: [
+                        const Text('Atau pilih jam custom: ', style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        TextButton(
+                          onPressed: () async {
+                            final pickStart = await showTimePicker(context: dialogCtx, initialTime: startTime);
+                            if (pickStart != null && dialogCtx.mounted) {
+                              final pickEnd = await showTimePicker(context: dialogCtx, initialTime: endTime);
+                              if (pickEnd != null) {
+                                final sStr = '${pickStart.hour.toString().padLeft(2, '0')}.${pickStart.minute.toString().padLeft(2, '0')}';
+                                final eStr = '${pickEnd.hour.toString().padLeft(2, '0')}.${pickEnd.minute.toString().padLeft(2, '0')}';
+                                setDialogState(() {
+                                  selectedTimeRange = '$sStr - $eStr WIB';
+                                });
+                              }
+                            }
+                          },
+                          child: const Text('Pilih Jam Mulai & Selesai', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 2. NAMA KEGIATAN (DIISI MANUAL OLEH PEMBUAT TRIP)
+                    const Text(
+                      'NAMA KEGIATAN / AKTIVITAS (MANUAL):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: activityCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Cth: Kumpul & Briefing / Trekking Air Terjun',
+                        hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.cream,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 3. LOKASI KEGIATAN (MANUAL)
+                    const Text(
+                      'LOKASI / TEMPAT (MANUAL):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: locationCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Cth: Titik Kumpul Rest Area / Tebing Echo',
+                        hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.cream,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 4. CATATAN / SOP (MANUAL)
+                    const Text(
+                      'CATATAN / INSTRUKSI KHUSUS (MANUAL):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: notesCtrl,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText: 'Cth: Wajib memakai alas kaki antiselip & jaket',
+                        hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.cream,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Batal', style: TextStyle(color: AppColors.muted)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final activityText = activityCtrl.text.trim();
+                    if (activityText.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Nama kegiatan wajib diisi')),
+                      );
+                      return;
+                    }
+
+                    final newStep = TripItineraryStep(
+                      time: selectedTimeRange,
+                      activity: activityText,
+                      location: locationCtrl.text.trim().isEmpty ? widget.trip.singleDestination : locationCtrl.text.trim(),
+                      notes: notesCtrl.text.trim().isEmpty ? 'Mengikuti instruksi penyelenggara' : notesCtrl.text.trim(),
+                      status: editingStep?.status ?? 'Akan Datang',
+                      icon: activityText.toLowerCase().contains('kumpul') || activityText.toLowerCase().contains('meeting')
+                          ? Icons.flag_rounded
+                          : (activityText.toLowerCase().contains('makan') || activityText.toLowerCase().contains('sholat')
+                              ? Icons.restaurant_rounded
+                              : (activityText.toLowerCase().contains('foto') || activityText.toLowerCase().contains('dokumentasi')
+                                  ? Icons.camera_alt_rounded
+                                  : Icons.landscape_rounded)),
+                    );
+
+                    setState(() {
+                      if (isEditing) {
+                        widget.trip.itinerary[editIndex] = newStep;
+                      } else {
+                        widget.trip.itinerary.add(newStep);
+                      }
+                    });
+
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(isEditing ? 'Simpan Perubahan' : 'Tambah Rundown'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -202,12 +462,11 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
@@ -217,27 +476,38 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.arrow_back_ios_new_rounded, size: 12, color: AppColors.forest),
-                            SizedBox(width: 4),
+                            SizedBox(width: 3),
                             Text('Kembali', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.forest)),
                           ],
                         ),
                       ),
                     ),
-                    const Row(
-                      children: [
-                        Icon(Icons.alt_route_rounded, size: 16, color: AppColors.forest),
-                        SizedBox(width: 6),
-                        Text(
-                          'SMART TRIP PLANNER',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.8, color: AppColors.forest),
-                        ),
-                      ],
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.alt_route_rounded, size: 14, color: AppColors.forest),
+                          SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'SMART TRIP PLANNER',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5, color: AppColors.forest),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     // Quick Action Menu (Cuaca, Kondisi Lapangan, Maps & SOP)
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.wb_cloudy_rounded, size: 20, color: Color(0xFF0284C7)),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.wb_cloudy_rounded, size: 18, color: Color(0xFF0284C7)),
                           tooltip: 'Informasi Cuaca Destinasi',
                           onPressed: () {
                             showModalBottomSheet(
@@ -248,8 +518,12 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                             );
                           },
                         ),
+                        const SizedBox(width: 3),
                         IconButton(
-                          icon: const Icon(Icons.visibility_rounded, size: 20, color: Color(0xFF16A34A)),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.visibility_rounded, size: 18, color: Color(0xFF16A34A)),
                           tooltip: 'Kondisi Nyata Lokasi',
                           onPressed: () {
                             showModalBottomSheet(
@@ -260,8 +534,12 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                             );
                           },
                         ),
+                        const SizedBox(width: 3),
                         IconButton(
-                          icon: const Icon(Icons.location_on_rounded, size: 20, color: Color(0xFFEA4335)),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.location_on_rounded, size: 18, color: Color(0xFFEA4335)),
                           tooltip: 'Titik Kumpul Google Maps',
                           onPressed: () {
                             showModalBottomSheet(
@@ -272,8 +550,12 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                             );
                           },
                         ),
+                        const SizedBox(width: 3),
                         IconButton(
-                          icon: const Icon(Icons.verified_user_rounded, size: 20, color: AppColors.forest),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.verified_user_rounded, size: 18, color: AppColors.forest),
                           tooltip: 'Verifikasi Penyelenggara',
                           onPressed: () {
                             showModalBottomSheet(
@@ -298,7 +580,9 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink),
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
@@ -311,7 +595,6 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                       decoration: BoxDecoration(
@@ -377,18 +660,20 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'RENCANA PERJALANAN TERSTRUKTUR',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
-                ),
-                Text(
-                  '${widget.trip.departureDate} (${widget.trip.duration})',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.ink),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'RUNDOWN PERJALANAN (MANUAL)',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
+                  ),
+                  Text(
+                    '${widget.trip.departureDate} (${widget.trip.duration})',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.ink),
+                  ),
+                ],
+              ),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -411,123 +696,270 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
 
-        // Timeline Items
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: widget.trip.itinerary.length,
-          itemBuilder: (ctx, index) {
-            final step = widget.trip.itinerary[index];
-            final isLast = index == widget.trip.itinerary.length - 1;
+        // Tombol Tambah Rundown Manual
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _showAddOrEditItineraryRundownDialog(),
+            icon: const Icon(Icons.add_rounded, size: 16),
+            label: const Text(
+              'Tambah Jam & Kegiatan Rundown',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.forest,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
 
-            return IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Timeline Indicator
-                  Column(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
+        // Info Banner: Rundown diisi manual, jam disediakan sistem
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFBFDBFE)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Color(0xFF1D4ED8), size: 15),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Rundown diisi manual oleh pembuat trip dengan slot jam acuan dari sistem. Penyelenggara bebas menambah, mengubah urutan, dan mengupdate status.',
+                  style: TextStyle(fontSize: 10, color: Color(0xFF1E40AF), height: 1.3),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        if (widget.trip.itinerary.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.sageBorder),
+            ),
+            child: const Center(
+              child: Text(
+                'Belum ada rundown. Klik tombol di atas untuk menambah jam & kegiatan rundown perjalanan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11.5, color: AppColors.muted),
+              ),
+            ),
+          )
+        else
+          // Timeline Items
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.trip.itinerary.length,
+            itemBuilder: (ctx, index) {
+              final step = widget.trip.itinerary[index];
+              final isLast = index == widget.trip.itinerary.length - 1;
+
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Timeline Indicator
+                    Column(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: step.status == 'Selesai'
+                                ? const Color(0xFF10B981)
+                                : (step.status == 'Sedang Berlangsung' ? const Color(0xFFD97706) : AppColors.forest),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Icon(
+                              step.icon,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        if (!isLast)
+                          Expanded(
+                            child: Container(
+                              width: 2,
+                              color: AppColors.sageBorder,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Card Content
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: index == 0 ? AppColors.forest : Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.forest, width: 2),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.sageBorder),
                         ),
-                        child: Center(
-                          child: Icon(
-                            step.icon,
-                            size: 16,
-                            color: index == 0 ? Colors.white : AppColors.forest,
-                          ),
-                        ),
-                      ),
-                      if (!isLast)
-                        Expanded(
-                          child: Container(
-                            width: 2,
-                            color: AppColors.sageBorder,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Card Content
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.sageBorder),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.cream,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.warmBorder),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.cream,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppColors.warmBorder),
+                                  ),
+                                  child: Text(
+                                    step.time,
+                                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                                  ),
                                 ),
-                                child: Text(
-                                  step.time,
-                                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: step.status == 'Selesai'
+                                        ? const Color(0xFFDCFCE7)
+                                        : (step.status == 'Sedang Berlangsung'
+                                            ? const Color(0xFFFEF3C7)
+                                            : const Color(0xFFF3F4F6)),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    step.status,
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: step.status == 'Selesai'
+                                          ? const Color(0xFF15803D)
+                                          : (step.status == 'Sedang Berlangsung'
+                                              ? const Color(0xFFB45309)
+                                              : AppColors.muted),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                step.status,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: step.status == 'Selesai' ? const Color(0xFF10B981) : AppColors.muted,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            step.activity,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.ink),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(Icons.place_rounded, size: 12, color: AppColors.muted),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  step.location,
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E5B82)),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (step.notes.isNotEmpty) ...[
+                              ],
+                            ),
                             const SizedBox(height: 6),
                             Text(
-                              step.notes,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF5A6B5D), height: 1.35),
+                              step.activity,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.ink),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                const Icon(Icons.place_rounded, size: 12, color: AppColors.muted),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    step.location,
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E5B82)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (step.notes.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                step.notes,
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF5A6B5D), height: 1.35),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                            const SizedBox(height: 6),
+
+                            // Aksi Item Rundown: Toggle Status, Ubah & Hapus
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      if (step.status == 'Akan Datang') {
+                                        step.status = 'Sedang Berlangsung';
+                                      } else if (step.status == 'Sedang Berlangsung') {
+                                        step.status = 'Selesai';
+                                      } else {
+                                        step.status = 'Akan Datang';
+                                      }
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF9FAFB),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.sync_rounded, size: 11, color: AppColors.forest),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Ubah: ${step.status}',
+                                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.forest),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_rounded, size: 16, color: AppColors.forest),
+                                      visualDensity: VisualDensity.compact,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      tooltip: 'Ubah Kegiatan',
+                                      onPressed: () => _showAddOrEditItineraryRundownDialog(
+                                        editIndex: index,
+                                        editingStep: step,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red),
+                                      visualDensity: VisualDensity.compact,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      tooltip: 'Hapus Rundown',
+                                      onPressed: () {
+                                        setState(() {
+                                          widget.trip.itinerary.removeAt(index);
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                  ],
+                ),
+              );
+            },
+          ),
       ],
     );
   }

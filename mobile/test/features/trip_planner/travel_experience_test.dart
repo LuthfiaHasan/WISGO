@@ -6,6 +6,7 @@ import 'package:rancakin_mobile/features/trip_planner/models/weather_model.dart'
 import 'package:rancakin_mobile/features/trip_planner/models/ground_condition_model.dart';
 import 'package:rancakin_mobile/features/trip_planner/presentation/widgets/travel_share_card_sheet.dart';
 import 'package:rancakin_mobile/features/trip_planner/presentation/widgets/travel_experience_sheet.dart';
+import 'package:rancakin_mobile/features/trip_planner/presentation/widgets/trip_planner_detail_sheet.dart';
 
 void main() {
   group('Travel Experience & 5 Fitur Utama Tests', () {
@@ -108,6 +109,27 @@ void main() {
       expect(find.text('Check Point Perjalanan'), findsOneWidget);
       expect(find.text('Gerbang Nagari & Pos Registrasi Pokdarwis Harau'), findsOneWidget);
       expect(find.text('Bagikan Template Posting (QR Promosi)'), findsOneWidget);
+    });
+
+    testWidgets('7. TripPlannerDetailSheet renders manual rundown and add rundown button', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final trip = kMockOpenTrips.first;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripPlannerDetailSheet(trip: trip),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('RUNDOWN PERJALANAN (MANUAL)'), findsOneWidget);
+      expect(find.text('Tambah Jam & Kegiatan Rundown'), findsOneWidget);
+      expect(find.text(trip.itinerary.first.activity), findsOneWidget);
     });
   });
 }
