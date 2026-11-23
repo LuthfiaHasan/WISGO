@@ -82,8 +82,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Template Posting Sosial Media'), findsOneWidget);
-      expect(find.text('14.8'), findsOneWidget);
-      expect(find.text('+520'), findsOneWidget);
+      expect(find.text('Gaya Instagram'), findsOneWidget);
+      expect(find.text('Feed Komunitas'), findsOneWidget);
+      expect(find.text('Upload Foto'), findsOneWidget);
+      expect(find.text('Post ke Feed WISGO'), findsOneWidget);
+      expect(find.text('Unduh Post'), findsOneWidget);
+      expect(find.text('14.8'), findsWidgets);
+      expect(find.text('+520'), findsWidgets);
       expect(find.byType(WisgoQrCodePainter), findsNothing); // painter used inside CustomPaint
       expect(find.byType(CustomPaint), findsWidgets);
       expect(find.text('Aplikasi WISGO Sumatera Barat'), findsOneWidget);
