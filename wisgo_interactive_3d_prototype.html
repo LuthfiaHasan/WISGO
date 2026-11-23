@@ -4614,18 +4614,19 @@ Day 2
            </button>`;
 
       const facilitiesChips = place.facilities.map(f => {
-        const detail = getFacilityDetailText(f, place);
-        const emoji = getFacilityIconEmoji(f);
-        const safePlaceTitle = place.title.replace(/'/g, "\\'");
-        const safeDetail = detail.replace(/'/g, "\\'");
-        const safeF = f.replace(/'/g, "\\'");
+        const facName = (typeof f === 'string') ? f : (f.name || '');
+        const detail = (typeof f === 'object' && f.detail) ? f.detail : getFacilityDetailText(facName, place);
+        const emoji = getFacilityIconEmoji(facName);
+        const safePlaceTitle = (place.title || '').replace(/'/g, "\'");
+        const safeDetail = String(detail || '').replace(/'/g, "\'");
+        const safeF = String(facName || '').replace(/'/g, "\'");
         return `
           <button type="button"
             onclick="openFacilityDetailModal('${safeF}', '${safeDetail}', '${safePlaceTitle}', '${emoji}')"
-            title="${f} • ${detail} (Ketuk untuk detail)"
+            title="${facName} • ${detail} (Ketuk untuk detail)"
             class="facility-chip btn-press px-2.5 py-1 rounded-lg bg-[#FAF3E6] border border-[#E5DEC9] text-[#193D22] text-[10.5px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs">
             <span>${emoji}</span>
-            <span>${f}</span>
+            <span>${facName}</span>
             <span class="text-[9px] text-[#5A6B5D] opacity-75">ⓘ</span>
           </button>
         `;
@@ -4774,6 +4775,10 @@ Day 2
     // FASILITAS LINGKUNGAN: DETAIL INFO & MODAL HANDLER
     // =========================================================================
     function getFacilityIconEmoji(facName) {
+      if (typeof facName === 'object' && facName !== null) {
+        facName = facName.name || '';
+      }
+      if (typeof facName !== 'string') facName = String(facName || '');
       const lower = facName.toLowerCase();
       if (lower.includes('parkir')) return '🅿️';
       if (lower.includes('toilet') || lower.includes('bilas')) return '🚻';
@@ -4789,6 +4794,11 @@ Day 2
     }
 
     function getFacilityDetailText(facName, place) {
+      if (typeof facName === 'object' && facName !== null) {
+        if (facName.detail) return facName.detail;
+        facName = facName.name || '';
+      }
+      if (typeof facName !== 'string') facName = String(facName || '');
       const lower = facName.toLowerCase();
       if (lower.includes('parkir')) {
         return 'Kantong parkir resmi terkelola rapi oleh Pokdarwis nagari. Tarif resmi Perda: Motor Rp 3.000 / Mobil Rp 5.000, karcis resmi diterbitkan langsung di pos jaga.';
@@ -5491,9 +5501,12 @@ Day 2
 
     function updateSavedCounters() {
       const count = savedIds.length;
-      document.getElementById('saved-badge-counter').textContent = `${count} Lokasi`;
-      document.getElementById('tab-count-num').textContent = count;
-      document.getElementById('bnav-saved-sub').textContent = `${count} Lokasi`;
+      const elBadge = document.getElementById('saved-badge-counter');
+      if (elBadge) elBadge.textContent = `${count} Lokasi`;
+      const elTab = document.getElementById('tab-count-num');
+      if (elTab) elTab.textContent = count;
+      const elBnav = document.getElementById('bnav-saved-sub');
+      if (elBnav) elBnav.textContent = `${count} Lokasi`;
     }
 
     function toggleBookmark(id) {
@@ -5636,6 +5649,7 @@ Day 2
     // --- Item 7: Vertical Fair-Price Barometer Logic ---
     function renderBarometerPills() {
       const container = document.getElementById('barometer-dest-pills');
+      if (!container) return;
       container.innerHTML = ALL_DESTINATIONS.map((d, idx) => `
         <button onclick="selectBarometerDestination(${idx})" class="btn-press shrink-0 px-3 py-1.5 rounded-xl text-[11px] transition-all ${idx === activeBarometerDestIdx ? 'font-bold bg-[#193D22] text-[#FAF3E6]' : 'font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618]'}">
           ${d.region.split(' ')[0]} • ${d.title.split('&')[0].trim()}
@@ -5665,8 +5679,10 @@ Day 2
     }
 
     function renderBarometerTable() {
+      const imgEl = document.getElementById('baro-hero-img');
+      if (!imgEl) return;
       const dest = ALL_DESTINATIONS[activeBarometerDestIdx];
-      document.getElementById('baro-hero-img').src = dest.imageUrl;
+      imgEl.src = dest.imageUrl;
       document.getElementById('baro-hero-img').style.display = 'block';
       document.getElementById('baro-region-badge').textContent = dest.region;
       document.getElementById('baro-type-badge').textContent = dest.natureType;
@@ -5726,8 +5742,10 @@ Day 2
     }
 
     function updateCalculatorUI() {
+      const calcEl = document.getElementById('calc-visitors-val');
+      if (!calcEl) return;
       const dest = ALL_DESTINATIONS[activeBarometerDestIdx];
-      document.getElementById('calc-visitors-val').textContent = calcState.visitors;
+      calcEl.textContent = calcState.visitors;
       document.getElementById('calc-motor-val').textContent = calcState.motor;
       document.getElementById('calc-mobil-val').textContent = calcState.mobil;
 
@@ -7379,6 +7397,8 @@ Day 2
     // =========================================================================
     // 1. LENIS SMOOTH SCROLL INITIALIZATION
     // =========================================================================
+    // 1. LENIS SMOOTH SCROLL (SUTRA / SMOOTH INERTIA SCROLLING)
+    // =========================================================================
     let globalLenis = null;
 
     function initLenisSmoothScroll() {
@@ -7395,7 +7415,6 @@ Day 2
           touchMultiplier: 1.6,
         });
 
-        // Sinkronisasi Lenis dengan GSAP ScrollTrigger
         if (typeof ScrollTrigger !== 'undefined' && typeof gsap !== 'undefined') {
           globalLenis.on('scroll', ScrollTrigger.update);
           gsap.ticker.add((time) => {
@@ -7412,11 +7431,11 @@ Day 2
 
         setupInternalScrollSmoothness();
       } catch (err) {
-        console.warn('Lenis initialization warning:', err);
+        console.warn('Lenis warning:', err);
       }
     }
 
-    // Inersia halus untuk container scroll internal (.overflow-y-auto) dalam bingkai HP
+    // Smooth inertia wheel scroll untuk container dalam HP (#explore-cards-container & .overflow-y-auto)
     function setupInternalScrollSmoothness() {
       const scrollContainers = document.querySelectorAll('.overflow-y-auto');
       scrollContainers.forEach(container => {
@@ -7430,17 +7449,18 @@ Day 2
         container.addEventListener('wheel', (e) => {
           if (Math.abs(e.deltaY) < 1) return;
           e.preventDefault();
-          targetY = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, targetY + e.deltaY * 0.85));
+          targetY = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, targetY + e.deltaY * 0.9));
           if (!isWheeling) {
             isWheeling = true;
             requestAnimationFrame(function animateScroll() {
-              currentY += (targetY - currentY) * 0.18;
+              currentY += (targetY - currentY) * 0.16;
               container.scrollTop = Math.round(currentY);
               if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.update();
               if (Math.abs(targetY - currentY) > 0.5) {
                 requestAnimationFrame(animateScroll);
               } else {
                 container.scrollTop = targetY;
+                if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.update();
                 isWheeling = false;
               }
             });
@@ -7454,7 +7474,7 @@ Day 2
     // =========================================================================
     function splitTextIntoWords(element) {
       if (!element || element.dataset.splitDone === 'true') {
-        return element ? element.querySelectorAll('.split-word') : [];
+        return element ? Array.from(element.querySelectorAll('.split-word')) : [];
       }
 
       if (element.querySelector('button, input, select, svg, canvas')) return [];
@@ -7465,163 +7485,187 @@ Day 2
 
       const words = originalText.split(/\s+/);
       element.innerHTML = words.map(w => 
-        `<span class="split-word-mask"><span class="split-word">${w}</span></span>`
-      ).join(' ');
+        `<span class="split-word-mask" style="display:inline-block; overflow:hidden; vertical-align:bottom; margin-right:0.25em;"><span class="split-word" style="display:inline-block; will-change:transform, opacity;">${w}</span></span>`
+      ).join('');
 
-      return element.querySelectorAll('.split-word');
+      return Array.from(element.querySelectorAll('.split-word'));
     }
 
     function initGsapScrollTriggerSplitText() {
-      if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
-      gsap.registerPlugin(ScrollTrigger);
+      if (typeof gsap === 'undefined') return;
+      if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
-      // Target seluruh judul section, h1, h2, h3, h4, dan headline
+      // 1. Judul Utama Header (Animate in immediately on page load)
+      const mainH1 = document.querySelector('#view-explore h1');
+      if (mainH1 && !mainH1.dataset.animatedMain) {
+        mainH1.dataset.animatedMain = 'true';
+        const words = splitTextIntoWords(mainH1);
+        if (words.length > 0) {
+          gsap.fromTo(words, 
+            { y: '120%', opacity: 0, rotateZ: 4 },
+            { y: '0%', opacity: 1, rotateZ: 0, duration: 0.65, stagger: 0.05, ease: 'power3.out' }
+          );
+        }
+      }
+
+      // 2. Judul-judul di dalam kartu dan section yang muncul saat di-scroll
       const headings = document.querySelectorAll(
-        'h1, h2, h3, h4, .split-headline, .sec-title, [data-split-text]'
+        '#explore-cards-container h3, .app-view.active h1, .app-view.active h2, .app-view.active h3, .app-view.active h4, .sec-title'
       );
 
       headings.forEach(heading => {
-        if (!heading.offsetParent && !heading.closest('.app-view.active')) return;
+        if (heading === mainH1) return;
+        if (heading.dataset.scrollTriggerSetup) return;
+        heading.dataset.scrollTriggerSetup = 'true';
 
         const words = splitTextIntoWords(heading);
         if (!words || words.length === 0) return;
 
         const scroller = heading.closest('.overflow-y-auto') || window;
 
-        ScrollTrigger.getAll().forEach(st => {
-          if (st.trigger === heading) st.kill();
-        });
-
-        gsap.fromTo(words, 
-          {
-            y: '115%',
-            opacity: 0,
-            rotateZ: 3.5,
-          },
-          {
-            y: '0%',
-            opacity: 1,
-            rotateZ: 0,
-            duration: 0.65,
-            stagger: 0.045,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: heading,
-              scroller: scroller,
-              start: 'top 88%',
-              toggleActions: 'play none none none',
-            }
-          }
-        );
-      });
-
-      ScrollTrigger.refresh();
-    }
-
-    // =========================================================================
-    // 3. MOTION (ANIMASI MASUK CARD DAN HOVER EFFECT)
-    // =========================================================================
-    function initMotionCardsAndHover() {
-      const cards = document.querySelectorAll(
-        'article, .dest-card, .opentrip-card, .culinary-card, .event-card, .baro-card, .facility-chip, [data-motion-card]'
-      );
-
-      if (window.Motion) {
-        const { animate, inView } = window.Motion;
-
-        cards.forEach((card, idx) => {
-          if (card.dataset.motionDone === 'true') return;
-          card.dataset.motionDone = 'true';
-
-          card.style.opacity = '0';
-          card.style.transform = 'translateY(24px) scale(0.96)';
-
-          // Animasi Masuk Card saat masuk viewport
-          inView(card, () => {
-            animate(
-              card,
-              { 
-                opacity: [0, 1], 
-                transform: ['translateY(24px) scale(0.96)', 'translateY(0px) scale(1)'] 
-              },
-              { 
-                duration: 0.55, 
-                delay: (idx % 4) * 0.05, 
-                easing: [0.16, 1, 0.3, 1] 
-              }
-            );
-          });
-
-          // Animasi Hover Card
-          card.addEventListener('mouseenter', () => {
-            animate(
-              card,
-              {
-                transform: 'translateY(-6px) scale(1.015)',
-                boxShadow: '0 20px 35px -8px rgba(25, 61, 34, 0.16)',
-              },
-              { duration: 0.3, easing: [0.16, 1, 0.3, 1] }
-            );
-
-            const img = card.querySelector('img');
-            if (img) {
-              animate(img, { transform: 'scale(1.055)' }, { duration: 0.4 });
-            }
-          });
-
-          card.addEventListener('mouseleave', () => {
-            animate(
-              card,
-              {
-                transform: 'translateY(0px) scale(1)',
-                boxShadow: '0 4px 14px rgba(20, 38, 24, 0.04)',
-              },
-              { duration: 0.3, easing: [0.16, 1, 0.3, 1] }
-            );
-
-            const img = card.querySelector('img');
-            if (img) {
-              animate(img, { transform: 'scale(1)' }, { duration: 0.35 });
-            }
-          });
-
-          // Efek Tactile Press saat diklik
-          card.addEventListener('mousedown', () => {
-            animate(card, { transform: 'scale(0.98)' }, { duration: 0.1 });
-          });
-          card.addEventListener('mouseup', () => {
-            animate(card, { transform: 'translateY(-6px) scale(1.015)' }, { duration: 0.2 });
-          });
-        });
-      } else if (typeof gsap !== 'undefined') {
-        cards.forEach((card, idx) => {
-          if (card.dataset.motionDone === 'true') return;
-          card.dataset.motionDone = 'true';
-
-          gsap.fromTo(card, 
-            { opacity: 0, y: 24, scale: 0.96 },
+        if (typeof ScrollTrigger !== 'undefined') {
+          gsap.fromTo(words, 
+            { y: '120%', opacity: 0, rotateZ: 4 },
             {
-              opacity: 1, y: 0, scale: 1, duration: 0.55, delay: (idx % 4) * 0.05, ease: 'power2.out',
+              y: '0%',
+              opacity: 1,
+              rotateZ: 0,
+              duration: 0.6,
+              stagger: 0.045,
+              ease: 'power3.out',
               scrollTrigger: {
-                trigger: card,
-                scroller: card.closest('.overflow-y-auto') || window,
+                trigger: heading,
+                scroller: scroller,
                 start: 'top 92%',
                 toggleActions: 'play none none none',
               }
             }
           );
+        } else {
+          gsap.fromTo(words, 
+            { y: '100%', opacity: 0 },
+            { y: '0%', opacity: 1, duration: 0.5, stagger: 0.04, ease: 'power2.out' }
+          );
+        }
+      });
 
-          card.addEventListener('mouseenter', () => {
-            gsap.to(card, { y: -6, scale: 1.015, duration: 0.3, ease: 'power2.out' });
-          });
-          card.addEventListener('mouseleave', () => {
-            gsap.to(card, { y: 0, scale: 1, duration: 0.3, ease: 'power2.out' });
-          });
-        });
-      }
+      if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh();
     }
 
+    // =========================================================================
+    // 3. MOTION (ANIMASI MASUK CARD & HOVER EFFECT)
+    // =========================================================================
+    function initMotionCardsAndHover() {
+      const cards = document.querySelectorAll(
+        '#explore-cards-container article, .dest-card, .opentrip-card, .culinary-card, .event-card, .baro-card, .facility-chip, [data-motion-card]'
+      );
 
+      const scroller = document.getElementById('explore-cards-container') || document.querySelector('.overflow-y-auto');
+
+      // Observer untuk kartu-kartu selanjutnya saat di-scroll
+      const cardObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const card = entry.target;
+            if (!card.dataset.motionAnimated) {
+              card.dataset.motionAnimated = 'true';
+              if (window.Motion && window.Motion.animate) {
+                window.Motion.animate(
+                  card,
+                  { 
+                    opacity: [0, 1], 
+                    transform: ['translateY(28px) scale(0.96)', 'translateY(0px) scale(1)'] 
+                  },
+                  { duration: 0.55, easing: [0.16, 1, 0.3, 1] }
+                );
+              } else if (typeof gsap !== 'undefined') {
+                gsap.to(card, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: 'power3.out' });
+              } else {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0) scale(1)';
+              }
+            }
+          }
+        });
+      }, {
+        root: scroller,
+        threshold: 0.08
+      });
+
+      cards.forEach((card, idx) => {
+        // A. Setup Hover Effects dengan Motion
+        if (!card.dataset.hoverBound) {
+          card.dataset.hoverBound = 'true';
+
+          card.addEventListener('mouseenter', () => {
+            if (window.Motion && window.Motion.animate) {
+              window.Motion.animate(
+                card,
+                {
+                  transform: 'translateY(-6px) scale(1.016)',
+                  boxShadow: '0 20px 35px -8px rgba(25, 61, 34, 0.18)',
+                },
+                { duration: 0.3, easing: [0.16, 1, 0.3, 1] }
+              );
+              const img = card.querySelector('img');
+              if (img) window.Motion.animate(img, { transform: 'scale(1.055)' }, { duration: 0.4 });
+            }
+          });
+
+          card.addEventListener('mouseleave', () => {
+            if (window.Motion && window.Motion.animate) {
+              window.Motion.animate(
+                card,
+                {
+                  transform: 'translateY(0px) scale(1)',
+                  boxShadow: '0 6px 20px rgba(20, 38, 24, 0.04)',
+                },
+                { duration: 0.3, easing: [0.16, 1, 0.3, 1] }
+              );
+              const img = card.querySelector('img');
+              if (img) window.Motion.animate(img, { transform: 'scale(1)' }, { duration: 0.35 });
+            }
+          });
+
+          card.addEventListener('mousedown', () => {
+            if (window.Motion && window.Motion.animate) {
+              window.Motion.animate(card, { transform: 'scale(0.98)' }, { duration: 0.1 });
+            }
+          });
+          card.addEventListener('mouseup', () => {
+            if (window.Motion && window.Motion.animate) {
+              window.Motion.animate(card, { transform: 'translateY(-6px) scale(1.016)' }, { duration: 0.2 });
+            }
+          });
+        }
+
+        // B. Animasi Masuk Card
+        if (!card.dataset.motionAnimated) {
+          if (idx < 3) {
+            // 3 kartu pertama langsung meluncur masuk dengan stagger indah
+            card.dataset.motionAnimated = 'true';
+            if (window.Motion && window.Motion.animate) {
+              window.Motion.animate(
+                card,
+                { 
+                  opacity: [0, 1], 
+                  transform: ['translateY(28px) scale(0.96)', 'translateY(0px) scale(1)'] 
+                },
+                { duration: 0.55, delay: idx * 0.08, easing: [0.16, 1, 0.3, 1] }
+              );
+            } else {
+              card.style.opacity = '1';
+              card.style.transform = 'translateY(0) scale(1)';
+            }
+          } else {
+            // Kartu selanjutnya menunggu di-scroll masuk viewport
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(28px) scale(0.96)';
+            cardObserver.observe(card);
+          }
+        }
+      });
+    }
 
 </script>
 </body>
