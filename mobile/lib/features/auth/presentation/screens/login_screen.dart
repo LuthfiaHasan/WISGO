@@ -139,6 +139,247 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleGoogleSignIn() {
     if (_isGoogleLoading) return;
+    _showGoogleAccountPickerSheet();
+  }
+
+  void _showGoogleAccountPickerSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 26),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Drag handle bar
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1D5DB),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Google Brand Header
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/google_logo.png',
+                      width: 24,
+                      height: 24,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _isSignUp
+                            ? 'Daftar ke WISGO dengan Google'
+                            : 'Pilih akun untuk melanjutkan ke WISGO',
+                        style: const TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1F2937),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
+                const SizedBox(height: 6),
+
+                // Akun Google 1: Akun Pengguna Utama
+                _buildGoogleAccountTile(
+                  name: 'Luthfia Hasan',
+                  email: 'luthfia.hasan@gmail.com',
+                  initialLetter: 'L',
+                  avatarColor: const Color(0xFF1976D2),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _performGoogleSignInProcess(
+                      userName: 'Luthfia Hasan',
+                      userEmail: 'luthfia.hasan@gmail.com',
+                    );
+                  },
+                ),
+
+                // Akun Google 2: Akun Wisatawan
+                _buildGoogleAccountTile(
+                  name: 'WISGO Traveler',
+                  email: 'wisgo.traveler@gmail.com',
+                  initialLetter: 'W',
+                  avatarColor: AppColors.forest,
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _performGoogleSignInProcess(
+                      userName: 'WISGO Traveler',
+                      userEmail: 'wisgo.traveler@gmail.com',
+                    );
+                  },
+                ),
+
+                // Opsi Gunakan Akun Lain
+                InkWell(
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _performGoogleSignInProcess(
+                      userName: 'Penjelajah Minang',
+                      userEmail: 'explorer.minang@gmail.com',
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFF3F4F6),
+                            border: Border.all(
+                              color: const Color(0xFFE5E7EB),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.person_add_alt_1_outlined,
+                            size: 20,
+                            color: Color(0xFF4B5563),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Text(
+                            'Gunakan akun lain',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1F2937),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
+                const SizedBox(height: 12),
+
+                // Catatan Kebijakan Privasi Akun Google
+                Text(
+                  'Untuk melanjutkan, Google akan membagikan nama, alamat email, dan foto profil Anda dengan WISGO. Sebelum menggunakan aplikasi, tinjau Kebijakan Privasi dan Ketentuan Layanan WISGO.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGoogleAccountTile({
+    required String name,
+    required String email,
+    required String initialLetter,
+    required Color avatarColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: avatarColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: avatarColor.withValues(alpha: 0.35),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  initialLetter,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    email,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF9CA3AF),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _performGoogleSignInProcess({
+    required String userName,
+    required String userEmail,
+  }) {
     setState(() => _isGoogleLoading = true);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -149,29 +390,30 @@ class _LoginScreenState extends State<LoginScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),
-        content: const Row(
+        content: Row(
           children: [
-            SizedBox(
-              width: 16,
-              height: 16,
+            const SizedBox(
+              width: 18,
+              height: 18,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
+                strokeWidth: 2.2,
                 color: Colors.white,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Menghubungkan akun Google...',
-                style: TextStyle(
+                'Masuk sebagai $userName ($userEmail)...',
+                style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
+                  fontSize: 13,
                 ),
               ),
             ),
           ],
         ),
-        duration: const Duration(milliseconds: 900),
+        duration: const Duration(milliseconds: 1200),
       ),
     );
 
