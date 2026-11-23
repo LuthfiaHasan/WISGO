@@ -11,7 +11,10 @@ import '../../../auth/presentation/screens/splash_screen.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
-import '../../../trip_planner/presentation/widgets/trip_planner_sheet.dart';
+import '../../../trip_planner/models/open_trip_model.dart';
+import '../../../trip_planner/presentation/widgets/open_trip_card.dart';
+import '../../../trip_planner/presentation/widgets/open_trip_create_sheet.dart';
+import '../../../trip_planner/presentation/widgets/trip_planner_detail_sheet.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
 import '../../../fe1_visual_map/destination_detail/destination_detail_screen.dart';
@@ -242,6 +245,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   ];
 
   int get _unreadNotificationCount => _appNotifications.where((n) => n['isRead'] == false).length;
+
+  // Open Trip & Trip Planner State
+  String _openTripFilterCategory = 'Semua';
+  late final List<OpenTripItem> _activeOpenTrips = List<OpenTripItem>.from(kMockOpenTrips);
 
 
 
@@ -2687,6 +2694,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // VIEW 1: TAB PETA RUTE (NAVIGASI, RENCANA TRIP & PANTAU ROMBONGAN)
   // ===========================================================================
   Widget _buildOpenTripView() {
+    final filteredTrips = _openTripFilterCategory == 'Semua'
+        ? _activeOpenTrips
+        : _activeOpenTrips.where((t) => t.category == _openTripFilterCategory).toList();
+
     return Column(
       children: [
         // Top Sticky Header
@@ -2747,7 +2758,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     const Icon(Icons.groups_rounded, size: 14, color: Color(0xFF1E5B82)),
                     const SizedBox(width: 4),
                     Text(
-                      AppLocale.tr('3 Trip Aktif', '3 Active Trips'),
+                      '${_activeOpenTrips.length} Trip Aktif',
                       style: const TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
@@ -2764,19 +2775,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         // Scrollable Body
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 116),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
             children: [
-              // 1. PUBLIC OPEN TRIP BOARD
+              // 1. STANDAR KEAMANAN OPEN TRIP WISGO (Item 1-7 Open Trip)
               Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.sageBorder),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.forest.withValues(alpha: 0.06),
+                      color: AppColors.forest.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -2786,226 +2797,189 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F1F8),
+                            color: AppColors.forest.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.3)),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.group_add_rounded, size: 13, color: Color(0xFF1E5B82)),
-                              const SizedBox(width: 4),
-                              Text(
-                                AppLocale.tr('OPEN TRIP TERBUKA', 'OPEN GROUP TRIPS'),
-                                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF1E5B82)),
-                              ),
-                            ],
+                          child: const Icon(Icons.verified_user_rounded, size: 16, color: AppColors.forest),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'STANDAR RESMI OPEN TRIP WISGO',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.forest,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF0FDF4),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
                           ),
-                          child: Text(
-                            AppLocale.tr('Kuota Tersedia', 'Spots Available'),
-                            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                          child: const Text(
+                            'Escrow Terjamin',
+                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      AppLocale.tr(
-                        'Daftar Open Trip Terbuka (Cari Barengan)',
-                        'Available Open Group Trips',
-                      ),
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      AppLocale.tr(
-                        'Gabung open trip untuk patungan sewa mobil, tour guide nagari, dan nikmati serunya jelajah Sumbar bersama wisatawan lain.',
-                        'Join open group trips to share car rental, local village guides, and explore West Sumatra with fellow travelers.',
-                      ),
-                      style: const TextStyle(fontSize: 10.5, color: Color(0xFF5A6B5D)),
-                    ),
-                    const SizedBox(height: 12),
-                    // Trip 1
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFAF3E6),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.warmBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.forest,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 20),
-                          ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Eksplor Harau & Batang Tabik',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
-                                ),
-                                Text(
-                                  'Sabtu, 21 Nov 2026 • Kuota: 4/6 org • Rp 120rb/org',
-                                  style: TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: _openTripPlannerModal,
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.forest,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            ),
-                            child: Text(AppLocale.tr('Gabung', 'Join'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Trip 2
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFAF3E6),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.warmBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E5B82),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.sailing_rounded, color: Colors.white, size: 20),
-                          ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Island Hopping Mandeh & Snorkeling',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
-                                ),
-                                Text(
-                                  'Minggu, 22 Nov 2026 • Kuota: 6/10 org • Rp 175rb/org',
-                                  style: TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: _openTripPlannerModal,
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFF1E5B82),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            ),
-                            child: Text(AppLocale.tr('Gabung', 'Join'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Trip 3
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFAF3E6),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.warmBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFC89242),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.account_balance_rounded, color: Colors.white, size: 20),
-                          ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Nagari Pariangan & Istano Pagaruyung',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
-                                ),
-                                Text(
-                                  'Sabtu, 28 Nov 2026 • Kuota: 3/5 org • Rp 95rb/org',
-                                  style: TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: _openTripPlannerModal,
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFC89242),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            ),
-                            child: Text(AppLocale.tr('Gabung', 'Join'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _openTripPlannerModal,
-                        icon: const Icon(Icons.add_rounded, size: 16),
-                        label: Text(
-                          AppLocale.tr(
-                            '+ Buat Jadwal Open Trip Baru',
-                            '+ Create New Open Trip',
-                          ),
-                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.forest,
-                          side: const BorderSide(color: AppColors.forest, width: 1.2),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '• 1 Destinasi Tunggal per perjalanan untuk kenyamanan maksimal.\n'
+                      '• Kategori otomatis diklasifikasi sesuai destinasi pilihan.\n'
+                      '• Transaksi langsung aman via sistem pembayaran resmi WISGO.\n'
+                      '• Titik kumpul presisi terintegrasi langsung dengan Google Maps.\n'
+                      '• Penyelenggara terverifikasi identitas, lisensi kepanduan, dan rating.\n'
+                      '• Ketentuan aktivitas luar aplikasi (SOP, asuransi & toleransi 15 mnt) jelas.',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: Color(0xFF4B5563),
+                        height: 1.45,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // 2. Feature Card: Smart Trip Planner
+              // Filter Kategori Otomatis Horizontal Chips
+              SizedBox(
+                height: 36,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    'Semua',
+                    'Wisata Alam & Tebing',
+                    'Wisata Bahari & Snorkeling',
+                    'Paralayang & Panorama',
+                    'Cagar Budaya & Adat Minang',
+                  ].map((category) {
+                    final isSelected = _openTripFilterCategory == category;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        selected: isSelected,
+                        label: Text(
+                          category,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? Colors.white : AppColors.forest,
+                          ),
+                        ),
+                        backgroundColor: Colors.white,
+                        selectedColor: AppColors.forest,
+                        checkmarkColor: Colors.white,
+                        side: BorderSide(
+                          color: isSelected ? AppColors.forest : AppColors.sageBorder,
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                        onSelected: (val) {
+                          setState(() {
+                            _openTripFilterCategory = category;
+                          });
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 2. DAFTAR KARTU OPEN TRIP MODERN (Item 4)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Jadwal Open Trip Terbuka (${filteredTrips.length})',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '1 Destinasi Tunggal',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              if (filteredTrips.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.sageBorder),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Belum ada open trip untuk kategori ini.',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                  ),
+                )
+              else
+                ...filteredTrips.map((trip) {
+                  return OpenTripCard(
+                    trip: trip,
+                    onTripUpdated: () => setState(() {}),
+                  );
+                }),
+
+              const SizedBox(height: 6),
+
+              // 3. Tombol Tambah Open Trip Baru (1 Destinasi Tunggal & Kategori Otomatis)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => OpenTripCreateSheet(
+                        onTripCreated: (newTrip) {
+                          setState(() {
+                            _activeOpenTrips.insert(0, newTrip);
+                          });
+                        },
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text(
+                    '+ Buat Jadwal Open Trip Baru (1 Destinasi Tunggal)',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.forest,
+                    side: const BorderSide(color: AppColors.forest, width: 1.2),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // 4. Feature Card: Smart Trip Planner (5 Fitur Terintegrasi)
               Container(
-                margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
@@ -3054,39 +3028,34 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      AppLocale.tr(
-                        'Rencana Perjalanan Otomatis 1–7 Hari',
-                        'Automated 1–7 Day Travel Itinerary',
-                      ),
-                      style: const TextStyle(
-                        fontSize: 16,
+                    const Text(
+                      'Perencanaan Perjalanan Terstruktur & Komunikasi Tim',
+                      style: TextStyle(
+                        fontSize: 15.5,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      AppLocale.tr(
-                        'Susun jadwal liburan otomatis berdasarkan durasi hari, estimasi anggaran per orang, dan minat wisata rombongan (Alam, Kuliner, Adat).',
-                        'Automatically plan your trip based on duration, estimated budget per person, and interests (Nature, Culinary, Heritage).',
-                      ),
+                      '1. Checklist Perjalanan untuk memastikan kebutuhan siap.\n'
+                      '2. Pembagian Jobdesk oleh penyelenggara ke anggota.\n'
+                      '3. Checklist Persiapan Barang Bawaan (Packing List).\n'
+                      '4. Informasi Itinerary tersusun jelas jam-demi-jam.\n'
+                      '5. Komunikasi & Obrolan Tim dalam satu perjalanan.',
                       style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.white.withValues(alpha: 0.85),
-                        height: 1.4,
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.90),
+                        height: 1.45,
                       ),
                     ),
                     const SizedBox(height: 14),
                     ElevatedButton.icon(
                       onPressed: _openTripPlannerModal,
                       icon: const Icon(Icons.calendar_today_rounded, size: 15),
-                      label: Text(
-                        AppLocale.tr(
-                          'Buka Trip Planner & Estimasi Anggaran',
-                          'Open Trip Planner & Budget Estimator',
-                        ),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                      label: const Text(
+                        'Buka Smart Trip Planner & Koordinasi Tim',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.cream,
@@ -3101,7 +3070,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ],
                 ),
               ),
-
             ],
           ),
         ),
@@ -5709,7 +5677,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => const TripPlannerSheet(),
+      builder: (ctx) => TripPlannerDetailSheet(trip: _activeOpenTrips.first),
     );
   }
 
