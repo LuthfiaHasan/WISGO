@@ -28,6 +28,9 @@ import '../../../booking/presentation/widgets/quick_booking_panel.dart';
 import '../../../group_room/presentation/widgets/live_group_tracking_sheet.dart';
 import '../../../passport/presentation/widgets/digital_passport_sheet.dart';
 import '../../../gamification/services/gamification_service.dart';
+import '../../../trip_planner/models/travel_experience_model.dart';
+import '../../../trip_planner/presentation/widgets/travel_experience_sheet.dart';
+import '../../../trip_planner/presentation/widgets/travel_share_card_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
 
@@ -2854,17 +2857,46 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
               ),
 
-              // Filter Kategori Otomatis Horizontal Chips
+              // Banner Kebijakan Transaksi Resmi WISGO (Item 5 Audit Transaksi)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.shield_outlined, color: Color(0xFF1D4ED8), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Kebijakan Transaksi WISGO: Sistem pembayaran & penjaminan Escrow HANYA digunakan pada layanan Open Trip resmi. Fitur perjalanan lainnya bebas biaya & non-transaksi.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: Color(0xFF1E40AF),
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Filter Kategori Perjalanan Terstruktur (5 Kluster Utama)
               SizedBox(
                 height: 36,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
                     'Semua',
-                    'Wisata Alam & Tebing',
-                    'Wisata Bahari & Snorkeling',
-                    'Paralayang & Panorama',
-                    'Cagar Budaya & Adat Minang',
+                    'Wisata Alam & Pegunungan',
+                    'Wisata Bahari & Pesisir',
+                    'Sejarah & Warisan Minangkabau',
+                    'Nagari Adat & Edukasi Budaya',
+                    'Kuliner Otentik & Agrowisata',
                   ].map((category) {
                     final isSelected = _openTripFilterCategory == category;
                     return Padding(
@@ -5956,6 +5988,24 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
+  void _openTravelExperienceDetailModal(TravelExperience exp) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => TravelExperienceDetailSheet(experience: exp),
+    );
+  }
+
+  void _openTravelShareCardModal(TravelExperience exp) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => TravelShareCardSheet(experience: exp),
+    );
+  }
+
   // ===========================================================================
   // MODAL 13: DETAIL FASILITAS LINGKUNGAN KAWASAN (DENGAN HOVER & DETAIL)
   // ===========================================================================
@@ -7206,6 +7256,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 },
               ),
 
+              const SizedBox(height: 20),
+
+              // 2B. RIWAYAT PERJALANAN & EXPERIENCE (STRAVA-LIKE DENGAN CHECKPOINT & TEMPLATE POSTING PROMOSI)
+              _buildTravelExperienceProfileSection(),
+
               const SizedBox(height: 22),
 
               // 3. Pengaturan & Pintasan Fitur (Apple Settings Clean Style)
@@ -7590,6 +7645,384 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTravelExperienceProfileSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.directions_run_rounded,
+                          color: AppColors.forest,
+                          size: 18,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Riwayat Perjalanan & Experience',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Pencapaian ala Strava, titik check point & template sharing ber-QR promosi',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: AppColors.ink.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: const Text(
+                  'Strava-like',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB45309),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Strava Aggregated Stats Banner
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.warmBorder),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.ink.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _buildAggregatedStatItem('42.3', 'km', 'Total Jarak', Icons.straighten_rounded, AppColors.forest),
+              _buildAggregatedDivider(),
+              _buildAggregatedStatItem('12j 15m', '', 'Waktu Aktif', Icons.schedule_rounded, const Color(0xFF0369A1)),
+              _buildAggregatedDivider(),
+              _buildAggregatedStatItem('+715', 'm', 'Elevasi Naik', Icons.landscape_rounded, const Color(0xFFD97706)),
+              _buildAggregatedDivider(),
+              _buildAggregatedStatItem('3', 'Trip', 'Tuntas', Icons.verified_rounded, const Color(0xFF15803D)),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // List of Travel Experiences
+        ...kSampleTravelExperiences.map((exp) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.warmBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.ink.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top tag & Date
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.forest.withValues(alpha: 0.09),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          exp.category,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.forest,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        exp.tripDate,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Title & Destination
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        exp.title,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(Icons.place_rounded, size: 12, color: Color(0xFFD97706)),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              exp.destinationName,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFFB45309),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 4 Metric Chips
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.cream,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildMiniExpMetric('Jarak', '${exp.distanceKm} km'),
+                      _buildMiniExpDivider(),
+                      _buildMiniExpMetric('Waktu', exp.durationFormatted),
+                      _buildMiniExpDivider(),
+                      _buildMiniExpMetric('Elevasi', '+${exp.elevationGainMeters} m'),
+                      _buildMiniExpDivider(),
+                      _buildMiniExpMetric('Check Point', '${exp.completedCheckpointsCount}/${exp.checkpoints.length}'),
+                    ],
+                  ),
+                ),
+
+                // Lencana Pills
+                if (exp.achievements.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: exp.achievements.map((ach) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: ach.ribbonColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: ach.ribbonColor.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(ach.icon, size: 11, color: ach.ribbonColor),
+                              const SizedBox(width: 3),
+                              Text(
+                                ach.title,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: ach.ribbonColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                const SizedBox(height: 10),
+
+                // 2 Action Buttons
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openTravelExperienceDetailModal(exp),
+                          icon: const Icon(Icons.fact_check_rounded, size: 14),
+                          label: const Text(
+                            'Check Point',
+                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.forest,
+                            side: const BorderSide(color: AppColors.forest),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openTravelShareCardModal(exp),
+                          icon: const Icon(Icons.share_rounded, size: 14),
+                          label: const Text(
+                            'Template Posting',
+                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.forest,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildAggregatedStatItem(String value, String unit, String label, IconData icon, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(height: 3),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
+              ),
+              if (unit.isNotEmpty) ...[
+                const SizedBox(width: 1),
+                Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 8.5,
+              color: AppColors.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAggregatedDivider() {
+    return Container(
+      width: 1,
+      height: 24,
+      color: AppColors.warmBorder,
+    );
+  }
+
+  Widget _buildMiniExpMetric(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: AppColors.ink,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 8.5,
+            color: AppColors.muted,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniExpDivider() {
+    return Container(
+      width: 1,
+      height: 18,
+      color: AppColors.warmBorder,
     );
   }
 
