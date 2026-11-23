@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
+import 'destination_weather_sheet.dart';
+import 'ground_condition_sheet.dart';
+import 'destination_panorama_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
 import 'open_trip_offline_rules_sheet.dart';
 import 'open_trip_payment_sheet.dart';
@@ -340,6 +343,147 @@ class OpenTripCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+
+                // Bilah Pintasan Cepat: Cuaca Real-time, Kondisi Nyata & Panorama 360°
+                Row(
+                  children: [
+                    // Tombol Cuaca Real-time
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => DestinationWeatherSheet(
+                              destinationName: trip.singleDestination,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2FE),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFBAE6FD)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.wb_cloudy_rounded, size: 13, color: Color(0xFF0284C7)),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'Info Cuaca',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0369A1),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Tombol Kondisi Nyata Lapangan
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => GroundConditionSheet(
+                              destinationName: trip.singleDestination,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.visibility_rounded, size: 13, color: Color(0xFF16A34A)),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'Kondisi Riil',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF15803D),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Tombol 360 Panorama View
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => DestinationPanoramaSheet(
+                              destinationName: trip.singleDestination,
+                              panoramaImageUrl: trip.coverUrl,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.threesixty_rounded, size: 13, color: Color(0xFFD97706)),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'Foto 360°',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFB45309),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 const Divider(height: 1, color: Color(0xFFF3F4F6)),
                 const SizedBox(height: 10),
@@ -353,7 +497,7 @@ class OpenTripCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Tarif Transaksi Langsung WISGO:',
+                            'Transaksi Khusus Open Trip (Escrow):',
                             style: TextStyle(fontSize: 10, color: AppColors.muted, fontWeight: FontWeight.w600),
                           ),
                           Row(

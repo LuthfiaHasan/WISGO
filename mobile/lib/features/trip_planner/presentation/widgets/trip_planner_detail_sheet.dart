@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
+import 'destination_weather_sheet.dart';
+import 'ground_condition_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
 import 'open_trip_offline_rules_sheet.dart';
 import 'verified_organizer_sheet.dart';
@@ -231,9 +233,33 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                         ),
                       ],
                     ),
-                    // Quick Action Menu (SOP & Maps)
+                    // Quick Action Menu (Cuaca, Kondisi Lapangan, Maps & SOP)
                     Row(
                       children: [
+                        IconButton(
+                          icon: const Icon(Icons.wb_cloudy_rounded, size: 20, color: Color(0xFF0284C7)),
+                          tooltip: 'Informasi Cuaca Destinasi',
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => DestinationWeatherSheet(destinationName: widget.trip.singleDestination),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.visibility_rounded, size: 20, color: Color(0xFF16A34A)),
+                          tooltip: 'Kondisi Nyata Lokasi',
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => GroundConditionSheet(destinationName: widget.trip.singleDestination),
+                            );
+                          },
+                        ),
                         IconButton(
                           icon: const Icon(Icons.location_on_rounded, size: 20, color: Color(0xFFEA4335)),
                           tooltip: 'Titik Kumpul Google Maps',

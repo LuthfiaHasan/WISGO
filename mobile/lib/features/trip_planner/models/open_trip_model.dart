@@ -136,44 +136,108 @@ class OfflineTripRule {
   });
 }
 
-/// Fungsi Penentuan Kategori Otomatis Berdasarkan Destinasi Tunggal (Item 2 Open Trip)
+/// Model Struktur Pengelompokan Kategori Perjalanan Resmi WISGO
+class TravelCategoryGroup {
+  final String id;
+  final String name;
+  final String description;
+  final IconData icon;
+  final Color primaryColor;
+  final Color badgeBgColor;
+  final List<String> popularKeywords;
+
+  const TravelCategoryGroup({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.primaryColor,
+    required this.badgeBgColor,
+    required this.popularKeywords,
+  });
+}
+
+/// 5 Kluster Struktur Kategori Perjalanan Resmi (Terstruktur & Mudah Dipahami)
+const List<TravelCategoryGroup> kStandardTravelCategories = [
+  TravelCategoryGroup(
+    id: 'cat-alam-gunung',
+    name: 'Wisata Alam & Pegunungan',
+    description: 'Eksplorasi puncak gunung api, tebing granit megah, air terjun tersembunyi, dan ngarai hijau.',
+    icon: Icons.terrain_rounded,
+    primaryColor: Color(0xFF193D22),
+    badgeBgColor: Color(0xFFE8F2EC),
+    popularKeywords: [
+      'harau', 'sarasah', 'tebing', 'gunung', 'marapi', 'singgalang',
+      'talang', 'tandikat', 'ngarai', 'sianok', 'anai', 'lubuk', 'bukit',
+      'air terjun', 'puncak', 'rimba', 'lawang', 'paralayang'
+    ],
+  ),
+  TravelCategoryGroup(
+    id: 'cat-bahari-pesisir',
+    name: 'Wisata Bahari & Pesisir',
+    description: 'Jelajah gugusan pulau eksotis, teluk tenang Mandeh, terumbu karang, dan pesona pantai Samudera Hindia.',
+    icon: Icons.sailing_rounded,
+    primaryColor: Color(0xFF0369A1),
+    badgeBgColor: Color(0xFFE0F2FE),
+    popularKeywords: [
+      'mandeh', 'pasumpahan', 'pagang', 'sirandah', 'pamutusan',
+      'mentawai', 'suwarnadwipa', 'pantai', 'air manis', 'carocok',
+      'gandoriah', 'pulau', 'bahari', 'snorkeling', 'diving', 'surfing'
+    ],
+  ),
+  TravelCategoryGroup(
+    id: 'cat-sejarah-warisan',
+    name: 'Sejarah & Warisan Minangkabau',
+    description: 'Napak tilas kejayaan kerajaan Pagaruyung, arsitektur gonjong megah, dan cagar budaya bersejarah.',
+    icon: Icons.account_balance_rounded,
+    primaryColor: Color(0xFF7C2D12),
+    badgeBgColor: Color(0xFFFEE2E2),
+    popularKeywords: [
+      'pagaruyung', 'istano', 'rumah gadang', 'jam gadang', 'lubang jepang',
+      'benteng', 'fort de kock', 'cagar budaya', 'heritage', 'kota tua'
+    ],
+  ),
+  TravelCategoryGroup(
+    id: 'cat-nagari-budaya',
+    name: 'Nagari Adat & Edukasi Budaya',
+    description: 'Pengalaman autentik berinteraksi dengan ninik mamak, desa terindah, tradisi tenun, dan seni randai.',
+    icon: Icons.diversity_3_rounded,
+    primaryColor: Color(0xFF92400E),
+    badgeBgColor: Color(0xFFFEF3C7),
+    popularKeywords: [
+      'pariangan', 'silokek', 'pandai sikek', 'desa adat', 'nagari',
+      'tenun', 'ukiran', 'pacu jawi', 'randai', 'silek', 'budaya', 'pokdarwis'
+    ],
+  ),
+  TravelCategoryGroup(
+    id: 'cat-kuliner-agro',
+    name: 'Kuliner Otentik & Agrowisata',
+    description: 'Eksplorasi cita rasa rempah rendang asli, pasar kuliner kapau, kebun teh sejuk, dan danau kembar.',
+    icon: Icons.restaurant_rounded,
+    primaryColor: Color(0xFF15803D),
+    badgeBgColor: Color(0xFFDCFCE7),
+    popularKeywords: [
+      'kapau', 'rendang', 'payakumbuh', 'danguang', 'sate', 'kebun teh',
+      'alahan panjang', 'danau', 'singkarak', 'maninjau', 'diatas', 'dibawah',
+      'kopi', 'agrowisata', 'durian'
+    ],
+  ),
+];
+
+/// Fungsi Penentuan Kategori Otomatis Berdasarkan Destinasi Tunggal (Item 2 Open Trip & Kategori Perjalanan)
 String determineCategoryForDestination(String destinationName) {
   final lower = destinationName.toLowerCase();
-  if (lower.contains('harau') || lower.contains('sarasah') || lower.contains('anai')) {
-    return 'Wisata Alam & Tebing';
-  } else if (lower.contains('mandeh') ||
-      lower.contains('pasumpahan') ||
-      lower.contains('pagang') ||
-      lower.contains('gandoriah') ||
-      lower.contains('mentawai') ||
-      lower.contains('pantai')) {
-    return 'Wisata Bahari & Snorkeling';
-  } else if (lower.contains('marapi') ||
-      lower.contains('singgalang') ||
-      lower.contains('talang') ||
-      lower.contains('gunung')) {
-    return 'Hiking & Gunung Api';
-  } else if (lower.contains('lawang') || lower.contains('nobita') || lower.contains('paralayang')) {
-    return 'Paralayang & Panorama';
-  } else if (lower.contains('maninjau') ||
-      lower.contains('singkarak') ||
-      lower.contains('diatas') ||
-      lower.contains('dibawah') ||
-      lower.contains('danau')) {
-    return 'Danau & Panorama Alam';
-  } else if (lower.contains('pagaruyung') ||
-      lower.contains('pariangan') ||
-      lower.contains('gadang') ||
-      lower.contains('istano') ||
-      lower.contains('desa adat') ||
-      lower.contains('sikek')) {
-    return 'Cagar Budaya & Adat Minang';
-  } else if (lower.contains('lubuk hitam') || lower.contains('nyarai') || lower.contains('air terjun')) {
-    return 'Air Terjun & Trekking';
-  } else if (lower.contains('kapalo banda') || lower.contains('taram') || lower.contains('batang tabik')) {
-    return 'Rekreasi Alam & Air';
+
+  for (final cat in kStandardTravelCategories) {
+    for (final kw in cat.popularKeywords) {
+      if (lower.contains(kw)) {
+        return cat.name;
+      }
+    }
   }
-  return 'Wisata Eksplorasi Alam';
+
+  // Fallback default kategori resmi
+  return 'Wisata Alam & Pegunungan';
 }
 
 /// Model Data Open Trip Lengkap (Item 1-7 Open Trip & Item 1-5 Trip Planner)
