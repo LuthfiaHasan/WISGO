@@ -286,3 +286,91 @@ final List<TravelExperience> kSampleTravelExperiences = [
     ],
   ),
 ];
+
+/// Model Postingan Feed Komunitas Aplikasi WISGO (Gaya Instagram)
+class CommunityPost {
+  final String id;
+  final String authorName;
+  final String username;
+  final String avatarUrl;
+  final String destinationName;
+  final String photoUrl;
+  String caption;
+  final double distanceKm;
+  final String durationFormatted;
+  final int elevationGainMeters;
+  final int caloriesBurned;
+  int likesCount;
+  bool isLiked;
+  int commentsCount;
+  final String postedTime;
+  final List<String> tags;
+  final bool isSelfPost;
+  final List<String> comments;
+
+  CommunityPost({
+    required this.id,
+    required this.authorName,
+    required this.username,
+    required this.avatarUrl,
+    required this.destinationName,
+    required this.photoUrl,
+    required this.caption,
+    required this.distanceKm,
+    required this.durationFormatted,
+    required this.elevationGainMeters,
+    required this.caloriesBurned,
+    required this.likesCount,
+    this.isLiked = false,
+    required this.commentsCount,
+    required this.postedTime,
+    required this.tags,
+    this.isSelfPost = false,
+    List<String>? comments,
+  }) : comments = comments ?? [
+          'Keren banget jalurnya! Lembah Harau emang ga pernah gagal 😍',
+          'Guide lokalnya ramah, minggu depan mau ikut open trip ke sini lagi!',
+        ];
+}
+
+/// Daftar Postingan Komunitas Aplikasi WISGO yang Siap Ditampilkan
+final List<CommunityPost> kSampleCommunityPosts = [
+  CommunityPost(
+    id: 'post-01',
+    authorName: 'Fajri Pratama',
+    username: 'fajri_travels',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    destinationName: 'Lembah Harau, Lima Puluh Kota',
+    photoUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+    caption: 'Menikmati kabut pagi di dinding granit Lembah Harau dan segarnya Sarasah Bunta! Rute 14.8 km dengan tanjakan memuaskan. Mari jaga kelestarian alam Ranah Minang 🏔️🌿',
+    distanceKm: 14.8,
+    durationFormatted: '4j 25m',
+    elevationGainMeters: 520,
+    caloriesBurned: 780,
+    likesCount: 142,
+    isLiked: false,
+    commentsCount: 18,
+    postedTime: '2 jam lalu',
+    tags: const ['#WisataSumbar', '#WISGO', '#LembahHarau', '#StravaTravel'],
+    isSelfPost: false,
+  ),
+  CommunityPost(
+    id: 'post-02',
+    authorName: 'Annisa Fitriani',
+    username: 'annisa_minang',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    destinationName: 'Kawasan Wisata Bahari Mandeh, Pesisir Selatan',
+    photoUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
+    caption: 'Snorkeling di Teluk Mandeh dan cliff jump di Sironjong Ketek! Airnya sejernih kaca. Wajib banget pakai aplikasi WISGO untuk pesan perahu tarif resmi Perda tanpa calo 🌊🤿',
+    distanceKm: 8.5,
+    durationFormatted: '3j 10m',
+    elevationGainMeters: 45,
+    caloriesBurned: 420,
+    likesCount: 96,
+    isLiked: true,
+    commentsCount: 12,
+    postedTime: '5 jam lalu',
+    tags: const ['#TelukMandeh', '#WISGO', '#PesisirSelatan', '#RajaAmpatSumbar'],
+    isSelfPost: false,
+  ),
+];
