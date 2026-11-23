@@ -27,6 +27,7 @@ import '../../../fe1_visual_map/virtual_tour_360/virtual_tour_360_screen.dart';
 import '../../../booking/presentation/widgets/quick_booking_panel.dart';
 import '../../../group_room/presentation/widgets/live_group_tracking_sheet.dart';
 import '../../../passport/presentation/widgets/digital_passport_sheet.dart';
+import '../../../gamification/services/gamification_service.dart';
 import '../../../trip_planner/models/travel_experience_model.dart';
 import '../../../trip_planner/presentation/widgets/travel_experience_sheet.dart';
 import '../../../trip_planner/presentation/widgets/travel_share_card_sheet.dart';
@@ -5680,7 +5681,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => const QrScannerSheet(),
+      builder: (ctx) => QrScannerSheet(
+        onNavigateToProfile: () {
+          setState(() {
+            _activeTabIndex = 4;
+          });
+        },
+      ),
     );
   }
 
@@ -6736,21 +6743,54 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       ),
                                     ),
                                   ),
+                                  AnimatedBuilder(
+                                    animation: GamificationService.instance,
+                                    builder: (context, _) {
+                                      final grade = GamificationService.instance.currentGrade;
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: grade.primaryColor.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: grade.primaryColor.withValues(alpha: 0.35)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(grade.icon, size: 11, color: grade.primaryColor),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              grade.title,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w800,
+                                                color: grade.primaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
                                       vertical: 3,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFEF3D6),
+                                      color: AppColors.creamSubtle,
                                       borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: AppColors.warmBorder),
                                     ),
                                     child: const Text(
                                       'OTP WhatsApp',
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w800,
-                                        color: Color(0xFFB45309),
+                                        color: AppColors.muted,
                                       ),
                                     ),
                                   ),
@@ -6761,40 +6801,144 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    // 3 Interactive Mini Metric Tiles
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildProfileMetricTile(
-                            icon: Icons.bookmark_rounded,
-                            iconColor: AppColors.forest,
-                            value: '${_savedIds.length}',
-                            label: AppLocale.tr('Tersimpan', 'Saved'),
-                            onTap: () => setState(() => _activeTabIndex = 0),
+                    const SizedBox(height: 14),
+
+                    // Progress Bar Experience (XP) Menuju Level Berikutnya
+                    AnimatedBuilder(
+                      animation: GamificationService.instance,
+                      builder: (context, _) {
+                        final gameService = GamificationService.instance;
+                        final grade = gameService.currentGrade;
+                        final next = gameService.nextGrade;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.creamSubtle,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.warmBorder),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildProfileMetricTile(
-                            icon: Icons.military_tech_rounded,
-                            iconColor: const Color(0xFFB45309),
-                            value: '4 / 10',
-                            label: AppLocale.tr('Stempel', 'Stamps'),
-                            onTap: _openDigitalPassportModal,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(grade.icon, size: 16, color: grade.primaryColor),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        grade.title,
+                                        style: const TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.ink,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    '${gameService.currentXp} / ${gameService.targetXpForNextLevel} XP (${gameService.levelProgressPercent}%)',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: grade.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 7),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(99),
+                                child: LinearProgressIndicator(
+                                  value: gameService.levelProgressRatio,
+                                  backgroundColor: const Color(0xFFE2E8F0),
+                                  valueColor: AlwaysStoppedAnimation<Color>(grade.primaryColor),
+                                  minHeight: 6,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    next != null
+                                        ? 'Butuh ${gameService.targetXpForNextLevel - gameService.currentXp} XP lagi menuju ${next.name}'
+                                        : 'Tingkat Tertinggi: Wanderer Agung Minang',
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.muted,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Grade ${grade.level}/5',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: grade.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildProfileMetricTile(
-                            icon: Icons.gps_fixed_rounded,
-                            iconColor: const Color(0xFF1E5B82),
-                            value: AppLocale.tr('Aktif', 'Active'),
-                            label: 'GPS Sumbar',
-                            onTap: () => setState(() => _activeTabIndex = 2),
-                          ),
-                        ),
-                      ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // 4 Ringkasan Angka Pencapaian Utama (Statistik Ringkas)
+                    AnimatedBuilder(
+                      animation: GamificationService.instance,
+                      builder: (context, _) {
+                        final gameService = GamificationService.instance;
+                        final challenge = gameService.primaryChallenge;
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _buildProfileMetricTile(
+                                icon: Icons.alt_route_rounded,
+                                iconColor: AppColors.forest,
+                                value: '${gameService.totalTrips}',
+                                label: AppLocale.tr('Perjalanan', 'Journeys'),
+                                onTap: () => setState(() => _activeTabIndex = 0),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: _buildProfileMetricTile(
+                                icon: Icons.pin_drop_rounded,
+                                iconColor: const Color(0xFF2563EB),
+                                value: '${gameService.totalCheckpoints}',
+                                label: AppLocale.tr('Check Point', 'Check Points'),
+                                onTap: _openQrScannerModal,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: _buildProfileMetricTile(
+                                icon: Icons.task_alt_rounded,
+                                iconColor: const Color(0xFF16A34A),
+                                value: '${challenge.currentCheckpoints}/${challenge.targetCheckpoints}',
+                                label: AppLocale.tr('Tantangan', 'Challenges'),
+                                onTap: _openGeodeRankingModal,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: _buildProfileMetricTile(
+                                icon: Icons.stars_rounded,
+                                iconColor: const Color(0xFFD97706),
+                                value: '${gameService.currentXp}',
+                                label: 'Total XP',
+                                onTap: _openDigitalPassportModal,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -6802,201 +6946,314 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
               const SizedBox(height: 16),
 
-              // 2. PASPOR DIGITAL MINANG (Refined Luxury Card + Fixed 40% Progress)
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF26180B), Color(0xFF4D3015)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF26180B).withValues(alpha: 0.24),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFC89242).withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFFE5C07B).withValues(alpha: 0.5),
-                            ),
-                          ),
-                          child: Text(
-                            AppLocale.tr(
-                              'PASPOR DIGITAL MINANG',
-                              'MINANG DIGITAL PASSPORT',
-                            ),
-                            style: const TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.0,
-                              color: Color(0xFFE5C07B),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.10),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.workspace_premium_rounded,
-                            color: Color(0xFFE5C07B),
-                            size: 20,
-                          ),
+              // 2. PASPOR DIGITAL MINANG & KOLEKSI LENCANA
+              AnimatedBuilder(
+                animation: GamificationService.instance,
+                builder: (context, _) {
+                  final gameService = GamificationService.instance;
+                  final challenge = gameService.primaryChallenge;
+                  return Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF26180B), Color(0xFF4D3015)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF26180B).withValues(alpha: 0.24),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      AppLocale.tr(
-                        'Stempel & Lencana Penjelajah',
-                        'Explorer Stamps & Badges',
-                      ),
-                      style: const TextStyle(
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppLocale.tr(
-                        'Check-in GPS di kawasan wisata (< 500m) untuk mengumpulkan stempel resmi nagari & naik peringkat.',
-                        'Check in via GPS at attractions (< 500m) to collect official village stamps & level up.',
-                      ),
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: Color(0xFFD9C9BC),
-                        height: 1.38,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    // Progress bar (4/10 = 40% akurat!)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFC89242).withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFE5C07B).withValues(alpha: 0.5),
+                                ),
+                              ),
+                              child: Text(
+                                AppLocale.tr(
+                                  'PASPOR DIGITAL MINANG',
+                                  'MINANG DIGITAL PASSPORT',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.0,
+                                  color: Color(0xFFE5C07B),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.10),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.workspace_premium_rounded,
+                                color: Color(0xFFE5C07B),
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           AppLocale.tr(
-                            '4 dari 10 Destinasi Nagari',
-                            '4 of 10 Village Destinations',
+                            'Stempel & Lencana Penjelajah',
+                            'Explorer Stamps & Badges',
                           ),
                           style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFFE5C07B),
-                          ),
-                        ),
-                        const Text(
-                          '40%',
-                          style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 16.5,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const ClipRRect(
-                      borderRadius: BorderRadius.all(Radius.circular(99)),
-                      child: LinearProgressIndicator(
-                        value: 0.40,
-                        backgroundColor: Colors.white24,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFFE5C07B),
-                        ),
-                        minHeight: 6,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _openGeodeRankingModal,
-                            icon: const Icon(
-                              Icons.leaderboard_rounded,
-                              size: 16,
-                            ),
-                            label: const Text(
-                              'Geode Ranking',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFF3DCAA),
-                              side: BorderSide(
-                                color: const Color(0xFFE5C07B)
-                                    .withValues(alpha: 0.65),
-                              ),
-                              backgroundColor:
-                                  Colors.white.withValues(alpha: 0.06),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 11,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          AppLocale.tr(
+                            'Check-in GPS di kawasan wisata (< 500m) untuk mengumpulkan stempel resmi nagari & naik peringkat.',
+                            'Check in via GPS at attractions (< 500m) to collect official village stamps & level up.',
+                          ),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFFD9C9BC),
+                            height: 1.38,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _openDigitalPassportModal,
-                            icon: const Icon(Icons.verified_rounded, size: 16),
-                            label: Text(
-                              AppLocale.tr(
-                                'Paspor Digital',
-                                'Digital Passport',
+                        const SizedBox(height: 14),
+                        // Indikator Progres Tantangan Lokasi
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${challenge.currentCheckpoints} dari ${challenge.targetCheckpoints} Destinasi Nagari',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFE5C07B),
                               ),
+                            ),
+                            Text(
+                              '${challenge.progressPercent}%',
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
+                                color: Colors.white,
                               ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFD49D4A),
-                              foregroundColor: const Color(0xFF1F1307),
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 11,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: const BorderRadius.all(Radius.circular(99)),
+                          child: LinearProgressIndicator(
+                            value: challenge.progressRatio,
+                            backgroundColor: Colors.white24,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFFE5C07B),
                             ),
+                            minHeight: 6,
                           ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Koleksi Lencana (Unlocked & Locked)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              AppLocale.tr('Koleksi Lencana Wisata', 'Explorer Badge Showcase'),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFE5C07B),
+                              ),
+                            ),
+                            Text(
+                              '${gameService.unlockedBadgeCount} Terbuka • ${gameService.lockedBadgeCount} Terkunci',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFFD9C9BC),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: gameService.badges.map((badge) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: _buildBadgeChip(
+                                  badge.title,
+                                  isUnlocked: badge.isUnlocked,
+                                  subtitle: badge.isUnlocked
+                                      ? badge.subtitle
+                                      : badge.requirementDescription,
+                                  icon: badge.icon,
+                                  color: badge.color,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _openGeodeRankingModal,
+                                icon: const Icon(
+                                  Icons.leaderboard_rounded,
+                                  size: 16,
+                                ),
+                                label: const Text(
+                                  'Geode Ranking',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFF3DCAA),
+                                  side: BorderSide(
+                                    color: const Color(0xFFE5C07B)
+                                        .withValues(alpha: 0.65),
+                                  ),
+                                  backgroundColor:
+                                      Colors.white.withValues(alpha: 0.06),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 11,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _openDigitalPassportModal,
+                                icon: const Icon(Icons.verified_rounded, size: 16),
+                                label: Text(
+                                  AppLocale.tr(
+                                    'Paspor Digital',
+                                    'Digital Passport',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD49D4A),
+                                  foregroundColor: const Color(0xFF1F1307),
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 11,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 18),
+
+              // 3. Riwayat Perjalanan & Aktivitas (Activity Timeline)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.history_rounded, size: 18, color: AppColors.forest),
+                    const SizedBox(width: 6),
+                    Text(
+                      AppLocale.tr('Riwayat Perjalanan & Aktivitas', 'Journey & Activity History'),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
                   ],
                 ),
+              ),
+              AnimatedBuilder(
+                animation: GamificationService.instance,
+                builder: (context, _) {
+                  final history = GamificationService.instance.activityHistory;
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.warmBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.ink.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        if (history.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              'Belum ada aktivitas tercatat. Lakukan check-in pertama Anda!',
+                              style: TextStyle(fontSize: 11.5, color: AppColors.muted),
+                            ),
+                          )
+                        else
+                          for (int i = 0; i < history.length; i++) ...[
+                            if (i > 0) const Divider(height: 18, color: AppColors.warmBorder),
+                            _buildActivityItem(
+                              icon: history[i].icon,
+                              iconColor: history[i].iconColor,
+                              title: history[i].destinationTitle,
+                              subtitle: '${history[i].region} • ${history[i].note}',
+                              xp: '+${history[i].xpEarned} XP',
+                            ),
+                          ],
+                      ],
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 20),
@@ -7880,6 +8137,141 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBadgeChip(
+    String title, {
+    required bool isUnlocked,
+    required String subtitle,
+    IconData? icon,
+    Color? color,
+  }) {
+    final activeColor = color ?? const Color(0xFFE5C07B);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: isUnlocked
+            ? const Color(0xFF382310)
+            : Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isUnlocked
+              ? activeColor.withValues(alpha: 0.70)
+              : Colors.white.withValues(alpha: 0.15),
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: isUnlocked ? activeColor.withValues(alpha: 0.20) : Colors.white10,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isUnlocked ? icon : Icons.lock_outline_rounded,
+                size: 13,
+                color: isUnlocked ? activeColor : Colors.white38,
+              ),
+            ),
+            const SizedBox(width: 7),
+          ],
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: isUnlocked ? const Color(0xFFE5C07B) : Colors.white54,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                  color: isUnlocked ? const Color(0xFFD9C9BC) : Colors.white38,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required String xp,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: iconColor),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  color: AppColors.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFBBF7D0)),
+          ),
+          child: Text(
+            xp,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF15803D),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
