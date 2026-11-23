@@ -451,6 +451,28 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
             ),
           ),
 
+          // Banner Kebijakan Transaksi: Hanya Open Trip yang Menggunakan Transaksi Aplikasi
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            color: const Color(0xFFF0FDF4),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline_rounded, size: 13, color: Color(0xFF15803D)),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Bebas biaya transaksi aplikasi. Fitur transaksi WISGO hanya digunakan pada Open Trip.',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      color: Color(0xFF166534),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Total & Checkout Action Footer
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
