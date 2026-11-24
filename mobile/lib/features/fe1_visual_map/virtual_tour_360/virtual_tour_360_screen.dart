@@ -43,11 +43,14 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   bool _isAerialMode = true;
   bool _isGyroEnabled = true;
   bool _isSpatialAudioPlaying = false;
+  bool _isMinangMusicPlaying = false;
   bool _isVrMode = false;
   double _yawAngle = 20.0;
   double _pitchAngle = -5.0;
   double _voiceOverProgress = 0.0;
   Timer? _voiceOverTimer;
+  double _minangMusicProgress = 0.0;
+  Timer? _minangMusicTimer;
   bool _isNarrationExpanded = false;
 
   // Nullable agar aman saat Hot Reload
@@ -88,6 +91,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   @override
   void dispose() {
     _voiceOverTimer?.cancel();
+    _minangMusicTimer?.cancel();
     super.dispose();
   }
 
@@ -115,6 +119,69 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
         _voiceOverTimer?.cancel();
       }
     });
+  }
+
+  void _toggleMinangMusic([Hotspot360Model? hotspot]) {
+    setState(() {
+      _isMinangMusicPlaying = !_isMinangMusicPlaying;
+      if (_isMinangMusicPlaying) {
+        if (hotspot != null) {
+          _yawAngle = hotspot.yaw.toDouble();
+          _pitchAngle = hotspot.pitch.toDouble();
+        }
+        _minangMusicTimer?.cancel();
+        _minangMusicTimer =
+            Timer.periodic(const Duration(milliseconds: 250), (t) {
+          if (!mounted) return;
+          setState(() {
+            _minangMusicProgress += 0.012;
+            if (_minangMusicProgress >= 1.0) {
+              _minangMusicProgress = 0.0; // Loop seamlessly
+            }
+          });
+        });
+      } else {
+        _minangMusicTimer?.cancel();
+      }
+    });
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF102218).withValues(alpha: 0.94),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: Row(
+          children: [
+            Icon(
+              _isMinangMusicPlaying
+                  ? Icons.music_note_rounded
+                  : Icons.music_off_rounded,
+              color: const Color(0xFF10B981),
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _isMinangMusicPlaying
+                    ? AppLocale.tr(
+                        'Memutar alunan musik tradisional Minang (Saluang & Talempong)',
+                        'Playing traditional Minang music (Saluang & Talempong)',
+                      )
+                    : AppLocale.tr(
+                        'Musik tradisional Minang dijeda',
+                        'Traditional Minang music paused',
+                      ),
+                style: const TextStyle(color: Colors.white, fontSize: 12.5),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(milliseconds: 1800),
+      ),
+    );
   }
 
   String _getHistoricalNarration() {
@@ -219,11 +286,20 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     if ((_isBeSceneLoaded ?? false) && scenes.isNotEmpty) {
       final targetType = _isAerialMode ? 'aerial' : 'ground';
       final matched = scenes.where((s) => s.type == targetType).toList();
+      List<Hotspot360Model> raw = [];
       if (matched.isNotEmpty && matched.first.hotspots.isNotEmpty) {
-        return matched.first.hotspots;
+        raw = matched.first.hotspots;
+      } else if (scenes.first.hotspots.isNotEmpty) {
+        raw = scenes.first.hotspots;
       }
-      if (scenes.first.hotspots.isNotEmpty) {
-        return scenes.first.hotspots;
+      final filtered = raw
+          .where((h) =>
+              h.type != 'fasilitas' &&
+              h.type != 'mitra' &&
+              h.type != 'kuliner')
+          .toList();
+      if (filtered.isNotEmpty) {
+        return filtered;
       }
     }
     return [
@@ -237,53 +313,38 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
             ? AppLocale.tr('Turun ke Titik Darat', 'Switch to Ground Spot')
             : AppLocale.tr('Naik ke Drone Udara (150m)', 'Switch to Aerial Drone'),
         description: AppLocale.tr(
-          'Transisi sudut pandang antara Drone Udara (150m) dan jalur pejalan kaki.',
-          'Smooth transition between 150m Aerial Drone view and walking-level spot.',
+          'Transisi sudut pandang antara Drone Udara (150m) dan jalur pejalan kaki 360°.',
+          'Smooth transition between 150m Aerial Drone view and walking-level 360° spot.',
         ),
       ),
       Hotspot360Model(
-        id: 'default-audio',
+        id: 'default-narasi',
         sceneId: 'default',
-        type: 'audio',
+        type: 'narasi',
         pitch: 6,
         yaw: -32,
         title: AppLocale.tr(
-          'Narasi Sejarah & Musik Saluang',
-          'Historical Audio & Saluang',
+          'Narasi Sejarah Minangkabau',
+          'Minangkabau History Narration',
         ),
         description: AppLocale.tr(
-          'Dengarkan kisah sejarah nagari & alunan musik tradisional Minang secara spasial.',
-          'Listen to local Minang heritage storytelling & ambient Saluang flute.',
+          'Dengarkan kisah sejarah nagari, asal-usul legenda, dan kearifan lokal Minangkabau secara spasial.',
+          'Listen to local Minang heritage storytelling, folk legends, and spatial wisdom.',
         ),
       ),
       Hotspot360Model(
-        id: 'default-fasilitas',
+        id: 'default-musik',
         sceneId: 'default',
-        type: 'fasilitas',
-        pitch: -7,
-        yaw: 48,
+        type: 'musik',
+        pitch: -6,
+        yaw: 45,
         title: AppLocale.tr(
-          'Musala, Toilet & Loket Resmi',
-          'Prayer Room, Restroom & Ticket Gate',
+          'Musik Tradisional Minang',
+          'Traditional Minang Music',
         ),
         description: AppLocale.tr(
-          'Fasilitas umum terverifikasi berjarak ±50m dari titik panorama ini.',
-          'Verified public facilities located ~50m from this viewpoint.',
-        ),
-      ),
-      Hotspot360Model(
-        id: 'default-mitra',
-        sceneId: 'default',
-        type: 'mitra',
-        pitch: -4,
-        yaw: -62,
-        title: AppLocale.tr(
-          'Homestay & Kuliner Nagari',
-          'Homestay & Local Culinary',
-        ),
-        description: AppLocale.tr(
-          'Mitra UMKM nagari terverifikasi di sekitar kawasan wisata.',
-          'Verified local village culinary & homestay partners nearby.',
+          'Alunan instrumen Saluang dan Talempong tradisional khas Minangkabau yang menenangkan.',
+          'Soothing traditional Minangkabau instruments (Saluang flute & Talempong).',
         ),
       ),
     ];
@@ -293,13 +354,13 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     switch (type) {
       case 'navigasi':
         return const Color(0xFF4F9DFF);
+      case 'narasi':
       case 'audio':
         return const Color(0xFFF5B041);
-      case 'fasilitas':
-        return const Color(0xFF34D399);
-      case 'mitra':
+      case 'musik':
+        return const Color(0xFF10B981);
       default:
-        return const Color(0xFFFF8A5B);
+        return const Color(0xFF4F9DFF);
     }
   }
 
@@ -309,13 +370,13 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
         return _isAerialMode
             ? Icons.flight_land_rounded
             : Icons.flight_takeoff_rounded;
+      case 'narasi':
       case 'audio':
-        return Icons.graphic_eq_rounded;
-      case 'fasilitas':
-        return Icons.mosque_rounded;
-      case 'mitra':
+        return Icons.record_voice_over_rounded;
+      case 'musik':
+        return Icons.music_note_rounded;
       default:
-        return Icons.storefront_rounded;
+        return Icons.explore_rounded;
     }
   }
 
@@ -325,27 +386,27 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
         return _isAerialMode
             ? AppLocale.tr('Darat', 'Ground')
             : AppLocale.tr('Drone', 'Aerial');
+      case 'narasi':
       case 'audio':
-        return AppLocale.tr('Audio', 'Audio');
-      case 'fasilitas':
-        return AppLocale.tr('Fasilitas', 'Facility');
-      case 'mitra':
+        return AppLocale.tr('Narasi Sejarah', 'History Narration');
+      case 'musik':
+        return AppLocale.tr('Musik Minang', 'Minang Music');
       default:
-        return AppLocale.tr('Kuliner', 'Dining');
+        return AppLocale.tr('360°', '360°');
     }
   }
 
   String _pinBadgeLabel(String type) {
     switch (type) {
       case 'navigasi':
-        return AppLocale.tr('Navigasi Sudut', 'Viewpoint Switch');
+        return AppLocale.tr('Navigasi Sudut 360°', '360° Viewpoint Switch');
+      case 'narasi':
       case 'audio':
-        return AppLocale.tr('Audio Budaya', 'Cultural Audio');
-      case 'fasilitas':
-        return AppLocale.tr('Fasilitas Resmi', 'Verified Facility');
-      case 'mitra':
+        return AppLocale.tr('Narasi Cerita Sejarah', 'Historical Storytelling');
+      case 'musik':
+        return AppLocale.tr('Musik Tradisional Minang', 'Traditional Minang Music');
       default:
-        return AppLocale.tr('Mitra Nagari', 'Local Partner');
+        return AppLocale.tr('Titik 360°', '360° Point');
     }
   }
 
@@ -381,12 +442,21 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
       return;
     }
 
-    if (hotspot.type == 'audio') {
+    if (hotspot.type == 'narasi' || hotspot.type == 'audio') {
       setState(() {
         _activeHotspotPreview = null;
         _isPinListExpanded = false;
       });
       _toggleAudioNarration(hotspot);
+      return;
+    }
+
+    if (hotspot.type == 'musik') {
+      setState(() {
+        _activeHotspotPreview = null;
+        _isPinListExpanded = false;
+      });
+      _toggleMinangMusic(hotspot);
       return;
     }
 
@@ -460,51 +530,76 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                 ),
               ),
               const SizedBox(height: 20),
-              if (hotspot.type == 'mitra')
+              if (hotspot.type == 'narasi' || hotspot.type == 'audio')
                 PillButton(
-                  text: AppLocale.tr(
-                    'Lihat Mitra & Kuliner Terdekat',
-                    'Explore Nearby Local Partners',
-                  ),
-                  icon: const Icon(
-                    Icons.verified_user_outlined,
+                  text: _isSpatialAudioPlaying
+                      ? AppLocale.tr(
+                          'Jeda Narasi Sejarah',
+                          'Pause History Narration',
+                        )
+                      : AppLocale.tr(
+                          'Dengarkan Narasi Sejarah',
+                          'Play History Narration',
+                        ),
+                  icon: Icon(
+                    _isSpatialAudioPlaying
+                        ? Icons.pause_circle_filled_rounded
+                        : Icons.play_circle_fill_rounded,
                     color: Colors.white,
                     size: 18,
                   ),
-                  backgroundColor: AppColors.pinMitraOranye,
+                  backgroundColor: const Color(0xFFF5B041),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          AppLocale.tr(
-                            'Mitra resmi nagari terverifikasi di sekitar ${_dest.name}.',
-                            'Verified village partners around ${_dest.name}.',
-                          ),
+                    _toggleAudioNarration(hotspot);
+                  },
+                )
+              else if (hotspot.type == 'musik')
+                PillButton(
+                  text: _isMinangMusicPlaying
+                      ? AppLocale.tr(
+                          'Jeda Musik Minang',
+                          'Pause Minang Music',
+                        )
+                      : AppLocale.tr(
+                          'Putar Musik Tradisional Minang',
+                          'Play Traditional Minang Music',
                         ),
-                      ),
-                    );
+                  icon: Icon(
+                    _isMinangMusicPlaying
+                        ? Icons.pause_circle_filled_rounded
+                        : Icons.play_circle_fill_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  backgroundColor: const Color(0xFF10B981),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _toggleMinangMusic(hotspot);
                   },
                 )
               else
                 PillButton(
-                  text: widget.onOpenDenah != null
+                  text: _isAerialMode
                       ? AppLocale.tr(
-                          'Lihat Denah Lokasi & Fasilitas',
-                          'Open Site Map & Facilities',
+                          'Turun ke Titik Darat',
+                          'Switch to Ground Spot',
                         )
                       : AppLocale.tr(
-                          'Arahkan ke Fasilitas Ini',
-                          'Navigate to This Facility',
+                          'Naik ke Drone Udara (150m)',
+                          'Switch to Aerial Drone',
                         ),
-                  icon: const Icon(
-                    Icons.map_outlined,
+                  icon: Icon(
+                    _isAerialMode
+                        ? Icons.flight_land_rounded
+                        : Icons.flight_takeoff_rounded,
                     color: Colors.white,
                     size: 18,
                   ),
+                  backgroundColor: const Color(0xFF4F9DFF),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    widget.onOpenDenah?.call();
+                    _handleHotspotTap(hotspot);
                   },
                 ),
             ],
@@ -517,8 +612,12 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
   /// Tag kaca minimalis melayang di sela-sela pemandangan 360°
   Widget _buildFloating360HotspotTag(Hotspot360Model hotspot) {
     final color = _pinColor(hotspot.type);
-    final isAudioPlaying = hotspot.type == 'audio' && _isSpatialAudioPlaying;
-    final isFocused = _activeHotspotPreview?.id == hotspot.id || isAudioPlaying;
+    final isAudio = hotspot.type == 'audio' || hotspot.type == 'narasi';
+    final isMusik = hotspot.type == 'musik';
+    final isAudioPlaying = isAudio && _isSpatialAudioPlaying;
+    final isMusikPlaying = isMusik && _isMinangMusicPlaying;
+    final isFocused =
+        _activeHotspotPreview?.id == hotspot.id || isAudioPlaying || isMusikPlaying;
 
     return GestureDetector(
       onTap: () => _handleHotspotTap(hotspot),
@@ -1129,6 +1228,129 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     );
   }
 
+  /// Floating Glass Bar untuk Musik Tradisional Minangkabau (Saluang & Talempong)
+  Widget _buildMinangMusicGlassBar() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.58),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFF10B981).withValues(alpha: 0.7),
+              width: 1.2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => _toggleMinangMusic(),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.pause_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocale.tr(
+                            'MUSIK TRADISIONAL MINANGKABAU',
+                            'MINANG TRADITIONAL MUSIC',
+                          ),
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        const Text(
+                          'Saluang, Talempong & Bansi · Nada Singgalang',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.equalizer_rounded,
+                          color: Color(0xFF10B981),
+                          size: 13,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Live Ambience',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _minangMusicProgress,
+                  backgroundColor: Colors.white24,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFF10B981),
+                  ),
+                  minHeight: 3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Kartu pratinjau kaca tipis ketika 1 pin dipilih (tidak menutupi pemandangan)
   Widget _buildFocusedHotspotGlassCard(Hotspot360Model hotspot) {
     final color = _pinColor(hotspot.type);
@@ -1304,9 +1526,13 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                                   final idx = entry.key;
                                   final hotspot = entry.value;
                                   final color = _pinColor(hotspot.type);
-                                  final isAudio = hotspot.type == 'audio';
+                                  final isAudio = hotspot.type == 'audio' ||
+                                      hotspot.type == 'narasi';
+                                  final isMusik = hotspot.type == 'musik';
                                   final isAudioPlaying =
                                       isAudio && _isSpatialAudioPlaying;
+                                  final isMusikPlaying =
+                                      isMusik && _isMinangMusicPlaying;
 
                                   return Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -1363,7 +1589,11 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                                                             ? const Color(
                                                                 0xFFF5B041,
                                                               )
-                                                            : Colors.white,
+                                                            : (isMusikPlaying
+                                                                ? const Color(
+                                                                    0xFF10B981,
+                                                                  )
+                                                                : Colors.white),
                                                         fontSize: 12.5,
                                                         fontWeight:
                                                             FontWeight.w700,
@@ -1388,11 +1618,19 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                                                             .pause_circle_filled_rounded
                                                         : Icons
                                                             .play_circle_fill_rounded)
-                                                    : Icons
-                                                        .chevron_right_rounded,
+                                                    : (isMusik
+                                                        ? (isMusikPlaying
+                                                            ? Icons
+                                                                .pause_circle_filled_rounded
+                                                            : Icons
+                                                                .play_circle_fill_rounded)
+                                                        : Icons
+                                                            .chevron_right_rounded),
                                                 color: isAudio
                                                     ? const Color(0xFFF5B041)
-                                                    : Colors.white60,
+                                                    : (isMusik
+                                                        ? const Color(0xFF10B981)
+                                                        : Colors.white60),
                                                 size: 20,
                                               ),
                                             ],
@@ -1431,10 +1669,16 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                     children: [
                       ...hotspots.map((hotspot) {
                         final color = _pinColor(hotspot.type);
-                        final isAudio = hotspot.type == 'audio';
-                        final isActive =
-                            (isAudio && _isSpatialAudioPlaying) ||
-                                _activeHotspotPreview?.id == hotspot.id;
+                        final isAudio = hotspot.type == 'audio' ||
+                            hotspot.type == 'narasi';
+                        final isMusik = hotspot.type == 'musik';
+                        final isAudioPlaying =
+                            isAudio && _isSpatialAudioPlaying;
+                        final isMusikPlaying =
+                            isMusik && _isMinangMusicPlaying;
+                        final isActive = isAudioPlaying ||
+                            isMusikPlaying ||
+                            _activeHotspotPreview?.id == hotspot.id;
 
                         return Expanded(
                           child: GestureDetector(
@@ -1628,16 +1872,26 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                       child: _buildFloatingHeader(),
                     ),
 
-                    // 4. FLOATING AI AUDIO MINI-BAR (HANYA SAAT AUDIO DIPUTAR)
-                    if (_isSpatialAudioPlaying)
+                    // 4. FLOATING AI AUDIO & MUSIK MINANG MINI-BAR
+                    if (_isSpatialAudioPlaying || _isMinangMusicPlaying)
                       Positioned(
                         top: 124,
                         left: 14,
                         right: 14,
-                        child: _buildAudioMiniGlassBar(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isSpatialAudioPlaying)
+                              _buildAudioMiniGlassBar(),
+                            if (_isSpatialAudioPlaying && _isMinangMusicPlaying)
+                              const SizedBox(height: 8),
+                            if (_isMinangMusicPlaying)
+                              _buildMinangMusicGlassBar(),
+                          ],
+                        ),
                       ),
 
-                    // 5. ULTRA-MINIMALIST FROSTED GLASS BOTTOM DOCK (4 PIN ELEGAN)
+                    // 5. ULTRA-MINIMALIST FROSTED GLASS BOTTOM DOCK (3 PIN ELEGAN: 360, NARASI SEJARAH, MUSIK MINANG)
                     Positioned(
                       left: 0,
                       right: 0,
