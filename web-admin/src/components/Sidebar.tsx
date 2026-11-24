@@ -14,6 +14,7 @@ import {
   Users,
   Monitor,
   Trophy,
+  Globe,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
 
@@ -38,6 +39,7 @@ interface SidebarProps {
   totalPartners?: number;
   openPungliCount?: number;
   openSosCount?: number;
+  onOpenLandingPage?: () => void;
   onOpenPublicQR?: () => void;
   onOpenGroupInvite?: () => void;
   onOpenSystemBenchmark?: () => void;
@@ -56,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   totalPartners = 5,
   openPungliCount = 2,
   openSosCount = 2,
+  onOpenLandingPage,
   onOpenPublicQR,
   onOpenGroupInvite,
   onOpenSystemBenchmark,
@@ -252,6 +255,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Pratinjau Web Publik Wisatawan
             </p>
             <div className="space-y-1">
+              {onOpenLandingPage && (
+                <button
+                  type="button"
+                  onClick={onOpenLandingPage}
+                  className="w-full text-left px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#F6F3EC] flex items-center justify-between transition min-h-[38px] group"
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    <Globe className="w-4 h-4 text-[#A7F3D0] shrink-0" aria-hidden="true" />
+                    <span className="truncate">Beranda Publik (/)</span>
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5 text-[#E4E9DA]/60 group-hover:text-white shrink-0 transition" aria-hidden="true" />
+                </button>
+              )}
               {onOpenPublicQR && (
                 <button
                   type="button"

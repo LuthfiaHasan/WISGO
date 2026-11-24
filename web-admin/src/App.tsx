@@ -44,6 +44,7 @@ import { CommandCenterPage } from './pages/CommandCenterPage';
 import { PartnersPage } from './pages/PartnersPage';
 import { PublicSmartQRView } from './pages/PublicSmartQRView';
 import { PublicGroupInviteView } from './pages/PublicGroupInviteView';
+import { PublicLandingPage } from './pages/PublicLandingPage';
 import { SmartQRPlacardModal } from './components/SmartQRPlacardModal';
 import { WhatsAppBotSimulator } from './components/WhatsAppBotSimulator';
 import { ExecutiveAnalyticsPage } from './pages/ExecutiveAnalyticsPage';
@@ -67,10 +68,17 @@ export const App: React.FC = () => {
   const [openPungliCount, setOpenPungliCount] = useState<number>(3);
   const [openSosCount, setOpenSosCount] = useState<number>(2);
 
-  // Public Web Preview Mode: null | 'qr' | 'group'
-  const [publicPreviewMode, setPublicPreviewMode] = useState<
-    'qr' | 'group' | null
-  >(null);
+  // Public View State: 'landing' | 'login' | 'qr' | 'group' | null
+  const [publicView, setPublicView] = useState<'landing' | 'login' | 'qr' | 'group' | null>(() => {
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    if (path.includes('/qr/') || hash.includes('/qr/')) return 'qr';
+    if (path.includes('/join') || hash.includes('/join')) return 'group';
+    if (path.includes('/login') || hash.includes('/login')) return 'login';
+    if (path.includes('/admin') || hash.includes('/admin')) return null;
+    const stored = getStoredAdminSession();
+    return stored ? null : 'landing';
+  });
   const [publicPreviewDest, setPublicPreviewDest] = useState<Destination | null>(
     null
   );
@@ -142,7 +150,7 @@ export const App: React.FC = () => {
     loadSystemData(false);
   }, [loadSystemData]);
 
-  // Check URL pathname or hash for direct public QR or Join link
+  // Check URL pathname or hash for direct public QR, Join, Login, or Landing link
   useEffect(() => {
     const handleUrlRoute = () => {
       const path = window.location.pathname;
@@ -152,9 +160,11 @@ export const App: React.FC = () => {
         const slug = (path.split('/qr/')[1] || hash.split('/qr/')[1] || '').split('/')[0];
         const match = destinations.find((d) => d.slug === slug || d.id === slug);
         setPublicPreviewDest(match || destinations[0]);
-        setPublicPreviewMode('qr');
+        setPublicView('qr');
       } else if (path.includes('/join') || hash.includes('/join')) {
-        setPublicPreviewMode('group');
+        setPublicView('group');
+      } else if (path.includes('/login') || hash.includes('/login')) {
+        setPublicView('login');
       }
     };
     handleUrlRoute();
@@ -240,38 +250,54 @@ export const App: React.FC = () => {
     [destinations]
   );
 
-  // If in Public Web Preview Mode
-  if (publicPreviewMode === 'qr') {
+  // If in Public Web View Mode
+  if (publicView === 'landing') {
+    return (
+      <PublicLandingPage
+        destinations={destinations}
+        onNavigateToLogin={() => setPublicView('login')}
+        onNavigateToQR={(dest) => {
+          if (dest) setPublicPreviewDest(dest);
+          setPublicView('qr');
+        }}
+        onNavigateToJoin={() => setPublicView('group')}
+      />
+    );
+  }
+
+  if (publicView === 'qr') {
     const previewTarget = publicPreviewDest || destinations[0] || MOCK_20_DESTINATIONS[0];
     return (
       <PublicSmartQRView
         destination={previewTarget}
         allDestinations={destinations}
-        onBackToAdmin={() => setPublicPreviewMode(null)}
+        onBackToAdmin={() => setPublicView(session ? null : 'landing')}
         showToast={showToast}
       />
     );
   }
 
-  if (publicPreviewMode === 'group') {
+  if (publicView === 'group') {
     return (
       <PublicGroupInviteView
         groupCode="WISGO-MINANG-88"
-        onBackToAdmin={() => setPublicPreviewMode(null)}
+        onBackToAdmin={() => setPublicView(session ? null : 'landing')}
         showToast={showToast}
       />
     );
   }
 
-  if (!session) {
+  if (publicView === 'login' || !session) {
     return (
       <LoginPage
         onLoginSuccess={(newSession) => {
           setSession(newSession);
+          setPublicView(null);
           showToast(
             `Selamat datang, ${newSession.user.full_name}. Sesi otoritas tunggal aktif.`
           );
         }}
+        onBackToLanding={() => setPublicView('landing')}
         backendOnline={backendOnline}
       />
     );
@@ -395,12 +421,13 @@ export const App: React.FC = () => {
         totalPartners={partners.length}
         openPungliCount={openPungliCount}
         openSosCount={openSosCount}
+        onOpenLandingPage={() => setPublicView('landing')}
         onOpenPublicQR={() => {
           setPublicPreviewDest(destinations[0] || MOCK_20_DESTINATIONS[0]);
-          setPublicPreviewMode('qr');
+          setPublicView('qr');
         }}
         onOpenGroupInvite={() => {
-          setPublicPreviewMode('group');
+          setPublicView('group');
         }}
         onOpenSystemBenchmark={() => {
           setActiveMenu('dispar_analytics');

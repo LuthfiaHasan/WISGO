@@ -10,17 +10,20 @@ import {
   CheckCircle2,
   Building2,
   Radio,
+  ArrowLeft,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
 import { loginAdminJWT } from '../services/api';
 
 interface LoginPageProps {
   onLoginSuccess: (session: AdminAuthResponse) => void;
+  onBackToLanding?: () => void;
   backendOnline: boolean;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
+  onBackToLanding,
   backendOnline,
 }) => {
   const [email, setEmail] = useState('admin.komando@sumbarprov.go.id');
@@ -211,6 +214,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       {/* Panel Formulir Otentikasi Otoritas */}
       <main className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-lg bg-white rounded-[28px] p-7 lg:p-10 shadow-md border border-[#D5E2D7]">
+          {onBackToLanding && (
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              className="mb-5 text-xs font-bold text-[#143D2B] hover:text-[#0E2E20] inline-flex items-center gap-1.5 transition group"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Kembali ke Beranda Publik</span>
+            </button>
+          )}
+
           <div className="flex items-center gap-3.5 mb-6">
             <div className="w-12 h-12 rounded-2xl bg-[#FAF3E6] p-2 flex items-center justify-center shadow-sm border border-[#D5E2D7]">
               <img src="/logo_icon.png" alt="WISGO" className="w-full h-full object-contain" />
