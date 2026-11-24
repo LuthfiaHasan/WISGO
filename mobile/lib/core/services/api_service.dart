@@ -461,6 +461,64 @@ class ApiService {
   }
 
   // ============================================================================
+  // 10b. OPEN TRIP / SHARED TRIPS DETAIL & MANAGEMENT (BE-2 · PILAR 6)
+  // ============================================================================
+
+  /// Ambil detail Open Trip beserta daftar peserta terdaftar
+  /// GET /api/v1/community/shared-trips/:id
+  static Future<ApiResponse<dynamic>> getSharedTripDetail(String tripId) async {
+    return await ApiClient.get('/community/shared-trips/$tripId');
+  }
+
+  /// Perbarui Open Trip oleh Host
+  /// PUT /api/v1/community/shared-trips/:id
+  static Future<ApiResponse<dynamic>> updateSharedTrip({
+    required String tripId,
+    required String userId,
+    required String title,
+    required String destinationId,
+    required DateTime departureDate,
+    required int availableSeats,
+    required double costPerPerson,
+    required String contactWa,
+  }) async {
+    return await ApiClient.put('/community/shared-trips/$tripId', body: {
+      'user_id': userId,
+      'title': title,
+      'destination_id': destinationId,
+      'departure_date': departureDate.toUtc().toIso8601String(),
+      'available_seats': availableSeats,
+      'cost_per_person': costPerPerson,
+      'contact_wa': contactWa,
+    });
+  }
+
+  /// Gabung ke Open Trip sebagai peserta
+  /// POST /api/v1/community/shared-trips/:id/join
+  static Future<ApiResponse<dynamic>> joinSharedTrip({
+    required String tripId,
+    String? userId,
+  }) async {
+    final uid = userId ?? ApiConfig.currentUserId;
+    return await ApiClient.post('/community/shared-trips/$tripId/join', body: {
+      'user_id': uid,
+    });
+  }
+
+  /// Hapus Open Trip oleh Host
+  /// DELETE /api/v1/community/shared-trips/:id?user_id=<uid>
+  static Future<ApiResponse<dynamic>> deleteSharedTrip({
+    required String tripId,
+    String? userId,
+  }) async {
+    final uid = userId ?? ApiConfig.currentUserId;
+    return await ApiClient.delete(
+      '/community/shared-trips/$tripId',
+      queryParams: {'user_id': uid},
+    );
+  }
+
+  // ============================================================================
   // 11. GAMIFIKASI: PASPOR DIGITAL MINANG & SERTIFIKAT (BE-2 · PILAR 6)
   // ============================================================================
 

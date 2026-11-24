@@ -5,6 +5,7 @@ import 'destination_weather_sheet.dart';
 import 'ground_condition_sheet.dart';
 import 'destination_panorama_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
+import 'open_trip_detail_sheet.dart';
 import 'open_trip_offline_rules_sheet.dart';
 import 'open_trip_payment_sheet.dart';
 import 'trip_planner_detail_sheet.dart';
@@ -22,11 +23,13 @@ import 'verified_organizer_sheet.dart';
 class OpenTripCard extends StatelessWidget {
   final OpenTripItem trip;
   final VoidCallback? onTripUpdated;
+  final ValueChanged<String>? onTripDeleted;
 
   const OpenTripCard({
     super.key,
     required this.trip,
     this.onTripUpdated,
+    this.onTripDeleted,
   });
 
   String _formatRupiah(int number) {
@@ -56,9 +59,24 @@ class OpenTripCard extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => OpenTripDetailSheet(
+                trip: trip,
+                onTripUpdated: (updated) => onTripUpdated?.call(),
+                onTripDeleted: onTripDeleted,
+              ),
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // 1. Cover Image with Auto-Category & Quota Badges
           Stack(
             children: [
@@ -620,6 +638,8 @@ class OpenTripCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }

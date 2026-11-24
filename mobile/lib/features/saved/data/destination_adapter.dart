@@ -7,7 +7,6 @@ class DestinationAdapter {
   static SavedDestinationModel fromJson(Map<String, dynamic> json, {int index = 0}) {
     final id = json['id']?.toString() ?? 'dest-$index';
     final name = json['name']?.toString() ?? 'Destinasi Minangkabau';
-    final category = json['category']?.toString() ?? 'Alam';
     final cityRegency = json['city_regency']?.toString() ?? 'Sumatera Barat';
     final description = json['description']?.toString() ?? '';
     final coverImage = json['cover_image']?.toString() ??

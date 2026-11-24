@@ -240,9 +240,36 @@ String determineCategoryForDestination(String destinationName) {
   return 'Wisata Alam & Pegunungan';
 }
 
+/// Model Peserta Terdaftar pada Open Trip (Item BE-2)
+class OpenTripParticipant {
+  final String userId;
+  final String fullName;
+  final String phoneNumber;
+  final String joinedAt;
+
+  const OpenTripParticipant({
+    required this.userId,
+    required this.fullName,
+    required this.phoneNumber,
+    required this.joinedAt,
+  });
+
+  factory OpenTripParticipant.fromJson(Map<String, dynamic> json) {
+    return OpenTripParticipant(
+      userId: json['user_id']?.toString() ?? '',
+      fullName: json['full_name']?.toString() ?? 'Peserta',
+      phoneNumber: json['phone_number']?.toString() ?? '',
+      joinedAt: json['joined_at']?.toString() ?? '',
+    );
+  }
+}
+
 /// Model Data Open Trip Lengkap (Item 1-7 Open Trip & Item 1-5 Trip Planner)
 class OpenTripItem {
   final String id;
+  final String userId; // ID Host pembuat trip
+  final String destinationId; // ID referensi katalog destinasi BE-1
+  final String contactWa; // Nomor WhatsApp Host
   final String title;
 
   /// ATURAN UTAMA 1: Open Trip HANYA memiliki 1 tujuan/destinasi dalam satu perjalanan
@@ -288,6 +315,9 @@ class OpenTripItem {
 
   OpenTripItem({
     required this.id,
+    this.userId = 'usr-host-01',
+    this.destinationId = 'dest-001',
+    this.contactWa = '0812-7578-953',
     required this.title,
     required this.singleDestination,
     String? category,
@@ -315,6 +345,74 @@ class OpenTripItem {
     required this.messages,
     required this.whatsappGroupLink,
   }) : category = category ?? determineCategoryForDestination(singleDestination);
+
+  int get availableSeats => quotaMax - quotaFilled;
+
+  OpenTripItem copyWith({
+    String? id,
+    String? userId,
+    String? destinationId,
+    String? contactWa,
+    String? title,
+    String? singleDestination,
+    String? category,
+    String? coverUrl,
+    String? departureDate,
+    String? returnDate,
+    String? departureTime,
+    String? duration,
+    String? meetingPointName,
+    String? meetingPointAddress,
+    double? meetingPointLat,
+    double? meetingPointLng,
+    String? googleMapsUrl,
+    int? pricePerPerson,
+    String? paymentGatewayInfo,
+    bool? isDirectWisgoEscrow,
+    int? quotaMax,
+    int? quotaFilled,
+    VerifiedOrganizer? organizer,
+    List<OfflineTripRule>? offlineRules,
+    List<TripItineraryStep>? itinerary,
+    List<TripReadinessItem>? readinessChecklist,
+    List<TripJobdeskItem>? jobdeskList,
+    List<TripPackingItem>? packingList,
+    List<TripChatMessage>? messages,
+    String? whatsappGroupLink,
+  }) {
+    return OpenTripItem(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      destinationId: destinationId ?? this.destinationId,
+      contactWa: contactWa ?? this.contactWa,
+      title: title ?? this.title,
+      singleDestination: singleDestination ?? this.singleDestination,
+      category: category ?? this.category,
+      coverUrl: coverUrl ?? this.coverUrl,
+      departureDate: departureDate ?? this.departureDate,
+      returnDate: returnDate ?? this.returnDate,
+      departureTime: departureTime ?? this.departureTime,
+      duration: duration ?? this.duration,
+      meetingPointName: meetingPointName ?? this.meetingPointName,
+      meetingPointAddress: meetingPointAddress ?? this.meetingPointAddress,
+      meetingPointLat: meetingPointLat ?? this.meetingPointLat,
+      meetingPointLng: meetingPointLng ?? this.meetingPointLng,
+      googleMapsUrl: googleMapsUrl ?? this.googleMapsUrl,
+      pricePerPerson: pricePerPerson ?? this.pricePerPerson,
+      paymentGatewayInfo: paymentGatewayInfo ?? this.paymentGatewayInfo,
+      isDirectWisgoEscrow: isDirectWisgoEscrow ?? this.isDirectWisgoEscrow,
+      quotaMax: quotaMax ?? this.quotaMax,
+      quotaFilled: quotaFilled ?? this.quotaFilled,
+      organizer: organizer ?? this.organizer,
+      offlineRules: offlineRules ?? this.offlineRules,
+      itinerary: itinerary ?? this.itinerary,
+      readinessChecklist: readinessChecklist ?? this.readinessChecklist,
+      jobdeskList: jobdeskList ?? this.jobdeskList,
+      packingList: packingList ?? this.packingList,
+      messages: messages ?? this.messages,
+      whatsappGroupLink: whatsappGroupLink ?? this.whatsappGroupLink,
+    );
+  }
 }
 
 /// Data Contoh Resmi Open Trip (Masing-masing 1 Destinasi Tunggal)

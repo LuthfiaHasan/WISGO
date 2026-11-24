@@ -142,11 +142,12 @@ class ApiClient {
   /// Request HTTP DELETE
   static Future<ApiResponse<dynamic>> delete(
     String path, {
+    Map<String, String>? queryParams,
     dynamic body,
     Map<String, String>? headers,
   }) async {
     try {
-      final uri = _buildUri(path);
+      final uri = _buildUri(path, queryParams);
       final encodedBody = body != null ? jsonEncode(body) : null;
       final response = await http
           .delete(uri, headers: _buildHeaders(headers), body: encodedBody)

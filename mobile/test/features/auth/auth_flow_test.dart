@@ -60,7 +60,7 @@ void main() {
 
       await tester.pumpWidget(
         const MaterialApp(
-          home: SavedPlacesScreen(initialTabIndex: 3),
+          home: SavedPlacesScreen(initialTabIndex: 4),
         ),
       );
       await tester.pumpAndSettle();
@@ -90,8 +90,11 @@ void main() {
       expect(find.text('OTP WhatsApp Terverifikasi'), findsOneWidget);
 
       // Scroll down to reveal the logout button
-      await tester.drag(find.byType(ListView), const Offset(0, -600));
-      await tester.pumpAndSettle();
+      await tester.dragUntilVisible(
+        find.text('Keluar dari Akun (Logout)'),
+        find.byType(ListView).last,
+        const Offset(0, -250),
+      );
       expect(find.text('Keluar dari Akun (Logout)'), findsOneWidget);
 
       // Now logout via ApiService
@@ -99,10 +102,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll back up to verify Guest Mode banner
-      await tester.drag(find.byType(ListView), const Offset(0, 600));
-      await tester.pumpAndSettle();
-
-      // Should seamlessly revert back to Guest Mode!
+      await tester.dragUntilVisible(
+        find.text('Masuk untuk Fitur Penuh'),
+        find.byType(ListView).last,
+        const Offset(0, 300),
+      );
       expect(find.text('MODE PENJELAJAH • TAMU (GUEST)'), findsOneWidget);
       expect(find.text('Akun Tamu'), findsOneWidget);
       expect(find.text('Masuk untuk Fitur Penuh'), findsOneWidget);

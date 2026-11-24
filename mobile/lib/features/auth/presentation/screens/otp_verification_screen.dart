@@ -16,11 +16,15 @@ import '../../../saved/presentation/screens/saved_places_screen.dart';
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
   final String? userName;
+  final String? canonicalPhone;
+  final String? devOtpCode;
 
   const OtpVerificationScreen({
     super.key,
     required this.phoneNumber,
     this.userName,
+    this.canonicalPhone,
+    this.devOtpCode,
   });
 
   @override
@@ -143,7 +147,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     setState(() {
       _showWaBanner = false;
     });
-    _verifyOtpAndFinish();
   }
 
   bool get _isComplete => _controllers.every((c) => c.text.isNotEmpty);
@@ -342,7 +345,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
                           // Judul
                           const Text(
-                            'Masukkan Kode OTP',
+                            'Verifikasi Kode OTP',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 28,
@@ -441,34 +444,58 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                           ],
                                   ),
                                   child: Center(
-                                    child: TextFormField(
-                                      controller: _controllers[index],
-                                      focusNode: _focusNodes[index],
-                                      keyboardType: TextInputType.number,
-                                      textAlign: TextAlign.center,
-                                      cursorColor: AppColors.forest,
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.forest,
-                                      ),
-                                      inputFormatters: [
-                                        LengthLimitingTextInputFormatter(1),
-                                        FilteringTextInputFormatter.digitsOnly,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        if (_controllers[index].text.isNotEmpty)
+                                          Offstage(
+                                            offstage: true,
+                                            child: Text(_controllers[index].text),
+                                          ),
+                                        TextFormField(
+                                          controller: _controllers[index],
+                                          focusNode: _focusNodes[index],
+                                          keyboardType: TextInputType.number,
+                                          textAlign: TextAlign.center,
+                                          cursorColor: AppColors.forest,
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.forest,
+                                          ),
+                                          inputFormatters: [
+                                            LengthLimitingTextInputFormatter(1),
+                                            FilteringTextInputFormatter.digitsOnly,
+                                          ],
+                                          decoration: const InputDecoration(
+                                            counterText: '',
+                                            contentPadding: EdgeInsets.zero,
+                                            border: InputBorder.none,
+                                          ),
+                                          onChanged: (val) =>
+                                              _onDigitChanged(index, val),
+                                        ),
                                       ],
-                                      decoration: const InputDecoration(
-                                        counterText: '',
-                                        contentPadding: EdgeInsets.zero,
-                                        border: InputBorder.none,
-                                      ),
-                                      onChanged: (val) =>
-                                          _onDigitChanged(index, val),
                                     ),
                                   ),
                                 ),
                               );
                             }),
                           ),
+
+                          if (widget.devOtpCode != null) ...[
+                            const SizedBox(height: 12),
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: () => _autoFillOtp(widget.devOtpCode!),
+                                icon: const Icon(Icons.flash_on_rounded, size: 16),
+                                label: const Text('Isi Otomatis'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.forest,
+                                ),
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 16),
 
