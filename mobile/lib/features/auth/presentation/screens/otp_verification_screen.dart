@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../saved/presentation/screens/saved_places_screen.dart';
+import '../../services/auth_session.dart';
 
 /// Layar 4: Verifikasi Kode OTP 4 Digit via WhatsApp
 /// - Desain Modern Frosted Glassmorphic Card (Selaras dengan Gambar 3 & Splashscreen)
@@ -162,9 +163,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     Future.delayed(const Duration(milliseconds: 400), () {
       if (!mounted) return;
       setState(() => _isVerifying = false);
+      AuthSession.instance.setAuthenticatedUser(
+        name: 'Ahmad Fauzi',
+        phone: widget.phoneNumber,
+      );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => const SavedPlacesScreen(),
+          builder: (_) => const SavedPlacesScreen(isGuest: false),
         ),
         (route) => false,
       );

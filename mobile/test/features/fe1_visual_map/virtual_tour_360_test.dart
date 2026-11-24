@@ -19,34 +19,10 @@ void main() {
       Scene360Model(
         id: 'scn-lubuk-aerial',
         destinationId: 'dest-lubuk-hitam',
-        title: 'Drone Udara Lubuk Hitam (150m)',
+        title: 'Panorama Lubuk Hitam',
         type: 'aerial',
         panoramaUrl: 'https://images.unsplash.com/photo-1518709268805',
         hotspots: [
-          Hotspot360Model(
-            id: 'hs-1',
-            sceneId: 'scn-lubuk-aerial',
-            type: 'navigasi',
-            pitch: -15,
-            yaw: 10,
-            title: 'Turun ke Titik Darat',
-          ),
-          Hotspot360Model(
-            id: 'hs-2',
-            sceneId: 'scn-lubuk-aerial',
-            type: 'narasi',
-            pitch: 5,
-            yaw: -30,
-            title: 'Narasi Sejarah Lubuk Hitam',
-          ),
-          Hotspot360Model(
-            id: 'hs-3',
-            sceneId: 'scn-lubuk-aerial',
-            type: 'musik',
-            pitch: -5,
-            yaw: 40,
-            title: 'Musik Tradisional Minang',
-          ),
           Hotspot360Model(
             id: 'hs-fasilitas-blocked',
             sceneId: 'scn-lubuk-aerial',
@@ -77,62 +53,52 @@ void main() {
     );
   }
 
-  group('VirtualTour360Screen - Clean 360 View, Narasi Sejarah & Musik Minang', () {
-    testWidgets('1. Menghapus pin fasilitas dan kuliner dari tampilan 360', (tester) async {
+  group('VirtualTour360Screen - Pure Panorama View 360°', () {
+    testWidgets('1. Tidak menampilkan ikon hotspot mengambang atau tombol Denah', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pump();
 
-      // Fasilitas and Kuliner pins MUST NOT be rendered
       expect(find.text('Fasilitas'), findsNothing);
       expect(find.text('Kuliner'), findsNothing);
+      expect(find.text('Audio'), findsNothing);
+      expect(find.text('Darat'), findsNothing);
+      expect(find.text('Denah'), findsNothing);
       expect(find.text('Musala & Toilet'), findsNothing);
       expect(find.text('Warung Kuliner'), findsNothing);
-
-      // Only 360 viewpoint (Darat), Narasi Sejarah, and Musik Minang are shown
-      expect(find.text('Darat'), findsWidgets);
-      expect(find.text('Narasi Sejarah'), findsWidgets);
-      expect(find.text('Musik Minang'), findsWidgets);
     });
 
-    testWidgets('2. Mengetuk Narasi Sejarah memicu pemutaran audio sejarah', (tester) async {
+    testWidgets('2. Menampilkan judul destinasi dan petunjuk geser panorama 360°', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pump();
 
-      // Tap 'Narasi Sejarah' pin or dock button
-      final narasiFinder = find.text('Narasi Sejarah').first;
-      await tester.tap(narasiFinder);
-      await tester.pump();
-
-      // Floating AI Historical Narration bar should appear
-      expect(find.text('NARASI SUARA AI SEJARAH'), findsOneWidget);
+      expect(find.text('Air Terjun Lubuk Hitam (Cindakir) 3 Tingkat'), findsOneWidget);
+      expect(find.text('Geser layar untuk melihat panorama 360° destinasi'), findsOneWidget);
     });
 
-    testWidgets('3. Mengetuk Musik Minang memicu pemutaran musik tradisional Minang', (tester) async {
+    testWidgets('3. Toggle tampilan Panorama Luas dan Dekat berfungsi', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pump();
 
-      // Tap 'Musik Minang' button
-      final musikFinder = find.text('Musik Minang').first;
-      await tester.tap(musikFinder);
+      expect(find.text('Panorama Luas'), findsOneWidget);
+      expect(find.text('Dekat'), findsOneWidget);
+
+      await tester.tap(find.text('Dekat'));
       await tester.pump();
 
-      // Floating Traditional Minang Music bar should appear
-      expect(find.text('MUSIK TRADISIONAL MINANGKABAU'), findsOneWidget);
+      await tester.tap(find.text('Panorama Luas'));
+      await tester.pump();
     });
 
-    testWidgets('4. Toggle sudut pandang Drone Udara dan Titik Darat', (tester) async {
+    testWidgets('4. Toggle Mode VR menampilkan tampilan stereoscopic', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pump();
 
-      // Initially aerial mode is true
-      expect(find.text('Titik Darat'), findsOneWidget);
-
-      // Tap Titik Darat chip
-      await tester.tap(find.text('Titik Darat'));
+      expect(find.text('LEFT EYE'), findsNothing);
+      await tester.tap(find.byIcon(Icons.vrpano_rounded));
       await tester.pump();
 
-      // Ground mode selected, bottom dock shows Drone
-      expect(find.text('Drone'), findsWidgets);
+      expect(find.text('LEFT EYE'), findsOneWidget);
+      expect(find.text('RIGHT EYE'), findsOneWidget);
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rancakin_mobile/core/widgets/wisgo_logo.dart';
 import 'package:rancakin_mobile/features/auth/presentation/screens/location_onboarding_screen.dart';
 import 'package:rancakin_mobile/features/auth/presentation/screens/splash_screen.dart';
+import 'package:rancakin_mobile/features/saved/presentation/screens/saved_places_screen.dart';
 
 void main() {
   testWidgets('SplashScreen displays 3 scenic slides, real Wisgo logo, and navigates correctly', (tester) async {
@@ -52,7 +53,7 @@ void main() {
     expect(find.byType(LocationOnboardingScreen), findsOneWidget);
   });
 
-  testWidgets('SplashScreen Lewati button navigates directly to LocationOnboardingScreen', (tester) async {
+  testWidgets('SplashScreen Lewati button navigates directly to SavedPlacesScreen as Guest without login', (tester) async {
     await tester.binding.setSurfaceSize(const Size(430, 932));
 
     await tester.pumpWidget(
@@ -62,11 +63,11 @@ void main() {
     );
     await tester.pump();
 
-    // Tap 'Lewati' button immediately on Slide 1
+    // Tap 'Lewati' button immediately on Slide 1 -> langsung masuk sebagai tamu ke SavedPlacesScreen
     await tester.tap(find.text('Lewati'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.byType(LocationOnboardingScreen), findsOneWidget);
+    expect(find.byType(SavedPlacesScreen), findsOneWidget);
   });
 }

@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
+import '../../../saved/presentation/screens/saved_places_screen.dart';
+import '../../services/auth_session.dart';
 import 'location_onboarding_screen.dart';
 
 class OnboardingSlideData {
@@ -136,6 +138,27 @@ class _SplashScreenState extends State<SplashScreen>
     } else {
       _goToOnboarding();
     }
+  }
+
+  /// Lewati langsung masuk ke beranda sebagai Tamu (Guest Mode) tanpa login
+  void _skipAsGuest() {
+    _autoSlideTimer?.cancel();
+    AuthSession.instance.setGuestMode();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (_, __, ___) => const SavedPlacesScreen(isGuest: true),
+        transitionsBuilder: (_, animation, __, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return FadeTransition(opacity: curved, child: child);
+        },
+      ),
+      (route) => false,
+    );
   }
 
   void _goToOnboarding() {
@@ -296,40 +319,44 @@ class _SplashScreenState extends State<SplashScreen>
               },
             ),
 
-            // 2. Fixed Top Bar: Tombol Lewati di Kanan Atas (Seragam dengan Izinkan Akses Lokasi)
+            // 2. Fixed Top Bar: Tombol Lewati di Kanan Atas -> Langsung Masuk sebagai Tamu Tanpa Login
             Positioned(
               top: 0,
               right: 0,
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: GestureDetector(
-                    onTap: _goToOnboarding,
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppColors.sageBorder.withValues(alpha: 0.9),
-                          width: 1.0,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
+                      onTap: _skipAsGuest,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.sageBorder.withValues(alpha: 0.9),
+                            width: 1.0,
                           ),
-                        ],
-                      ),
-                      child: const Text(
-                        'Lewati',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.forest,
-                          letterSpacing: 0.2,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'Lewati',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.forest,
+                            letterSpacing: 0.2,
+                          ),
                         ),
                       ),
                     ),
