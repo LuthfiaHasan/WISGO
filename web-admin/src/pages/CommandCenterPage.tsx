@@ -804,6 +804,61 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
             </div>
           )}
 
+          {/* Card Mekanisme Fitur SOS Offline di Area Tanpa Jaringan / Blank Spot */}
+          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center shrink-0">
+                <WifiOff className="w-4 h-4 text-[#F26B4B]" />
+              </div>
+              <div>
+                <h3 className="text-xs font-extrabold text-[#1B1F1A]">
+                  Protokol &amp; Mekanisme SOS di Lokasi Tanpa Sinyal (Blank Spot / Zero Cellular Data)
+                </h3>
+                <p className="text-[11px] text-[#4A5248]">
+                  Sistem otomatis mengaktifkan 4 jalur alternatif saat aplikasi mendeteksi hilangnya koneksi internet:
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs pt-1">
+              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
+                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
+                  <span>1. SMS Satelit / Gateway GSM</span>
+                </div>
+                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
+                  Kirim teks otomatis ringkas berformat koordinat satelit yang tetap tembus jaringan seluler dasar 2G/GSM tanpa kuota internet.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
+                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
+                  <span>2. Cache Kontak Darurat Lokal</span>
+                </div>
+                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
+                  Nomor posko SAR, BPBD kab/kota, dan nomor pengelola nagari di-cache otomatis ke HP sebelum wisatawan memasuki jalur ekstrem.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
+                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
+                  <span>3. Tombol Darurat Seluler 112 / 115</span>
+                </div>
+                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
+                  Panggilan darurat terpadu yang dijamin operator telekomunikasi nasional untuk tetap terhubung meski tanpa pulsa dan tanpa data.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
+                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
+                  <span>4. Last Known GPS Tracking</span>
+                </div>
+                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
+                  Pusat Komando merekam titik koordinat terakhir sebelum sinyal putus sebagai titik acuan awal pencarian evakuasi SAR.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Daftar Tiket Sinyal Darurat SOS */}
           <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
             <div className="flex items-center justify-between">

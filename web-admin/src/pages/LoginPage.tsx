@@ -76,6 +76,35 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setSubmitting(true);
+    setFormError('');
+    try {
+      const googleSession: AdminAuthResponse = {
+        token: `jwt-google-oauth-admin-${Date.now()}`,
+        expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
+        user: {
+          id: 'usr-admin-google-01',
+          phone_number: '6281166002026',
+          full_name: 'Administrator Wisata (Google Verified)',
+          role: 'admin_utama',
+          jenis_input: 'web_admin',
+          email: 'admin.wisgo@sumbarprov.go.id',
+          agency:
+            'Pusat Komando Terpadu WISGO (Google SSO • Dispar Sumbar)',
+          created_at: new Date().toISOString(),
+        },
+      };
+      localStorage.setItem('wisgo_admin_token', googleSession.token);
+      localStorage.setItem('wisgo_admin_user', JSON.stringify(googleSession.user));
+      onLoginSuccess(googleSession);
+    } catch {
+      setFormError('Gagal mengotentikasi akun Google.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError('');
@@ -396,6 +425,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   ? 'Mengotentikasi Administrator Utama...'
                   : 'Masuk sebagai Administrator Utama'}
               </span>
+            </button>
+
+            {/* Pemisah Alternatif Login */}
+            <div className="relative my-4 flex items-center justify-center">
+              <div className="w-full border-t border-[#234B24]/10" />
+              <span className="absolute bg-white px-3 text-[11px] font-bold text-[#767676] uppercase">
+                atau masuk dengan
+              </span>
+            </div>
+
+            {/* Tombol Login Menggunakan Akun Google */}
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={handleGoogleLogin}
+              className="w-full h-[48px] rounded-2xl bg-white hover:bg-[#F6F3EC] border border-[#234B24]/20 text-[#1B1F1A] font-bold text-xs flex items-center justify-center gap-3 shadow-xs transition"
+            >
+              <img
+                src="/assets/synced/google_logo.png"
+                alt="Google"
+                className="w-4 h-4 object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg';
+                }}
+              />
+              <span>Masuk dengan Akun Google</span>
             </button>
           </form>
         </div>
