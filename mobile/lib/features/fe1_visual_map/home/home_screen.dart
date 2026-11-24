@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/crowd_badge.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../data/destination_repository.dart';
