@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/app_locale.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../services/osrm_route_service.dart';
 
 /// Gaya peta real (tanpa perlu API Key berbayar)
 enum SumbarMapLayer {
@@ -262,6 +262,8 @@ class SumbarRealMapWidget extends StatefulWidget {
     this.onDestinationSelected,
     this.onOpenFullShunlu,
     this.compactNavigationTitle,
+    this.onLaunchGoogleMapsRoute,
+    this.onOpenGoogleMapsHub,
   });
 
   final double height;
@@ -269,6 +271,8 @@ class SumbarRealMapWidget extends StatefulWidget {
   final ValueChanged<SumbarMapDestination>? onDestinationSelected;
   final VoidCallback? onOpenFullShunlu;
   final String? compactNavigationTitle;
+  final ValueChanged<SumbarMapDestination>? onLaunchGoogleMapsRoute;
+  final VoidCallback? onOpenGoogleMapsHub;
 
   @override
   State<SumbarRealMapWidget> createState() => _SumbarRealMapWidgetState();
@@ -280,21 +284,41 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
   String? _selectedId;
   double _currentZoom = 8.4;
 
-  // State rute jalan raya nyata (OSRM — mengikuti jalan sungguhan + alternatif)
-  List<RoadRouteOption>? _roadRoutes;
-  int _activeRouteIndex = 0;
-  bool _isLoadingRoute = false;
-
   static const LatLng _sumbarCenter = LatLng(-0.62, 100.43);
+
+  Future<void> _launchGmapsRoute(SumbarMapDestination dest) async {
+    if (widget.onLaunchGoogleMapsRoute != null) {
+      widget.onLaunchGoogleMapsRoute!(dest);
+      return;
+    }
+    final lat = dest.position.latitude;
+    final lng = dest.position.longitude;
+    final nativeUri = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
+    final webUri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
+    try {
+      if (await canLaunchUrl(nativeUri)) {
+        await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _launchGmapsHub() async {
+    if (widget.onOpenGoogleMapsHub != null) {
+      widget.onOpenGoogleMapsHub!();
+      return;
+    }
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=Wisata+Sumatera+Barat');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedId = widget.selectedDestinationId;
-    final initial = _findById(_selectedId);
-    if (initial != null) {
-      _loadRoadRouteFor(initial);
-    }
   }
 
   @override
@@ -304,62 +328,12 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
         widget.selectedDestinationId != null) {
       setState(() {
         _selectedId = widget.selectedDestinationId;
-        _activeRouteIndex = 0;
       });
       final target = _findById(widget.selectedDestinationId);
       if (target != null) {
         _focusDestination(target);
-        _loadRoadRouteFor(target);
       }
     }
-  }
-
-  Future<void> _loadRoadRouteFor(SumbarMapDestination dest) async {
-    final cached = OsrmRouteService.getCached(kPadangUserPosition, dest.position);
-    if (cached != null) {
-      if (!mounted) return;
-      setState(() {
-        _roadRoutes = cached;
-        _activeRouteIndex = 0;
-        _isLoadingRoute = false;
-      });
-      _fitRouteBounds(cached.first.points);
-      return;
-    }
-
-    setState(() {
-      _isLoadingRoute = true;
-      _roadRoutes = null;
-      _activeRouteIndex = 0;
-    });
-
-    final routes = await OsrmRouteService.fetchRoutes(
-      origin: kPadangUserPosition,
-      destination: dest.position,
-    );
-
-    if (!mounted || _selectedId != dest.id) return;
-    setState(() {
-      _roadRoutes = routes;
-      _activeRouteIndex = 0;
-      _isLoadingRoute = false;
-    });
-    if (routes != null && routes.isNotEmpty) {
-      _fitRouteBounds(routes.first.points);
-    }
-  }
-
-  void _fitRouteBounds(List<LatLng> points) {
-    if (points.length < 2) return;
-    try {
-      final bounds = LatLngBounds.fromPoints(points);
-      _mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: bounds,
-          padding: const EdgeInsets.fromLTRB(34, 52, 48, 108),
-        ),
-      );
-    } catch (_) {}
   }
 
   SumbarMapDestination? _findById(String? id) {
@@ -371,32 +345,15 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
   }
 
   void _focusDestination(SumbarMapDestination dest) {
-    final midLat = (kPadangUserPosition.latitude + dest.position.latitude) / 2;
-    final midLng = (kPadangUserPosition.longitude + dest.position.longitude) / 2;
-    final dist = const Distance().as(
-      LengthUnit.Kilometer,
-      kPadangUserPosition,
-      dest.position,
-    );
-    final zoom = dist < 10
-        ? 13.0
-        : dist < 30
-            ? 11.2
-            : dist < 70
-                ? 9.8
-                : 8.8;
-    _currentZoom = zoom;
+    _currentZoom = 11.5;
     try {
-      _mapController.move(LatLng(midLat, midLng), zoom);
+      _mapController.move(dest.position, _currentZoom);
     } catch (_) {}
   }
 
   void _resetOverview() {
     setState(() {
       _selectedId = null;
-      _roadRoutes = null;
-      _activeRouteIndex = 0;
-      _isLoadingRoute = false;
     });
     _currentZoom = 8.4;
     try {
@@ -411,229 +368,9 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
     } catch (_) {}
   }
 
-  void _openTurnByTurnSheet(
-    SumbarMapDestination dest,
-    RoadRouteOption route,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.62,
-          minChildSize: 0.4,
-          maxChildSize: 0.88,
-          expand: false,
-          builder: (_, scrollCtrl) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: AppColors.cream,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.warmBorder,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A73E8),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.directions_car_rounded,
-                            color: Colors.white,
-                            size: 21,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                dest.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.ink,
-                                ),
-                              ),
-                              Text(
-                                '${route.formattedDistance} • ${route.formattedDuration} • ${AppLocale.tr('Jalur Jalan Nyata', 'Real Road Route')}',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1A73E8),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          icon: const Icon(Icons.close_rounded, size: 20),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1, color: AppColors.warmBorder),
-                  Expanded(
-                    child: ListView.separated(
-                      controller: scrollCtrl,
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                      itemCount: route.steps.length,
-                      separatorBuilder: (_, __) => const Divider(
-                        height: 1,
-                        indent: 48,
-                        color: AppColors.warmBorder,
-                      ),
-                      itemBuilder: (_, idx) {
-                        final step = route.steps[idx];
-                        final isFirstOrLast =
-                            idx == 0 || idx == route.steps.length - 1;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: isFirstOrLast
-                                      ? AppColors.sage
-                                      : const Color(0xFFE8F0FE),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  step.icon,
-                                  size: 18,
-                                  color: isFirstOrLast
-                                      ? AppColors.forest
-                                      : const Color(0xFF1A73E8),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      step.instruction,
-                                      style: const TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.ink,
-                                      ),
-                                    ),
-                                    if (step.distanceMeters > 0)
-                                      Text(
-                                        step.formattedDistance,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.muted,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final selectedDest = _findById(_selectedId);
-
-    // Garis arteri utama Trans-Sumatera (tampil saat overview belum memilih satu tujuan)
-    final mainArtery = kSumbarMapDestinations
-        .firstWhere((d) => d.id == 'lembah-harau')
-        .routeFromPadang;
-
-    final routes = _roadRoutes;
-    final hasRealRoutes =
-        selectedDest != null && routes != null && routes.isNotEmpty;
-    final safeRouteIdx =
-        hasRealRoutes ? _activeRouteIndex.clamp(0, routes.length - 1) : 0;
-    final activeRoadRoute = hasRealRoutes ? routes[safeRouteIdx] : null;
-
-    final activePolylinePoints =
-        activeRoadRoute?.points ?? selectedDest?.routeFromPadang ?? mainArtery;
-
-    // Susun polyline: rute alternatif (abu-biru lembut) di bawah, rute aktif (biru Google Maps) di atas
-    final polylines = <Polyline>[];
-    if (hasRealRoutes && routes.length > 1) {
-      for (var i = 0; i < routes.length; i++) {
-        if (i == safeRouteIdx) continue;
-        polylines.add(
-          Polyline(
-            points: routes[i].points,
-            strokeWidth: 7.0,
-            color: Colors.white.withValues(alpha: 0.85),
-          ),
-        );
-        polylines.add(
-          Polyline(
-            points: routes[i].points,
-            strokeWidth: 4.2,
-            color: const Color(0xFF94A3B8).withValues(alpha: 0.92),
-          ),
-        );
-      }
-    }
-
-    // Rute utama terpilih (mengikuti jalan nyata seperti Google Maps!)
-    polylines.addAll([
-      Polyline(
-        points: activePolylinePoints,
-        strokeWidth: selectedDest != null ? 8.2 : 6.0,
-        color: selectedDest != null
-            ? const Color(0xFF0F4C81).withValues(alpha: 0.85)
-            : Colors.white.withValues(alpha: 0.9),
-      ),
-      Polyline(
-        points: activePolylinePoints,
-        strokeWidth: selectedDest != null ? 5.2 : 3.5,
-        color: selectedDest != null
-            ? const Color(0xFF1A73E8)
-            : AppColors.forest,
-      ),
-    ]);
-
-    // Langkah belokan pertama yang bermakna untuk preview di kartu bawah
-    RoadRouteStep? nextTurnStep;
-    if (activeRoadRoute != null && activeRoadRoute.steps.length > 1) {
-      nextTurnStep = activeRoadRoute.steps[1];
-    } else if (activeRoadRoute != null && activeRoadRoute.steps.isNotEmpty) {
-      nextTurnStep = activeRoadRoute.steps.first;
-    }
 
     return Container(
       height: widget.height,
@@ -653,21 +390,12 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
         borderRadius: BorderRadius.circular(18.5),
         child: Stack(
           children: [
-            // 1. REAL INTERACTIVE FLUTTER MAP (Esri Street / Satellite Hybrid / Topo)
+            // 1. REAL INTERACTIVE FLUTTER MAP (Ringan: tanpa garis rute / OSRM tracking)
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                initialCenter: selectedDest != null
-                    ? LatLng(
-                        (kPadangUserPosition.latitude +
-                                selectedDest.position.latitude) /
-                            2,
-                        (kPadangUserPosition.longitude +
-                                selectedDest.position.longitude) /
-                            2,
-                      )
-                    : _sumbarCenter,
-                initialZoom: selectedDest != null ? 10.8 : 8.4,
+                initialCenter: selectedDest?.position ?? _sumbarCenter,
+                initialZoom: selectedDest != null ? 11.5 : 8.4,
                 minZoom: 6.5,
                 maxZoom: 18.0,
                 onPositionChanged: (pos, _) {
@@ -686,9 +414,6 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                     userAgentPackageName: 'com.wisgo.rancakin',
                     maxZoom: 18,
                   ),
-
-                // Polyline Rute Jalan Nyata (OSRM + Alternatif seperti Google Maps)
-                PolylineLayer(polylines: polylines),
 
                 // Markers: Lokasi Pengguna + 10 Destinasi Sumbar
                 MarkerLayer(
@@ -734,10 +459,8 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                           onTap: () {
                             setState(() {
                               _selectedId = dest.id;
-                              _activeRouteIndex = 0;
                             });
                             _focusDestination(dest);
-                            _loadRoadRouteFor(dest);
                             widget.onDestinationSelected?.call(dest);
                           },
                           child: AnimatedContainer(
@@ -790,33 +513,18 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_isLoadingRoute)
-                      const SizedBox(
-                        width: 9,
-                        height: 9,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.8,
-                          color: Color(0xFF1A73E8),
-                        ),
-                      )
-                    else
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF16A34A),
-                          shape: BoxShape.circle,
-                        ),
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF16A34A),
+                        shape: BoxShape.circle,
                       ),
+                    ),
                     const SizedBox(width: 5),
                     Text(
-                      _isLoadingRoute
-                          ? AppLocale.tr(
-                              'Mencari jalur jalan...',
-                              'Finding road route...',
-                            )
-                          : (widget.compactNavigationTitle ??
-                              '${AppLocale.tr('10 Destinasi', '10 Destinations')} • ${_activeLayer.label}'),
+                      widget.compactNavigationTitle ??
+                          '${AppLocale.tr('10 Destinasi', '10 Destinations')} • ${_activeLayer.label}',
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -889,7 +597,7 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
             // 4. RIGHT SIDE: Zoom (+ / -) & Recenter Buttons
             Positioned(
               right: 10,
-              bottom: selectedDest != null && activeRoadRoute != null ? 112 : 68,
+              bottom: 68,
               child: Column(
                 children: [
                   _MapControlBtn(
@@ -908,6 +616,12 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                     icon: Icons.my_location_rounded,
                     tooltip: AppLocale.tr('Lihat Semua Sumbar', 'Reset Overview'),
                     onTap: _resetOverview,
+                  ),
+                  const SizedBox(height: 5),
+                  _MapControlBtn(
+                    icon: Icons.map_rounded,
+                    tooltip: AppLocale.tr('Buka Peta Wisata di Google Maps', 'Open Tourist Map in Google Maps'),
+                    onTap: _launchGmapsHub,
                   ),
                 ],
               ),
@@ -969,165 +683,59 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                                       ),
                                     ),
                                     Text(
-                                      activeRoadRoute != null
-                                          ? '${activeRoadRoute.formattedDistance} • ${activeRoadRoute.formattedDuration} (${safeRouteIdx == 0 ? AppLocale.tr('Jalur Tercepat', 'Fastest Route') : AppLocale.tr('Jalur Alternatif', 'Alt. Route')})'
-                                          : '${selectedDest.region} • ${selectedDest.distanceLabel} (${selectedDest.durationLabel})',
+                                      '${selectedDest.region} • ${selectedDest.distanceLabel} (${selectedDest.durationLabel})',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: activeRoadRoute != null
-                                            ? const Color(0xFF1A73E8)
-                                            : AppColors.muted,
+                                        color: AppColors.muted,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              if (activeRoadRoute != null)
-                                GestureDetector(
-                                  onTap: () => _openTurnByTurnSheet(
-                                    selectedDest,
-                                    activeRoadRoute,
+                              GestureDetector(
+                                onTap: () => _launchGmapsRoute(selectedDest),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
                                   ),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF1A73E8),
-                                      borderRadius: BorderRadius.circular(9),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.directions_rounded,
-                                          size: 12,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          AppLocale.tr('Arahkan', 'Guide'),
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w800,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1A73E8),
+                                    borderRadius: BorderRadius.circular(9),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF1A73E8).withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                )
-                              else if (widget.onOpenFullShunlu != null)
-                                GestureDetector(
-                                  onTap: widget.onOpenFullShunlu,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.forest,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      AppLocale.tr('Rute →', 'Route →'),
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.navigation_rounded,
+                                        size: 12,
                                         color: Colors.white,
                                       ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          // Preview Belokan Berikutnya + Pilihan Jalur Alternatif (jika tersedia)
-                          if (nextTurnStep != null ||
-                              (hasRealRoutes && routes.length > 1)) ...[
-                            const SizedBox(height: 7),
-                            Row(
-                              children: [
-                                if (nextTurnStep != null)
-                                  Expanded(
-                                    child: GestureDetector(
-                                      onTap: () => _openTurnByTurnSheet(
-                                        selectedDest,
-                                        activeRoadRoute!,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            nextTurnStep.icon,
-                                            size: 13,
-                                            color: const Color(0xFF1A73E8),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Expanded(
-                                            child: Text(
-                                              nextTurnStep.instruction,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.ink,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                if (hasRealRoutes && routes.length > 1) ...[
-                                  const SizedBox(width: 6),
-                                  ...List.generate(routes.length, (rIdx) {
-                                    final isPick = rIdx == safeRouteIdx;
-                                    return Padding(
-                                      padding: const EdgeInsets.only(left: 4),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() => _activeRouteIndex = rIdx);
-                                          _fitRouteBounds(routes[rIdx].points);
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6.5,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: isPick
-                                                ? const Color(0xFF1A73E8)
-                                                : AppColors.creamSubtle,
-                                            borderRadius:
-                                                BorderRadius.circular(7),
-                                            border: Border.all(
-                                              color: isPick
-                                                  ? const Color(0xFF1A73E8)
-                                                  : AppColors.warmBorder,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            '${AppLocale.tr('Jalur', 'R')}${rIdx + 1}',
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w800,
-                                              color: isPick
-                                                  ? Colors.white
-                                                  : AppColors.muted,
-                                            ),
-                                          ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        AppLocale.tr('Rute GMaps', 'GMaps Route'),
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
                                         ),
                                       ),
-                                    );
-                                  }),
-                                ],
-                              ],
-                            ),
-                          ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       )
                     : Row(
@@ -1135,19 +743,48 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                           const Icon(
                             Icons.touch_app_rounded,
                             color: AppColors.forest,
-                            size: 18,
+                            size: 17,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               AppLocale.tr(
-                                'Ketuk pin destinasi untuk melihat jalur jalan raya tercepat & panduan arah.',
-                                'Tap any destination pin to get the fastest real road route & directions.',
+                                'Ketuk pin destinasi untuk rute langsung ke Google Maps.',
+                                'Tap any destination pin for direct Google Maps route.',
                               ),
                               style: const TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _launchGmapsHub,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A73E8),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.map_rounded, size: 11, color: Colors.white),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    AppLocale.tr('Buka GMaps', 'Open GMaps'),
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

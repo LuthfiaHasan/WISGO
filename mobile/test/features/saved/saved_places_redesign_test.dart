@@ -27,7 +27,7 @@ void main() {
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -850));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Tempat Parkir Warga'), findsOneWidget);
-    expect(find.text('360° & Denah'), findsWidgets);
+    expect(find.text('Panorama 360°'), findsWidgets);
     expect(find.text('Detail'), findsWidgets);
 
     // Scroll back up to Search Bar

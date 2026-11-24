@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../saved/presentation/screens/saved_places_screen.dart';
+import '../../services/auth_session.dart';
 import '../widgets/animated_3d_route_scene.dart';
 import 'login_screen.dart';
 
@@ -18,10 +19,11 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
   bool _isButtonPressed = false;
 
   void _skipToBeranda() {
+    AuthSession.instance.setGuestMode();
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 400),
-        pageBuilder: (_, __, ___) => const SavedPlacesScreen(),
+        pageBuilder: (_, __, ___) => const SavedPlacesScreen(isGuest: true),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -99,49 +101,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
             ),
           ),
 
-          // 3. Tombol Lewati di Kanan Atas (SAMA PERSIS DENGAN SPLASHSCREEN)
-          Positioned(
-            top: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: GestureDetector(
-                  onTap: _skipToBeranda,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.sageBorder.withValues(alpha: 0.9),
-                        width: 1.0,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Text(
-                      'Lewati',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.forest,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // 4. Konten Utama Layar
+          // 3. Konten Utama Layar
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -310,6 +270,52 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                   ),
                 );
               },
+            ),
+          ),
+
+          // 4. Fixed Top Bar: Tombol Lewati di Kanan Atas (FLOATING DI LAPISAN TERATAS AGAR BISA DI-KLIK)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  child: InkWell(
+                    onTap: _skipToBeranda,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.sageBorder.withValues(alpha: 0.9),
+                          width: 1.0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'Lewati',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.forest,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
