@@ -69,10 +69,12 @@ void main() {
     expect(find.text('Pesan via WhatsApp Vendor'), findsOneWidget);
 
     // Facilities section is visible in modal
+    await tester.drag(find.byType(ListView).last, const Offset(0, -350));
+    await tester.pumpAndSettle();
     expect(find.text('LINGKUP FASILITAS KAWASAN WISATA'), findsOneWidget);
 
     // Scroll down to see Reviews & Fees
-    await tester.drag(find.byType(ListView).last, const Offset(0, -600));
+    await tester.drag(find.byType(ListView).last, const Offset(0, -450));
     await tester.pumpAndSettle();
 
     // - Verified Reviews (REQUEST 1)
