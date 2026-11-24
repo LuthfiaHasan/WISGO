@@ -91,6 +91,10 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
   // Selected Trip for Trip Planner Modal
   const [selectedPlannerTrip, setSelectedPlannerTrip] = useState<OpenTrip | null>(null);
 
+  // Selected Organizer for 7-Points Verification Sheet
+  const [selectedOrganizerFor7Points, setSelectedOrganizerFor7Points] =
+    useState<OpenTripOrganizer | null>(null);
+
   // New Packing Item Form
   const [newTemplateCat, setNewTemplateCat] = useState<string>('Wisata Alam & Pegunungan');
   const [newTemplateItem, setNewTemplateItem] = useState('');
@@ -109,6 +113,20 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
         ? 'Penyelenggara Open Trip berhasil diverifikasi dan disetujui.'
         : 'Status pengajuan penyelenggara telah diperbarui.',
       status === 'Terverifikasi' ? 'success' : 'info'
+    );
+  };
+
+  // Update Escrow Status
+  const handleUpdateTripEscrow = (tripId: string, newStatus: string) => {
+    const updated = OpenTripsRepo.updateEscrowStatus(tripId, newStatus);
+    setTrips(updated);
+    showToast(
+      newStatus === 'DICAIRKAN_KE_PENYELENGGARA'
+        ? 'Dana rekening penampung (Escrow) berhasil dicairkan ke penyelenggara.'
+        : newStatus === 'DILAPORKAN_INSIDEN'
+        ? 'Dana escrow dibekukan sementara karena investigasi laporan insiden.'
+        : 'Status dana escrow dipulihkan ke rekening penampung aman.',
+      newStatus === 'DILAPORKAN_INSIDEN' ? 'warning' : 'success'
     );
   };
 
@@ -416,6 +434,85 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                       </strong>
                     </div>
 
+                    {/* Rincian Biaya Termasuk vs Tidak Termasuk */}
+                    {trip.includes && trip.includes.length > 0 && (
+                      <div className="space-y-1 pt-1 text-[11px]">
+                        <span className="text-[#4A5248] font-bold block">Fasilitas Termasuk:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {trip.includes.slice(0, 2).map((inc, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-md bg-[#16A34A]/10 text-[#166534] font-medium text-[10px]">
+                              ✓ {inc}
+                            </span>
+                          ))}
+                          {trip.includes.length > 2 && (
+                            <span className="text-[10px] text-[#767676] font-bold self-center">
+                              +{trip.includes.length - 2} lainnya
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Status Rekening Penampung (Escrow) WISGO */}
+                    <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
+                          <ShieldCheck className="w-3.5 h-3.5 text-[#16A34A]" />
+                          <span>Escrow WISGO</span>
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                            trip.escrow_status === 'DICAIRKAN_KE_PENYELENGGARA'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : trip.escrow_status === 'DILAPORKAN_INSIDEN'
+                              ? 'bg-red-100 text-red-700 animate-pulse'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {trip.escrow_status === 'DICAIRKAN_KE_PENYELENGGARA'
+                            ? 'Dicairkan ke Host'
+                            : trip.escrow_status === 'DILAPORKAN_INSIDEN'
+                            ? 'Dibekukan (Insiden)'
+                            : 'Ditahan Aman di Escrow'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] font-mono text-[#4A5248]">
+                        <span>Dana Tertahan:</span>
+                        <strong className="text-[#234B24]">
+                          Rp {(trip.escrow_amount_idr || trip.cost_per_person * 8).toLocaleString('id-ID')}
+                        </strong>
+                      </div>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        {trip.escrow_status !== 'DICAIRKAN_KE_PENYELENGGARA' && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateTripEscrow(trip.id, 'DICAIRKAN_KE_PENYELENGGARA')}
+                            className="flex-1 py-1 px-2 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white text-[10px] font-bold transition text-center shadow-2xs"
+                          >
+                            Cairkan Escrow
+                          </button>
+                        )}
+                        {trip.escrow_status !== 'DILAPORKAN_INSIDEN' && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateTripEscrow(trip.id, 'DILAPORKAN_INSIDEN')}
+                            className="flex-1 py-1 px-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-bold transition text-center"
+                          >
+                            Bekukan (Sengketa)
+                          </button>
+                        )}
+                        {trip.escrow_status === 'DILAPORKAN_INSIDEN' && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateTripEscrow(trip.id, 'DITAHAN_DI_ESCROW')}
+                            className="flex-1 py-1 px-2 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-bold transition text-center"
+                          >
+                            Buka Pembekuan
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Ketentuan Aktivitas di Luar Aplikasi */}
                     {trip.external_activity_terms && (
                       <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 leading-relaxed">
@@ -537,12 +634,20 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrganizerFor7Points(org)}
+                            className="px-2.5 py-1 rounded-lg bg-[#234B24]/10 hover:bg-[#234B24]/20 text-[#234B24] font-black text-[10px] transition border border-[#234B24]/15"
+                            title="Buka Lembar 7 Poin Verifikasi"
+                          >
+                            7 Poin
+                          </button>
                           {org.status !== 'Terverifikasi' && (
                             <button
                               type="button"
                               onClick={() => handleUpdateOrganizerStatus(org.id, 'Terverifikasi')}
-                              className="px-3 py-1 rounded-lg bg-[#1E9E5A] hover:bg-[#166534] text-white font-bold text-xs transition"
+                              className="px-3 py-1 rounded-lg bg-[#1E9E5A] hover:bg-[#166534] text-white font-bold text-xs transition shadow-2xs"
                             >
                               Setujui
                             </button>
@@ -828,6 +933,82 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
 
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              {/* Meeting Point & Integrasi Google Maps */}
+              <div className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#234B24]/10 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-xs">
+                    <MapPin className="w-4 h-4 text-[#F26B4B]" />
+                    <span>Titik Kumpul (Meeting Point) Terintegrasi</span>
+                  </span>
+                  <a
+                    href={
+                      selectedPlannerTrip.meeting_point_gmaps_url ||
+                      (selectedPlannerTrip.meeting_point_coords
+                        ? `https://maps.google.com/?q=${selectedPlannerTrip.meeting_point_coords}`
+                        : '#')
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[28px] px-2.5 py-1 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white font-extrabold text-[10px] flex items-center gap-1 transition"
+                  >
+                    <span>Buka Google Maps</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <p className="font-bold text-[#1B1F1A]">
+                  {selectedPlannerTrip.meeting_point_name || 'Titik Kumpul Terjadwal'}
+                </p>
+                {selectedPlannerTrip.meeting_point_address && (
+                  <p className="text-[11px] text-[#4A5248]">
+                    {selectedPlannerTrip.meeting_point_address}
+                  </p>
+                )}
+                {selectedPlannerTrip.meeting_point_coords && (
+                  <p className="text-[10px] font-mono text-[#767676]">
+                    Koordinat GPS: {selectedPlannerTrip.meeting_point_coords}
+                  </p>
+                )}
+              </div>
+
+              {/* Rincian Biaya Transparan (Includes vs Excludes) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-2">
+                  <span className="font-extrabold text-emerald-900 block text-xs">
+                    Fasilitas Termasuk (Include):
+                  </span>
+                  <ul className="space-y-1.5 text-[11px] text-emerald-800">
+                    {(selectedPlannerTrip.includes || [
+                      'Transportasi Pulang-Pergi Titik Kumpul - Lokasi',
+                      'Tiket Masuk Resmi Retribusi Perda & Asuransi',
+                      'Pemandu Berlisensi & First Aid',
+                      'Makan Siang & Air Mineral',
+                    ]).map((inc, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="font-black text-emerald-700">✓</span>
+                        <span>{inc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 space-y-2">
+                  <span className="font-extrabold text-rose-900 block text-xs">
+                    Tidak Termasuk (Exclude):
+                  </span>
+                  <ul className="space-y-1.5 text-[11px] text-rose-800">
+                    {(selectedPlannerTrip.excludes || [
+                      'Pengeluaran Belanja Pribadi & Oleh-oleh',
+                      'Wahana Tambahan di Luar Paket',
+                      'Tips Sukarela Kru Lapangan',
+                    ]).map((exc, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="font-black text-rose-600">✕</span>
+                        <span>{exc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
               {/* 1. Checklist Perjalanan */}
               <div className="space-y-2.5">
                 <h4 className="text-xs font-black uppercase tracking-wider text-[#234B24] flex items-center gap-1.5">
@@ -852,7 +1033,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
               <div className="space-y-2.5">
                 <h4 className="text-xs font-black uppercase tracking-wider text-[#234B24] flex items-center gap-1.5">
                   <Briefcase className="w-4 h-4 text-[#3B82F6]" />
-                  Pembagian Tugas &amp; Jobdesk
+                  Pembagian Tugas &amp; Jobdesk Tim
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {(selectedPlannerTrip.trip_planner?.jobdesk_assignments || [
@@ -909,6 +1090,22 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* 5. SOP & Ketentuan Aktivitas di Luar Aplikasi */}
+              {selectedPlannerTrip.offline_rules && selectedPlannerTrip.offline_rules.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+                  <span className="font-extrabold text-amber-900 block text-xs">
+                    Ketentuan Aktivitas di Luar Aplikasi (SOP Keamanan &amp; Adat):
+                  </span>
+                  <div className="space-y-1.5">
+                    {selectedPlannerTrip.offline_rules.map((rule, i) => (
+                      <div key={i} className="text-[11px] text-amber-950">
+                        <strong>• {rule.title}:</strong> {rule.ruleDescription}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -919,6 +1116,139 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                 className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C]"
               >
                 Tutup Pratinjau
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 7 POIN VERIFIKASI PENYELENGGARA */}
+      {selectedOrganizerFor7Points && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl border border-[#CFD8BE] shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="p-5 border-b border-[#234B24]/10 bg-[#F6F3EC] flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#166534] px-2 py-0.5 rounded bg-emerald-100 border border-emerald-300">
+                  7 Poin Legalitas Penyelenggara
+                </span>
+                <h3 className="text-base font-extrabold text-[#1B1F1A] mt-1">
+                  {selectedOrganizerFor7Points.name}
+                </h3>
+                <p className="text-xs text-[#4A5248]">
+                  {selectedOrganizerFor7Points.agency_name} • WhatsApp: +{selectedOrganizerFor7Points.phone_number}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedOrganizerFor7Points(null)}
+                className="w-8 h-8 rounded-full bg-white text-[#767676] hover:text-[#1B1F1A] hover:bg-gray-100 flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body 7 Poin */}
+            <div className="p-6 overflow-y-auto space-y-3.5 flex-1 text-xs">
+              {/* Poin 1 */}
+              <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#1B1F1A] block">1. Status e-KTP Dukcapil</strong>
+                  <span className="text-emerald-700 font-semibold text-[11px]">
+                    {selectedOrganizerFor7Points.ktp_status || 'Terverifikasi e-KTP Dukcapil RI'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Poin 2 */}
+              <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#1B1F1A] block">2. Dokumen Fisik e-KTP Asli</strong>
+                  <span className="text-[#4A5248] text-[11px]">
+                    {selectedOrganizerFor7Points.ktp_upload_status || 'Dokumen e-KTP Terunggah & Valid'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Poin 3 */}
+              <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#1B1F1A] block">3. Verifikasi Biometrik Wajah (Liveness Test)</strong>
+                  <span className="text-emerald-700 font-semibold text-[11px]">
+                    {selectedOrganizerFor7Points.face_verification_status || 'Verifikasi Wajah Liveness Lolos (99.2%)'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Poin 4 */}
+              <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-[#234B24] shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#1B1F1A] block">4. Lisensi Kepemanduan HPI / Pokdarwis</strong>
+                  <span className="text-[#234B24] font-mono text-[11px]">
+                    {selectedOrganizerFor7Points.license_number || 'SK Lisensi Pramuwisata HPI Aktif'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Poin 5 */}
+              <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-[#234B24] shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#1B1F1A] block">5. Sertifikasi Kompetensi &amp; P3K BNSP</strong>
+                  <span className="text-[#4A5248] text-[11px]">
+                    {selectedOrganizerFor7Points.special_competency || 'Sertifikasi P3K & Wilderness First Aid BNSP'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Poin 6 */}
+              <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 flex items-start gap-2.5">
+                <Users className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#1B1F1A] block">6. Rating &amp; Rekam Jejak Trip Selesai</strong>
+                  <span className="text-amber-800 font-bold text-[11px]">
+                    Rating {selectedOrganizerFor7Points.rating || 4.95} ★ • {selectedOrganizerFor7Points.completed_trips || 38} Perjalanan Selesai
+                  </span>
+                </div>
+              </div>
+
+              {/* Poin 7 */}
+              <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10 flex items-start gap-2.5">
+                <Compass className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-[#1B1F1A] block">7. Media Sosial &amp; Jam Terbang Lapangan</strong>
+                  <span className="text-blue-700 font-semibold text-[11px] block">
+                    {selectedOrganizerFor7Points.social_media || '@wisatapemandu_sumbar'}
+                  </span>
+                  <span className="text-[#767676] text-[10px]">
+                    {selectedOrganizerFor7Points.experience_years || '4+ Tahun Pengalaman Pemandu Wisata Alam'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Rekening Penampung Escrow */}
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-[11px] leading-relaxed">
+                <strong>🛡️ Garansi Escrow WISGO:</strong>{' '}
+                {selectedOrganizerFor7Points.escrow_protection_note ||
+                  'Dana peserta ditahan di Rekening Penampung (Escrow) WISGO dan baru diteruskan ke penyelenggara setelah trip selesai dan terkonfirmasi tanpa insiden pungli.'}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-[#234B24]/10 bg-[#F6F3EC] flex items-center justify-between">
+              <span className="text-[11px] text-[#4A5248]">
+                Status: <strong>{selectedOrganizerFor7Points.status}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedOrganizerFor7Points(null)}
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C]"
+              >
+                Tutup
               </button>
             </div>
           </div>

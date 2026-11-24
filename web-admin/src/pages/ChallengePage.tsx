@@ -1058,16 +1058,18 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                   {/* Kriteria Ambang Batas */}
                   <div className="p-3.5 rounded-2xl bg-white border border-[#234B24]/10 space-y-2 text-xs">
                     <div className="flex justify-between items-center">
+                      <span className="text-[#767676]">Rentang XP Resmi:</span>
+                      <strong className="text-[#234B24] font-mono">
+                        {lvl.min_xp} {lvl.max_xp ? `– ${lvl.max_xp} XP` : 'XP+'}
+                      </strong>
+                    </div>
+                    <div className="flex justify-between items-center">
                       <span className="text-[#767676]">Min. Trip Selesai:</span>
                       <strong className="text-[#1B1F1A] font-mono">{lvl.min_trips} Trip</strong>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-[#767676]">Min. Check Point:</span>
+                      <span className="text-[#767676]">Min. Check Point GPS:</span>
                       <strong className="text-[#1B1F1A] font-mono">{lvl.min_checkpoints} Titik</strong>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[#767676]">Min. XP Dibutuhkan:</span>
-                      <strong className="text-[#234B24] font-mono">{lvl.min_xp} XP</strong>
                     </div>
                   </div>
 

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 76" width="64" height="76" fill="none">
+  <defs>
+    <filter id="pinShadowMusik" x="-20%" y="-10%" width="140%" height="130%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#142618" flood-opacity="0.25"/>
+    </filter>
+    <linearGradient id="pinGradMusik" x1="12" y1="6" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+  <!-- Pin Body -->
+  <path d="M32 4 C18.7 4 8 14.7 8 28 C8 44 28 66 32 70 C36 66 56 44 56 28 C56 14.7 45.3 4 32 4 Z" fill="url(#pinGradMusik)" filter="url(#pinShadowMusik)" stroke="#FFFFFF" stroke-width="2.5"/>
+  <!-- Inner White Circle -->
+  <circle cx="32" cy="28" r="15" fill="#FFFFFF"/>
+  <!-- Traditional Music Note & Sound Waves Icon -->
+  <path d="M36 19 L36 29 C35.2 28.4 34.2 28 33 28 C30.8 28 29 29.8 29 32 C29 34.2 30.8 36 33 36 C35.2 36 37 34.2 37 32 L37 23 L41 23 C41.6 23 42 22.6 42 22 L42 20 C42 19.4 41.6 19 41 19 L36 19 Z" fill="#059669"/>
+  <circle cx="25" cy="24" r="1.5" fill="#10B981"/>
+  <circle cx="23" cy="28" r="1.5" fill="#10B981"/>
+</svg>

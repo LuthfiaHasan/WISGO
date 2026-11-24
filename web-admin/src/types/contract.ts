@@ -121,37 +121,42 @@ export type Scene360 = PanoramaScene;
 
 // ============================================================================
 // 6. HOTSPOT PIN 360° (panorama_hotspots)
+// Kanvas Bersih: Narasi Sejarah, Musik Tradisional Minang & Navigasi Pindah Scene
 // ============================================================================
 export type HotspotPinCategory =
-  | 'fasilitas_umum'
-  | 'mitra_umkm'
-  | 'loket_info'
+  | 'narasi_sejarah'
+  | 'musik_minang'
   | 'navigasi_arah'
+  | 'narasi'
+  | 'musik'
+  | 'navigasi'
   | string;
 
 export interface PanoramaHotspot {
   id: string; // varchar pk
   scene_id: string; // varchar not null
   pin_type?: HotspotPinCategory; // varchar not null
-  color_token?: string; // varchar not null (teal, coral, amber, blue)
+  color_token?: string; // varchar not null (amber, emerald, blue, teal, coral)
   pitch: number; // float8 not null
   yaw: number; // float8 not null
   title: string; // varchar not null
-  target_ref?: string; // varchar not null (WA link/no atau target scene_id, fallback "")
-  voice_text?: string; // text not null (fallback "")
+  target_ref?: string; // varchar not null (scene_id target atau audio URL)
+  voice_text?: string; // text not null (teks narasi sejarah Minangkabau)
   description: string; // text not null
   created_at?: string; // timestamptz not null
 
   // UI convenience aliases:
   category?: HotspotPinCategory;
-  whatsapp_number?: string;
   target_scene_id?: string;
   audio_url?: string;
-  partner_name?: string;
-  partner_fee?: number;
+  music_url?: string;
+  narration_duration_sec?: number;
   facility_subtype?: string;
   operating_hours?: string;
   type?: string;
+  whatsapp_number?: string;
+  partner_name?: string;
+  partner_fee?: number;
 }
 export type HotspotPin = PanoramaHotspot;
 export type Hotspot360 = PanoramaHotspot;
@@ -452,6 +457,9 @@ export interface SosSignal {
   lng?: number;
   battery_level?: number;
   signal_status?: string;
+  signal_channel?: 'ONLINE_GPS' | 'OFFLINE_MORSE_SIRINE' | string;
+  morse_active?: boolean;
+  siren_active?: boolean;
   medical_notes?: string;
   sar_unit_assigned?: string;
   delivery_method?: 'online' | 'offline_fallback';
@@ -697,13 +705,19 @@ export interface User {
 }
 
 // ============================================================================
-// 25. OPEN TRIPS / CARI BARENGAN (open_trips)
+// 25. OPEN TRIPS / CARI BARENGAN (open_trips) — TRIP GO RESMI
 // ============================================================================
+export type EscrowStatus =
+  | 'DITAHAN_DI_ESCROW'
+  | 'DICAIRKAN_KE_PENYELENGGARA'
+  | 'DILAPORKAN_INSIDEN'
+  | string;
+
 export interface OpenTrip {
   id: string; // varchar pk (Dipakai sebagai kode grup / invitation code)
   user_id: string; // varchar not null (Ref: users.id)
   title: string; // varchar not null
-  destination_route: string; // varchar not null (Format delimiter: "H1: BIM | H2: Harau | H3: Bukittinggi")
+  destination_route: string; // varchar not null (Single destination or route label)
   departure_date: string; // timestamptz not null
   available_seats: number; // int4 not null
   cost_per_person: number; // numeric not null (IDR)
@@ -733,13 +747,35 @@ export interface OpenTrip {
   pokdarwis_verified?: boolean;
 
   // Single Destination & Auto-Category Constraint
+  singleDestination?: string;
   destination_id?: string;
   destination_name?: string;
   travel_category?: string;
   meeting_point_name?: string;
+  meeting_point_address?: string;
+  meeting_point_lat?: number;
+  meeting_point_lng?: number;
   meeting_point_gmaps_url?: string;
   meeting_point_coords?: string;
   external_activity_terms?: string;
+
+  // Rincian Biaya Transparan (Includes vs Excludes)
+  includes?: string[];
+  excludes?: string[];
+
+  // Rekening Penampung (Escrow) WISGO
+  escrow_status?: EscrowStatus;
+  escrow_amount_idr?: number;
+
+  // SOP & Ketentuan Aktivitas di Luar Aplikasi
+  offline_rules?: {
+    title: string;
+    ruleDescription: string;
+    iconCode?: string;
+  }[];
+
+  // Penyelenggara Terverifikasi Terkait
+  organizer?: OpenTripOrganizer;
 
   // Trip Planner Detail
   trip_planner?: {
@@ -752,13 +788,14 @@ export interface OpenTrip {
 export type OpenTripItem = OpenTrip;
 
 // ============================================================================
-// VERIFIKASI PENYELENGGARA OPEN TRIP (Kredibilitas Komunitas/Pemandu)
+// VERIFIKASI PENYELENGGARA OPEN TRIP (7 Poin Kredibilitas Komunitas/Pemandu)
 // ============================================================================
 export interface OpenTripOrganizer {
   id: string;
   name: string;
   agency_name: string;
   phone_number: string;
+  phone?: string;
   doc_ktp_url?: string;
   doc_sk_pokdarwis_url?: string;
   doc_guide_cert_url?: string;
@@ -766,6 +803,20 @@ export interface OpenTripOrganizer {
   submitted_at: string;
   verified_at?: string;
   notes?: string;
+
+  // 7 Poin Spesifikasi Frontend-2
+  is_verified?: boolean;
+  verification_badge?: string; // 'Penyelenggara Terverifikasi WISGO'
+  ktp_status?: string; // 'Terverifikasi e-KTP Dukcapil RI'
+  ktp_upload_status?: string; // 'Dokumen e-KTP Terunggah & Valid'
+  face_verification_status?: string; // 'Verifikasi Wajah (Liveness Biometrik) Lolos'
+  license_number?: string; // SK Pramuwisata HPI / Pokdarwis
+  special_competency?: string; // 'Sertifikasi P3K & Wilderness First Aid BNSP'
+  rating?: number; // e.g. 4.95
+  completed_trips?: number; // e.g. 38
+  social_media?: string; // e.g. '@rahmathidayat_guide (Instagram)'
+  experience_years?: string; // e.g. '4+ Tahun Pengalaman Pemandu Wisata Alam'
+  escrow_protection_note?: string;
 }
 
 // ============================================================================
@@ -806,6 +857,7 @@ export interface AdventurerLevelConfig {
   min_trips: number;
   min_checkpoints: number;
   min_xp: number;
+  max_xp?: number;
   badge_icon: string;
   badge_color: string;
   perk_description: string;

@@ -838,10 +838,10 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
 
               <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
                 <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
-                  <span>4. Last Known GPS Tracking</span>
+                  <span>4. Kode Morse Senter &amp; Sirine Darurat</span>
                 </div>
                 <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
-                  Pusat Komando merekam titik koordinat terakhir sebelum sinyal putus sebagai titik acuan awal pencarian evakuasi SAR.
+                  Aplikasi mengaktifkan kedipan senter Kode Morse (S-O-S: 3 pendek, 3 panjang, 3 pendek) dan sirine audio lapangan HP saat blank spot total untuk mempermudah pencarian tim SAR.
                 </p>
               </div>
             </div>
@@ -907,6 +907,12 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-xs">
                               <Wifi className="w-3 h-3 text-emerald-600" />
                               <span>Online GPS Langsung</span>
+                            </span>
+                          )}
+                          {(ticket.morse_active || ticket.signal_channel === 'OFFLINE_MORSE_SIRINE') && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1 shadow-xs animate-pulse">
+                              <AlertTriangle className="w-3 h-3 text-rose-600" />
+                              <span>Morse Senter &amp; Sirine Aktif</span>
                             </span>
                           )}
                         </div>

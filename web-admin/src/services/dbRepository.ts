@@ -756,6 +756,15 @@ export const OpenTripsRepo = {
     writeTable(DB_KEYS.OPEN_TRIPS, updated);
     return updated;
   },
+  updateEscrowStatus: (
+    id: string,
+    escrow_status: 'DITAHAN_DI_ESCROW' | 'DICAIRKAN_KE_PENYELENGGARA' | 'DILAPORKAN_INSIDEN' | string
+  ): OpenTrip[] => {
+    const list = OpenTripsRepo.getAll();
+    const updated = list.map((t) => (t.id === id ? { ...t, escrow_status } : t));
+    writeTable(DB_KEYS.OPEN_TRIPS, updated);
+    return updated;
+  },
 };
 
 // ============================================================================
