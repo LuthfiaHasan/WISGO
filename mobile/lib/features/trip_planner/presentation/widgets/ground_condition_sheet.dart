@@ -183,6 +183,52 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Banner Penjelasan Sumber Ulasan Nyata di Lokasi (Item 4 Spesifikasi Trip Go)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF86EFAC)),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.verified_user_rounded,
+                          color: Color(0xFF15803D),
+                          size: 19,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ulasan Pengunjung Riil di Lokasi',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF166534),
+                                ),
+                              ),
+                              SizedBox(height: 3),
+                              Text(
+                                'Review yang ditampilkan di bawah ini murni merupakan gambaran kondisi nyata berdasarkan pengalaman wisatawan yang sudah pernah mengunjungi tempat wisata ini langsung, bukan dari peserta Trip Go yang belum pernah ke lokasi.',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: Color(0xFF14532D),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   // Banner Edukasi: Bebas tanpa template, minimal 30 karakter
                   Container(
                     padding: const EdgeInsets.all(12),

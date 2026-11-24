@@ -10,11 +10,13 @@ import 'package:rancakin_mobile/features/trip_planner/presentation/widgets/trip_
 
 void main() {
   group('Travel Experience & 5 Fitur Utama Tests', () {
-    test('1. TravelExperience model stores Strava-like metrics, checkpoints and badges', () {
+    test('1. TravelExperience model stores Jejak WISGO metadata, checkpoints and badges', () {
       final exp = kSampleTravelExperiences.first;
       expect(exp.title, contains('Lembah Harau'));
-      expect(exp.distanceKm, 14.8);
-      expect(exp.elevationGainMeters, 520);
+      expect(exp.destinationName, 'Lembah Harau');
+      expect(exp.cityRegency, contains('Lima Puluh Kota'));
+      expect(exp.stampNumber, 4);
+      expect(exp.levelTitle, 'Panjelajah Nagari');
       expect(exp.checkpoints.length, 4);
       expect(exp.completedCheckpointsCount, 4);
       expect(exp.achievements.isNotEmpty, true);
@@ -65,7 +67,7 @@ void main() {
       expect(sample.tags.isNotEmpty, true);
     });
 
-    testWidgets('5. TravelShareCardSheet renders Strava metrics and WisgoQrCodePainter', (tester) async {
+    testWidgets('5. TravelShareCardSheet renders Jejak WISGO sticker and full card modes', (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -81,20 +83,24 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Template Posting Sosial Media'), findsOneWidget);
-      expect(find.text('Gaya Instagram'), findsOneWidget);
+      expect(find.text('Jejak WISGO'), findsWidgets);
+      expect(find.text('Stiker & Kartu'), findsOneWidget);
       expect(find.text('Feed Komunitas'), findsOneWidget);
-      expect(find.text('Upload Foto'), findsOneWidget);
-      expect(find.text('Post ke Feed WISGO'), findsOneWidget);
-      expect(find.text('Unduh Post'), findsOneWidget);
-      expect(find.text('14.8'), findsWidgets);
-      expect(find.text('+520'), findsWidgets);
-      expect(find.byType(WisgoQrCodePainter), findsNothing); // painter used inside CustomPaint
+      expect(find.text('Stiker Transparan (PNG)'), findsOneWidget);
+      expect(find.text('Kartu Penuh'), findsOneWidget);
+      expect(find.text('Ganti Foto Sendiri'), findsOneWidget);
+      expect(find.text('DESTINASI'), findsOneWidget);
+      expect(find.text('JEJAK SUMBAR'), findsOneWidget);
+      expect(find.text('GELAR'), findsOneWidget);
+      expect(find.text('WISGO'), findsOneWidget);
+      expect(find.text('Dijelajahi bersama WISGO'), findsOneWidget);
+      expect(find.text('IG Story'), findsOneWidget);
+      expect(find.text('TikTok'), findsOneWidget);
+      expect(find.text('WhatsApp Status'), findsOneWidget);
       expect(find.byType(CustomPaint), findsWidgets);
-      expect(find.text('Aplikasi WISGO Sumatera Barat'), findsOneWidget);
     });
 
-    testWidgets('6. TravelExperienceDetailSheet renders checkpoint timeline', (tester) async {
+    testWidgets('6. TravelExperienceDetailSheet renders checkpoint timeline and Jejak WISGO info', (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -110,10 +116,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Riwayat Perjalanan (Experience)'), findsOneWidget);
-      expect(find.text('Check Point Perjalanan'), findsOneWidget);
+      expect(find.text('Jejak WISGO'), findsOneWidget);
+      expect(find.text('Check Point Kunjungan'), findsOneWidget);
       expect(find.text('Gerbang Nagari & Pos Registrasi Pokdarwis Harau'), findsOneWidget);
-      expect(find.text('Bagikan Template Posting (QR Promosi)'), findsOneWidget);
+      expect(find.text('Buka Stiker & Kartu Jejak WISGO'), findsOneWidget);
     });
 
     testWidgets('7. TripPlannerDetailSheet renders manual rundown and add rundown button', (tester) async {

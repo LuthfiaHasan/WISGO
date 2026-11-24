@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
 
-/// Modal Informasi & Ketentuan Aktivitas Luar Aplikasi (Item 7 Open Trip)
+/// Modal Informasi & Ketentuan Aktivitas Luar Aplikasi (Item 7 Trip Go)
 class OpenTripOfflineRulesSheet extends StatelessWidget {
   final OpenTripItem trip;
 
@@ -94,7 +94,7 @@ class OpenTripOfflineRulesSheet extends StatelessWidget {
                 border: Border.all(color: const Color(0xFFFDE68A)),
               ),
               child: const Text(
-                'Demi keamanan, kenyamanan bersama, dan kelestarian alam Sumatera Barat, seluruh peserta wajib membaca dan menaati ketentuan di bawah ini selama mengikuti Open Trip.',
+                'Demi keamanan, kenyamanan bersama, dan kelestarian alam Sumatera Barat, seluruh peserta wajib membaca dan menaati ketentuan di bawah ini selama mengikuti Trip Go.',
                 style: TextStyle(
                   fontSize: 11.5,
                   color: Color(0xFF92400E),

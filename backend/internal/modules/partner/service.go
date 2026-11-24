@@ -2,6 +2,7 @@ package partner
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
@@ -25,7 +26,21 @@ func (s *partnerService) GetPartners(category string, spicyLevel *int, nagari st
 	if spicyLevel != nil && (*spicyLevel < 0 || *spicyLevel > 5) {
 		return nil, errors.New("Level pedas harus berada dalam rentang 0 sampai 5")
 	}
-	return s.repo.FindAll(category, spicyLevel, nagari)
+
+	// Normalisasi cerdas agar toleran terhadap input frontend (Bahasa Indonesia UI vs Backend Enum)
+	normCat := strings.ToLower(strings.TrimSpace(category))
+	switch normCat {
+	case "penginapan":
+		normCat = "homestay"
+	case "transportasi":
+		normCat = "transport"
+	case "atraksi", "tiket":
+		normCat = "pokdarwis"
+	case "pakaian adat", "baju adat":
+		normCat = "pakaian_adat"
+	}
+
+	return s.repo.FindAll(normCat, spicyLevel, nagari)
 }
 
 func (s *partnerService) GetPartnerDetail(id string) (*models.PartnerNagari, error) {

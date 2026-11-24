@@ -1,10 +1,20 @@
 package community
 
 import (
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
+)
+
+var (
+	ErrSharedTripNotFound    = errors.New("Open Trip tidak ditemukan")
+	ErrHostCannotJoinOwnTrip = errors.New("Host tidak perlu bergabung ke trip miliknya sendiri")
+	ErrSharedTripFull        = errors.New("Kuota kursi Open Trip sudah penuh")
+	ErrUnauthorizedDelete    = errors.New("Hanya pembuat (host) yang dapat menghapus Open Trip ini")
+	ErrJoinUserIDRequired    = errors.New("user_id wajib diisi untuk bergabung ke Open Trip")
+	ErrDeleteUserIDRequired  = errors.New("user_id wajib diisi untuk menghapus Open Trip")
 )
 
 // Repository antarmuka penyimpanan data komunitas dan papan cari barengan
@@ -13,6 +23,8 @@ type Repository interface {
 	GetCommunityPlaces() []models.CommunityPlace
 	SaveSharedTrip(trip models.SharedTrip) error
 	GetSharedTrips() []models.SharedTrip
+	JoinSharedTrip(id, userID string) (*models.SharedTrip, error)
+	DeleteSharedTrip(id, userID string) error
 }
 
 type inMemoryRepository struct {
@@ -98,5 +110,41 @@ func (r *inMemoryRepository) GetSharedTrips() []models.SharedTrip {
 	result := make([]models.SharedTrip, len(r.sharedTrips))
 	copy(result, r.sharedTrips)
 	return result
+}
+
+func (r *inMemoryRepository) JoinSharedTrip(id, userID string) (*models.SharedTrip, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := range r.sharedTrips {
+		if r.sharedTrips[i].ID == id {
+			if r.sharedTrips[i].UserID == userID {
+				return nil, ErrHostCannotJoinOwnTrip
+			}
+			if r.sharedTrips[i].AvailableSeats <= 0 {
+				return nil, ErrSharedTripFull
+			}
+			r.sharedTrips[i].AvailableSeats--
+			updated := r.sharedTrips[i]
+			return &updated, nil
+		}
+	}
+	return nil, ErrSharedTripNotFound
+}
+
+func (r *inMemoryRepository) DeleteSharedTrip(id, userID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := range r.sharedTrips {
+		if r.sharedTrips[i].ID == id {
+			if r.sharedTrips[i].UserID != userID {
+				return ErrUnauthorizedDelete
+			}
+			r.sharedTrips = append(r.sharedTrips[:i], r.sharedTrips[i+1:]...)
+			return nil
+		}
+	}
+	return ErrSharedTripNotFound
 }
 

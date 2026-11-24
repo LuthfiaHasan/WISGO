@@ -511,7 +511,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
           senderName: '${_hostNameController.text.trim()} (Host)',
           senderRole: 'Host',
           message:
-              'Jadwal Open Trip resmi diterbitkan melalui sistem WISGO! Silakan berkoordinasi di sini.',
+              'Jadwal Trip Go resmi diterbitkan melalui sistem WISGO! Silakan berkoordinasi di sini.',
           timestamp: 'Baru saja',
           isPinnedNotice: true,
         ),
@@ -526,7 +526,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       SnackBar(
         backgroundColor: AppColors.forest,
         content: Text(
-          ' Berhasil membuat Open Trip: ${newTrip.singleDestination} ($newTrip.category)!',
+          ' Berhasil membuat Trip Go: ${newTrip.singleDestination} ($newTrip.category)!',
         ),
       ),
     );
@@ -562,7 +562,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               const SizedBox(height: 16),
 
               const Text(
-                'BUAT JADWAL OPEN TRIP BARU',
+                'BUAT JADWAL TRIP GO BARU',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -643,7 +643,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               const SizedBox(height: 16),
 
               // Judul Trip
-              _buildFieldLabel('JUDUL OPEN TRIP'),
+              _buildFieldLabel('JUDUL TRIP GO'),
               TextField(
                 controller: _titleController,
                 decoration: _inputDecoration('Contoh: Eksplor Tebing Lembah Harau'),
@@ -946,7 +946,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: const Text(
-                  'Publikasikan Open Trip ke Sistem WISGO',
+                  'Publikasikan Trip Go ke Sistem WISGO',
                   style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
                 ),
               ),

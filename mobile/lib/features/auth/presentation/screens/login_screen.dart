@@ -627,7 +627,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(
-                                  _isSignUp ? 'Daftar Akun Baru' : 'Masuk ke Akun',
+                                  _isSignUp ? 'Daftar Akun Baru' : 'Masuk ke Akun WISGO',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 28,
@@ -921,7 +921,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text(
                                     _isSignUp
                                         ? 'Daftar & Kirim Kode OTP'
-                                        : 'Kirim Kode OTP WhatsApp',
+                                        : 'Kirim Kode OTP 4 Digit',
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,

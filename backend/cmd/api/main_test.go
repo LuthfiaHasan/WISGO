@@ -27,7 +27,7 @@ func TestIntegratedGinRouter(t *testing.T) {
 	}
 
 	// 2. Test CORS Headers
-	reqOptions := httptest.NewRequest(http.MethodOptions, "/api/v1/partners", nil)
+	reqOptions := httptest.NewRequest(http.MethodOptions, "/api/v1/destinations", nil)
 	wOptions := httptest.NewRecorder()
 	r.ServeHTTP(wOptions, reqOptions)
 
@@ -63,17 +63,16 @@ func TestIntegratedGinRouter(t *testing.T) {
 		})
 	}
 
-	// 4. Test Modul BE-2 (Clean Vertical Slice Architecture)
+	// 4. Test Modul BE-2 (Clean Vertical Slice Architecture - Active Clusters)
 	be2Endpoints := []struct {
 		name   string
 		method string
 		path   string
 	}{
-		{"Partner Module", http.MethodGet, "/api/v1/partners"},
-		{"Community Module", http.MethodGet, "/api/v1/community/places"},
-		{"Escrow FX Module", http.MethodGet, "/api/v1/escrow/currency/myr-rate"},
-		{"Gamification Module", http.MethodGet, "/api/v1/gamification/passport"},
-		{"Analytics Module", http.MethodGet, "/api/v1/analytics/dispar/summary"},
+		{"Community Places Module", http.MethodGet, "/api/v1/community/places"},
+		{"Community Open Trips Module", http.MethodGet, "/api/v1/community/shared-trips"},
+		{"Gamification Passport Module", http.MethodGet, "/api/v1/gamification/passport"},
+		{"Analytics Dispar Module", http.MethodGet, "/api/v1/analytics/dispar/summary"},
 	}
 
 	for _, tc := range be2Endpoints {
