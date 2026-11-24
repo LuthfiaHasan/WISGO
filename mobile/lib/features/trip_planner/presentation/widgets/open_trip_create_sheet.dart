@@ -57,12 +57,313 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
   DateTime _departureDate = DateTime(2026, 12, 12);
   TimeOfDay _departureTime = const TimeOfDay(hour: 6, minute: 30);
 
+  // Itinerary Rundown yang diisi manual oleh pembuat trip (Sistem sediakan slot jam)
+  late List<TripItineraryStep> _itinerarySteps;
+
   @override
   void initState() {
     super.initState();
     _selectedSingleDestination = _availableSingleDestinations.first;
     _autoDeterminedCategory = determineCategoryForDestination(_selectedSingleDestination);
     _titleController.text = 'Eksplorasi $_selectedSingleDestination';
+
+    // Inisialisasi rundown default dengan jam dari sistem untuk diisi/diubah pembuat trip
+    _itinerarySteps = [
+      TripItineraryStep(
+        time: '06.30 - 07.30 WIB',
+        activity: 'Kumpul di Meeting Point & Briefing Tim',
+        location: _meetingPointNameController.text.trim(),
+        notes: 'Presensi peserta, doa bersama & pembagian ID card rombongan',
+        status: 'Akan Datang',
+        icon: Icons.flag_rounded,
+      ),
+      TripItineraryStep(
+        time: '07.30 - 11.30 WIB',
+        activity: 'Eksplorasi Destinasi Utama & Trekking Alam',
+        location: _selectedSingleDestination,
+        notes: 'Aktivitas eksplorasi dipandu pemandu lokal bersertifikat',
+        status: 'Akan Datang',
+        icon: Icons.landscape_rounded,
+      ),
+      TripItineraryStep(
+        time: '11.30 - 13.00 WIB',
+        activity: 'Ishoma (Istirahat, Sholat & Santap Kuliner Minang)',
+        location: 'Gazebo / Rest Area Nagari',
+        notes: 'Makan siang bersama sajian khas lokal nagari',
+        status: 'Akan Datang',
+        icon: Icons.restaurant_rounded,
+      ),
+      TripItineraryStep(
+        time: '13.00 - 16.30 WIB',
+        activity: 'Sesi Foto Dokumentasi Bebas & Penutupan Trip',
+        location: _selectedSingleDestination,
+        notes: 'Foto bersama dan persiapan kembali ke titik asal',
+        status: 'Akan Datang',
+        icon: Icons.camera_alt_rounded,
+      ),
+    ];
+  }
+
+  void _showAddOrEditItineraryDialog({int? editIndex}) {
+    final isEditing = editIndex != null;
+    final existingStep = isEditing ? _itinerarySteps[editIndex] : null;
+
+    final activityCtrl = TextEditingController(text: existingStep?.activity ?? '');
+    final locationCtrl = TextEditingController(
+      text: existingStep != null ? existingStep.location : _selectedSingleDestination,
+    );
+    final notesCtrl = TextEditingController(text: existingStep?.notes ?? '');
+
+    // Waktu yang disediakan sistem (slot jam)
+    String selectedTimeRange = existingStep?.time ?? '08.00 - 09.30 WIB';
+    TimeOfDay startTime = const TimeOfDay(hour: 8, minute: 0);
+    TimeOfDay endTime = const TimeOfDay(hour: 9, minute: 30);
+
+    // Preset jam rundown yang disediakan sistem
+    final systemPresetHours = [
+      '06.00 - 07.00 WIB',
+      '06.30 - 07.30 WIB',
+      '07.00 - 08.30 WIB',
+      '07.30 - 09.30 WIB',
+      '08.00 - 09.30 WIB',
+      '08.30 - 10.30 WIB',
+      '09.30 - 11.30 WIB',
+      '11.30 - 13.00 WIB',
+      '13.00 - 14.30 WIB',
+      '13.00 - 16.30 WIB',
+      '14.30 - 16.00 WIB',
+      '16.00 - 17.30 WIB',
+      '17.30 - 19.00 WIB',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.forest.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.schedule_rounded, color: AppColors.forest, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isEditing ? 'Ubah Item Rundown' : 'Tambah Rundown Baru',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.forest),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Info Sistem
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, color: Color(0xFF1D4ED8), size: 15),
+                          SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Sistem menyediakan pilihan jam. Silakan pilih jam lalu isi kegiatan manual di bawah.',
+                              style: TextStyle(fontSize: 10, color: Color(0xFF1E40AF)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 1. JAM / WAKTU (DISEDIAKAN SISTEM)
+                    const Text(
+                      'PILIHAN JAM / WAKTU (DARI SISTEM):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.cream,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.sageBorder),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: systemPresetHours.contains(selectedTimeRange)
+                              ? selectedTimeRange
+                              : null,
+                          hint: Text(selectedTimeRange, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.forest)),
+                          isExpanded: true,
+                          icon: const Icon(Icons.arrow_drop_down_rounded, color: AppColors.forest),
+                          items: systemPresetHours.map((h) {
+                            return DropdownMenuItem<String>(
+                              value: h,
+                              child: Text(h, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDialogState(() {
+                                selectedTimeRange = val;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Opsi Custom Jam Manual
+                    Row(
+                      children: [
+                        const Text('Atau pilih jam custom: ', style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        TextButton(
+                          onPressed: () async {
+                            final pickStart = await showTimePicker(context: dialogCtx, initialTime: startTime);
+                            if (pickStart != null && dialogCtx.mounted) {
+                              final pickEnd = await showTimePicker(context: dialogCtx, initialTime: endTime);
+                              if (pickEnd != null) {
+                                final sStr = '${pickStart.hour.toString().padLeft(2, '0')}.${pickStart.minute.toString().padLeft(2, '0')}';
+                                final eStr = '${pickEnd.hour.toString().padLeft(2, '0')}.${pickEnd.minute.toString().padLeft(2, '0')}';
+                                setDialogState(() {
+                                  selectedTimeRange = '$sStr - $eStr WIB';
+                                });
+                              }
+                            }
+                          },
+                          child: const Text('Pilih Jam Mulai & Selesai', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 2. NAMA KEGIATAN (DIISI MANUAL OLEH PEMBUAT TRIP)
+                    const Text(
+                      'NAMA KEGIATAN / AKTIVITAS (MANUAL):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: activityCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Cth: Kumpul & Briefing / Trekking Air Terjun',
+                        hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.cream,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 3. LOKASI KEGIATAN (MANUAL)
+                    const Text(
+                      'LOKASI / TEMPAT (MANUAL):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: locationCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Cth: Titik Kumpul Rest Area / Tebing Echo',
+                        hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.cream,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 4. CATATAN / SOP (MANUAL)
+                    const Text(
+                      'CATATAN / INSTRUKSI KHUSUS (MANUAL):',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: notesCtrl,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText: 'Cth: Wajib memakai alas kaki antiselip & jaket',
+                        hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        filled: true,
+                        fillColor: AppColors.cream,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Batal', style: TextStyle(color: AppColors.muted)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final activityText = activityCtrl.text.trim();
+                    if (activityText.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Nama kegiatan wajib diisi')),
+                      );
+                      return;
+                    }
+
+                    final newStep = TripItineraryStep(
+                      time: selectedTimeRange,
+                      activity: activityText,
+                      location: locationCtrl.text.trim().isEmpty ? _selectedSingleDestination : locationCtrl.text.trim(),
+                      notes: notesCtrl.text.trim().isEmpty ? 'Mengikuti instruksi pemandu' : notesCtrl.text.trim(),
+                      status: 'Akan Datang',
+                      icon: activityText.toLowerCase().contains('kumpul') || activityText.toLowerCase().contains('meeting')
+                          ? Icons.flag_rounded
+                          : (activityText.toLowerCase().contains('makan') || activityText.toLowerCase().contains('sholat')
+                              ? Icons.restaurant_rounded
+                              : (activityText.toLowerCase().contains('foto') || activityText.toLowerCase().contains('dokumentasi')
+                                  ? Icons.camera_alt_rounded
+                                  : Icons.landscape_rounded)),
+                    );
+
+                    setState(() {
+                      if (isEditing) {
+                        _itinerarySteps[editIndex] = newStep;
+                      } else {
+                        _itinerarySteps.add(newStep);
+                      }
+                    });
+
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(isEditing ? 'Simpan Perubahan' : 'Tambah Rundown'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -202,31 +503,14 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
           isPacked: true,
         ),
       ],
-      itinerary: [
-        TripItineraryStep(
-          time: '06.30 - 07.00 WIB',
-          activity: 'Kumpul di Titik Kumpul (Google Maps)',
-          location: _meetingPointNameController.text.trim(),
-          notes: 'Briefing dan presensi',
-          status: 'Akan Datang',
-          icon: Icons.place_rounded,
-        ),
-        TripItineraryStep(
-          time: '07.00 - 15.00 WIB',
-          activity: 'Eksplorasi $_selectedSingleDestination',
-          location: _selectedSingleDestination,
-          notes: 'Aktivitas inti dan dokumentasi',
-          status: 'Akan Datang',
-          icon: Icons.landscape_rounded,
-        ),
-      ],
+      itinerary: List<TripItineraryStep>.from(_itinerarySteps),
       messages: [
         TripChatMessage(
           id: 'm_host_init',
           senderName: '${_hostNameController.text.trim()} (Host)',
           senderRole: 'Host',
           message:
-              'Jadwal Open Trip resmi diterbitkan melalui sistem WISGO! Silakan berkoordinasi di sini.',
+              'Jadwal Trip Go resmi diterbitkan melalui sistem WISGO! Silakan berkoordinasi di sini.',
           timestamp: 'Baru saja',
           isPinnedNotice: true,
         ),
@@ -241,7 +525,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       SnackBar(
         backgroundColor: AppColors.forest,
         content: Text(
-          ' Berhasil membuat Open Trip: ${newTrip.singleDestination} ($newTrip.category)!',
+          ' Berhasil membuat Trip Go: ${newTrip.singleDestination} ($newTrip.category)!',
         ),
       ),
     );
@@ -277,7 +561,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               const SizedBox(height: 16),
 
               const Text(
-                'BUAT JADWAL OPEN TRIP BARU',
+                'BUAT JADWAL TRIP GO BARU',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -358,7 +642,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               const SizedBox(height: 16),
 
               // Judul Trip
-              _buildFieldLabel('JUDUL OPEN TRIP'),
+              _buildFieldLabel('JUDUL TRIP GO'),
               TextField(
                 controller: _titleController,
                 decoration: _inputDecoration('Contoh: Eksplor Tebing Lembah Harau'),
@@ -478,6 +762,161 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 14),
 
+              // RUNDOWN & ITINERARY PERJALANAN (DIISI MANUAL OLEH PEMBUAT TRIP)
+              _buildFieldLabel('RUNDOWN ITINERARY (DIISI MANUAL OLEH PEMBUAT TRIP)'),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.cream,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.sageBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppColors.forest.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.schedule_rounded, size: 16, color: AppColors.forest),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Jadwal Rundown Perjalanan',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.forest),
+                              ),
+                              Text(
+                                'Sistem menyediakan jam/waktu, Anda mengisi kegiatan & lokasi.',
+                                style: TextStyle(fontSize: 10, color: AppColors.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Daftar Item Rundown
+                    ..._itinerarySteps.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final step = entry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.sageBorder),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F1F8),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                step.time,
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF1E5B82)),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    step.activity,
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
+                                  ),
+                                  if (step.location.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.place_rounded, size: 11, color: AppColors.muted),
+                                        const SizedBox(width: 2),
+                                        Expanded(
+                                          child: Text(
+                                            step.location,
+                                            style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                  if (step.notes.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      step.notes,
+                                      style: TextStyle(fontSize: 9.5, color: AppColors.ink.withValues(alpha: 0.65)),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_rounded, size: 16, color: AppColors.forest),
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () => _showAddOrEditItineraryDialog(editIndex: idx),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red),
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    setState(() {
+                                      _itinerarySteps.removeAt(idx);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 6),
+
+                    // Tombol Tambah Item Rundown
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showAddOrEditItineraryDialog(),
+                        icon: const Icon(Icons.add_rounded, size: 16),
+                        label: const Text('Tambah Jam & Kegiatan Rundown', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.forest,
+                          side: const BorderSide(color: AppColors.forest),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
               // Penyelenggara & Verifikasi
               _buildFieldLabel('PENYELENGGARA TERVERIFIKASI'),
               TextField(
@@ -506,7 +945,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: const Text(
-                  'Publikasikan Open Trip ke Sistem WISGO',
+                  'Publikasikan Trip Go ke Sistem WISGO',
                   style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
                 ),
               ),

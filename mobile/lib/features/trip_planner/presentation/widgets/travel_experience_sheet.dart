@@ -3,7 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../models/travel_experience_model.dart';
 import 'travel_share_card_sheet.dart';
 
-/// Modal Rincian Experience & Riwayat Perjalanan (Konsep Strava)
+/// Modal Rincian Jejak WISGO (Kampanye Promosi Wisata)
 class TravelExperienceDetailSheet extends StatelessWidget {
   final TravelExperience experience;
 
@@ -60,7 +60,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
-                          Icons.directions_run_rounded,
+                          Icons.travel_explore_rounded,
                           color: AppColors.forest,
                           size: 20,
                         ),
@@ -71,17 +71,17 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Riwayat Perjalanan (Experience)',
+                              'Jejak WISGO',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 15.5,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.ink,
                               ),
                             ),
                             Text(
-                              experience.tripDate,
+                              '${experience.destinationName} • ${experience.tripDate}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -124,19 +124,19 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.place_rounded,
-                        color: AppColors.brush,
+                        color: AppColors.forest,
                         size: 15,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          experience.destinationName,
+                          '${experience.destinationName}, ${experience.cityRegency}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.brush,
+                            color: AppColors.forest,
                           ),
                         ),
                       ),
@@ -164,7 +164,59 @@ class TravelExperienceDetailSheet extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Strava-style Stat Highlight Banner
+                  // Foto Tempat Wisata
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: AspectRatio(
+                      aspectRatio: 1.4,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            experience.activePhotoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: AppColors.forest.withValues(alpha: 0.2),
+                              child: const Icon(Icons.landscape_rounded,
+                                  size: 48, color: AppColors.forest),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 10,
+                            left: 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.verified_rounded,
+                                      size: 11, color: Color(0xFF34D399)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    experience.badgeTitle,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Stat Highlight Banner: Jejak WISGO (Tanpa Pace, Kalori, Elevasi)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -179,50 +231,34 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            _buildStatTile(
-                              'Total Jarak',
-                              '${experience.distanceKm}',
-                              'km',
-                              Icons.straighten_rounded,
-                              AppColors.forest,
-                            ),
-                            _buildStatTile(
-                              'Total Waktu',
-                              experience.durationFormatted,
-                              '',
-                              Icons.schedule_rounded,
-                              const Color(0xFF0369A1),
-                            ),
-                          ],
+                        _buildStatTile(
+                          'Stempel Jejak',
+                          '#${experience.stampNumber}',
+                          '',
+                          Icons.verified_rounded,
+                          const Color(0xFF15803D),
                         ),
-                        const Divider(height: 22, color: AppColors.warmBorder),
-                        Row(
-                          children: [
-                            _buildStatTile(
-                              'Elevasi / Ketinggian',
-                              '+${experience.elevationGainMeters}',
-                              'm',
-                              Icons.trending_up_rounded,
-                              const Color(0xFFD97706),
-                            ),
-                            _buildStatTile(
-                              'Kalori Terbakar',
-                              '${experience.caloriesBurned}',
-                              'kkal',
-                              Icons.local_fire_department_rounded,
-                              const Color(0xFFDC2626),
-                            ),
-                          ],
+                        _buildStatTile(
+                          'Progres Destinasi',
+                          '${experience.visitedCount}/${experience.totalDestinations}',
+                          '',
+                          Icons.explore_rounded,
+                          AppColors.forest,
+                        ),
+                        _buildStatTile(
+                          'Gelar Petualang',
+                          experience.levelTitle,
+                          '',
+                          Icons.military_tech_rounded,
+                          const Color(0xFFD97706),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   // Catatan Cerita Pengalaman
                   Container(
@@ -256,163 +292,142 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
 
                   // Section Titik Checkpoint yang Direkam
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Check Point Perjalanan',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.forest.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '${experience.completedCheckpointsCount}/${experience.checkpoints.length} Tercatat',
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.forest,
+                  if (experience.checkpoints.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Check Point Kunjungan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.ink,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // List of checkpoints
-                  ...experience.checkpoints.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final cp = entry.value;
-                    final isLast = index == experience.checkpoints.length - 1;
-
-                    return IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Timeline indicator
-                          Column(
-                            children: [
-                              Container(
-                                width: 26,
-                                height: 26,
-                                decoration: BoxDecoration(
-                                  color: cp.isCompleted
-                                      ? AppColors.forest
-                                      : Colors.grey.shade400,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  cp.icon,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                              ),
-                              if (!isLast)
-                                Expanded(
-                                  child: Container(
-                                    width: 2,
-                                    color: AppColors.forest.withValues(alpha: 0.35),
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 2,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
                           ),
-                          const SizedBox(width: 12),
-                          // Content box
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: AppColors.warmBorder,
+                          decoration: BoxDecoration(
+                            color: AppColors.forest.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${experience.completedCheckpointsCount}/${experience.checkpoints.length} Tercatat',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    ...experience.checkpoints.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final cp = entry.value;
+                      final isLast = index == experience.checkpoints.length - 1;
+
+                      return IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              children: [
+                                Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    color: cp.isCompleted
+                                        ? AppColors.forest
+                                        : Colors.grey.shade400,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    cp.icon,
+                                    color: Colors.white,
+                                    size: 14,
                                   ),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            cp.name,
-                                            style: const TextStyle(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w800,
-                                              color: AppColors.ink,
-                                            ),
-                                          ),
-                                        ),
-                                        Text(
-                                          cp.time,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.forest,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      cp.notes,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.ink.withValues(
-                                          alpha: 0.7,
-                                        ),
+                                if (!isLast)
+                                  Expanded(
+                                    child: Container(
+                                      width: 2,
+                                      color: AppColors.forest.withValues(alpha: 0.35),
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 2,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.height_rounded,
-                                          size: 12,
-                                          color: Color(0xFFD97706),
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          'Ketinggian: ${cp.elevationMeters} mdpl',
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Color(0xFFD97706),
-                                            fontWeight: FontWeight.w600,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 14),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: AppColors.warmBorder,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              cp.name,
+                                              style: const TextStyle(
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w800,
+                                                color: AppColors.ink,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            cp.time,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.forest,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        cp.notes,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.ink.withValues(
+                                            alpha: 0.7,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-
-                  const SizedBox(height: 10),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 10),
+                  ],
 
                   // Lencana Pencapaian
                   if (experience.achievements.isNotEmpty) ...[
@@ -483,25 +498,28 @@ class TravelExperienceDetailSheet extends StatelessWidget {
 
                   const SizedBox(height: 18),
 
-                  // Big Share Button
+                  // Tombol Utama Buka Stiker & Kartu Jejak WISGO
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _openShareModal(context),
-                      icon: const Icon(Icons.share_rounded, size: 18),
-                      label: const Text(
-                        'Bagikan Template Posting (QR Promosi)',
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w900,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openShareModal(context),
+                        icon: const Icon(Icons.share_rounded, size: 18),
+                        label: const Text(
+                          'Buka Stiker & Kartu Jejak WISGO',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.forest,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.forest,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                       ),
                     ),
@@ -525,53 +543,28 @@ class TravelExperienceDetailSheet extends StatelessWidget {
     Color color,
   ) {
     return Expanded(
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: color,
             ),
-            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: color,
-                      ),
-                    ),
-                    if (unit.isNotEmpty) ...[
-                      const SizedBox(width: 2),
-                      Text(
-                        unit,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: color,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink.withValues(alpha: 0.65),
-                  ),
-                ),
-              ],
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink.withValues(alpha: 0.65),
             ),
           ),
         ],

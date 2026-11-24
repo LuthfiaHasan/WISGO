@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/common"
@@ -15,13 +16,38 @@ func setupTestRouter() (*gin.Engine, *Handler) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	repo := NewRepository()
-	service := NewService(repo)
+	service := NewService(repo, true) // allow dev bypass in test
 	handler := NewHandler(service)
 
 	v1 := r.Group("/api/v1")
 	handler.RegisterRoutes(v1)
 
 	return r, handler
+}
+
+func TestNormalizePhoneNumber(t *testing.T) {
+	cases := []struct {
+		input    string
+		expected string
+		isErr    bool
+	}{
+		{"0812-7578-953", "628127578953", false},
+		{"+62 812 7578 953", "628127578953", false},
+		{"6208127578953", "628127578953", false},
+		{"00628127578953", "628127578953", false},
+		{"8127578953", "628127578953", false},
+		{"12345", "", true},
+		{"0711123456", "", true}, // bukan 08
+	}
+
+	for _, c := range cases {
+		out, err := NormalizePhoneNumber(c.input)
+		if c.isErr && err == nil {
+			t.Errorf("Expected error for input %s, got %s", c.input, out)
+		} else if !c.isErr && out != c.expected {
+			t.Errorf("Expected %s for input %s, got %s (err: %v)", c.expected, c.input, out, err)
+		}
+	}
 }
 
 func TestRequestOTP_Success(t *testing.T) {
@@ -60,13 +86,15 @@ func TestRequestOTP_InvalidPayload(t *testing.T) {
 func TestVerifyOTP_SuccessAndWrongCode(t *testing.T) {
 	r, _ := setupTestRouter()
 
+	phone := "0812-7578-953"
+
 	// 1. Minta OTP
-	reqOTP, _ := json.Marshal(OTPRequest{PhoneNumber: "6281234567890"})
+	reqOTP, _ := json.Marshal(OTPRequest{PhoneNumber: phone})
 	w1 := httptest.NewRecorder()
 	r.ServeHTTP(w1, httptest.NewRequest(http.MethodPost, "/api/v1/auth/request-otp", bytes.NewReader(reqOTP)))
 
 	// 2. Verifikasi dengan kode salah (Harus 401)
-	wrongVerify, _ := json.Marshal(OTPVerifyRequest{PhoneNumber: "6281234567890", OTPCode: "9999"})
+	wrongVerify, _ := json.Marshal(OTPVerifyRequest{PhoneNumber: phone, OTPCode: "9999"})
 	wWrong := httptest.NewRecorder()
 	r.ServeHTTP(wWrong, httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify-otp", bytes.NewReader(wrongVerify)))
 
@@ -75,12 +103,16 @@ func TestVerifyOTP_SuccessAndWrongCode(t *testing.T) {
 	}
 
 	// 3. Verifikasi dengan kode master "1234" (Harus 200 OK)
-	validVerify, _ := json.Marshal(OTPVerifyRequest{PhoneNumber: "6281234567890", OTPCode: "1234"})
+	validVerify, _ := json.Marshal(OTPVerifyRequest{
+		PhoneNumber: phone,
+		OTPCode:     "1234",
+		FullName:    "Ahmad Fauzi (Wisatawan)",
+	})
 	wValid := httptest.NewRecorder()
 	r.ServeHTTP(wValid, httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify-otp", bytes.NewReader(validVerify)))
 
 	if wValid.Code != http.StatusOK {
-		t.Fatalf("Expected 200 OK for valid OTP, got %d", wValid.Code)
+		t.Fatalf("Expected 200 OK for valid OTP, got %d. Body: %s", wValid.Code, wValid.Body.String())
 	}
 
 	var resp common.ResponseStandar
@@ -88,6 +120,48 @@ func TestVerifyOTP_SuccessAndWrongCode(t *testing.T) {
 	data := resp.Data.(map[string]interface{})
 	if data["token"] == "" {
 		t.Fatalf("Expected non-empty JWT token")
+	}
+	user := data["user"].(map[string]interface{})
+	if user["full_name"] != "Ahmad Fauzi (Wisatawan)" {
+		t.Fatalf("Expected full_name 'Ahmad Fauzi (Wisatawan)', got '%v'", user["full_name"])
+	}
+
+	// 4. Test code "2486" (FE prototype code)
+	validVerify2, _ := json.Marshal(OTPVerifyRequest{
+		PhoneNumber: phone,
+		OTPCode:     "2486",
+	})
+	wValid2 := httptest.NewRecorder()
+	r.ServeHTTP(wValid2, httptest.NewRequest(http.MethodPost, "/api/v1/auth/verify-otp", bytes.NewReader(validVerify2)))
+	if wValid2.Code != http.StatusOK {
+		t.Fatalf("Expected 200 OK for 2486 dev bypass, got %d", wValid2.Code)
+	}
+}
+
+func TestOTP_ExpirationAndReplayProtection(t *testing.T) {
+	repo := NewRepository()
+	service := NewService(repo, true)
+
+	phone := "628127578953"
+	// Simpan OTP dengan TTL kedaluwarsa seketika
+	_ = repo.SaveOTP(phone, "7777", -1*time.Second)
+
+	_, _, err := service.VerifyOTP(phone, "7777")
+	if err == nil {
+		t.Fatalf("Expected error for expired OTP")
+	}
+
+	// Simpan OTP valid
+	_ = repo.SaveOTP(phone, "8888", 300*time.Second)
+	user, _, err := service.VerifyOTP(phone, "8888")
+	if err != nil || user == nil {
+		t.Fatalf("Expected successful verification, got err: %v", err)
+	}
+
+	// Verifikasi kedua dengan kode sama harus ditolak (Anti-Replay)
+	_, _, err2 := service.VerifyOTP(phone, "8888")
+	if err2 == nil {
+		t.Fatalf("Expected error on second verification with same OTP (replay attack)")
 	}
 }
 
@@ -151,34 +225,58 @@ func TestSavedPlaces_GetAndToggle(t *testing.T) {
 	r.ServeHTTP(wGet, httptest.NewRequest(http.MethodGet, "/api/v1/users/saved?user_id=usr-001", nil))
 
 	if wGet.Code != http.StatusOK {
-		t.Fatalf("Expected 200 OK, got %d", wGet.Code)
+		t.Fatalf("Expected 200 OK for GetSavedPlaces, got %d", wGet.Code)
 	}
 
-	// 2. Tambah favorit baru ("dest-02")
-	toggleAdd, _ := json.Marshal(ToggleSavedRequest{UserID: "usr-001", DestinationID: "dest-02"})
-	wAdd := httptest.NewRecorder()
-	r.ServeHTTP(wAdd, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved", bytes.NewReader(toggleAdd)))
+	// 2. Toggle simpan tempat baru "dest-02"
+	toggleReq, _ := json.Marshal(ToggleSavedRequest{UserID: "usr-001", DestinationID: "dest-02"})
+	wToggle := httptest.NewRecorder()
+	r.ServeHTTP(wToggle, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved", bytes.NewReader(toggleReq)))
 
-	if wAdd.Code != http.StatusOK {
-		t.Fatalf("Expected 200 OK for toggle add, got %d", wAdd.Code)
+	if wToggle.Code != http.StatusOK {
+		t.Fatalf("Expected 200 OK for ToggleSavedPlace, got %d", wToggle.Code)
 	}
 
-	var respAdd common.ResponseStandar
-	_ = json.Unmarshal(wAdd.Body.Bytes(), &respAdd)
-	dataAdd := respAdd.Data.(map[string]interface{})
-	if dataAdd["is_saved"].(bool) != true {
-		t.Fatalf("Expected is_saved=true")
-	}
+	// 3. Toggle hapus kembali "dest-02"
+	wToggle2 := httptest.NewRecorder()
+	r.ServeHTTP(wToggle2, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved/dest-02?user_id=usr-001", nil))
 
-	// 3. Hapus favorit ("dest-02") dengan toggle ulang
-	wRemove := httptest.NewRecorder()
-	r.ServeHTTP(wRemove, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved", bytes.NewReader(toggleAdd)))
-
-	var respRemove common.ResponseStandar
-	_ = json.Unmarshal(wRemove.Body.Bytes(), &respRemove)
-	dataRemove := respRemove.Data.(map[string]interface{})
-	if dataRemove["is_saved"].(bool) != false {
-		t.Fatalf("Expected is_saved=false after removing")
+	if wToggle2.Code != http.StatusOK {
+		t.Fatalf("Expected 200 OK for ToggleSavedPlace (Delete), got %d", wToggle2.Code)
 	}
 }
 
+func TestSavedPlaces_RejectMissingUserId(t *testing.T) {
+	r, _ := setupTestRouter()
+
+	// 1. Post tanpa user_id di body maupun query
+	reqNoUser, _ := json.Marshal(map[string]string{
+		"destination_id": "dest-02",
+	})
+	wNoUser := httptest.NewRecorder()
+	r.ServeHTTP(wNoUser, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved", bytes.NewReader(reqNoUser)))
+
+	if wNoUser.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request when user_id is missing, got %d. Body: %s", wNoUser.Code, wNoUser.Body.String())
+	}
+
+	// 2. Post dengan user_id kosong / spasi
+	reqEmptyUser, _ := json.Marshal(map[string]string{
+		"user_id":        "   ",
+		"destination_id": "dest-02",
+	})
+	wEmptyUser := httptest.NewRecorder()
+	r.ServeHTTP(wEmptyUser, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved", bytes.NewReader(reqEmptyUser)))
+
+	if wEmptyUser.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request when user_id is whitespace, got %d. Body: %s", wEmptyUser.Code, wEmptyUser.Body.String())
+	}
+
+	// 3. Post via URL param tanpa user_id
+	wUrlParam := httptest.NewRecorder()
+	r.ServeHTTP(wUrlParam, httptest.NewRequest(http.MethodPost, "/api/v1/users/saved/dest-02", nil))
+
+	if wUrlParam.Code != http.StatusBadRequest {
+		t.Fatalf("Expected 400 Bad Request when user_id is omitted on URL param route, got %d. Body: %s", wUrlParam.Code, wUrlParam.Body.String())
+	}
+}

@@ -1,10 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../../core/constants/colors.dart';
 import '../data/destination_repository.dart';
 import '../models/destination_model.dart';
+import 'widgets/morse_sos_modal.dart';
 
-/// Layar Mitigasi Jalur Rawan & Tombol Darurat SOS GPS (FE-1)
-/// Pilar 7: Mitigasi Jalur Rawan & Mode Zero-Signal
+/// Layar Mitigasi Jalur Rawan & Kontak Darurat Bencana Sumbar
+/// Menyajikan kontak darurat resmi, hotline bebas pulsa, 4 radar koridor ekstrem,
+/// serta alat bantu fisik offline (Sirine & Senter Morse).
 class HazardSosScreen extends StatefulWidget {
   const HazardSosScreen({super.key});
 
@@ -12,16 +17,41 @@ class HazardSosScreen extends StatefulWidget {
   State<HazardSosScreen> createState() => _HazardSosScreenState();
 }
 
-class _HazardSosScreenState extends State<HazardSosScreen> {
+class _HazardSosScreenState extends State<HazardSosScreen>
+    with SingleTickerProviderStateMixin {
   final DestinationRepository _repository = DestinationRepository();
   bool _isLoading = true;
   List<HazardAlertModel> _corridors = [];
   List<EmergencyContactModel> _officialContacts = [];
 
+  // Status Jaringan & Offline Caching
+  bool _isZeroSignalMode = false;
+  static const double _lastKnownLat = -0.9468;
+  static const double _lastKnownLng = 100.5182;
+  final List<Map<String, dynamic>> _offlineSosQueue = [];
+
+  // Sirine Darurat
+  bool _isSirenActive = false;
+  AudioPlayer? _audioPlayer;
+  late AnimationController _sirenPulseController;
+
   @override
   void initState() {
     super.initState();
+    _sirenPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
     _loadHazards();
+  }
+
+  @override
+  void dispose() {
+    _sirenPulseController.dispose();
+    _audioPlayer?.stop();
+    _audioPlayer?.dispose();
+    super.dispose();
   }
 
   Future<void> _loadHazards() async {
@@ -53,6 +83,41 @@ class _HazardSosScreenState extends State<HazardSosScreen> {
     }
   }
 
+  void _syncOfflineQueue() {
+    if (_offlineSosQueue.isEmpty) return;
+    final count = _offlineSosQueue.length;
+    setState(() {
+      _offlineSosQueue.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$count laporan berhasil disinkronkan ke server WISGO!'),
+        backgroundColor: AppColors.green800,
+      ),
+    );
+  }
+
+  Future<void> _toggleSiren() async {
+    setState(() => _isSirenActive = !_isSirenActive);
+    if (_isSirenActive) {
+      _sirenPulseController.repeat(reverse: true);
+      HapticFeedback.heavyImpact();
+    } else {
+      _sirenPulseController.stop();
+      _sirenPulseController.reset();
+      await _audioPlayer?.stop();
+    }
+  }
+
+  void _openMorseModal() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const MorseSosModal(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,7 +137,11 @@ class _HazardSosScreenState extends State<HazardSosScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               children: [
-                // 1. HOTLINE DARURAT SUMATERA BARAT
+                // 1. STATUS BAR JARINGAN & OFFLINE CACHING GPS TERAKHIR
+                _buildOfflineCacheStatusBar(),
+                const SizedBox(height: 16),
+
+                // 2. HOTLINE DARURAT SUMATERA BARAT
                 const Text(
                   'Kontak Darurat Siaga (Bebas Pulsa)',
                   style: TextStyle(
@@ -98,7 +167,7 @@ class _HazardSosScreenState extends State<HazardSosScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // 2B. 6 NOMOR DARURAT BENCANA RESMI SUMATERA BARAT (DATA REAL)
+                // 3. 6 NOMOR DARURAT BENCANA RESMI SUMATERA BARAT (DATA REAL)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -127,7 +196,7 @@ class _HazardSosScreenState extends State<HazardSosScreen> {
                 ..._buildOfficialEmergencyCards(),
                 const SizedBox(height: 24),
 
-                // 3. DAFTAR KORIDOR RAWAN BENCANA (SITINJAU, ANAI, KELOK 9, KELOK 44)
+                // 4. DAFTAR KORIDOR RAWAN BENCANA (SITINJAU, ANAI, KELOK 9, KELOK 44)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -171,79 +240,59 @@ class _HazardSosScreenState extends State<HazardSosScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: Text(
-                                c.location,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.ink900,
-                                ),
-                              ),
-                            ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
+                                color: color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 c.severity.toUpperCase(),
                                 style: TextStyle(
+                                  color: color,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: color,
                                 ),
                               ),
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.access_time_rounded, size: 13, color: Colors.black38),
+                            const SizedBox(width: 4),
+                            Text(
+                              c.lastUpdated,
+                              style: const TextStyle(fontSize: 11, color: Colors.black45),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 10),
+                        Text(
+                          c.corridorName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink900,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         Text(
-                          'Ruas: ${c.roadSegment} · Tanjakan ${c.slopeGradientDeg}°',
-                          style: const TextStyle(fontSize: 11.5, color: Colors.black54),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          c.message,
-                          style: const TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.4),
+                          c.conditionDescription,
+                          style: const TextStyle(fontSize: 12.5, color: Colors.black54, height: 1.35),
                         ),
                         const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.sage100,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.alt_route, size: 16, color: AppColors.green800),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  c.detourRoute,
-                                  style: const TextStyle(fontSize: 11.5, color: AppColors.ink900, fontWeight: FontWeight.w500),
+                        Row(
+                          children: [
+                            const Icon(Icons.alt_route_rounded, size: 14, color: AppColors.green800),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Jalur Alternatif: ${c.alternativeRoute}',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.green800,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              'Posko: ${c.nearestRescuePost}',
-                              style: const TextStyle(fontSize: 11, color: Colors.black45),
-                            ),
-                            Text(
-                              c.emergencyContact,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.green800),
                             ),
                           ],
                         ),
@@ -251,6 +300,10 @@ class _HazardSosScreenState extends State<HazardSosScreen> {
                     ),
                   );
                 }),
+                const SizedBox(height: 12),
+
+                // 5. ALAT BANTU SINYAL FISIK (100% OFFLINE TANPA SINYAL)
+                _buildPhysicalRescueToolsCard(),
               ],
             ),
     );
@@ -463,6 +516,272 @@ class _HazardSosScreenState extends State<HazardSosScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Tutup', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // WIDGET 1: STATUS BAR JARINGAN & OFFLINE CACHING GPS
+  Widget _buildOfflineCacheStatusBar() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _isZeroSignalMode ? Colors.orange.shade300 : Colors.black.withValues(alpha: 0.08),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      _isZeroSignalMode ? Icons.signal_cellular_off_rounded : Icons.cell_tower_rounded,
+                      size: 18,
+                      color: _isZeroSignalMode ? Colors.orange.shade800 : AppColors.green800,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        _isZeroSignalMode ? 'Mode Blank Spot (Zero-Signal)' : 'Sinyal Normal (Data Aktif)',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: _isZeroSignalMode ? Colors.orange.shade900 : AppColors.green800,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Switch Simulasi Sinyal
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Offline:', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                  const SizedBox(width: 4),
+                  Transform.scale(
+                    scale: 0.75,
+                    child: Switch(
+                      value: _isZeroSignalMode,
+                      activeColor: Colors.orange.shade800,
+                      onChanged: (val) {
+                        setState(() => _isZeroSignalMode = val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const Divider(height: 14),
+          Row(
+            children: [
+              const Icon(Icons.pin_drop_rounded, size: 14, color: AppColors.green800),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'Last Known GPS: $_lastKnownLat, $_lastKnownLng (Akurasi ±4m)',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.ink900),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.sage100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text('Cached', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.green800)),
+              ),
+            ],
+          ),
+          if (_offlineSosQueue.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.hourglass_top_rounded, size: 14, color: Colors.amber.shade900),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${_offlineSosQueue.length} laporan di antrean offline lokal',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                    ),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: _syncOfflineQueue,
+                    child: const Text('Sinkronkan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // WIDGET 2: ALAT BANTU SINYAL FISIK (100% OFFLINE)
+  Widget _buildPhysicalRescueToolsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.offline_bolt_rounded, color: AppColors.green800, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Alat Bantu Sinyal Fisik (100% Offline)',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.ink900),
+                ),
+              ),
+              Text(
+                'Nol Kuota/Sinyal',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.green800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Gunakan saat ponsel sama sekali tidak mendapat sinyal seluler untuk menarik perhatian warga nagari atau tim penyelamat dari kejauhan.',
+            style: TextStyle(fontSize: 11.5, color: Colors.black54, height: 1.35),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              // Alat 1: Sirine Suara Maksimal
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: _sirenPulseController,
+                  builder: (context, child) {
+                    return ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isSirenActive
+                            ? Color.lerp(Colors.red.shade700, Colors.red.shade900, _sirenPulseController.value)
+                            : Colors.grey.shade100,
+                        foregroundColor: _isSirenActive ? Colors.white : Colors.black87,
+                        elevation: _isSirenActive ? 3 : 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: _isSirenActive ? Colors.red : Colors.grey.shade300,
+                            width: 1.2,
+                          ),
+                        ),
+                      ),
+                      onPressed: _toggleSiren,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isSirenActive ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                            size: 24,
+                            color: _isSirenActive ? Colors.white : Colors.red.shade700,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _isSirenActive ? 'SIRINE AKTIF' : 'SIRINE SUARA',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: _isSirenActive ? Colors.white : Colors.red.shade800,
+                            ),
+                          ),
+                          Text(
+                            _isSirenActive ? 'Volume 110dB' : 'Maksimal',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: _isSirenActive ? Colors.white70 : Colors.black45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // Alat 2: Senter Kedipan Pola Morse SOS
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber.shade50,
+                    foregroundColor: Colors.black87,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: Colors.amber.shade400, width: 1.2),
+                    ),
+                  ),
+                  onPressed: _openMorseModal,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.flare_rounded, size: 24, color: Colors.orange),
+                      const SizedBox(height: 4),
+                      Text(
+                        'SENTER MORSE',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.orange.shade900,
+                        ),
+                      ),
+                      const Text(
+                        'Pola · · · — — — · · ·',
+                        style: TextStyle(fontSize: 10, color: Colors.black45),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -239,6 +239,13 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 		SELECT id, destination_id, category_id, title, aturan
 		FROM aturan_destinasi WHERE destination_id = $1;
 	`, d.ID)
+	if err != nil {
+		// Fallback jika skema aturan_destinasi menggunakan nama kolom content
+		tipRows, err = r.db.Query(`
+			SELECT id, destination_id, category_id, title, content
+			FROM aturan_destinasi WHERE destination_id = $1;
+		`, d.ID)
+	}
 	if err == nil {
 		defer tipRows.Close()
 		for tipRows.Next() {

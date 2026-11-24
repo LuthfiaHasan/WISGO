@@ -23,6 +23,7 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/bookings/create", h.CreateBooking)
 	rg.POST("/bookings", h.CreateBooking)
+	rg.POST("/escrow/bookings", h.CreateBooking)
 	rg.POST("/bookings/wa-webhook", h.WAWebhookSimulation)
 	rg.GET("/bookings/:id/ticket-qr", h.GetBookingTicketQR)
 	rg.GET("/bookings/ticket-qr", h.GetBookingTicketQR)

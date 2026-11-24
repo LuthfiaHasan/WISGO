@@ -118,7 +118,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Detail Kredibilitas Penyelenggara
+            // Detail Kredibilitas Penyelenggara (7 Poin Resmi Trip Go)
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -128,29 +128,63 @@ class VerifiedOrganizerSheet extends StatelessWidget {
               ),
               child: Column(
                 children: [
+                  // 1. Nama Penyelenggara & Organisasi
                   _buildCredentialRow(
-                    icon: Icons.badge_outlined,
-                    label: 'Status Identitas Penyelenggara',
-                    value: organizer.ktpStatus,
+                    icon: Icons.person_rounded,
+                    label: '1. Nama Lengkap Penyelenggara',
+                    value: '${organizer.name} (${organizer.organizationName})',
                     isHighlight: true,
                   ),
-                  const Divider(height: 18, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+
+                  // 2. Upload KTP
+                  _buildCredentialRow(
+                    icon: Icons.badge_outlined,
+                    label: '2. Status Upload e-KTP',
+                    value: '${organizer.ktpUploadStatus} • ${organizer.ktpStatus}',
+                    isHighlight: true,
+                  ),
+                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+
+                  // 3. Nomor HP Terverifikasi
+                  _buildCredentialRow(
+                    icon: Icons.phone_android_rounded,
+                    label: '3. Nomor Handphone Terverifikasi',
+                    value: '${organizer.phone} (OTP Terhubung Akun WISGO)',
+                  ),
+                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+
+                  // 4. Akun / Media Sosial
+                  _buildCredentialRow(
+                    icon: Icons.share_rounded,
+                    label: '4. Akun / Media Sosial Terhubung',
+                    value: organizer.socialMedia,
+                  ),
+                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+
+                  // 5. Verifikasi Wajah / Liveness Biometrik
+                  _buildCredentialRow(
+                    icon: Icons.face_retouching_natural_rounded,
+                    label: '5. Verifikasi Wajah (Liveness Biometrik)',
+                    value: organizer.faceVerificationStatus,
+                    isHighlight: true,
+                  ),
+                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+
+                  // 6. Pengalaman Sebagai Penyelenggara
+                  _buildCredentialRow(
+                    icon: Icons.work_history_rounded,
+                    label: '6. Pengalaman Penyelenggara',
+                    value: '${organizer.experienceYears} (${organizer.completedTrips} Trip Berhasil • ★ ${organizer.rating})',
+                  ),
+                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+
+                  // 7. Lisensi & Sertifikasi Kompetensi Khusus
                   _buildCredentialRow(
                     icon: Icons.card_membership_rounded,
-                    label: 'Lisensi Resmi Kepanduan',
-                    value: organizer.licenseNumber,
-                  ),
-                  const Divider(height: 18, color: Color(0xFFE5E7EB)),
-                  _buildCredentialRow(
-                    icon: Icons.star_rounded,
-                    label: 'Rating & Rekam Jejak',
-                    value: '★ ${organizer.rating} • ${organizer.completedTrips} Trip Berhasil Tanpa Keluhan',
-                  ),
-                  const Divider(height: 18, color: Color(0xFFE5E7EB)),
-                  _buildCredentialRow(
-                    icon: Icons.phone_rounded,
-                    label: 'Kontak Darurat Terverifikasi',
-                    value: organizer.phone,
+                    label: '7. Lisensi & Sertifikasi Khusus',
+                    value: '${organizer.licenseNumber}\n${organizer.specialCompetency}',
+                    isHighlight: true,
                   ),
                 ],
               ),

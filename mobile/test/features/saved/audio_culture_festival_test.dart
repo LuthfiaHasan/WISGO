@@ -18,7 +18,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 1. In Open Trip: Verify "Kalender Event & Festival Budaya" is NOT present
-    expect(find.text('Open Trip Sumbar'), findsOneWidget);
+    expect(find.text('Trip Go Sumbar'), findsOneWidget);
     expect(find.text('Kalender Event & Festival Budaya'), findsNothing);
 
     // 2. Switch to Kamus Minang tab (index 3)

@@ -58,6 +58,7 @@ type TariffsResponse struct {
 
 // CreateHiddenGemInput payload kontribusi destinasi hidden gem oleh wisatawan (BE-1 Pilar 2 & 6)
 type CreateHiddenGemInput struct {
+	UserID         string  `json:"user_id,omitempty"`
 	Name           string  `json:"name" binding:"required"`
 	CityRegency    string  `json:"city_regency"`
 	Description    string  `json:"description"`

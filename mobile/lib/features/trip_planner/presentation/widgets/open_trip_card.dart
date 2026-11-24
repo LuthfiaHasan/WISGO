@@ -5,6 +5,7 @@ import 'destination_weather_sheet.dart';
 import 'ground_condition_sheet.dart';
 import 'destination_panorama_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
+import 'open_trip_detail_sheet.dart';
 import 'open_trip_offline_rules_sheet.dart';
 import 'open_trip_payment_sheet.dart';
 import 'trip_planner_detail_sheet.dart';
@@ -22,11 +23,13 @@ import 'verified_organizer_sheet.dart';
 class OpenTripCard extends StatelessWidget {
   final OpenTripItem trip;
   final VoidCallback? onTripUpdated;
+  final ValueChanged<String>? onTripDeleted;
 
   const OpenTripCard({
     super.key,
     required this.trip,
     this.onTripUpdated,
+    this.onTripDeleted,
   });
 
   String _formatRupiah(int number) {
@@ -56,9 +59,24 @@ class OpenTripCard extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => OpenTripDetailSheet(
+                trip: trip,
+                onTripUpdated: (updated) => onTripUpdated?.call(),
+                onTripDeleted: onTripDeleted,
+              ),
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // 1. Cover Image with Auto-Category & Quota Badges
           Stack(
             children: [
@@ -484,7 +502,60 @@ class OpenTripCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+
+                // Rincian Singkat Fasilitas Include & Exclude (Item 1 Spesifikasi Trip Go)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF16A34A)),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Include: ',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                          ),
+                          Expanded(
+                            child: Text(
+                              trip.includes.take(2).join(', ') + (trip.includes.length > 2 ? ', +${trip.includes.length - 2} lainnya' : ''),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF4B5563)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(Icons.cancel_rounded, size: 12, color: Color(0xFFDC2626)),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Exclude: ',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFB91C1C)),
+                          ),
+                          Expanded(
+                            child: Text(
+                              trip.excludes.take(2).join(', ') + (trip.excludes.length > 2 ? ', +${trip.excludes.length - 2} lainnya' : ''),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
                 const Divider(height: 1, color: Color(0xFFF3F4F6)),
                 const SizedBox(height: 10),
 
@@ -497,7 +568,7 @@ class OpenTripCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Transaksi Khusus Open Trip (Escrow):',
+                            'Transaksi Khusus Trip Go (Escrow):',
                             style: TextStyle(fontSize: 10, color: AppColors.muted, fontWeight: FontWeight.w600),
                           ),
                           Row(
@@ -620,6 +691,8 @@ class OpenTripCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }

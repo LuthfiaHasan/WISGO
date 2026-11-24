@@ -170,8 +170,9 @@ func (h *Handler) GetOfflineBundle(c *gin.Context) {
 
 // CreateHiddenGemTourist menangani POST /api/v1/destinations/hidden-gem oleh Wisatawan (Role: tourist / publik)
 func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
-	// Validasi opsional token jika Authorization header disertakan
+	// Validasi token jika Authorization header disertakan
 	authHeader := c.GetHeader("Authorization")
+	hasValidToken := false
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		if token != middleware.TokenTourist && token != middleware.TokenAdminDispar && token != middleware.TokenPokdarwis && token != middleware.TokenVendor {
@@ -182,6 +183,7 @@ func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
 			})
 			return
 		}
+		hasValidToken = true
 	}
 
 	var input CreateHiddenGemInput
@@ -192,6 +194,26 @@ func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
 			"message": "Field 'name' wajib diisi untuk menginput wisata hidden gem.",
 		})
 		return
+	}
+
+	// Session validation hardening: Wajib valid Bearer token ATAU non-empty user_id
+	resolvedUserID := strings.TrimSpace(input.UserID)
+	if resolvedUserID == "" {
+		resolvedUserID = strings.TrimSpace(c.Query("user_id"))
+	}
+	if !hasValidToken && resolvedUserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"code":    "UNAUTHORIZED_MISSING_USER",
+			"message": "user_id atau header Authorization wajib disertakan untuk mengusulkan destinasi hidden gem.",
+		})
+		return
+	}
+	if input.UserID == "" && resolvedUserID != "" {
+		input.UserID = resolvedUserID
+	}
+	if input.Contributor == "" && resolvedUserID != "" {
+		input.Contributor = resolvedUserID
 	}
 
 	created, err := h.service.CreateHiddenGem(input)

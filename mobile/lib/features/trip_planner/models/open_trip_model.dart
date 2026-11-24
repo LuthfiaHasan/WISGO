@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Model Penyelenggara Terverifikasi (Item 6 Open Trip)
+/// Model Penyelenggara Terverifikasi (Item 2 Spesifikasi Trip Go)
 class VerifiedOrganizer {
   final String id;
   final String name;
   final bool isVerified;
   final String verificationBadge;
   final String ktpStatus;
+  final String ktpUploadStatus;
+  final String faceVerificationStatus;
   final String licenseNumber;
+  final String specialCompetency;
   final double rating;
   final int completedTrips;
   final String phone;
+  final String socialMedia;
+  final String experienceYears;
   final String organizationName;
   final String escrowProtectionNote;
 
@@ -19,14 +24,19 @@ class VerifiedOrganizer {
     required this.name,
     this.isVerified = true,
     this.verificationBadge = 'Penyelenggara Terverifikasi WISGO',
-    this.ktpStatus = 'Terverifikasi e-KTP & KYC WISGO',
+    this.ktpStatus = 'Terverifikasi e-KTP Dukcapil RI',
+    this.ktpUploadStatus = 'Dokumen e-KTP Terunggah & Valid',
+    this.faceVerificationStatus = 'Verifikasi Wajah (Liveness Biometrik) Lolos',
     required this.licenseNumber,
-    this.rating = 4.9,
-    this.completedTrips = 24,
+    this.specialCompetency = 'Sertifikasi P3K & Wilderness First Aid BNSP',
+    this.rating = 4.95,
+    this.completedTrips = 38,
     required this.phone,
+    this.socialMedia = '@rahmathidayat_guide (Instagram)',
+    this.experienceYears = '4+ Tahun Pengalaman Pemandu Wisata Alam',
     required this.organizationName,
     this.escrowProtectionNote =
-        'Dana peserta ditahan di Rekening Penampung (Escrow) WISGO dan baru dilepas setelah trip selesai.',
+        'Dana peserta ditahan di Rekening Penampung (Escrow) WISGO dan baru diteruskan ke penyelenggara setelah trip selesai dan terkonfirmasi.',
   });
 }
 
@@ -237,13 +247,43 @@ String determineCategoryForDestination(String destinationName) {
   return 'Alam & Geopark';
 }
 
-/// Model Data Open Trip Lengkap (Item 1-7 Open Trip & Item 1-5 Trip Planner)
+/// Model Peserta Terdaftar pada Open Trip (Item BE-2)
+class OpenTripParticipant {
+  final String userId;
+  final String fullName;
+  final String phoneNumber;
+  final String joinedAt;
+
+  const OpenTripParticipant({
+    required this.userId,
+    required this.fullName,
+    required this.phoneNumber,
+    required this.joinedAt,
+  });
+
+  factory OpenTripParticipant.fromJson(Map<String, dynamic> json) {
+    return OpenTripParticipant(
+      userId: json['user_id']?.toString() ?? '',
+      fullName: json['full_name']?.toString() ?? 'Peserta',
+      phoneNumber: json['phone_number']?.toString() ?? '',
+      joinedAt: json['joined_at']?.toString() ?? '',
+    );
+  }
+}
+
+/// Model Data Trip Go Lengkap (Item 1-10 Spesifikasi Trip Go)
 class OpenTripItem {
   final String id;
+  final String userId; // ID Host pembuat trip
+  final String destinationId; // ID referensi katalog destinasi BE-1
+  final String contactWa; // Nomor Kontak Penyelenggara
   final String title;
 
-  /// ATURAN UTAMA 1: Open Trip HANYA memiliki 1 tujuan/destinasi dalam satu perjalanan
+  /// ATURAN UTAMA 1: Trip Go HANYA memiliki 1 tujuan/destinasi dalam satu perjalanan
   final String singleDestination;
+
+  /// Deskripsi Destinasi Informatif & Kondisi Sebenarnya (Item 5 Trip Go)
+  final String destinationDescription;
 
   /// ATURAN UTAMA 2: Kategori perjalanan ditentukan secara OTOMATIS berdasarkan destinasi
   final String category;
@@ -263,30 +303,40 @@ class OpenTripItem {
 
   /// ATURAN UTAMA 3: Transaksi dilakukan langsung melalui sistem WISGO
   final int pricePerPerson;
+
+  /// Rincian Fasilitas & Layanan Include & Exclude (Item 1 Trip Go)
+  final List<String> includes;
+  final List<String> excludes;
+
   final String paymentGatewayInfo;
   final bool isDirectWisgoEscrow;
 
   int quotaMax;
   int quotaFilled;
 
-  /// ATURAN UTAMA 6: Verifikasi penyelenggara terjamin
+  /// ATURAN UTAMA 6: Verifikasi penyelenggara terjamin (7 Poin)
   final VerifiedOrganizer organizer;
 
   /// ATURAN UTAMA 7: Ketentuan aktivitas di luar aplikasi jelas bagi peserta
   final List<OfflineTripRule> offlineRules;
 
-  // FITUR TRIP PLANNER (Item 1-5 Trip Planner)
+  // FITUR SMART TRIP PLANNER & KOMUNIKASI IN-APP (Item 6 Trip Go)
   final List<TripItineraryStep> itinerary;
   final List<TripReadinessItem> readinessChecklist;
   final List<TripJobdeskItem> jobdeskList;
   final List<TripPackingItem> packingList;
   final List<TripChatMessage> messages;
+  final String communicationChannel;
   final String whatsappGroupLink;
 
   OpenTripItem({
     required this.id,
+    this.userId = 'usr-host-01',
+    this.destinationId = 'dest-001',
+    this.contactWa = '0812-7578-953',
     required this.title,
     required this.singleDestination,
+    String? destinationDescription,
     String? category,
     required this.coverUrl,
     required this.departureDate,
@@ -299,7 +349,10 @@ class OpenTripItem {
     required this.meetingPointLng,
     required this.googleMapsUrl,
     required this.pricePerPerson,
-    this.paymentGatewayInfo = 'Sistem Pembayaran Resmi WISGO (QRIS / Escrow Terlindungi)',
+    List<String>? includes,
+    List<String>? excludes,
+    this.paymentGatewayInfo =
+        'Sistem Pembayaran Resmi WISGO (Payment Gateway / Rekening Penampung Escrow)',
     this.isDirectWisgoEscrow = true,
     required this.quotaMax,
     required this.quotaFilled,
@@ -310,18 +363,116 @@ class OpenTripItem {
     required this.jobdeskList,
     required this.packingList,
     required this.messages,
-    required this.whatsappGroupLink,
-  }) : category = category ?? determineCategoryForDestination(singleDestination);
+    this.communicationChannel =
+        'Forum Diskusi & Chat Komunikasi Smart Trip Planner (In-App)',
+    this.whatsappGroupLink = '',
+  })  : destinationDescription = destinationDescription ??
+            'Kawasan cagar alam Lembah Harau dengan formasi tebing batuan vertikal 100-300 meter, akses jalan aspal datar yang mudah dijangkau, serta kolam alami air terjun Sarasah Bunta yang sejuk.',
+        includes = includes ??
+            const [
+              'Tiket Masuk Resmi Kawasan (Perda Terpantau)',
+              'Pemandu Lokal Berlisensi HPI / Pokdarwis',
+              'Air Mineral & Buah Segar Lokal',
+              'Asuransi Keselamatan Rekreasi Nagari',
+              'Retribusi Parkir Resmi & Kebersihan Terkelola',
+            ],
+        excludes = excludes ??
+            const [
+              'Pengeluaran Pribadi & Cinderamata',
+              'Makan di Luar Jadwal Rundown',
+              'Sewa Perlengkapan Pribadi / Ojek Tambahan',
+              'Transportasi Mandiri Menuju Titik Kumpul',
+            ],
+        category = category ?? determineCategoryForDestination(singleDestination);
+
+  int get availableSeats => quotaMax - quotaFilled;
+
+  OpenTripItem copyWith({
+    String? id,
+    String? userId,
+    String? destinationId,
+    String? contactWa,
+    String? title,
+    String? singleDestination,
+    String? destinationDescription,
+    String? category,
+    String? coverUrl,
+    String? departureDate,
+    String? returnDate,
+    String? departureTime,
+    String? duration,
+    String? meetingPointName,
+    String? meetingPointAddress,
+    double? meetingPointLat,
+    double? meetingPointLng,
+    String? googleMapsUrl,
+    int? pricePerPerson,
+    List<String>? includes,
+    List<String>? excludes,
+    String? paymentGatewayInfo,
+    bool? isDirectWisgoEscrow,
+    int? quotaMax,
+    int? quotaFilled,
+    VerifiedOrganizer? organizer,
+    List<OfflineTripRule>? offlineRules,
+    List<TripItineraryStep>? itinerary,
+    List<TripReadinessItem>? readinessChecklist,
+    List<TripJobdeskItem>? jobdeskList,
+    List<TripPackingItem>? packingList,
+    List<TripChatMessage>? messages,
+    String? communicationChannel,
+    String? whatsappGroupLink,
+  }) {
+    return OpenTripItem(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      destinationId: destinationId ?? this.destinationId,
+      contactWa: contactWa ?? this.contactWa,
+      title: title ?? this.title,
+      singleDestination: singleDestination ?? this.singleDestination,
+      destinationDescription:
+          destinationDescription ?? this.destinationDescription,
+      category: category ?? this.category,
+      coverUrl: coverUrl ?? this.coverUrl,
+      departureDate: departureDate ?? this.departureDate,
+      returnDate: returnDate ?? this.returnDate,
+      departureTime: departureTime ?? this.departureTime,
+      duration: duration ?? this.duration,
+      meetingPointName: meetingPointName ?? this.meetingPointName,
+      meetingPointAddress: meetingPointAddress ?? this.meetingPointAddress,
+      meetingPointLat: meetingPointLat ?? this.meetingPointLat,
+      meetingPointLng: meetingPointLng ?? this.meetingPointLng,
+      googleMapsUrl: googleMapsUrl ?? this.googleMapsUrl,
+      pricePerPerson: pricePerPerson ?? this.pricePerPerson,
+      includes: includes ?? this.includes,
+      excludes: excludes ?? this.excludes,
+      paymentGatewayInfo: paymentGatewayInfo ?? this.paymentGatewayInfo,
+      isDirectWisgoEscrow: isDirectWisgoEscrow ?? this.isDirectWisgoEscrow,
+      quotaMax: quotaMax ?? this.quotaMax,
+      quotaFilled: quotaFilled ?? this.quotaFilled,
+      organizer: organizer ?? this.organizer,
+      offlineRules: offlineRules ?? this.offlineRules,
+      itinerary: itinerary ?? this.itinerary,
+      readinessChecklist: readinessChecklist ?? this.readinessChecklist,
+      jobdeskList: jobdeskList ?? this.jobdeskList,
+      packingList: packingList ?? this.packingList,
+      messages: messages ?? this.messages,
+      communicationChannel: communicationChannel ?? this.communicationChannel,
+      whatsappGroupLink: whatsappGroupLink ?? this.whatsappGroupLink,
+    );
+  }
 }
 
-/// Data Contoh Resmi Open Trip (Masing-masing 1 Destinasi Tunggal)
+/// Data Contoh Resmi Trip Go (Masing-masing 1 Destinasi Tunggal)
 final List<OpenTripItem> kMockOpenTrips = [
   // TRIP 1: Lembah Harau (Alam & Geopark)
   OpenTripItem(
     id: 'TRIP-HARAU-01',
-    title: 'Eksplor Kemegahan Tebing Granit Lembah Harau',
+    title: 'Jelajah Lembah Harau & Air Terjun Sarasah Bunta',
     singleDestination: 'Lembah Harau & Sarasah Bunta',
     category: 'Alam & Geopark',
+    destinationDescription:
+        'Kawasan cagar alam Lembah Harau dengan tebing batuan vertikal setinggi 100-300 meter, akses jalan aspal datar yang mudah dijangkau kendaraan roda dua maupun empat, serta aliran air terjun Sarasah Bunta dengan kolam alami yang sejuk dan terawat.',
     coverUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
     departureDate: 'Sabtu, 28 Nov 2026',
     returnDate: 'Minggu, 29 Nov 2026',
@@ -339,10 +490,15 @@ final List<OpenTripItem> kMockOpenTrips = [
       id: 'ORG-01',
       name: 'Rahmat Hidayat (Guide Berlisensi Nagari)',
       licenseNumber: 'HPI-SB-2024-0412 (Pemandu Wisata Muda)',
-      ktpStatus: 'Terverifikasi e-KTP & SK Pokdarwis Harau',
+      specialCompetency: 'Sertifikasi P3K & Wilderness First Aid BNSP',
+      ktpStatus: 'Terverifikasi e-KTP Dukcapil RI',
+      ktpUploadStatus: 'Dokumen KTP Terunggah & Tervalidasi',
+      faceVerificationStatus: 'Verifikasi Wajah / Liveness Biometrik Lolos (99.2%)',
       rating: 4.95,
       completedTrips: 38,
       phone: '0812-7578-953',
+      socialMedia: '@rahmathidayat_guide (Instagram)',
+      experienceYears: '4+ Tahun Pengalaman Pemandu Wisata Alam',
       organizationName: 'Komunitas Pemandu Harau Geopark',
     ),
     offlineRules: const [

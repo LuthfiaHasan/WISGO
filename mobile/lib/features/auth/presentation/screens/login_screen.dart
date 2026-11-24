@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
 import '../../../saved/presentation/screens/saved_places_screen.dart';
+import '../../services/auth_session.dart';
 import 'location_onboarding_screen.dart';
 import 'otp_verification_screen.dart';
 
@@ -501,53 +502,69 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
-                        child: const Text(
-                          'Kembali',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.forest,
-                            letterSpacing: 0.2,
-                          ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 13,
+                              color: AppColors.forest,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Kembali',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.forest,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
 
                     // Tombol Lewati / Tamu
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) => const SavedPlacesScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.sageBorder.withValues(alpha: 0.9),
-                            width: 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                    Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      child: InkWell(
+                        onTap: () {
+                          AuthSession.instance.setGuestMode();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const SavedPlacesScreen(isGuest: true),
                             ),
-                          ],
-                        ),
-                        child: const Text(
-                          'Lewati',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.forest,
-                            letterSpacing: 0.2,
+                            (route) => false,
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.sageBorder.withValues(alpha: 0.9),
+                              width: 1.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Lewati',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.forest,
+                              letterSpacing: 0.2,
+                            ),
                           ),
                         ),
                       ),
@@ -610,7 +627,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(
-                                  _isSignUp ? 'Daftar Akun Baru' : 'Masuk ke Akun',
+                                  _isSignUp ? 'Daftar Akun Baru' : 'Masuk ke Akun WISGO',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 28,
@@ -904,7 +921,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text(
                                     _isSignUp
                                         ? 'Daftar & Kirim Kode OTP'
-                                        : 'Kirim Kode OTP WhatsApp',
+                                        : 'Kirim Kode OTP 4 Digit',
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
@@ -1070,9 +1087,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           Center(
                             child: TextButton(
                               onPressed: () {
+                                AuthSession.instance.setGuestMode();
                                 Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
-                                    builder: (_) => const SavedPlacesScreen(),
+                                    builder: (_) => const SavedPlacesScreen(isGuest: true),
                                   ),
                                   (route) => false,
                                 );

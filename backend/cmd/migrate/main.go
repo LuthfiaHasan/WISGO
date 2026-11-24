@@ -86,6 +86,8 @@ func main() {
 		"migrations/000001_be1_sprint4_tuning.sql",
 		"migrations/000002_be2_schema.sql",
 		"migrations/000002_be2_seeders.sql",
+		"migrations/000003_v2_new_schema.sql",
+		"migrations/000004_v2_contract_cleanup.sql",
 	}
 
 	for _, fileRel := range migrationFiles {
@@ -112,18 +114,12 @@ func main() {
 		log.Printf("SUKSES: %s", filePath)
 	}
 
-	// 3. SEED 20 DESTINASI & BOOKING JIKA MASIH KOSONG
+	// 3. SEED 20 DESTINASI JIKA MASIH KOSONG
 	log.Println("Memeriksa dan menyuntikkan seeder 20 Destinasi Prioritas...")
 	var destCount int
 	_ = db.QueryRow("SELECT COUNT(*) FROM destinations;").Scan(&destCount)
 	if destCount == 0 {
 		seedDestinationsToDB(db)
-	}
-
-	var bkgCount int
-	_ = db.QueryRow("SELECT COUNT(*) FROM booking_escrows;").Scan(&bkgCount)
-	if bkgCount == 0 {
-		seedBookingsToDB(db)
 	}
 
 	// 4. Verifikasi Tabel yang Terbentuk di Supabase
@@ -185,19 +181,19 @@ func seedDestinationsToDB(db *sql.DB) {
 		if d.MedanIndicator != nil {
 			m := d.MedanIndicator
 			_, _ = db.Exec(`
-				INSERT INTO medan_indicators (
-					id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need, pokdarwis_name
-				) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-				ON CONFLICT (id) DO NOTHING;
-			`, m.ID, m.DestinationID, m.VehicleAccess, m.TrekkingLevel, m.CellularSignal, m.Facilities, m.GuideNeed, m.PokdarwisName)
+				INSERT INTO indikator_medan (
+					id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need
+				) VALUES ($1, $2, $3, $4, $5, $6, $7)
+				ON CONFLICT (destination_id) DO NOTHING;
+			`, m.ID, m.DestinationID, m.VehicleAccess, m.TrekkingLevel, m.CellularSignal, m.Facilities, m.GuideNeed)
 		}
 
 		for _, tip := range d.Tips {
 			_, _ = db.Exec(`
-				INSERT INTO local_tips (id, destination_id, title, category, content, is_important)
-				VALUES ($1, $2, $3, $4, $5, $6)
+				INSERT INTO aturan_destinasi (id, destination_id, category_id, title, content)
+				VALUES ($1, $2, 'cat_rul_alam', $3, $4)
 				ON CONFLICT (id) DO NOTHING;
-			`, tip.ID, tip.DestinationID, tip.Title, tip.Category, tip.Content, tip.IsImportant)
+			`, tip.ID, tip.DestinationID, tip.Title, tip.Content)
 		}
 
 		for _, trf := range d.Tariffs {
@@ -209,20 +205,4 @@ func seedDestinationsToDB(db *sql.DB) {
 		}
 	}
 	log.Printf("Sukses menyuntikkan %d destinasi ke Supabase!", len(dests))
-}
-
-func seedBookingsToDB(db *sql.DB) {
-	_, err := db.Exec(`
-		INSERT INTO booking_escrows (
-			id, partner_id, user_id, total_amount, currency, status, qr_code_ticket, created_at, updated_at
-		) VALUES 
-		('bkg-001', 'ptr-01', 'usr-001', 250000.00, 'IDR', 'ESCROW_LOCKED', 'QR-RANCAK-TKT-bkg-001', NOW(), NOW()),
-		('bkg-demo-01', 'ptr-01', 'usr-001', 250000.00, 'IDR', 'ESCROW_LOCKED', 'QR-RANCAK-TKT-bkg-demo-01', NOW(), NOW())
-		ON CONFLICT (id) DO NOTHING;
-	`)
-	if err != nil {
-		log.Printf("Gagal insert seeder booking: %v", err)
-	} else {
-		log.Println("Sukses menyuntikkan seeder booking_escrows ke Supabase!")
-	}
 }

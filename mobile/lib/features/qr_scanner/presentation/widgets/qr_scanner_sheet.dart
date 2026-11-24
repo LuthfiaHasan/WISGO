@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../passport/presentation/widgets/digital_passport_sheet.dart';
+import '../../../gamification/services/gamification_service.dart';
+import '../../../gamification/widgets/level_up_dialog.dart';
 
 /// Item 8 & Use Case Diagram:
 /// "Scan QR dengan metode check-in GPS" untuk "Tantangan Menaklukkan Destinasi"
@@ -8,8 +10,13 @@ import '../../../passport/presentation/widgets/digital_passport_sheet.dart';
 /// Memenuhi tantangan 10 destinasi yang di-input oleh Admin Dispar.
 class QrScannerSheet extends StatefulWidget {
   final VoidCallback? onOpenSiteMap;
+  final VoidCallback? onNavigateToProfile;
 
-  const QrScannerSheet({super.key, this.onOpenSiteMap});
+  const QrScannerSheet({
+    super.key,
+    this.onOpenSiteMap,
+    this.onNavigateToProfile,
+  });
 
   @override
   State<QrScannerSheet> createState() => _QrScannerSheetState();
@@ -109,22 +116,43 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
       _hasCheckedIn = false;
     });
 
-    Future.delayed(const Duration(milliseconds: 1000), () {
+    Future.delayed(const Duration(milliseconds: 900), () {
       if (mounted) {
+        final result = GamificationService.instance.performCheckIn(
+          destinationTitle: _currentDestinationData['title']!,
+          region: _currentDestinationData['region']!,
+          xpBonus: 50,
+          pointBonus: 100,
+        );
+
         setState(() {
           _isScanning = false;
           _hasCheckedIn = true;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '🎉 CHECK-IN SUKSES! "${_currentDestinationData['title']}" Tertaklukkan! Stempel Paspor Digital Telah Tercatat.',
+        if (result.leveledUp) {
+          LevelUpDialog.show(
+            context: context,
+            oldGrade: result.oldGrade,
+            newGrade: result.newGrade,
+            totalXp: GamificationService.instance.currentXp,
+            onGoToProfile: () {
+              Navigator.pop(context);
+              widget.onNavigateToProfile?.call();
+            },
+          );
+        } else {
+          final challenge = GamificationService.instance.primaryChallenge;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '🎉 CHECK-POINT TERCAPAI! "${_currentDestinationData['title']}" (+50 XP, +100 GP).\nProgres: ${challenge.currentCheckpoints}/${challenge.targetCheckpoints} Check Point tertaklukkan!',
+              ),
+              backgroundColor: AppColors.forest,
+              duration: const Duration(seconds: 4),
             ),
-            backgroundColor: AppColors.forest,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+          );
+        }
       }
     });
   }
@@ -137,6 +165,11 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => const DigitalPassportSheet(),
     );
+  }
+
+  void _goToProfile() {
+    Navigator.pop(context);
+    widget.onNavigateToProfile?.call();
   }
 
   @override
@@ -225,26 +258,147 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Info Box: Penjelasan Alur Tantangan Sesuai Use Case
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFBF4E4),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFC89242)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.verified_user_rounded, color: Color(0xFFC89242), size: 24),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Scan stempel saat Anda telah TIBA di lokasi wisata. GPS perangkat otomatis divalidasi (< 500m) untuk mencatat penaklukan destinasi di Paspor Digital Anda.',
-                          style: TextStyle(fontSize: 11, color: AppColors.ink, height: 1.3),
+                // Kartu Misi & Indikator Progres Challenge Gamifikasi
+                AnimatedBuilder(
+                  animation: GamificationService.instance,
+                  builder: (context, _) {
+                    final challenge = GamificationService.instance.primaryChallenge;
+                    final grade = GamificationService.instance.currentGrade;
+                    return Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFBF4E4), Color(0xFFF3EBDC)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFC89242)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFC89242).withValues(alpha: 0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFC89242),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Icon(
+                                      Icons.military_tech_rounded,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'MISI TANTANGAN RESMI DISPAR',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.8,
+                                      color: Color(0xFF8C5C1E),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: grade.primaryColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: grade.primaryColor.withValues(alpha: 0.4)),
+                                ),
+                                child: Text(
+                                  'Level ${grade.level} • ${GamificationService.instance.currentXp} XP',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: grade.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Tagline Khusus Gamifikasi
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.forest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.bolt_rounded, size: 14, color: Color(0xFFE5C07B)),
+                                SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'Tandai Check Point, Kumpulkan XP & Taklukkan Challenge!',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          // Indikator Progres Check Point
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${challenge.currentCheckpoints} dari ${challenge.targetCheckpoints} Check Point Tertaklukkan',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                              Text(
+                                '${challenge.progressPercent}% Selesai',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF8C5C1E),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(99),
+                            child: LinearProgressIndicator(
+                              value: challenge.progressRatio,
+                              backgroundColor: Colors.black12,
+                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFC89242)),
+                              minHeight: 7,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Scan stempel saat tiba di lokasi (< 500m). Dapatkan reward otomatis +50 XP & +100 GP yang langsung disinkronkan ke Profil Anda.',
+                            style: TextStyle(fontSize: 9.5, color: Color(0xFF5A6B5D), height: 1.3),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -446,7 +600,7 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Tombol Scan Check-in Tiba di Lokasi
+                      // Tombol Scan Check-in Tiba di Lokasi & Taklukkan Challenge
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -456,8 +610,10 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
                               : Icon(_hasCheckedIn ? Icons.check_circle_rounded : Icons.qr_code_scanner_rounded, size: 18),
                           label: Text(
                             _isScanning
-                                ? 'Memvalidasi Jarak GPS & Kode Stempel...'
-                                : (_hasCheckedIn ? 'Sudah Ditaklukkan (Scan Ulang)' : 'Scan Check-in Tiba di Lokasi Ini'),
+                                ? 'Memvalidasi GPS & Mencatat Check Point...'
+                                : (_hasCheckedIn
+                                    ? '✓ Check Point Tercatat (+50 XP Didapatkan)'
+                                    : 'Check-In & Taklukkan Challenge (+50 XP)'),
                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
                           ),
                           style: ElevatedButton.styleFrom(
@@ -471,21 +627,41 @@ class _QrScannerSheetState extends State<QrScannerSheet> {
 
                       if (_hasCheckedIn) ...[
                         const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: _openPassport,
-                            icon: const Icon(Icons.verified_rounded, size: 16, color: Color(0xFFC89242)),
-                            label: const Text(
-                              'Buka Paspor Digital & Pantau Tantangan 10 Destinasi',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFC89242)),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _openPassport,
+                                icon: const Icon(Icons.verified_rounded, size: 15, color: Color(0xFFC89242)),
+                                label: const Text(
+                                  'Paspor Digital',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFC89242)),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFC89242)),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
                             ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFC89242)),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _goToProfile,
+                                icon: const Icon(Icons.person_rounded, size: 15, color: Colors.white),
+                                label: const Text(
+                                  'Lihat Profil',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.forest,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
 

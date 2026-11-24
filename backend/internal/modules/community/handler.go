@@ -1,7 +1,9 @@
 package community
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/common"
@@ -23,6 +25,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/community/places", h.CreateCommunityPlace)
 	rg.GET("/community/shared-trips", h.GetSharedTrips)
 	rg.POST("/community/shared-trips", h.CreateSharedTrip)
+	rg.POST("/community/shared-trips/:id/join", h.JoinSharedTrip)
+	rg.DELETE("/community/shared-trips/:id", h.DeleteSharedTrip)
 }
 
 // GetCommunityPlaces menangani GET /api/v1/community/places
@@ -82,7 +86,7 @@ func (h *Handler) GetSharedTrips(c *gin.Context) {
 func (h *Handler) CreateSharedTrip(c *gin.Context) {
 	var req CreateSharedTripRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Error(c, http.StatusBadRequest, "Payload tidak valid: title dan destination_route wajib diisi")
+		common.Error(c, http.StatusBadRequest, "Payload tidak valid: title wajib diisi")
 		return
 	}
 
@@ -94,6 +98,75 @@ func (h *Handler) CreateSharedTrip(c *gin.Context) {
 
 	common.Success(c, http.StatusCreated, "Postingan cari barengan berhasil diterbitkan di papan komunitas", map[string]interface{}{
 		"trip": trip,
+	})
+}
+
+// JoinSharedTrip menangani POST /api/v1/community/shared-trips/:id/join
+func (h *Handler) JoinSharedTrip(c *gin.Context) {
+	id := strings.TrimSpace(c.Param("id"))
+
+	var req JoinSharedTripRequest
+	_ = c.ShouldBindJSON(&req)
+	userID := strings.TrimSpace(req.UserID)
+	if userID == "" {
+		userID = strings.TrimSpace(c.Query("user_id"))
+	}
+	if userID == "" {
+		common.Error(c, http.StatusBadRequest, ErrJoinUserIDRequired.Error())
+		return
+	}
+
+	updatedTrip, err := h.service.JoinSharedTrip(id, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrSharedTripNotFound):
+			common.Error(c, http.StatusNotFound, err.Error())
+		case errors.Is(err, ErrHostCannotJoinOwnTrip),
+			errors.Is(err, ErrSharedTripFull),
+			errors.Is(err, ErrJoinUserIDRequired):
+			common.Error(c, http.StatusBadRequest, err.Error())
+		default:
+			common.Error(c, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	common.Success(c, http.StatusOK, "Berhasil bergabung ke Open Trip", map[string]interface{}{
+		"trip": updatedTrip,
+	})
+}
+
+// DeleteSharedTrip menangani DELETE /api/v1/community/shared-trips/:id
+func (h *Handler) DeleteSharedTrip(c *gin.Context) {
+	id := strings.TrimSpace(c.Param("id"))
+
+	userID := strings.TrimSpace(c.Query("user_id"))
+	if userID == "" {
+		var req DeleteSharedTripRequest
+		_ = c.ShouldBindJSON(&req)
+		userID = strings.TrimSpace(req.UserID)
+	}
+	if userID == "" {
+		common.Error(c, http.StatusBadRequest, ErrDeleteUserIDRequired.Error())
+		return
+	}
+
+	if err := h.service.DeleteSharedTrip(id, userID); err != nil {
+		switch {
+		case errors.Is(err, ErrSharedTripNotFound):
+			common.Error(c, http.StatusNotFound, err.Error())
+		case errors.Is(err, ErrUnauthorizedDelete):
+			common.Error(c, http.StatusForbidden, err.Error())
+		case errors.Is(err, ErrDeleteUserIDRequired):
+			common.Error(c, http.StatusBadRequest, err.Error())
+		default:
+			common.Error(c, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	common.Success(c, http.StatusOK, "Open Trip berhasil dihapus", map[string]interface{}{
+		"deleted_id": id,
 	})
 }
 

@@ -108,8 +108,9 @@ func (r *postgresRepository) AddPassportStamp(userID, spotID string, t time.Time
 	`, userID)
 
 	passID := fmt.Sprintf("pass-%d", time.Now().UnixNano()%100000)
+	// Migrated to v2: stemp_visit
 	_, _ = r.db.Exec(`
-		INSERT INTO digital_passports (id, user_id, destination_id, checked_in_at, is_gps_valid)
+		INSERT INTO stemp_visit (id, user_id, destination_id, checked_in_at, is_gps_valid)
 		VALUES ($1, $2, $3, $4, TRUE)
 		ON CONFLICT (user_id, destination_id) DO UPDATE SET checked_in_at = EXCLUDED.checked_in_at;
 	`, passID, userID, spotID, t)
@@ -117,9 +118,10 @@ func (r *postgresRepository) AddPassportStamp(userID, spotID string, t time.Time
 
 func (r *postgresRepository) GetUserPassportStamps(userID string) map[string]time.Time {
 	result := make(map[string]time.Time)
+	// Migrated to v2: stemp_visit
 	rows, err := r.db.Query(`
 		SELECT destination_id, checked_in_at
-		FROM digital_passports
+		FROM stemp_visit
 		WHERE user_id = $1;
 	`, userID)
 	if err != nil {
@@ -155,6 +157,7 @@ func (r *postgresRepository) GetCertificate(userID string) (*CertificateResponse
 
 func (r *postgresRepository) GetTotalStampsCount() int {
 	var count int
-	_ = r.db.QueryRow(`SELECT COUNT(*) FROM digital_passports;`).Scan(&count)
+	// Migrated to v2: stemp_visit
+	_ = r.db.QueryRow(`SELECT COUNT(*) FROM stemp_visit;`).Scan(&count)
 	return count
 }

@@ -12,14 +12,10 @@ import (
 	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/analytics"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/auth"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/booking_escrow"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/community"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/culture_ranking"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/destination"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/gamification"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/group"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/itinerary"
-	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/partner"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/pungli"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/scenes360"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/spatial"
@@ -106,8 +102,10 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	systemHandler.RegisterRoutes(v1)
 
 	// ==========================================
-	// 3. MODUL BE-2 (GROUP, ESCROW, ITINERARY, DLL)
+	// 3. MODUL BE-2 (WISGO / RANCAK.IN)
 	// ==========================================
+	// --- A. MODUL AKTIF (Terhubung ke Skema Presisi 26 Tabel DBML v2 di Supabase Cloud) ---
+
 	// Modul B1: Autentikasi OTP & Simpan Tempat Favorit (Pilar 4 & 5)
 	var authRepo auth.Repository
 	if db != nil && database.IsConnected() {
@@ -119,58 +117,14 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	authHandler := auth.NewHandler(authService)
 	authHandler.RegisterRoutes(v1)
 
-	// Modul B2: Mitra Nagari Minang & Filter Level Pedas (Pilar 5)
-	var partnerRepo partner.Repository
-	if db != nil && database.IsConnected() {
-		partnerRepo = partner.NewPostgresRepository(db)
-	} else {
-		partnerRepo = partner.NewRepository()
-	}
-	partnerService := partner.NewService(partnerRepo)
-	partnerHandler := partner.NewHandler(partnerService)
-	partnerHandler.RegisterRoutes(v1)
-
-	// Modul B3: Rencana Perjalanan 7 Hari — AI & Manual (Pilar 4)
-	var itineraryRepo itinerary.Repository
-	if db != nil && database.IsConnected() {
-		itineraryRepo = itinerary.NewPostgresRepository(db)
-	} else {
-		itineraryRepo = itinerary.NewRepository()
-	}
-	itineraryService := itinerary.NewService(itineraryRepo)
-	itineraryHandler := itinerary.NewHandler(itineraryService)
-	itineraryHandler.RegisterRoutes(v1)
-
-	// Modul B4: Private Group Room, Live Voting, Split-Bill & Live Radar (Pilar 4)
-	var groupRepo group.Repository
-	if db != nil && database.IsConnected() {
-		groupRepo = group.NewPostgresRepository(db)
-	} else {
-		groupRepo = group.NewRepository()
-	}
-	groupService := group.NewService(groupRepo)
-	groupHandler := group.NewHandler(groupService)
-	groupHandler.RegisterRoutes(v1)
-
-	// Modul B5: Quick Booking 360°, Escrow State Machine, Bot WA & E-Ticket QR (Pilar 5)
-	var bookingRepo booking_escrow.Repository
-	if db != nil && database.IsConnected() {
-		bookingRepo = booking_escrow.NewPostgresRepository(db)
-	} else {
-		bookingRepo = booking_escrow.NewRepository()
-	}
-	bookingService := booking_escrow.NewService(bookingRepo)
-	bookingHandler := booking_escrow.NewHandler(bookingService)
-	bookingHandler.RegisterRoutes(v1)
-
-	// Modul B6: Komunitas, Hidden Gem, Masking GPS, & Shared Trips (Pilar 6)
+	// Modul B2: Komunitas, Hidden Gem, Masking GPS, & Open Trips (Pilar 6 - eks B6)
 	var communityRepo community.Repository
 	if db != nil && database.IsConnected() {
 		communityRepo = community.NewPostgresRepository(db)
 	} else {
 		communityRepo = community.NewRepository()
 	}
-	communityService := community.NewService(communityRepo)
+	communityService := community.NewServiceWithDestinations(communityRepo, destRepo)
 	communityHandler := community.NewHandler(communityService)
 	communityHandler.RegisterRoutes(v1)
 
@@ -190,6 +144,16 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	analyticsService := analytics.NewService(analyticsRepo)
 	analyticsHandler := analytics.NewHandler(analyticsService)
 	analyticsHandler.RegisterRoutes(v1)
+
+	// --- B. MODUL NON-AKTIF / ARCHIVED (Ditiadakan Mengikuti Kesepakatan Scope DBML v2) ---
+	// Modul berikut telah selesai 100% di 'backend/internal/modules/*', namun rutenya sengaja
+	// dinonaktifkan (dormant) karena 7 tabel fisiknya di-drop dari Supabase Cloud melalui
+	// migrasi '000004_v2_contract_cleanup.sql' untuk menjaga batas presisi 26 tabel murni:
+	//   1. Modul Group (Private Group Room, Voting, Split Bill, Radar) -> tabel: group_rooms, group_members, group_votes
+	//   2. Modul Itinerary (Smart Trip Planner 7 Hari)                -> tabel: itineraries, itinerary_items
+	//   3. Modul Partner & Booking Escrow (Mitra & Rekening Bersama)    -> tabel: partners, booking_escrows
+	// Jika tim di masa mendatang memutuskan mengaktifkan kembali, jalankan migrasi '000002_be2_schema.sql'
+	// untuk memulihkan tabel terkait, lalu daftarkan rutenya di sini.
 
 	return r
 }

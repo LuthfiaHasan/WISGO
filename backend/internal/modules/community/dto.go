@@ -28,10 +28,22 @@ type CreateCommunityPlaceResponse struct {
 type CreateSharedTripRequest struct {
 	UserID           string  `json:"user_id"`
 	Title            string  `json:"title" binding:"required"`
-	DestinationRoute string  `json:"destination_route" binding:"required"`
+	DestinationID    string  `json:"destination_id"`
+	Category         string  `json:"category"`
+	DestinationRoute string  `json:"destination_route"`
 	DepartureDate    string  `json:"departure_date"`
 	AvailableSeats   int     `json:"available_seats"`
 	CostPerPerson    float64 `json:"cost_per_person"`
 	ContactWA        string  `json:"contact_wa"`
+}
+
+// JoinSharedTripRequest payload bergabung ke Open Trip
+type JoinSharedTripRequest struct {
+	UserID string `json:"user_id"`
+}
+
+// DeleteSharedTripRequest payload penghapusan Open Trip oleh Host
+type DeleteSharedTripRequest struct {
+	UserID string `json:"user_id"`
 }
 
