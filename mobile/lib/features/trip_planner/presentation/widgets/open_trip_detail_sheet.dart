@@ -4,6 +4,7 @@ import '../../../../core/network/auth_guard.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
+import 'verified_organizer_sheet.dart';
 
 /// Modal Bottom Sheet Detail & Kelola Open Trip (Item 1-7 Open Trip)
 /// Mengimplementasikan alur interaksi resmi BE-2:
@@ -145,7 +146,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
 
     if (_isQuotaFull) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maaf, kuota open trip ini sudah penuh.')),
+        const SnackBar(content: Text('Maaf, kuota Trip Go ini sudah penuh.')),
       );
       return;
     }
@@ -180,7 +181,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Selamat! Anda berhasil bergabung ke Open Trip.'),
+            content: Text('Selamat! Anda berhasil bergabung ke Trip Go.'),
             backgroundColor: AppColors.forest,
           ),
         );
@@ -190,7 +191,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
           SnackBar(
             content: Text(res.message.isNotEmpty
                 ? res.message
-                : 'Gagal bergabung ke open trip'),
+                : 'Gagal bergabung ke Trip Go'),
             backgroundColor: AppColors.terracotta,
           ),
         );
@@ -231,7 +232,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
-                'Hapus Open Trip?',
+                'Hapus Trip Go?',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -242,7 +243,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
           ],
         ),
         content: const Text(
-          'Apakah Anda yakin ingin menghapus Open Trip ini? Seluruh jadwal dan peserta terdaftar akan dibatalkan.',
+          'Apakah Anda yakin ingin menghapus Trip Go ini? Seluruh jadwal dan peserta terdaftar akan dibatalkan.',
           style: TextStyle(
             fontSize: 13,
             color: AppColors.muted,
@@ -291,7 +292,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
       Navigator.of(context).pop(); // Tutup detail sheet
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Open Trip berhasil dihapus'),
+          content: Text('Trip Go berhasil dihapus'),
           backgroundColor: AppColors.forest,
         ),
       );
@@ -301,7 +302,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
         SnackBar(
           content: Text(res.message.isNotEmpty
               ? res.message
-              : 'Gagal menghapus Open Trip'),
+              : 'Gagal menghapus Trip Go'),
           backgroundColor: AppColors.terracotta,
         ),
       );
@@ -370,7 +371,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
-                              'DETAIL OPEN TRIP',
+                              'DETAIL TRIP GO',
                               style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w900,
@@ -562,10 +563,10 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               ),
                               const Divider(height: 16, color: AppColors.creamSubtle),
                               _buildInfoRow(
-                                icon: Icons.phone_android_rounded,
-                                label: 'Kontak WA Host',
-                                value: _currentTrip.contactWa,
-                                valueColor: AppColors.ink,
+                                icon: Icons.forum_rounded,
+                                label: 'Kanal Komunikasi',
+                                value: _currentTrip.communicationChannel,
+                                valueColor: AppColors.forest,
                               ),
                               const Divider(height: 16, color: AppColors.creamSubtle),
                               _buildInfoRow(
@@ -575,6 +576,192 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 valueColor: AppColors.ink,
                               ),
                             ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Deskripsi Destinasi Informatif & Kondisi Sebenarnya (Item 5 Spesifikasi Trip Go)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.sageBorder),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.info_outline_rounded, size: 16, color: AppColors.forest),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Deskripsi & Kondisi Nyata Destinasi',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.forest,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _currentTrip.destinationDescription,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF374151),
+                                  height: 1.45,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Rincian Detail Harga: Include & Exclude (Item 1 Spesifikasi Trip Go)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.sageBorder),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Detail Fasilitas & Layanan',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rp ${_formatRupiah(_currentTrip.pricePerPerson)}/org',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.forest,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Termasuk dalam Harga (Include):',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF15803D),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              ..._currentTrip.includes.map((inc) => Padding(
+                                padding: const EdgeInsets.only(bottom: 3),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF16A34A)),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        inc,
+                                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF374151)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Tidak Termasuk dalam Harga (Exclude):',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFB91C1C),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              ..._currentTrip.excludes.map((exc) => Padding(
+                                padding: const EdgeInsets.only(bottom: 3),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.cancel_rounded, size: 14, color: Color(0xFFDC2626)),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        exc,
+                                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Card Penyelenggara Terverifikasi (Item 2 Spesifikasi Trip Go)
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => VerifiedOrganizerSheet(organizer: _currentTrip.organizer),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFF86EFAC)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.verified_rounded, size: 24, color: Color(0xFF16A34A)),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _currentTrip.organizer.name,
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF15803D),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Penyelenggara Terverifikasi 7-Poin WISGO • ★ ${_currentTrip.organizer.rating}',
+                                        style: const TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF166534),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded, color: Color(0xFF16A34A), size: 20),
+                              ],
+                            ),
                           ),
                         ),
 
@@ -701,7 +888,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                       MouseRegion(
                                         cursor: SystemMouseCursors.click,
                                         child: IconButton(
-                                          tooltip: 'Hubungi via WhatsApp',
+                                          tooltip: 'Buka Chat Smart Trip Planner',
                                           icon: const Icon(
                                             Icons.chat_bubble_outline_rounded,
                                             color: AppColors.forest,
@@ -712,7 +899,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                                 .showSnackBar(
                                               SnackBar(
                                                 content: Text(
-                                                    'Menghubungi ${p.fullName} (${p.phoneNumber}) via WhatsApp...'),
+                                                    'Membuka komunikasi tim Smart Trip Planner dengan ${p.fullName}...'),
                                                 backgroundColor:
                                                     AppColors.forest,
                                               ),
@@ -751,7 +938,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               onPressed: _openEditTripForm,
                               icon: const Icon(Icons.edit_rounded, size: 16),
                               label: const Text(
-                                'Edit Open Trip',
+                                'Edit Trip Go',
                                 style: TextStyle(
                                     fontSize: 12.5, fontWeight: FontWeight.w800),
                               ),
@@ -865,7 +1052,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                     label: Text(
                                       _isJoining
                                           ? 'Memproses...'
-                                          : 'Gabung Open Trip',
+                                          : 'Gabung Trip Go',
                                       style: const TextStyle(
                                         fontSize: 13.5,
                                         fontWeight: FontWeight.w900,
@@ -900,22 +1087,26 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
       children: [
         Icon(icon, size: 18, color: AppColors.forest),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.muted,
-            ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.muted,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w800,
-            color: valueColor,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              color: valueColor,
+            ),
           ),
         ),
       ],
@@ -1090,7 +1281,7 @@ class _EditOpenTripSheetState extends State<_EditOpenTripSheet> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Open Trip berhasil diperbarui'),
+            content: Text('Trip Go berhasil diperbarui'),
             backgroundColor: AppColors.forest,
           ),
         );
@@ -1099,7 +1290,7 @@ class _EditOpenTripSheetState extends State<_EditOpenTripSheet> {
           SnackBar(
             content: Text(res.message.isNotEmpty
                 ? res.message
-                : 'Gagal memperbarui Open Trip (Error ${res.statusCode})'),
+                : 'Gagal memperbarui Trip Go (Error ${res.statusCode})'),
             backgroundColor: AppColors.terracotta,
           ),
         );
@@ -1148,7 +1339,7 @@ class _EditOpenTripSheetState extends State<_EditOpenTripSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Edit Open Trip',
+                  'Edit Trip Go',
                   style: TextStyle(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w900,
@@ -1173,7 +1364,7 @@ class _EditOpenTripSheetState extends State<_EditOpenTripSheet> {
                 children: [
                   // Judul Trip
                   const Text(
-                    'Judul Open Trip',
+                    'Judul Trip Go',
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,

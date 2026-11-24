@@ -152,8 +152,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       'activeIcon': Icons.home_rounded,
     },
     {
-      'label': 'Open Trip',
-      'labelEn': 'Open Trip',
+      'label': 'Trip Go',
+      'labelEn': 'Trip Go',
       'icon': Icons.groups_outlined,
       'activeIcon': Icons.groups_rounded,
     },
@@ -227,7 +227,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     },
     {
       'id': 'notif_2',
-      'title': 'Permintaan Open Trip Disetujui!',
+      'title': 'Permintaan Trip Go Disetujui!',
       'message': 'Host telah menerima permohonan Anda untuk bergabung di Eksplor Harau Camp. Tautan WhatsApp Group kini dapat diakses.',
       'time': '1 jam lalu',
       'isRead': false,
@@ -2739,8 +2739,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     const SizedBox(height: 2),
                     Text(
                       AppLocale.tr(
-                        'Open Trip Sumbar',
-                        'West Sumatra Open Trips',
+                        'Trip Go Sumbar',
+                        'West Sumatra Trip Go',
                       ),
                       style: const TextStyle(
                         fontSize: 19,
@@ -2784,7 +2784,79 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
             children: [
-              // 1. STANDAR KEAMANAN OPEN TRIP WISGO (Item 1-7 Open Trip)
+              // 1. INFORMASI EDUKASI: MENGENAL TRIP GO (Konsep, Mekanisme & Cara Kerja - Item 8 Spesifikasi Trip Go)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF064E3B), Color(0xFF0F766E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF064E3B).withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.travel_explore_rounded, size: 18, color: Colors.white),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'MENGENAL FITUR TRIP GO',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF34D399),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Panduan Resmi',
+                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: Color(0xFF064E3B)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '• KONSEP: Perjalanan wisata terstruktur dengan 1 Destinasi Tunggal per trip bersama penyelenggara lokal berlisensi terverifikasi.\n'
+                      '• MEKANISME: Pembayaran disetor ke Rekening Penampung (Escrow) terpusat melalui Payment Gateway, komunikasi peserta wajib melalui Smart Trip Planner in-app (non-WhatsApp).\n'
+                      '• CARA KERJA: 1. Pilih jadwal trip & cek detail Include/Exclude -> 2. Tinjau verifikasi 7-poin penyelenggara -> 3. Setujui ketentuan platform & bayar aman -> 4. Koordinasi tim di Smart Trip Planner & kumpul di titik GPS.',
+                      style: TextStyle(
+                        fontSize: 10.8,
+                        color: Color(0xFFECFDF5),
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // STANDAR RESMI TRIP GO WISGO
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(14),
@@ -2816,7 +2888,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
-                            'STANDAR RESMI OPEN TRIP WISGO',
+                            'STANDAR RESMI TRIP GO WISGO',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -2845,11 +2917,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       '• 1 Destinasi Tunggal per perjalanan untuk kenyamanan maksimal.\n'
-                      '• Kategori otomatis diklasifikasi sesuai destinasi pilihan.\n'
-                      '• Transaksi langsung aman via sistem pembayaran resmi WISGO.\n'
-                      '• Titik kumpul presisi terintegrasi langsung dengan Google Maps.\n'
-                      '• Penyelenggara terverifikasi identitas, lisensi kepanduan, dan rating.\n'
-                      '• Ketentuan aktivitas luar aplikasi (SOP, asuransi & toleransi 15 mnt) jelas.',
+                      '• Rincian transparan mencakup fasilitas Include & Exclude secara jelas.\n'
+                      '• Penyelenggara wajib memenuhi 7 poin verifikasi identitas, lisensi, dan sertifikasi.\n'
+                      '• Komunikasi koordinasi terpusat di Smart Trip Planner in-app.\n'
+                      '• Titik kumpul presisi terintegrasi langsung dengan navigasi Google Maps.\n'
+                      '• Transaksi aman terlindungi Rekening Penampung (Escrow) WISGO.',
                       style: TextStyle(
                         fontSize: 10.5,
                         color: Color(0xFF4B5563),
@@ -2875,7 +2947,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Kebijakan Transaksi WISGO: Sistem pembayaran & penjaminan Escrow HANYA digunakan pada layanan Open Trip resmi. Fitur perjalanan lainnya bebas biaya & non-transaksi.',
+                        'Kebijakan Transaksi WISGO: Sistem pembayaran & penjaminan Escrow HANYA digunakan pada layanan Trip Go resmi. Fitur perjalanan lainnya bebas biaya & non-transaksi.',
                         style: TextStyle(
                           fontSize: 10.5,
                           color: Color(0xFF1E40AF),
@@ -2940,7 +3012,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Jadwal Open Trip Terbuka (${filteredTrips.length})',
+                      'Jadwal Trip Go Terbuka (${filteredTrips.length})',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppColors.ink),
@@ -2965,7 +3037,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                   child: const Center(
                     child: Text(
-                      'Belum ada open trip untuk kategori ini.',
+                      'Belum ada Trip Go untuk kategori ini.',
                       style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                   ),
@@ -3005,7 +3077,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   },
                   icon: const Icon(Icons.add_rounded, size: 16),
                   label: const Text(
-                    '+ Buat Jadwal Open Trip Baru (1 Destinasi Tunggal)',
+                    '+ Buat Jadwal Trip Go Baru (1 Destinasi Tunggal)',
                     style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
                   ),
                   style: OutlinedButton.styleFrom(

@@ -20,6 +20,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
   String _selectedPaymentMethod = 'QRIS'; // 'QRIS', 'WISGO_PAY', 'VIRTUAL_ACCOUNT'
   bool _isProcessing = false;
   bool _isPaid = false;
+  bool _agreedToTerms = false;
   String _bookingCode = '';
 
   @override
@@ -247,6 +248,65 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
           ),
           const SizedBox(height: 14),
 
+          // 1. Rincian Fasilitas & Layanan (Include & Exclude - Item 1 Spesifikasi Trip Go)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Rincian Fasilitas Termasuk (Include):',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                ),
+                const SizedBox(height: 4),
+                ...widget.trip.includes.map((inc) => Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 13, color: Color(0xFF16A34A)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          inc,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF374151)),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 8),
+                const Text(
+                  'Tidak Termasuk (Exclude):',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFFB91C1C)),
+                ),
+                const SizedBox(height: 4),
+                ...widget.trip.excludes.map((exc) => Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.cancel_rounded, size: 13, color: Color(0xFFDC2626)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          exc,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
           // Rincian Biaya Transparan
           Container(
             padding: const EdgeInsets.all(12),
@@ -256,11 +316,11 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
             ),
             child: Column(
               children: [
-                _buildFeeRow('Tarif Trip (${_participantCount}x)', 'Rp ${_formatRupiah(_totalAmount)}'),
+                _buildFeeRow('Tarif Trip Go (${_participantCount}x)', 'Rp ${_formatRupiah(_totalAmount)}'),
                 const SizedBox(height: 6),
                 _buildFeeRow('Asuransi Keselamatan Rekreasi', 'Termasuk (Rp 0)'),
                 const SizedBox(height: 6),
-                _buildFeeRow('Proteksi Escrow Rekening Bersama', 'Gratis Resmi WISGO'),
+                _buildFeeRow('Proteksi Escrow Rekening Penampung', 'Gratis Resmi WISGO'),
                 const Divider(height: 16, color: Color(0xFFE5E7EB)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -274,35 +334,88 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
           ),
           const SizedBox(height: 12),
 
-          // Banner Escrow
+          // Banner Escrow & Payment Gateway Terpusat (Item 7 Spesifikasi Trip Go)
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
             ),
             child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.lock_rounded, color: Color(0xFF15803D), size: 16),
+                Icon(Icons.account_balance_rounded, color: Color(0xFF15803D), size: 18),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    'Dana Anda aman di Escrow WISGO hingga trip terlaksana dengan baik.',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF166534), fontWeight: FontWeight.w600),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Payment Gateway & Rekening Penampung Terpusat',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Pembayaran disalurkan melalui Payment Gateway resmi ke Rekening Penampung WISGO (Escrow Admin). Dana baru diteruskan ke penyelenggara setelah trip selesai dan terkonfirmasi.',
+                        style: TextStyle(fontSize: 10.5, color: Color(0xFF166534), height: 1.35),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
-          // Tombol Bayar
+          // Checkbox Persetujuan Ketentuan & Tanggung Jawab Platform (Item 3 Spesifikasi Trip Go)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Checkbox(
+                  value: _agreedToTerms,
+                  activeColor: AppColors.forest,
+                  onChanged: (val) {
+                    setState(() => _agreedToTerms = val ?? false);
+                  },
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
+                    child: const Padding(
+                      padding: EdgeInsets.only(top: 8, bottom: 8, right: 8),
+                      child: Text(
+                        'Saya memahami & menyetujui bahwa WISGO hanya sebagai penyedia platform digital. Seluruh proses dan aktivitas teknis selama pelaksanaan Trip Go menjadi tanggung jawab bersama antara pihak penyelenggara dan peserta.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF92400E),
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Tombol Bayar (Hanya aktif bila checkbox telah disetujui)
           ElevatedButton(
-            onPressed: _isProcessing ? null : _processPayment,
+            onPressed: (!_agreedToTerms || _isProcessing) ? null : _processPayment,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.forest,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey.shade300,
+              disabledForegroundColor: Colors.grey.shade500,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
@@ -313,8 +426,8 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
                 : Text(
-                    'Bayar Rp ${_formatRupiah(_totalAmount)} via Sistem WISGO',
-                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
+                    'Bayar Rp ${_formatRupiah(_totalAmount)} via Payment Gateway WISGO',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                   ),
           ),
         ],
@@ -346,7 +459,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
         ),
         const SizedBox(height: 4),
         const Text(
-          'e-Tiket Resmi Open Trip & Perlindungan Escrow Aktif',
+          'e-Tiket Resmi Trip Go & Perlindungan Escrow Aktif',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12, color: AppColors.muted),
         ),
