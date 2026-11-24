@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../constants/colors.dart';
+import '../theme/app_colors.dart';
 
-/// CrowdBadge - Penanda Keramaian (Sepi, Sedang, Ramai)
+/// CrowdBadge - Penanda Keramaian (Sepi, Sedang, Ramai) (desain.md 07.2)
 enum CrowdLevel { sepi, sedang, ramai }
 
 class CrowdBadge extends StatelessWidget {
@@ -17,18 +17,18 @@ class CrowdBadge extends StatelessWidget {
 
     switch (level) {
       case CrowdLevel.sepi:
-        bg = AppColors.green500.withOpacity(0.15);
-        fg = AppColors.green500;
+        bg = AppColors.successBg;
+        fg = AppColors.success;
         text = 'Sepi';
         break;
       case CrowdLevel.sedang:
-        bg = AppColors.orange500.withOpacity(0.15);
-        fg = AppColors.orange500;
+        bg = AppColors.warningBg;
+        fg = AppColors.warning;
         text = 'Sedang';
         break;
       case CrowdLevel.ramai:
-        bg = AppColors.coral500.withOpacity(0.15);
-        fg = AppColors.coral500;
+        bg = AppColors.coralTint;
+        fg = AppColors.terracotta;
         text = 'Ramai';
         break;
     }
@@ -38,6 +38,7 @@ class CrowdBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: fg.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -56,7 +57,7 @@ class CrowdBadge extends StatelessWidget {
             style: TextStyle(
               color: fg,
               fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -64,4 +65,3 @@ class CrowdBadge extends StatelessWidget {
     );
   }
 }
-
