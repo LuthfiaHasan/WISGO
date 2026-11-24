@@ -1,20 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../../core/constants/colors.dart';
-import '../../../core/widgets/pill_button.dart';
 import '../data/destination_repository.dart';
 import '../models/destination_model.dart';
 import 'widgets/morse_sos_modal.dart';
 
-/// Layar Mitigasi Jalur Rawan & Tombol Darurat SOS GPS (FE-1 & Pilar 7)
-/// Dilengkapi 4 Mekanisme Tanggap Darurat Tanpa Sinyal (Zero-Signal / Offline):
-/// 1. SMS Fallback (Koordinat GPS via SMS 2G)
-/// 2. Akses Cepat Panggilan Darurat Nasional 112 (Bebas Pulsa & Kuota)
-/// 3. Offline Caching & Auto-Queue Sinyal SOS
-/// 4. Alat Bantu Sinyal Fisik: Sirine Volume Maksimal & Senter Kedipan Pola Morse SOS
+/// Layar Mitigasi Jalur Rawan & Kontak Darurat Bencana Sumbar
+/// Menyajikan kontak darurat resmi, hotline bebas pulsa, 4 radar koridor ekstrem,
+/// serta alat bantu fisik offline (Sirine & Senter Morse).
 class HazardSosScreen extends StatefulWidget {
   const HazardSosScreen({super.key});
 
@@ -25,28 +20,17 @@ class HazardSosScreen extends StatefulWidget {
 class _HazardSosScreenState extends State<HazardSosScreen>
     with SingleTickerProviderStateMixin {
   final DestinationRepository _repository = DestinationRepository();
-  bool _isSendingSos = false;
   bool _isLoading = true;
   List<HazardAlertModel> _corridors = [];
+  List<EmergencyContactModel> _officialContacts = [];
 
-  // 1. Status Jaringan & Offline Caching
+  // Status Jaringan & Offline Caching
   bool _isZeroSignalMode = false;
   static const double _lastKnownLat = -0.9468;
   static const double _lastKnownLng = 100.5182;
-  static const String _lastKnownLocationName = 'Sitinjau Lauik (Padang - Solok)';
-  static const int _cachedBatteryPercent = 84;
   final List<Map<String, dynamic>> _offlineSosQueue = [];
 
-  // 2. Jenis Darurat
-  String _selectedEmergencyType = 'Kendaraan Mogok di Tanjakan';
-  static const List<String> _emergencyTypes = [
-    'Kendaraan Mogok di Tanjakan',
-    'Terjebak Longsor / Jalan Putus',
-    'Darurat Medis / Kecelakaan',
-    'Tersesat di Jalur Hutan (Zero-Signal)',
-  ];
-
-  // 3. Sirine Darurat
+  // Sirine Darurat
   bool _isSirenActive = false;
   AudioPlayer? _audioPlayer;
   late AnimationController _sirenPulseController;
@@ -72,10 +56,14 @@ class _HazardSosScreenState extends State<HazardSosScreen>
 
   Future<void> _loadHazards() async {
     setState(() => _isLoading = true);
-    final data = await _repository.getHazardAlerts();
+    final results = await Future.wait([
+      _repository.getHazardAlerts(),
+      _repository.getEmergencyContacts(),
+    ]);
     if (!mounted) return;
     setState(() {
-      _corridors = data;
+      _corridors = results[0] as List<HazardAlertModel>;
+      _officialContacts = results[1] as List<EmergencyContactModel>;
       _isLoading = false;
     });
   }
@@ -95,381 +83,38 @@ class _HazardSosScreenState extends State<HazardSosScreen>
     }
   }
 
-  // ==========================================
-  // FITUR 1: SMS FALLBACK (KOORDINAT VIA SMS)
-  // ==========================================
-  String _buildEmergencySmsBody(String emergencyType) {
-    return '[WISGO SOS DARURAT] Butuh Bantuan Segera!\n'
-        'Jenis: $emergencyType\n'
-        'Lokasi: $_lastKnownLocationName\n'
-        'GPS: $_lastKnownLat, $_lastKnownLng\n'
-        'Peta: https://maps.google.com/?q=$_lastKnownLat,$_lastKnownLng\n'
-        'Baterai: $_cachedBatteryPercent%\n'
-        'Pesan ini dikirim via SMS Fallback (Zero-Signal Mode)';
-  }
-
-  Future<void> _triggerSmsFallback(String emergencyType) async {
-    const targetPhone = '+62811660115'; // Posko Siaga SAR Padang
-    final message = _buildEmergencySmsBody(emergencyType);
-    final Uri smsUri = Uri(
-      scheme: 'sms',
-      path: targetPhone,
-      queryParameters: {'body': message},
-    );
-
-    try {
-      final launched = await launchUrl(smsUri, mode: LaunchMode.externalApplication);
-      if (!launched) {
-        _showSmsFallbackDialog(targetPhone, message);
-      }
-    } catch (_) {
-      if (mounted) {
-        _showSmsFallbackDialog(targetPhone, message);
-      }
-    }
-  }
-
-  void _showSmsFallbackDialog(String phone, String message) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.sms_rounded, color: AppColors.green800, size: 24),
-            SizedBox(width: 8),
-            Text('SMS Fallback Darurat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Jaringan data internet tidak tersedia. Sistem menyiapkan SMS darurat berikut:',
-              style: TextStyle(fontSize: 12, color: Colors.black87),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: SelectableText(
-                message,
-                style: const TextStyle(fontSize: 11.5, fontFamily: 'monospace', height: 1.35),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tutup', style: TextStyle(color: Colors.black54)),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.green800,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            icon: const Icon(Icons.copy_rounded, size: 16),
-            label: const Text('Salin Pesan Darurat'),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: message));
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Pesan SMS darurat & koordinat GPS berhasil disalin ke clipboard!'),
-                  backgroundColor: AppColors.green800,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================
-  // FITUR 2: PANGGILAN CEPAT DARURAT (112)
-  // ==========================================
-  Future<void> _makeEmergencyCall(String number, String label) async {
-    final Uri callUri = Uri(scheme: 'tel', path: number);
-    try {
-      final launched = await launchUrl(callUri, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) {
-        _showCallFallbackSnackbar(number, label);
-      }
-    } catch (_) {
-      if (mounted) {
-        _showCallFallbackSnackbar(number, label);
-      }
-    }
-  }
-
-  void _showCallFallbackSnackbar(String number, String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: Colors.red.shade900,
-        content: Text('Panggil $label ke nomor $number (Bebas Pulsa)'),
-        action: SnackBarAction(
-          label: 'Salin Nomor',
-          textColor: Colors.yellow,
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: number));
-          },
-        ),
-      ),
-    );
-  }
-
-  // ==========================================
-  // FITUR 3: OFFLINE CACHING & AUTO-QUEUE
-  // ==========================================
-  Future<void> _processSosTrigger() async {
-    setState(() => _isSendingSos = true);
-
-    if (_isZeroSignalMode) {
-      // Masuk ke antrean sistem offline
-      final queueId = 'SOS-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-      _offlineSosQueue.add({
-        'id': queueId,
-        'type': _selectedEmergencyType,
-        'time': 'Baru Saja',
-        'lat': _lastKnownLat,
-        'lng': _lastKnownLng,
-      });
-
-      setState(() => _isSendingSos = false);
-
-      // Jalankan SMS Fallback otomatis
-      await _triggerSmsFallback(_selectedEmergencyType);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFFD32F2F),
-            duration: const Duration(seconds: 5),
-            content: Text(
-              '⚠️ Mode Zero-Signal: Permintaan SOS ($queueId) tersimpan di Antrean Offline & Dialihkan ke SMS Darurat!',
-            ),
-          ),
-        );
-      }
-    } else {
-      // Jalur Online via API
-      final signal = SOSSignalModel(
-        touristName: 'Wisatawan WISGO',
-        phoneNumber: '+6281234567890',
-        emergencyType: _selectedEmergencyType,
-        latitude: _lastKnownLat,
-        longitude: _lastKnownLng,
-        batteryPercent: _cachedBatteryPercent,
-        nearestCorridor: 'Sitinjau Lauik',
-      );
-
-      await _repository.sendSosSignal(signal);
-
-      if (!mounted) return;
-      setState(() => _isSendingSos = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.green800,
-          duration: const Duration(seconds: 4),
-          content: Text(
-            'Sinyal SOS ($_selectedEmergencyType) & GPS darurat berhasil dipancarkan ke Posko SAR & Satgas Nagari!',
-          ),
-        ),
-      );
-    }
-  }
-
   void _syncOfflineQueue() {
     if (_offlineSosQueue.isEmpty) return;
     final count = _offlineSosQueue.length;
     setState(() {
       _offlineSosQueue.clear();
-      _isZeroSignalMode = false;
     });
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        content: Text('$count laporan berhasil disinkronkan ke server WISGO!'),
         backgroundColor: AppColors.green800,
-        content: Text('$count permintaan SOS dalam antrean berhasil disinkronkan ke Posko SAR Sumbar!'),
       ),
     );
   }
 
-  // ==========================================
-  // FITUR 4: SIRINE & SENTER MORSE (100% OFFLINE)
-  // ==========================================
   Future<void> _toggleSiren() async {
+    setState(() => _isSirenActive = !_isSirenActive);
     if (_isSirenActive) {
+      _sirenPulseController.repeat(reverse: true);
+      HapticFeedback.heavyImpact();
+    } else {
       _sirenPulseController.stop();
       _sirenPulseController.reset();
       await _audioPlayer?.stop();
-      setState(() => _isSirenActive = false);
-    } else {
-      setState(() => _isSirenActive = true);
-      _sirenPulseController.repeat(reverse: true);
-      _audioPlayer ??= AudioPlayer();
-      try {
-        await _audioPlayer!.setReleaseMode(ReleaseMode.loop);
-        await _audioPlayer!.play(AssetSource('audio/phr-1.mp3'));
-      } catch (_) {}
     }
   }
 
   void _openMorseModal() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => const MorseSosModal(),
-      ),
-    );
-  }
-
-  // ==========================================
-  // DIALOG PANCARKAN SOS
-  // ==========================================
-  void _triggerSosDialog() {
-    showDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (dialogCtx, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: AppColors.coral500, size: 28),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Pancarkan Sinyal Darurat SOS GPS',
-                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Pilih Jenis Keadaan Darurat:',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
-              ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                value: _selectedEmergencyType,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                items: _emergencyTypes.map((t) {
-                  return DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(fontSize: 12)));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setDialogState(() => _selectedEmergencyType = val);
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.sage100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.my_location, size: 14, color: AppColors.green800),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Koordinat: $_lastKnownLat, $_lastKnownLng ($_lastKnownLocationName)',
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.ink900),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.battery_charging_full, size: 14, color: AppColors.green800),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Status Baterai: $_cachedBatteryPercent% · Terhubung ke SAR Padang',
-                            style: const TextStyle(fontSize: 11, color: Colors.black54),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          _isZeroSignalMode ? Icons.signal_cellular_connected_no_internet_0_bar : Icons.wifi_rounded,
-                          size: 14,
-                          color: _isZeroSignalMode ? Colors.red : AppColors.green800,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            _isZeroSignalMode
-                                ? 'Mode: Zero-Signal (Fallback SMS Aktif)'
-                                : 'Mode: Online (Koneksi Data Normal)',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: _isZeroSignalMode ? Colors.red.shade800 : AppColors.green800,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _isZeroSignalMode
-                    ? 'Saat internet mati, sistem otomatis menyiapkan SMS darurat koordinat & menyimpan permintaan ke antrean offline.'
-                    : 'Sinyal akan dipancarkan ke Basarnas Sumbar, BPBD, & Posko Satgas Nagari terdekat.',
-                style: const TextStyle(fontSize: 11.5, color: Colors.black54),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal', style: TextStyle(color: Colors.black54)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.coral500,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                _processSosTrigger();
-              },
-              child: const Text('Ya, Pancarkan Sekarang'),
-            ),
-          ],
-        ),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const MorseSosModal(),
     );
   }
 
@@ -478,7 +123,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
     return Scaffold(
       backgroundColor: AppColors.cream100,
       appBar: AppBar(
-        title: const Text('Pantauan Jalur Rawan & SOS GPS'),
+        title: const Text('Pantauan Jalur Rawan & Kontak Darurat'),
         actions: [
           IconButton(
             tooltip: 'Segarkan Status Jalur',
@@ -494,65 +139,62 @@ class _HazardSosScreenState extends State<HazardSosScreen>
               children: [
                 // 1. STATUS BAR JARINGAN & OFFLINE CACHING GPS TERAKHIR
                 _buildOfflineCacheStatusBar(),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
-                // 2. BANNER TOMBOL DARURAT SOS GPS (PILAR 7)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFD32F2F), Color(0xFFB71C1C)],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withValues(alpha: 0.3),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+                // 2. HOTLINE DARURAT SUMATERA BARAT
+                const Text(
+                  'Kontak Darurat Siaga (Bebas Pulsa)',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.ink900,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                const SizedBox(height: 10),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
                     children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.sos_rounded, color: Colors.white, size: 36),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Tombol Bantuan Darurat SOS GPS',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _isZeroSignalMode
-                            ? 'Mode Blank Spot Aktif: Tombol otomatis mengaktifkan SMS Fallback (berisi titik koordinat GPS) & antrean lokal tanpa kuota internet.'
-                            : 'Gunakan saat darurat di tanjakan ekstrem atau kawasan blank spot. Sistem mengirim koordinat GPS dan peringatan otomatis ke posko penyelamatan nagari.',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.4),
-                      ),
-                      const SizedBox(height: 16),
-                      PillButton(
-                        text: _isSendingSos ? 'Memancarkan Sinyal...' : 'PANCARKAN SOS SEKARANG',
-                        icon: const Icon(Icons.emergency_share, color: Colors.white, size: 18),
-                        backgroundColor: const Color(0xFF8B0000),
-                        onPressed: _isSendingSos ? null : _triggerSosDialog,
-                      ),
+                      _buildHotlinePill('SAR Sumbar: 115', 'Basarnas Padang / Sumbar', '115', Icons.phone_in_talk, Colors.red.shade700),
+                      const SizedBox(width: 8),
+                      _buildHotlinePill('BPBD: 112', 'BPBD & Damkar Terpadu', '112', Icons.emergency, AppColors.orange500),
+                      const SizedBox(width: 8),
+                      _buildHotlinePill('Ambulans: 118', 'Layanan Medis Darurat', '118', Icons.local_hospital, AppColors.green800),
+                      const SizedBox(width: 8),
+                      _buildHotlinePill('Polisi: 110', 'Kepolisian RI (Polri)', '110', Icons.local_police, AppColors.indigo500),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-                // 3. AKSES CEPAT PANGGILAN DARURAT (112 - BEBAS PULSA & KUOTA)
-                _buildEmergencyCallCard(),
-                const SizedBox(height: 20),
+                // 3. 6 NOMOR DARURAT BENCANA RESMI SUMATERA BARAT (DATA REAL)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Nomor Darurat Bencana Sumbar',
+                      style: TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink900,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.green800.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '6 Kontak Resmi',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.green800),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ..._buildOfficialEmergencyCards(),
+                const SizedBox(height: 24),
 
                 // 4. DAFTAR KORIDOR RAWAN BENCANA (SITINJAU, ANAI, KELOK 9, KELOK 44)
                 Row(
@@ -598,79 +240,59 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: Text(
-                                c.location,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.ink900,
-                                ),
-                              ),
-                            ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
+                                color: color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 c.severity.toUpperCase(),
                                 style: TextStyle(
+                                  color: color,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: color,
                                 ),
                               ),
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.access_time_rounded, size: 13, color: Colors.black38),
+                            const SizedBox(width: 4),
+                            Text(
+                              c.lastUpdated,
+                              style: const TextStyle(fontSize: 11, color: Colors.black45),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 10),
+                        Text(
+                          c.corridorName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink900,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         Text(
-                          'Ruas: ${c.roadSegment} · Tanjakan ${c.slopeGradientDeg}°',
-                          style: const TextStyle(fontSize: 11.5, color: Colors.black54),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          c.message,
-                          style: const TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.4),
+                          c.conditionDescription,
+                          style: const TextStyle(fontSize: 12.5, color: Colors.black54, height: 1.35),
                         ),
                         const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.sage100,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.alt_route, size: 16, color: AppColors.green800),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  c.detourRoute,
-                                  style: const TextStyle(fontSize: 11.5, color: AppColors.ink900, fontWeight: FontWeight.w500),
+                        Row(
+                          children: [
+                            const Icon(Icons.alt_route_rounded, size: 14, color: AppColors.green800),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Jalur Alternatif: ${c.alternativeRoute}',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.green800,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              'Posko: ${c.nearestRescuePost}',
-                              style: const TextStyle(fontSize: 11, color: Colors.black45),
-                            ),
-                            Text(
-                              c.emergencyContact,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.green800),
                             ),
                           ],
                         ),
@@ -684,6 +306,219 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                 _buildPhysicalRescueToolsCard(),
               ],
             ),
+    );
+  }
+
+  Color _getContactColor(String agencyType) {
+    switch (agencyType.toLowerCase()) {
+      case 'damkar':
+        return Colors.deepOrange;
+      case 'pmi':
+        return Colors.red.shade700;
+      case 'polisi':
+        return AppColors.indigo500;
+      case 'bpbd':
+      default:
+        return AppColors.orange500;
+    }
+  }
+
+  IconData _getContactIcon(String agencyType) {
+    switch (agencyType.toLowerCase()) {
+      case 'damkar':
+        return Icons.local_fire_department;
+      case 'pmi':
+        return Icons.health_and_safety;
+      case 'polisi':
+        return Icons.local_police;
+      case 'bpbd':
+      default:
+        return Icons.emergency;
+    }
+  }
+
+  List<Widget> _buildOfficialEmergencyCards() {
+    if (_officialContacts.isEmpty) {
+      return [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Center(
+            child: Text(
+              'Memuat kontak darurat dari server backend...',
+              style: TextStyle(fontSize: 12, color: Colors.black45),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return _officialContacts.map((c) {
+      final name = c.agencyName;
+      final phone = c.phoneNumber;
+      final city = c.city;
+      final color = _getContactColor(c.agencyType);
+      final icon = _getContactIcon(c.agencyType);
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _showCallSimulationDialog(name, phone, icon, color),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: color, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          city,
+                          style: const TextStyle(fontSize: 11, color: Colors.black45),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.cream100,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.phone_outlined, size: 13, color: color),
+                        const SizedBox(width: 4),
+                        Text(
+                          phone,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  void _showCallSimulationDialog(String agency, String number, IconData icon, Color color) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Simulasi Panggilan Darurat',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.ink900),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Instansi: $agency',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.ink900),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Text('Nomor Darurat: ', style: TextStyle(fontSize: 13, color: Colors.black54)),
+                Text(
+                  number,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: color),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF9E6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFFD54F)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.shield_outlined, color: Color(0xFFF57F17), size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Mode Uji Coba: Fitur dialer otomatis sengaja ditahan agar tidak melakukan panggilan nyata ke nomor darurat instansi terkait saat pengujian/demo.',
+                      style: TextStyle(fontSize: 11.5, color: Color(0xFF5D4037), height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tutup', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -792,7 +627,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '${_offlineSosQueue.length} SOS tersimpan di Antrean Offline lokal',
+                      '${_offlineSosQueue.length} laporan di antrean offline lokal',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
                     ),
                   ),
@@ -814,121 +649,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
     );
   }
 
-  // WIDGET 2: AKSES CEPAT PANGGILAN DARURAT (112)
-  Widget _buildEmergencyCallCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.red.shade100, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.phone_in_talk_rounded, color: Colors.red, size: 18),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Panggilan Darurat Terpadu (112)',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.ink900),
-                    ),
-                    Text(
-                      'Bebas Pulsa & Kuota • Berfungsi di Semua Operator Seluler',
-                      style: TextStyle(fontSize: 11, color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Tombol Panggilan Utama 112
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC62828),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 1,
-              ),
-              icon: const Icon(Icons.call_rounded, size: 18),
-              label: const Text(
-                'PANGGIL 112 SEKARANG (BEBAS PULSA)',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, letterSpacing: 0.3),
-              ),
-              onPressed: () => _makeEmergencyCall('112', 'Panggilan Darurat 112'),
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Baris Hotline Tambahan
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildQuickCallChip('SAR: 115', '115', Colors.red.shade700),
-                const SizedBox(width: 6),
-                _buildQuickCallChip('Ambulans: 118', '118', AppColors.green800),
-                const SizedBox(width: 6),
-                _buildQuickCallChip('Polisi: 110', '110', AppColors.indigo500),
-                const SizedBox(width: 6),
-                _buildQuickCallChip('Posko Sitinjau', '0811660115', AppColors.orange500),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickCallChip(String label, String number, Color color) {
-    return InkWell(
-      onTap: () => _makeEmergencyCall(number, label),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.call, size: 12, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // WIDGET 3: ALAT BANTU SINYAL FISIK (100% OFFLINE)
+  // WIDGET 2: ALAT BANTU SINYAL FISIK (100% OFFLINE)
   Widget _buildPhysicalRescueToolsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1063,6 +784,35 @@ class _HazardSosScreenState extends State<HazardSosScreen>
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHotlinePill(String title, String agency, String number, IconData icon, Color color) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showCallSimulationDialog(agency, number, icon, color),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: color),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

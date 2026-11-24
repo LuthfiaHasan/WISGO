@@ -45,9 +45,28 @@ func TestScenes360Suite(t *testing.T) {
 		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 			t.Fatalf("failed to parse JSON: %v", err)
 		}
+
+		if body["view_mode"] != "photo_panorama" {
+			t.Fatalf("expected view_mode 'photo_panorama', got '%v'", body["view_mode"])
+		}
+		if body["image_resolution"] != "4K Equirectangular Panorama" {
+			t.Fatalf("expected image_resolution '4K Equirectangular Panorama', got '%v'", body["image_resolution"])
+		}
+
 		scenes, ok := body["scenes_360"].([]interface{})
 		if !ok || len(scenes) < 2 {
 			t.Fatalf("expected at least 2 scenes (aerial & ground) for Lembah Harau, got %v", len(scenes))
+		}
+
+		// Verifikasi voice_text pada hotspot
+		firstScene := scenes[0].(map[string]interface{})
+		hotspots, ok := firstScene["hotspots"].([]interface{})
+		if !ok || len(hotspots) == 0 {
+			t.Fatal("expected hotspots in first scene")
+		}
+		audioHotspot := hotspots[1].(map[string]interface{})
+		if audioHotspot["voice_text"] == nil || audioHotspot["voice_text"] == "" {
+			t.Fatal("expected voice_text to be populated for voice guidance")
 		}
 
 		legend, ok := body["pin_legend"].(map[string]interface{})

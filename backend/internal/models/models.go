@@ -6,12 +6,82 @@ import (
 
 // --- Domain Models BE-1: Core & Spasial (Pilar 1, 2, 3, 7) ---
 
-// Category tabel master kategori yang menyatukan seluruh category_id lintas modul (ERD Revisi #1)
+// Category tabel master kategori yang menyatukan seluruh category_id lintas modul (ERD Revisi #1 & Poin 6)
 type Category struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`             // Alam & Geopark, Budaya & Nagari, Hidden Gem, Religi, Kuliner
+	Slug             string    `json:"slug"`
+	Description      string    `json:"description,omitempty"`
+	IconURL          string    `json:"icon_url,omitempty"`
+	DestinationCount int       `json:"destination_count"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+// GetDefaultCategories mengembalikan 5 Kategori Induk Resmi Wisata Ranah Minang (Poin 6)
+func GetDefaultCategories() []Category {
+	now := time.Now()
+	return []Category{
+		{
+			ID:               "cat-alam-geopark",
+			Name:             "Alam & Geopark",
+			Slug:             "alam-geopark",
+			Description:      "Wisata bentang alam, tebing granit purba, ngarai, danau pegunungan, dan geopark Sumatera Barat.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-alam.png",
+			DestinationCount: 7,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-budaya-nagari",
+			Name:             "Budaya & Nagari",
+			Slug:             "budaya-nagari",
+			Description:      "Wisata warisan budaya Minangkabau, rumah gadang, desa adat terindah, dan sejarah peradaban Minang.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-budaya.png",
+			DestinationCount: 7,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-hidden-gem",
+			Name:             "Hidden Gem",
+			Slug:             "hidden-gem",
+			Description:      "Destinasi alami tersembunyi yang asri, minim keramaian, dan membutuhkan edukasi kelestarian tinggi.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-hidden-gem.png",
+			DestinationCount: 3,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-religi",
+			Name:             "Religi",
+			Slug:             "religi",
+			Description:      "Wisata masjid bersejarah berarsitektur Minang, surau tarekat, dan jejak peradaban Islam Minangkabau.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-religi.png",
+			DestinationCount: 1,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-kuliner",
+			Name:             "Kuliner",
+			Slug:             "kuliner",
+			Description:      "Sentra kuliner Minangkabau otentik, los lambuang pasar tradisional, rumah makan legendaris, dan sentra rendang.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-kuliner.png",
+			DestinationCount: 2,
+			CreatedAt:        now,
+		},
+	}
+}
+
+// WeatherInfo memuat data cuaca real-time tingkat kota/kabupaten destinasi (Poin 7)
+type WeatherInfo struct {
+	CityRegency     string `json:"city_regency"`
+	TemperatureC    int    `json:"temperature_c"`
+	Condition       string `json:"condition"`        // Cerah Berawan, Hujan Sedang, Hujan Lebat Berkabut
+	WeatherStatus   string `json:"weather_status"`   // Aman / Waspada Hujan / Siaga Cuaca Ekstrem
+	HumidityPercent int    `json:"humidity_percent"` // 70-90%
+	WindSpeedKmh    int    `json:"wind_speed_kmh"`   // 10-25 km/h
+	RainProbability int    `json:"rain_probability"` // 20-80%
+	Forecast        string `json:"forecast"`         // Prediksi cuaca beberapa waktu ke depan
+	AlertNote       string `json:"alert_note,omitempty"`
+	Source          string `json:"source,omitempty"` // Open-Meteo Live API / Regional Engine
+	LastUpdated     string `json:"last_updated"`
 }
 
 // Destination merepresentasikan destinasi wisata di Sumatera Barat
@@ -21,7 +91,7 @@ type Destination struct {
 	Slug          string    `json:"slug,omitempty"`
 	Name          string    `json:"name"`
 	CategoryID    string    `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #2)
-	Category      string    `json:"category"`       // Alam, Budaya, Kuliner, Sejarah, Bahari, Geopark, Nagari
+	Category      string    `json:"category"`       // Alam & Geopark, Budaya & Nagari, Hidden Gem, Religi, Kuliner
 	CityRegency   string    `json:"city_regency"`   // 19 Kab/Kota Sumbar
 	Description   string    `json:"description"`
 	Latitude      float64   `json:"latitude"`
@@ -36,6 +106,8 @@ type Destination struct {
 	VerificationStatus string    `json:"verification_status,omitempty"` // verified (default), pending (menunggu kurasi admin), rejected
 	QRPlacardCode      string    `json:"qr_placard_code,omitempty"`
 	OpeningHours  string    `json:"opening_hours,omitempty"`
+	WeatherStatus string    `json:"weather_status,omitempty"` // Status cuaca ringkas (Poin 7)
+	Weather       *WeatherInfo `json:"weather,omitempty"`     // Data cuaca real-time per kota/kabupaten (Poin 7)
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 
@@ -91,12 +163,14 @@ type OfficialTariff struct {
 
 // --- Domain Models BE-1: Sprint 2 (Hari 6â€“10: 360Â° 4-Pin, Shunlu, Peta Mikro, Lapor Pungli) ---
 
-// Scene360 representasi scene tur imersif aerial (drone 100-200m) & ground (spot utama) (ERD Revisi #6: panorama_scenes)
+// Scene360 representasi foto panorama view resolusi tajam aerial & ground (Pilar 1, Poin 9)
 type Scene360 struct {
 	ID              string       `json:"id"`
 	DestinationID   string       `json:"destination_id"`
 	Title           string       `json:"title"`
-	Type            string       `json:"type"` // aerial, ground
+	Type            string       `json:"type"`                     // aerial, ground
+	ViewMode        string       `json:"view_mode,omitempty"`        // photo_panorama (Pilar 1 - Penyederhanaan panorama view ringan)
+	ImageResolution string       `json:"image_resolution,omitempty"` // 4K Equirectangular Panorama
 	PanoramaURL     string       `json:"panorama_url"`
 	UploadFormat    string       `json:"upload_format,omitempty"` // url, base64, multipart
 	SpatialAudioURL string       `json:"spatial_audio_url,omitempty"`
@@ -263,24 +337,49 @@ type HazardAlert struct {
 	UpdatedAt           time.Time `json:"updated_at"`
 }
 
-// SOSSignal sinyal pancaran darurat GPS dari wisatawan di jalur ekstrem / destinasi blank spot (Pilar 7 â€” P7.2)
+// SOSSignal sinyal pancaran darurat GPS dari wisatawan di jalur ekstrem / destinasi blank spot (Pilar 7 – P7.2)
 type SOSSignal struct {
-	ID                  string    `json:"id"`
-	SOSCode             string    `json:"sos_code"` // Contoh: SOS-SUMBAR-202611-001
-	TouristName         string    `json:"tourist_name"`
-	PhoneNumber         string    `json:"phone_number"`
-	EmergencyType       string    `json:"emergency_type"` // Kendaraan Mogok di Tanjakan, Terjebak Longsor, Darurat Medis, Tersesat di Jalur
-	Latitude            float64   `json:"latitude"`
-	Longitude           float64   `json:"longitude"`
-	BatteryPercent      int       `json:"battery_percent"`
-	PassengersCount     int       `json:"passengers_count"`
-	NearestCorridor     string    `json:"nearest_corridor"`
-	NearestRescuePost   string    `json:"nearest_rescue_post"`
-	DistanceToRescueKm  float64   `json:"distance_to_rescue_km"`
-	ETARescueMinutes    int       `json:"eta_rescue_minutes"`
-	Status              string    `json:"status"` // Dipancarkan, Tim SAR Meluncur, Evakuasi Selesai
-	Notes               string    `json:"notes"`
-	CreatedAt           time.Time `json:"created_at"`
+	ID                  string     `json:"id"`
+	SOSCode             string     `json:"sos_code"` // Contoh: SOS-SUMBAR-202611-001
+	TouristName         string     `json:"tourist_name"`
+	PhoneNumber         string     `json:"phone_number"`
+	EmergencyType       string     `json:"emergency_type"` // Kendaraan Mogok di Tanjakan, Terjebak Longsor, Darurat Medis, Tersesat di Jalur
+	Latitude            float64    `json:"latitude"`
+	Longitude           float64    `json:"longitude"`
+	BatteryPercent      int        `json:"battery_percent"`
+	PassengersCount     int        `json:"passengers_count"`
+	NearestCorridor     string     `json:"nearest_corridor"`
+	NearestRescuePost   string     `json:"nearest_rescue_post"`
+	DistanceToRescueKm  float64    `json:"distance_to_rescue_km"`
+	ETARescueMinutes    int        `json:"eta_rescue_minutes"`
+	Status              string     `json:"status"` // Dipancarkan, Tim SAR Meluncur, Evakuasi Selesai
+	Notes               string     `json:"notes"`
+	IsOfflineSync       bool       `json:"is_offline_sync,omitempty"`       // True jika disinkronkan dari antrean offline HP
+	OfflineTriggeredAt  *time.Time `json:"offline_triggered_at,omitempty"`  // Timestamp saat tombol ditekan offline
+	EmergencyCallAction string     `json:"emergency_call_action,omitempty"` // Skema panggilan cepat: tel:112 atau tel:(0751)890721
+	CreatedAt           time.Time  `json:"created_at"`
+}
+
+// EmergencyCallProtocol protokol panggilan suara darurat langsung (bebas pulsa / offline)
+type EmergencyCallProtocol struct {
+	NationalEmergency string `json:"national_emergency"` // 112 (Bebas Pulsa)
+	Police            string `json:"police"`             // 110 (Bebas Pulsa)
+	BPBDSumbar        string `json:"bpbd_sumbar"`        // (0751) 890721
+	PMISumbar         string `json:"pmi_sumbar"`         // (0751) 27882
+	PrimaryAction     string `json:"primary_action"`     // tel:112
+	Description       string `json:"description"`
+}
+
+// GetDefaultEmergencyCallProtocol menyediakan konfigurasi panggilan suara cepat darurat Sumbar
+func GetDefaultEmergencyCallProtocol() EmergencyCallProtocol {
+	return EmergencyCallProtocol{
+		NationalEmergency: "112",
+		Police:            "110",
+		BPBDSumbar:        "(0751) 890721",
+		PMISumbar:         "(0751) 27882",
+		PrimaryAction:     "tel:112",
+		Description:       "Panggilan darurat suara langsung. Hubungi 112 (Layanan Darurat Terpadu / Bebas Pulsa) atau (0751) 890721 (BPBD Sumbar) saat kondisi darurat atau tanpa koneksi internet.",
+	}
 }
 
 // MinangPhrase entri Kamus Saku Audio Bahasa Minang sehari-hari (ERD Revisi #14: minang_phrases)
@@ -327,7 +426,7 @@ type CulturalEvent struct {
 type EmergencyContact struct {
 	ID               string  `json:"id"`
 	CorridorCode     string  `json:"corridor_code"` // SITINJAU-LAUIK, LEMBAH-ANAI, KELOK-9, KELOK-44
-	AgencyType       string  `json:"agency_type"`   // BPBD, Basarnas, Kepolisian, PMI
+	AgencyType       string  `json:"agency_type"`   // BPBD, Basarnas, Kepolisian, PMI, Damkar
 	AgencyName       string  `json:"agency_name"`
 	PhoneNumber      string  `json:"phone_number"`
 	WhatsAppNumber   string  `json:"whatsapp_number,omitempty"`
@@ -337,6 +436,79 @@ type EmergencyContact struct {
 	CreatedByAdminID string  `json:"created_by_admin_id,omitempty"`
 	IsActive         bool    `json:"is_active"`
 }
+
+// GetDefaultEmergencyContacts menyediakan daftar kontak darurat resmi Pos Penanggulangan Bencana Sumbar
+func GetDefaultEmergencyContacts() []EmergencyContact {
+	return []EmergencyContact{
+		{
+			ID:           "emg-001",
+			CorridorCode: "PROV-SUMBAR",
+			AgencyType:   "BPBD",
+			AgencyName:   "BPBD Sumatera Barat",
+			PhoneNumber:  "(0751) 890721",
+			City:         "Provinsi Sumatera Barat",
+			Latitude:     -0.9471,
+			Longitude:    100.3543,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-002",
+			CorridorCode: "PROV-SUMBAR",
+			AgencyType:   "PMI",
+			AgencyName:   "PMI Sumatera Barat",
+			PhoneNumber:  "(0751) 27882",
+			City:         "Kota Padang",
+			Latitude:     -0.9324,
+			Longitude:    100.3621,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-003",
+			CorridorCode: "SITINJAU-LAUIK",
+			AgencyType:   "Damkar",
+			AgencyName:   "Damkar Kota Padang",
+			PhoneNumber:  "08116606113",
+			City:         "Kota Padang",
+			Latitude:     -0.9512,
+			Longitude:    100.3705,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-004",
+			CorridorCode: "LEMBAH-ANAI",
+			AgencyType:   "BPBD",
+			AgencyName:   "BPBD Padang Pariaman",
+			PhoneNumber:  "08116662114",
+			City:         "Kab. Padang Pariaman",
+			Latitude:     -0.6272,
+			Longitude:    100.2811,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-005",
+			CorridorCode: "MANDEH-PESSEL",
+			AgencyType:   "BPBD",
+			AgencyName:   "BPBD Pesisir Selatan",
+			PhoneNumber:  "085269380950",
+			City:         "Kab. Pesisir Selatan",
+			Latitude:     -1.3502,
+			Longitude:    100.5694,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-006",
+			CorridorCode: "MALALAK-AGAM",
+			AgencyType:   "Damkar",
+			AgencyName:   "Damkar Bukittinggi",
+			PhoneNumber:  "085355157883",
+			City:         "Kota Bukittinggi",
+			Latitude:     -0.3055,
+			Longitude:    100.3692,
+			IsActive:     true,
+		},
+	}
+}
+
 
 // ApiTelemetryLog log kecepatan dan SLA performa API <100ms (ERD Tambahan Sistem)
 type ApiTelemetryLog struct {

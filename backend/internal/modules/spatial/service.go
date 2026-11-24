@@ -21,6 +21,7 @@ type Service interface {
 	RecordTelemetry(input NavigationTelemetryInput) (*models.GaodeBehaviorRanking, error)
 	GetNearbyDestinations(lat, lng float64, radiusKm float64, category string) []models.Destination
 	OptimizeTSP(req OptimizeTSPRequest) (*OptimizeTSPResponse, error)
+	GetEmergencyContacts(corridor string) *EmergencyContactsResponse
 }
 
 type service struct {
@@ -174,16 +175,36 @@ func (s *service) DispatchSOS(input SOSEmergencyInput) (*SOSEmergencyResponse, e
 	}
 
 	created := s.repo.CreateSOSSignal(input)
+	callProtocol := models.GetDefaultEmergencyCallProtocol()
+
+	msg := fmt.Sprintf("Sinyal darurat %s diterima oleh %s. Estimasi tiba %d menit.", created.SOSCode, created.NearestRescuePost, created.ETARescueMinutes)
+	if created.IsOfflineSync {
+		msg = fmt.Sprintf("Sinyal darurat %s (Sinkronisasi Offline) berhasil diterima dan diteruskan ke %s.", created.SOSCode, created.NearestRescuePost)
+	}
+
 	return &SOSEmergencyResponse{
 		Status:              "sos_dispatched",
-		Message:             fmt.Sprintf("Sinyal darurat %s diterima oleh %s. Estimasi tiba %d menit.", created.SOSCode, created.NearestRescuePost, created.ETARescueMinutes),
+		Message:             msg,
 		SOSSignal:           created,
-		SurvivalInstruction: "Tetap berada di titik aman di luar badan jalan tikungan, nyalakan lampu hazard, dan hemat baterai ponsel Anda.",
+		SurvivalInstruction: "Tetap berada di titik aman di luar badan jalan tikungan, nyalakan lampu hazard, dan hubungi nomor panggilan darurat 112 jika membutuhkan bantuan segera.",
+		EmergencyContacts:   s.repo.ListEmergencyContacts(""),
+		EmergencyCall:       &callProtocol,
 	}, nil
 }
 
 func (s *service) GetSOSSignals() ([]models.SOSSignal, error) {
 	return s.repo.ListSOSSignals(), nil
+}
+
+func (s *service) GetEmergencyContacts(corridor string) *EmergencyContactsResponse {
+	list := s.repo.ListEmergencyContacts(corridor)
+	callProtocol := models.GetDefaultEmergencyCallProtocol()
+	return &EmergencyContactsResponse{
+		Status:        "ok",
+		Total:         len(list),
+		Contacts:      list,
+		EmergencyCall: &callProtocol,
+	}
 }
 
 func (s *service) RecordTelemetry(input NavigationTelemetryInput) (*models.GaodeBehaviorRanking, error) {

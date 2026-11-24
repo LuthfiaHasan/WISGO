@@ -28,6 +28,8 @@ func NewHandler(service Service, cache *middleware.InMemoryTTLCache) *Handler {
 // RegisterRoutes mendaftarkan seluruh endpoint destinasi ke Gin RouterGroup
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// Publik
+	rg.GET("/categories", h.GetCategories)
+	rg.GET("/destinations/categories", h.GetCategories)
 	rg.GET("/destinations", h.GetDestinations)
 	rg.GET("/destinations/detail", h.GetDestinationDetail)
 	rg.GET("/destinations/:id", h.GetDestinationByID)
@@ -80,7 +82,9 @@ func (h *Handler) GetDestinations(c *gin.Context) {
 	}
 	hasGPS, lat, lng := parseGPS(c)
 
+	catID := c.Query("category_id")
 	params := SpatialFilterParams{
+		CategoryID:  catID,
 		Category:    c.Query("category"),
 		CityRegency: qCity,
 		CrowdLevel:  c.Query("crowd_level"),
@@ -390,4 +394,10 @@ func (h *Handler) UpdateDestinationTariffsCMS(c *gin.Context) {
 		"message": "Tabel Fair-Price Barometer (Tarif Resmi Perda) berhasil disinkronkan oleh CMS FS-1.",
 		"data":    updated,
 	})
+}
+
+// GetCategories GET /api/v1/categories (ERD Revisi #1: Master Categories)
+func (h *Handler) GetCategories(c *gin.Context) {
+	resp := h.service.GetCategories()
+	c.JSON(http.StatusOK, resp)
 }

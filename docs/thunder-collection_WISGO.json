@@ -69,6 +69,14 @@
       }
     },
     {
+      "_id": "req_wisata_categories",
+      "colId": "wisgo-be1-thunder-client",
+      "containerId": "f_wisatawan",
+      "name": "Master 5 Kategori Perjalanan & Live Count (Poin 6)",
+      "url": "{{baseUrl}}/api/v1/categories",
+      "method": "GET"
+    },
+    {
       "_id": "req_wisata_dir",
       "colId": "wisgo-be1-thunder-client",
       "containerId": "f_wisatawan",
@@ -406,6 +414,26 @@
       "body": {
         "type": "json",
         "raw": "{\n  \"title\": \"Event Ilegal\"\n}"
+      }
+    },
+    {
+      "_id": "req_emergency_contacts",
+      "colId": "wisgo-be1-thunder-client",
+      "containerId": "f_wisatawan",
+      "name": "Daftar Kontak Darurat Resmi Sumbar (BPBD, PMI, Damkar)",
+      "url": "{{baseUrl}}/api/v1/spatial/emergency-contacts",
+      "method": "GET"
+    },
+    {
+      "_id": "req_sos_offline_sync",
+      "colId": "wisgo-be1-thunder-client",
+      "containerId": "f_wisatawan",
+      "name": "Sinkronisasi Sinyal SOS Offline (Idempotent)",
+      "url": "{{baseUrl}}/api/v1/spatial/sos",
+      "method": "POST",
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"sos_code\": \"SOS-OFFLINE-202611-001\",\n  \"is_offline_sync\": true,\n  \"tourist_name\": \"Rombongan Malalak\",\n  \"phone_number\": \"081234567890\",\n  \"emergency_type\": \"Longsor Tebing Menutup Jalan\",\n  \"latitude\": -0.32,\n  \"longitude\": 100.22,\n  \"battery_percent\": 14,\n  \"passengers_count\": 3\n}"
       }
     }
   ]

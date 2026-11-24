@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 /// Model Prediksi Cuaca Jam-per-Jam
 class HourlyWeatherForecast {
@@ -49,6 +51,7 @@ class DestinationWeather {
   final String uvIndex;
   final int rainProbability;
   final String lastUpdatedTime;
+  final String dataSource;
   final List<HourlyWeatherForecast> hourlyForecast;
   final WeatherTripAlert tripAlert;
 
@@ -64,9 +67,202 @@ class DestinationWeather {
     required this.uvIndex,
     required this.rainProbability,
     required this.lastUpdatedTime,
+    this.dataSource = 'Open-Meteo Live Satellite API',
     required this.hourlyForecast,
     required this.tripAlert,
   });
+
+  /// Mengambil data cuaca live langsung dari Open-Meteo API
+  static Future<DestinationWeather> fetchLiveFromOpenMeteo({
+    required String destinationName,
+    double? latitude,
+    double? longitude,
+  }) async {
+    double lat = latitude ?? -0.9471;
+    double lng = longitude ?? 100.4172;
+    final lower = destinationName.toLowerCase();
+
+    if (latitude == null || longitude == null) {
+      if (lower.contains('harau') || lower.contains('payakumbuh') || lower.contains('lima puluh')) {
+        lat = -0.1023; lng = 100.6728;
+      } else if (lower.contains('mandeh') || lower.contains('pesisir') || lower.contains('tarusan')) {
+        lat = -1.2015; lng = 100.4220;
+      } else if (lower.contains('lawang') || lower.contains('maninjau') || lower.contains('agam')) {
+        lat = -0.3055; lng = 100.1989;
+      } else if (lower.contains('pagaruyung') || lower.contains('tanah datar') || lower.contains('batusangkar')) {
+        lat = -0.4632; lng = 100.3986;
+      } else if (lower.contains('nyarai') || lower.contains('pariaman')) {
+        lat = -0.6812; lng = 100.3915;
+      } else if (lower.contains('jam gadang') || lower.contains('bukittinggi')) {
+        lat = -0.3051; lng = 100.3692;
+      }
+    }
+
+    try {
+      final uri = Uri.parse(
+        'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lng&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FJakarta',
+      );
+      final response = await http.get(uri).timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final current = data['current'] as Map<String, dynamic>;
+        final hourly = data['hourly'] as Map<String, dynamic>?;
+
+        final code = current['weather_code'] as int? ?? 1;
+        final temp = (current['temperature_2m'] as num?)?.round() ?? 26;
+        final humidity = (current['relative_humidity_2m'] as num?)?.round() ?? 75;
+        final wind = (current['wind_speed_10m'] as num?)?.round() ?? 12;
+
+        final mapped = _mapWmoCode(code);
+        final hourlyList = <HourlyWeatherForecast>[];
+
+        if (hourly != null && hourly['time'] is List && hourly['temperature_2m'] is List) {
+          final times = hourly['time'] as List;
+          final temps = hourly['temperature_2m'] as List;
+          final codes = hourly['weather_code'] as List? ?? [];
+          final probs = hourly['precipitation_probability'] as List? ?? [];
+
+          final now = DateTime.now();
+          int added = 0;
+          for (int i = 0; i < times.length && added < 4; i++) {
+            final tStr = times[i].toString();
+            if (tStr.length >= 16) {
+              final hourPart = tStr.substring(11, 16);
+              final itemHour = int.tryParse(tStr.substring(11, 13)) ?? 0;
+              if (itemHour >= now.hour || (times.length - i <= 4)) {
+                final hTemp = (temps[i] as num?)?.round() ?? temp;
+                final hCode = i < codes.length ? (codes[i] as int? ?? code) : code;
+                final hProb = i < probs.length ? (probs[i] as int? ?? 20) : 20;
+                final hMap = _mapWmoCode(hCode);
+                hourlyList.add(
+                  HourlyWeatherForecast(
+                    hourTime: hourPart,
+                    tempCelsius: hTemp,
+                    condition: hMap['condition'] as String,
+                    icon: hMap['icon'] as IconData,
+                    rainChancePercent: hProb,
+                  ),
+                );
+                added++;
+              }
+            }
+          }
+        }
+
+        final nowTime = DateTime.now();
+        final timeStr = '${nowTime.hour.toString().padLeft(2, '0')}:${nowTime.minute.toString().padLeft(2, '0')} WIB';
+
+        return DestinationWeather(
+          cityName: destinationName,
+          destinationName: destinationName,
+          currentTemp: temp,
+          feelsLikeTemp: temp + 2,
+          currentCondition: mapped['condition'] as String,
+          conditionIcon: mapped['icon'] as IconData,
+          humidity: humidity,
+          windSpeedKmh: wind,
+          uvIndex: 'UV 6 (Sedang)',
+          rainProbability: hourlyList.isNotEmpty ? hourlyList.first.rainChancePercent : 20,
+          lastUpdatedTime: '$timeStr (Open-Meteo Live Satellite)',
+          dataSource: 'Open-Meteo Live API',
+          hourlyForecast: hourlyList.isNotEmpty
+              ? hourlyList
+              : getForDestination(destinationName).hourlyForecast,
+          tripAlert: WeatherTripAlert(
+            severity: mapped['severity'] as String,
+            title: mapped['title'] as String,
+            description: mapped['desc'] as String,
+            validUntil: 'Update Terkini Satelit',
+            practicalAdvice: [
+              'Data satelit cuaca diperbarui berkala via Open-Meteo',
+              'Periksa perlengkapan luar ruang sesuai suhu aktual',
+            ],
+          ),
+        );
+      }
+    } catch (_) {}
+
+    return getForDestination(destinationName);
+  }
+
+  static Map<String, dynamic> _mapWmoCode(int code) {
+    switch (code) {
+      case 0:
+        return {
+          'condition': 'Cerah',
+          'icon': Icons.wb_sunny_rounded,
+          'severity': 'Aman',
+          'title': 'Kondisi Cerah Kondusif',
+          'desc': 'Langit cerah berawan minimal, sangat ideal untuk aktivitas wisata luar ruangan.',
+        };
+      case 1:
+      case 2:
+        return {
+          'condition': 'Cerah Berawan',
+          'icon': Icons.wb_cloudy_rounded,
+          'severity': 'Aman',
+          'title': 'Kondisi Cuaca Aman & Bersahabat',
+          'desc': 'Cerah berawan sejuk, jalanan kering dan nyaman dilalui rombongan.',
+        };
+      case 3:
+        return {
+          'condition': 'Mendung Berawan',
+          'icon': Icons.cloud_rounded,
+          'severity': 'Waspada',
+          'title': 'Langit Mendung Tebal',
+          'desc': 'Awan tebal menutupi kawasan destinasi, persiapkan payung atau jas hujan.',
+        };
+      case 45:
+      case 48:
+        return {
+          'condition': 'Berkabut Tebal',
+          'icon': Icons.foggy,
+          'severity': 'Waspada',
+          'title': 'Visibilitas Terbatas Karena Kabut',
+          'desc': 'Kabut tebal di kawasan pegunungan, nyalakan lampu kabut dan jaga jarak aman.',
+        };
+      case 51:
+      case 53:
+      case 55:
+        return {
+          'condition': 'Gerimis',
+          'icon': Icons.grain_rounded,
+          'severity': 'Waspada',
+          'title': 'Gerimis Ringan di Sekitar Destinasi',
+          'desc': 'Jalanan dan batu alam mulai licin, berhati-hati saat berjalan di tepi kolam/tebing.',
+        };
+      case 61:
+      case 63:
+      case 65:
+      case 80:
+      case 81:
+        return {
+          'condition': 'Hujan Guyur',
+          'icon': Icons.water_drop_rounded,
+          'severity': 'Peringatan Dini',
+          'title': 'Potensi Peningkatan Curah Hujan',
+          'desc': 'Terpantau hujan di area hulu, waspada peningkatan debit air terjun.',
+        };
+      case 95:
+      case 96:
+      case 99:
+        return {
+          'condition': 'Hujan Badai Petir',
+          'icon': Icons.thunderstorm_rounded,
+          'severity': 'Peringatan Dini',
+          'title': 'Peringatan Dini Cuaca Ekstrem',
+          'desc': 'Badai petir terdeteksi, segera cari posko berteduh yang aman.',
+        };
+      default:
+        return {
+          'condition': 'Cerah Berawan',
+          'icon': Icons.wb_cloudy_rounded,
+          'severity': 'Aman',
+          'title': 'Kondisi Normal',
+          'desc': 'Kondisi cuaca terpantau stabil untuk kegiatan wisata.',
+        };
+    }
+  }
 
   /// Factory untuk mendapatkan cuaca berdasarkan destinasi / kota
   static DestinationWeather getForDestination(String destinationOrCity) {

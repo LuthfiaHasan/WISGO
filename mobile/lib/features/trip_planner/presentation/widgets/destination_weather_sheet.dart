@@ -25,17 +25,31 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
   void initState() {
     super.initState();
     _weather = DestinationWeather.getForDestination(widget.destinationName);
+    _loadLiveWeather();
+  }
+
+  void _loadLiveWeather() async {
+    final live = await DestinationWeather.fetchLiveFromOpenMeteo(
+      destinationName: widget.destinationName,
+    );
+    if (!mounted) return;
+    setState(() {
+      _weather = live;
+      _lastUpdatedTime = DateTime.now();
+    });
   }
 
   void _handleRefreshWeather() async {
     setState(() => _isRefreshing = true);
-    await Future.delayed(const Duration(milliseconds: 650));
+    final live = await DestinationWeather.fetchLiveFromOpenMeteo(
+      destinationName: widget.destinationName,
+    );
     if (!mounted) return;
 
     setState(() {
       _isRefreshing = false;
       _lastUpdatedTime = DateTime.now();
-      _weather = DestinationWeather.getForDestination(widget.destinationName);
+      _weather = live;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -46,11 +60,13 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const Icon(Icons.satellite_alt_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Text(
-              'Data cuaca ${_weather.destinationName} berhasil diperbarui!',
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            Expanded(
+              child: Text(
+                'Data cuaca ${_weather.destinationName} berhasil diperbarui via Open-Meteo!',
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -189,7 +205,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Pembaruan: ${_lastUpdatedTime.hour.toString().padLeft(2, '0')}:${_lastUpdatedTime.minute.toString().padLeft(2, '0')} WIB',
+                                    'Live Open-Meteo • ${_lastUpdatedTime.hour.toString().padLeft(2, '0')}:${_lastUpdatedTime.minute.toString().padLeft(2, '0')} WIB',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 10,

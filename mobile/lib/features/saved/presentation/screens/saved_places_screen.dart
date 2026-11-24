@@ -17,6 +17,8 @@ import '../../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../trip_planner/models/open_trip_model.dart';
+import '../../../trip_planner/models/weather_model.dart';
+import '../../../trip_planner/presentation/widgets/destination_weather_sheet.dart';
 import '../../../trip_planner/presentation/widgets/open_trip_card.dart';
 import '../../../trip_planner/presentation/widgets/open_trip_create_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_detail_sheet.dart';
@@ -212,10 +214,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   static const List<Map<String, String>> _exploreTypes = [
     {'key': 'ALL', 'label': 'Semua Kategori'},
-    {'key': 'Air Terjun', 'label': 'Air Terjun'},
-    {'key': 'Gunung & Lembah', 'label': 'Gunung & Lembah'},
-    {'key': 'Pantai & Bahari', 'label': 'Pantai & Bahari'},
-    {'key': 'Nagari & Hutan Terpencil', 'label': 'Nagari & Hutan Terpencil'},
+    {'key': 'Alam & Geopark', 'label': 'Alam & Geopark'},
+    {'key': 'Budaya & Nagari', 'label': 'Budaya & Nagari'},
+    {'key': 'Hidden Gem', 'label': 'Hidden Gem'},
+    {'key': 'Religi', 'label': 'Religi'},
+    {'key': 'Kuliner', 'label': 'Kuliner'},
   ];
 
   // Notifikasi & Pengingat Festival Budaya
@@ -260,7 +263,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   // Open Trip & Trip Planner State
   String _openTripFilterCategory = 'Semua';
-  late final List<OpenTripItem> _activeOpenTrips = List<OpenTripItem>.from(kMockOpenTrips);
+  List<OpenTripItem>? _customOpenTrips;
+  List<OpenTripItem> get _activeOpenTrips => _customOpenTrips ?? kMockOpenTrips;
 
 
 
@@ -539,10 +543,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   IconData _getCategoryChipIcon(String key) {
     switch (key) {
-      case 'Air Terjun':
-        return Icons.water_drop_rounded;
+      case 'Alam & Geopark':
       case 'Gunung & Lembah':
         return Icons.terrain_rounded;
+      case 'Budaya & Nagari':
+        return Icons.account_balance_rounded;
+      case 'Hidden Gem':
+        return Icons.diamond_outlined;
+      case 'Religi':
+        return Icons.mosque_rounded;
+      case 'Kuliner':
+        return Icons.restaurant_rounded;
+      case 'Air Terjun':
+        return Icons.water_drop_rounded;
       case 'Pantai & Bahari':
         return Icons.waves_rounded;
       case 'Nagari & Hutan Terpencil':
@@ -1885,7 +1898,26 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       final regMatch = _currentExploreRegion == 'ALL' ||
           item.region == _currentExploreRegion;
       final typeMatch = _currentExploreType == 'ALL' ||
-          item.natureType == _currentExploreType;
+          item.natureType.toLowerCase().contains(_currentExploreType.toLowerCase()) ||
+          item.categoryTag.toLowerCase().contains(_currentExploreType.toLowerCase()) ||
+          (_currentExploreType == 'Alam & Geopark' &&
+              (item.natureType == 'Air Terjun' ||
+                  item.natureType == 'Gunung & Lembah' ||
+                  item.natureType == 'Pantai & Bahari' ||
+                  item.natureType.contains('Alam'))) ||
+          (_currentExploreType == 'Budaya & Nagari' &&
+              (item.natureType == 'Nagari & Hutan Terpencil' ||
+                  item.categoryTag.toLowerCase().contains('nagari') ||
+                  item.categoryTag.toLowerCase().contains('budaya'))) ||
+          (_currentExploreType == 'Hidden Gem' &&
+              (item.natureType == 'Air Terjun' ||
+                  item.title.toLowerCase().contains('tersembunyi') ||
+                  item.title.toLowerCase().contains('cindakir') ||
+                  item.title.toLowerCase().contains('taram'))) ||
+          (_currentExploreType == 'Religi' &&
+              (item.facilities.any((f) => f.toLowerCase().contains('musholla') || f.toLowerCase().contains('masjid')))) ||
+          (_currentExploreType == 'Kuliner' &&
+              (item.facilities.any((f) => f.toLowerCase().contains('makanan') || f.toLowerCase().contains('kuliner'))));
       var searchMatch = true;
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
@@ -2992,11 +3024,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   scrollDirection: Axis.horizontal,
                   children: [
                     'Semua',
-                    'Wisata Alam & Pegunungan',
-                    'Wisata Bahari & Pesisir',
-                    'Sejarah & Warisan Minangkabau',
-                    'Nagari Adat & Edukasi Budaya',
-                    'Kuliner Otentik & Agrowisata',
+                    'Alam & Geopark',
+                    'Budaya & Nagari',
+                    'Hidden Gem',
+                    'Religi',
+                    'Kuliner',
                   ].map((category) {
                     final isSelected = _openTripFilterCategory == category;
                     return Padding(
@@ -3094,7 +3126,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       builder: (_) => OpenTripCreateSheet(
                         onTripCreated: (newTrip) {
                           setState(() {
-                            _activeOpenTrips.insert(0, newTrip);
+                            _customOpenTrips ??= List<OpenTripItem>.from(kMockOpenTrips);
+                            _customOpenTrips!.insert(0, newTrip);
                           });
                         },
                       ),
@@ -10770,12 +10803,25 @@ class _DestinationDetailSheet extends StatefulWidget {
 class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
   late bool _bookmarked;
   late List<UserReview> _reviews;
+  late DestinationWeather _weather;
 
   @override
   void initState() {
     super.initState();
     _bookmarked = widget.isBookmarked;
     _reviews = List<UserReview>.from(widget.place.reviews);
+    _weather = DestinationWeather.getForDestination(widget.place.title);
+    _loadLiveWeather();
+  }
+
+  void _loadLiveWeather() async {
+    final live = await DestinationWeather.fetchLiveFromOpenMeteo(
+      destinationName: widget.place.title,
+    );
+    if (!mounted) return;
+    setState(() {
+      _weather = live;
+    });
   }
 
   String _formatRupiah(int num) {
@@ -11068,6 +11114,136 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         label: const Text(
                           'Panorama 360°',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // INFORMASI CUACA TERKINI (LIVE OPEN-METEO SATELIT - POIN 7)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0F2B1D), Color(0xFF1E4D32)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _weather.conditionIcon,
+                          color: const Color(0xFFFDE047),
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  '${_weather.currentTemp}°C',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _weather.currentCondition,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFFDE047),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF4ADE80),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'Live Open-Meteo • Angin ${_weather.windSpeedKmh} km/j • Hujan ${_weather.rainProbability}%',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (ctx) => DestinationWeatherSheet(
+                              destinationName: widget.place.title,
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.22),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.radar_rounded, size: 14, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text(
+                              'Radar Jam',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                          ],
                         ),
                       ),
                     ],
