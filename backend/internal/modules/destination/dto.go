@@ -8,6 +8,7 @@ import (
 
 // SpatialFilterParams parameter filter direktori destinasi dan koordinat GPS pengguna
 type SpatialFilterParams struct {
+	CategoryID         string  `form:"category_id"`
 	Category           string  `form:"category"`
 	CityRegency        string  `form:"city_regency"`
 	CrowdLevel         string  `form:"crowd_level"`
@@ -20,6 +21,13 @@ type SpatialFilterParams struct {
 	UserLng            float64 `form:"lng"`
 }
 
+// CategoriesResponse respon daftar 5 kategori induk master WISGO (Poin 6)
+type CategoriesResponse struct {
+	Status     string            `json:"status"`
+	Total      int               `json:"total"`
+	Categories []models.Category `json:"categories"`
+}
+
 // SyncTariffsPayload payload sinkronisasi tabel tarif resmi Perda dari CMS Web Admin TS (FS-1)
 type SyncTariffsPayload struct {
 	Tariffs         []models.OfficialTariff `json:"tariffs"`
@@ -28,14 +36,16 @@ type SyncTariffsPayload struct {
 
 // OfflineBundleResponse struktur paket offline bundle v2 (Flutter Hive / SQLite Ready)
 type OfflineBundleResponse struct {
-	BundleVersion   string                 `json:"bundle_version"`
-	GeneratedAt     string                 `json:"generated_at"`
-	LocalStorageSDK string                 `json:"local_storage_sdk"`
-	OfflineBanner   string                 `json:"offline_banner"`
-	Destination     *models.Destination    `json:"destination"`
-	Scenes360       []models.Scene360      `json:"scenes_360"`
-	MicroMap        *models.ScenicMicroMap     `json:"micro_map"`
-	AudioTriggers   []models.AudioTriggerPoint `json:"audio_triggers"`
+	BundleVersion        string                       `json:"bundle_version"`
+	GeneratedAt          string                       `json:"generated_at"`
+	LocalStorageSDK      string                       `json:"local_storage_sdk"`
+	OfflineBanner        string                       `json:"offline_banner"`
+	Destination          *models.Destination          `json:"destination"`
+	Scenes360            []models.Scene360            `json:"scenes_360"`
+	MicroMap             *models.ScenicMicroMap       `json:"micro_map"`
+	AudioTriggers        []models.AudioTriggerPoint   `json:"audio_triggers"`
+	EmergencyContacts     []models.EmergencyContact     `json:"emergency_contacts"`
+	EmergencyCallProtocol *models.EmergencyCallProtocol `json:"emergency_call_protocol"`
 }
 
 // TariffsResponse respon rincian tarif resmi Perda destinasi

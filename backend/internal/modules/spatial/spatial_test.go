@@ -237,4 +237,101 @@ func TestSpatialSuite(t *testing.T) {
 			t.Fatalf("expected 200 OK for valid dwell time, got %d", recValid.Code)
 		}
 	})
+
+	t.Run("TC-S4-11: GET /api/v1/spatial/emergency-contacts memuat kontak BPBD, PMI, Damkar & Pos SAR Sumbar", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/spatial/emergency-contacts", nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d: %s", rec.Code, rec.Body.String())
+		}
+
+		var res EmergencyContactsResponse
+		_ = json.Unmarshal(rec.Body.Bytes(), &res)
+		if res.Total < 6 {
+			t.Fatalf("expected at least 6 emergency contacts, got %d", res.Total)
+		}
+
+		hasBPBD := false
+		for _, c := range res.Contacts {
+			if c.PhoneNumber == "(0751) 890721" || c.PhoneNumber == "08116606113" {
+				hasBPBD = true
+				break
+			}
+		}
+		if !hasBPBD {
+			t.Fatal("expected real official disaster phone number to be present in emergency contacts")
+		}
+	})
+
+	t.Run("TC-S4-12: POST /api/v1/spatial/sos mendukung Offline Sync dan Idempotency", func(t *testing.T) {
+		payload := []byte(`{
+			"sos_code": "SOS-OFFLINE-TEST-999",
+			"is_offline_sync": true,
+			"tourist_name": "Rombongan Malalak",
+			"phone_number": "081234567890",
+			"emergency_type": "Longsor Tebing Menutup Jalan",
+			"latitude": -0.3200,
+			"longitude": 100.2200,
+			"battery_percent": 14,
+			"passengers_count": 3
+		}`)
+
+		// First sync dispatch
+		req1 := httptest.NewRequest(http.MethodPost, "/api/v1/spatial/sos", bytes.NewBuffer(payload))
+		req1.Header.Set("Content-Type", "application/json")
+		rec1 := httptest.NewRecorder()
+		r.ServeHTTP(rec1, req1)
+
+		if rec1.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created on first offline SOS sync, got %d: %s", rec1.Code, rec1.Body.String())
+		}
+
+		var res1 SOSEmergencyResponse
+		_ = json.Unmarshal(rec1.Body.Bytes(), &res1)
+		if !res1.SOSSignal.IsOfflineSync {
+			t.Fatal("expected is_offline_sync=true")
+		}
+		if res1.SOSSignal.SOSCode != "SOS-OFFLINE-TEST-999" {
+			t.Fatalf("expected preserved offline sos_code, got %s", res1.SOSSignal.SOSCode)
+		}
+
+		// Second sync attempt with the same sos_code (Idempotent test)
+		req2 := httptest.NewRequest(http.MethodPost, "/api/v1/spatial/sos", bytes.NewBuffer(payload))
+		req2.Header.Set("Content-Type", "application/json")
+		rec2 := httptest.NewRecorder()
+		r.ServeHTTP(rec2, req2)
+
+		if rec2.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created on idempotent resend, got %d", rec2.Code)
+		}
+		var res2 SOSEmergencyResponse
+		_ = json.Unmarshal(rec2.Body.Bytes(), &res2)
+		if res2.SOSSignal.ID != res1.SOSSignal.ID {
+			t.Fatalf("expected same signal ID for idempotent sync, got %s vs %s", res2.SOSSignal.ID, res1.SOSSignal.ID)
+		}
+	})
+
+	t.Run("TC-S4-13: GET /api/v1/spatial/emergency-contacts menyediakan protokol panggilan suara darurat 112 & 110", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/spatial/emergency-contacts", nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d: %s", rec.Code, rec.Body.String())
+		}
+
+		var res EmergencyContactsResponse
+		_ = json.Unmarshal(rec.Body.Bytes(), &res)
+		if res.EmergencyCall == nil {
+			t.Fatal("expected emergency_call to be present")
+		}
+		if res.EmergencyCall.NationalEmergency != "112" || res.EmergencyCall.Police != "110" {
+			t.Fatalf("expected national emergency 112 and police 110, got %+v", res.EmergencyCall)
+		}
+		if res.EmergencyCall.BPBDSumbar != "(0751) 890721" {
+			t.Fatalf("expected BPBD Sumbar (0751) 890721, got %s", res.EmergencyCall.BPBDSumbar)
+		}
+	})
 }

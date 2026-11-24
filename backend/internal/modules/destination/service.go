@@ -13,6 +13,7 @@ import (
 type Service interface {
 	FindAllWithSpatial(params SpatialFilterParams) []models.Destination
 	FindByID(idOrSlugOrQR string, hasUserGPS bool, userLat, userLng float64) (*models.Destination, error)
+	GetCategories() *CategoriesResponse
 	GetTariffs(idOrSlug string) (*TariffsResponse, error)
 	GetOfflineBundle(idOrSlug string) (*OfflineBundleResponse, error)
 	CreateCMS(input models.Destination) (models.Destination, error)
@@ -39,6 +40,15 @@ func (s *service) FindAllWithSpatial(params SpatialFilterParams) []models.Destin
 
 func (s *service) FindByID(idOrSlugOrQR string, hasUserGPS bool, userLat, userLng float64) (*models.Destination, error) {
 	return s.repo.FindByID(idOrSlugOrQR, hasUserGPS, userLat, userLng)
+}
+
+func (s *service) GetCategories() *CategoriesResponse {
+	categories := s.repo.GetCategories()
+	return &CategoriesResponse{
+		Status:     "success",
+		Total:      len(categories),
+		Categories: categories,
+	}
 }
 
 func (s *service) GetTariffs(idOrSlug string) (*TariffsResponse, error) {
@@ -84,15 +94,20 @@ func (s *service) GetOfflineBundle(idOrSlug string) (*OfflineBundleResponse, err
 		},
 	}
 
+	contacts := models.GetDefaultEmergencyContacts()
+	callProtocol := models.GetDefaultEmergencyCallProtocol()
+
 	return &OfflineBundleResponse{
-		BundleVersion:   "v2.0-sprint2-complete",
-		GeneratedAt:     time.Now().Format(time.RFC3339),
-		LocalStorageSDK: "Flutter Hive / Sqflite Ready",
-		OfflineBanner:   "⚡ Mode offline aktif · Tempat siap dibuka tanpa sinyal.",
-		Destination:     dest,
-		Scenes360:       dest.Scenes360,
-		MicroMap:        microMap,
-		AudioTriggers:   microMap.AudioTriggers,
+		BundleVersion:         "v2.1-offline-sos",
+		GeneratedAt:           time.Now().Format(time.RFC3339),
+		LocalStorageSDK:       "Flutter Hive / Sqflite Ready",
+		OfflineBanner:         "⚡ Mode offline aktif · Tempat & Nomor Darurat siap dibuka tanpa sinyal.",
+		Destination:           dest,
+		Scenes360:             dest.Scenes360,
+		MicroMap:              microMap,
+		AudioTriggers:         microMap.AudioTriggers,
+		EmergencyContacts:     contacts,
+		EmergencyCallProtocol: &callProtocol,
 	}, nil
 }
 

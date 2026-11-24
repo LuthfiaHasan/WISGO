@@ -3,14 +3,16 @@ import '../../../core/widgets/crowd_badge.dart';
 /// Model Destinasi Wisata Sumatera Barat (Sinkron dengan backend/internal/models/models.go)
 class DestinationModel {
   final String id;
+  final String categoryId; // cat-alam-geopark, cat-budaya-nagari, cat-hidden-gem, cat-religi, cat-kuliner
   final String name;
-  final String category; // Alam, Budaya, Kuliner, Sejarah
+  final String category; // Alam & Geopark, Budaya & Nagari, Hidden Gem, Religi, Kuliner
   final String cityRegency; // 19 Kab/Kota Sumbar
   final String description;
   final double latitude;
   final double longitude;
   final String coverImage;
   final String crowdLevel; // Sepi, Sedang, Ramai
+  final String weatherStatus;
 
   // 4 Statistik Keputusan (Layar 02 Paruh Atas)
   final String distanceKm;
@@ -25,6 +27,7 @@ class DestinationModel {
 
   const DestinationModel({
     required this.id,
+    this.categoryId = 'cat-alam-geopark',
     required this.name,
     required this.category,
     required this.cityRegency,
@@ -33,6 +36,7 @@ class DestinationModel {
     required this.longitude,
     this.coverImage = '',
     required this.crowdLevel,
+    this.weatherStatus = 'Cerah Berawan',
     this.distanceKm = '0 km',
     this.travelTime = '0 mnt',
     this.entryFee = 'Gratis',
@@ -83,14 +87,16 @@ class DestinationModel {
 
     return DestinationModel(
       id: json['id'] as String? ?? '',
+      categoryId: json['category_id'] as String? ?? 'cat-alam-geopark',
       name: json['name'] as String? ?? '',
-      category: json['category'] as String? ?? 'Alam',
+      category: json['category'] as String? ?? 'Alam & Geopark',
       cityRegency: json['city_regency'] as String? ?? '',
       description: json['description'] as String? ?? '',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       coverImage: json['cover_image'] as String? ?? '',
       crowdLevel: json['crowd_level'] as String? ?? 'Sedang',
+      weatherStatus: json['weather_status'] as String? ?? 'Cerah Berawan',
       distanceKm: parsedDistance,
       travelTime: parsedTime,
       entryFee: parsedFee,
@@ -455,6 +461,45 @@ class SOSSignalModel {
     'nearest_corridor': nearestCorridor,
     'notes': notes,
   };
+}
+
+/// Kontak Darurat Resmi Kebencanaan Sumbar (BE-1: emergency_contacts)
+class EmergencyContactModel {
+  final String id;
+  final String corridorCode;
+  final String agencyType;
+  final String agencyName;
+  final String phoneNumber;
+  final String city;
+  final double latitude;
+  final double longitude;
+  final bool isActive;
+
+  const EmergencyContactModel({
+    required this.id,
+    required this.corridorCode,
+    required this.agencyType,
+    required this.agencyName,
+    required this.phoneNumber,
+    required this.city,
+    this.latitude = 0.0,
+    this.longitude = 0.0,
+    this.isActive = true,
+  });
+
+  factory EmergencyContactModel.fromJson(Map<String, dynamic> json) {
+    return EmergencyContactModel(
+      id: json['id'] as String? ?? '',
+      corridorCode: json['corridor_code'] as String? ?? '',
+      agencyType: json['agency_type'] as String? ?? 'BPBD',
+      agencyName: json['agency_name'] as String? ?? '',
+      phoneNumber: json['phone_number'] as String? ?? '',
+      city: json['city'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      isActive: json['is_active'] as bool? ?? true,
+    );
+  }
 }
 
 /// Landmark Gunung untuk Kompas Visual (Pilar 2)

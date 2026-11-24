@@ -304,6 +304,36 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 			}
 		}
 	}
+
+	// 4. Informasi Cuaca Real-Time Open-Meteo (Poin 7)
+	if d.Weather == nil {
+		d.Weather = GetRealtimeWeather(d.Latitude, d.Longitude, d.CityRegency)
+		if d.Weather != nil {
+			d.WeatherStatus = d.Weather.WeatherStatus
+		}
+	}
+}
+
+func (r *postgresRepository) GetCategories() []models.Category {
+	categories := models.GetDefaultCategories()
+	rows, err := r.db.Query(`SELECT category_id, COUNT(*) FROM destinations GROUP BY category_id;`)
+	if err == nil {
+		defer rows.Close()
+		counts := make(map[string]int)
+		for rows.Next() {
+			var catID string
+			var count int
+			if err := rows.Scan(&catID, &count); err == nil {
+				counts[catID] = count
+			}
+		}
+		for i := range categories {
+			if cnt, ok := counts[categories[i].ID]; ok {
+				categories[i].DestinationCount = cnt
+			}
+		}
+	}
+	return categories
 }
 
 func (r *postgresRepository) FindPending() []models.Destination {

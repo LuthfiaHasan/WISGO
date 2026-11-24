@@ -1,6 +1,10 @@
 package spatial
 
-import "github.com/LuthfiaHasan/WISGO/backend/internal/models"
+import (
+	"time"
+
+	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
+)
 
 // ShunluSearchRequest parameter pencarian POI searah rute koridor (FE-1 Layar 03)
 type ShunluSearchRequest struct {
@@ -96,22 +100,35 @@ type OptimizeTSPResponse struct {
 
 // SOSEmergencyInput payload pancaran darurat SOS GPS dari wisatawan (FE-1)
 type SOSEmergencyInput struct {
-	TouristName     string  `json:"tourist_name"`
-	PhoneNumber     string  `json:"phone_number"`
-	EmergencyType   string  `json:"emergency_type"`
-	Latitude        float64 `json:"latitude"`
-	Longitude       float64 `json:"longitude"`
-	BatteryPercent  int     `json:"battery_percent"`
-	PassengersCount int     `json:"passengers_count"`
-	Notes           string  `json:"notes"`
+	SOSCode            string     `json:"sos_code,omitempty"`             // ID unik yang digenerate client saat offline
+	IsOfflineSync      bool       `json:"is_offline_sync,omitempty"`      // True jika dikirim via auto-sync saat sinyal pulih
+	OfflineTriggeredAt *time.Time `json:"offline_triggered_at,omitempty"` // Timestamp saat tombol ditekan offline
+	TouristName        string     `json:"tourist_name"`
+	PhoneNumber        string     `json:"phone_number"`
+	EmergencyType      string     `json:"emergency_type"`
+	Latitude           float64    `json:"latitude"`
+	Longitude          float64    `json:"longitude"`
+	BatteryPercent     int        `json:"battery_percent"`
+	PassengersCount    int        `json:"passengers_count"`
+	Notes              string     `json:"notes"`
 }
 
 // SOSEmergencyResponse respon penerimaan sinyal darurat SOS
 type SOSEmergencyResponse struct {
-	Status              string           `json:"status"`
-	Message             string           `json:"message"`
-	SOSSignal           models.SOSSignal `json:"sos_signal"`
-	SurvivalInstruction string           `json:"survival_instruction"`
+	Status              string                        `json:"status"`
+	Message             string                        `json:"message"`
+	SOSSignal           models.SOSSignal              `json:"sos_signal"`
+	SurvivalInstruction string                        `json:"survival_instruction"`
+	EmergencyContacts   []models.EmergencyContact     `json:"emergency_contacts,omitempty"`
+	EmergencyCall       *models.EmergencyCallProtocol `json:"emergency_call,omitempty"`
+}
+
+// EmergencyContactsResponse respon master kontak darurat & pos SAR Sumbar
+type EmergencyContactsResponse struct {
+	Status        string                        `json:"status"`
+	Total         int                           `json:"total"`
+	Contacts      []models.EmergencyContact     `json:"contacts"`
+	EmergencyCall *models.EmergencyCallProtocol `json:"emergency_call,omitempty"`
 }
 
 // NavigationTelemetryInput payload telemetri navigasi dan dwell time GPS (FE-1)

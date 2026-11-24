@@ -22,14 +22,16 @@ func ResolvePinColorToken(pinType string) string {
 	}
 }
 
-// Scenes360Response respon terstandarisasi untuk kanvas penjelajah tur 360°
+// Scenes360Response respon terstandarisasi untuk kanvas penjelajah tur panorama view (Poin 9)
 type Scenes360Response struct {
-	DestinationID   string             `json:"destination_id"`
-	DestinationName string             `json:"destination_name"`
-	CityRegency     string             `json:"city_regency"`
-	TotalScenes     int                `json:"total_scenes"`
-	PinLegend       map[string]string  `json:"pin_legend"`
-	Scenes360       []models.Scene360  `json:"scenes_360"`
+	DestinationID   string            `json:"destination_id"`
+	DestinationName string            `json:"destination_name"`
+	CityRegency     string            `json:"city_regency"`
+	ViewMode        string            `json:"view_mode"`        // photo_panorama (Pilar 1 - Penyederhanaan panorama view ringan)
+	ImageResolution string            `json:"image_resolution"` // 4K Equirectangular Panorama
+	TotalScenes     int               `json:"total_scenes"`
+	PinLegend       map[string]string `json:"pin_legend"`
+	Scenes360       []models.Scene360 `json:"scenes_360"`
 }
 
 // CreateScene360Request payload pembuatan kanvas 360° baru dari CMS Studio Web Admin FS-1

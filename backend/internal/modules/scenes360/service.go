@@ -43,6 +43,8 @@ func (s *service) GetScenesByDestination(idOrSlug string) (*Scenes360Response, e
 		DestinationID:   dest.ID,
 		DestinationName: dest.Name,
 		CityRegency:     dest.CityRegency,
+		ViewMode:        "photo_panorama",
+		ImageResolution: "4K Equirectangular Panorama",
 		TotalScenes:     len(scenes),
 		PinLegend: map[string]string{
 			"navigasi":  "#2563EB (Biru — Transisi Aerial-to-Ground)",

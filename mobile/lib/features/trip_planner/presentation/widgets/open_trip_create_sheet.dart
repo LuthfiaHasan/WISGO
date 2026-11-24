@@ -23,19 +23,18 @@ class OpenTripCreateSheet extends StatefulWidget {
 }
 
 class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
-  // Daftar Destinasi Tunggal Resmi Sumatera Barat
+  // Daftar Destinasi Tunggal Resmi Sumatera Barat (5 Kluster Kategori Induk)
   final List<String> _availableSingleDestinations = [
     'Lembah Harau & Sarasah Bunta',
-    'Kawasan Mandeh (Raja Ampat Minang)',
-    'Puncak Lawang & Kebun Tebu',
+    'Jam Gadang Bukittinggi',
     'Istano Basa Pagaruyung',
-    'Danau Maninjau & Kelok 44',
-    'Gunung Marapi (Koto Baru)',
-    'Pantai Gandoriah & Angso Duo',
-    'Kapalo Banda Taram',
-    'Air Terjun Lubuk Hitam (Cindakir)',
-    'Desa Wisata Pariangan',
-    'Danau Singkarak',
+    'Ekowisata Air Terjun Nyarai (Hidden Gem)',
+    'Kawasan Bahari Mandeh',
+    'Jembatan Akar Bayang (Hidden Gem)',
+    'Desa Wisata Nagari Tuo Pariangan',
+    'Masjid Raya Sumatera Barat (Religi)',
+    'Los Lambuang Nasi Kapau Pasar Ateh (Kuliner)',
+    'Danau Singkarak & Kuliner Ikan Bilih',
   ];
 
   late String _selectedSingleDestination;

@@ -295,3 +295,8 @@ func SeedSOSSignals() []models.SOSSignal {
 		},
 	}
 }
+
+// SeedEmergencyContacts menyediakan master kontak darurat resmi Pos SAR, BPBD, PMI & Damkar Sumbar
+func SeedEmergencyContacts() []models.EmergencyContact {
+	return models.GetDefaultEmergencyContacts()
+}

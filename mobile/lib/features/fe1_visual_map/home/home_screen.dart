@@ -27,10 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const List<String> _categories = [
     'Semua',
-    'Alam',
-    'Budaya',
+    'Alam & Geopark',
+    'Budaya & Nagari',
+    'Hidden Gem',
+    'Religi',
     'Kuliner',
-    'Sejarah',
   ];
 
   @override
@@ -324,9 +325,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: dest.category == 'Budaya'
+                            color: dest.category.toLowerCase().contains('budaya')
                                 ? AppColors.indigo500
-                                : AppColors.green800,
+                                : (dest.category.toLowerCase().contains('gem')
+                                    ? const Color(0xFF0F766E)
+                                    : (dest.category.toLowerCase().contains('religi')
+                                        ? const Color(0xFF047857)
+                                        : (dest.category.toLowerCase().contains('kuliner')
+                                            ? AppColors.coral500
+                                            : AppColors.green800))),
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(

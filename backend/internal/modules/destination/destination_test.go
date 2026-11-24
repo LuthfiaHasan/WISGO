@@ -105,6 +105,15 @@ func TestDestinationSuite(t *testing.T) {
 		if recOffline.Code != http.StatusOK {
 			t.Fatalf("expected 200 OK on /offline-bundle, got %d", recOffline.Code)
 		}
+
+		var bundleRes OfflineBundleResponse
+		_ = json.Unmarshal(recOffline.Body.Bytes(), &bundleRes)
+		if len(bundleRes.EmergencyContacts) == 0 {
+			t.Fatal("expected emergency_contacts to be included in offline-bundle")
+		}
+		if bundleRes.EmergencyCallProtocol == nil || bundleRes.EmergencyCallProtocol.NationalEmergency == "" {
+			t.Fatal("expected emergency_call_protocol to be configured in offline-bundle")
+		}
 	})
 
 	t.Run("TC-05: POST /api/v1/admin/destinations menolak request tanpa Bearer Token (401 Unauthorized)", func(t *testing.T) {
@@ -253,6 +262,99 @@ func TestDestinationSuite(t *testing.T) {
 		_ = json.Unmarshal(recAdminVerify.Body.Bytes(), &verifyRes)
 		if verifyRes.Data.VerificationStatus != "verified" {
 			t.Fatalf("expected VerificationStatus 'verified' after admin approval, got '%s'", verifyRes.Data.VerificationStatus)
+		}
+	})
+
+	t.Run("TC-11: GET /api/v1/categories mengembalikan 5 Master Categories & Auto-Category Mapping", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/categories", nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d", rec.Code)
+		}
+
+		var resp CategoriesResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("failed to decode categories: %v", err)
+		}
+
+		if resp.Total != 5 || len(resp.Categories) != 5 {
+			t.Fatalf("expected 5 canonical categories, got total=%d len=%d", resp.Total, len(resp.Categories))
+		}
+
+		expectedIDs := map[string]bool{
+			"cat-alam-geopark":  false,
+			"cat-budaya-nagari": false,
+			"cat-hidden-gem":    false,
+			"cat-religi":        false,
+			"cat-kuliner":       false,
+		}
+
+		for _, c := range resp.Categories {
+			if _, exists := expectedIDs[c.ID]; exists {
+				expectedIDs[c.ID] = true
+			}
+			if c.DestinationCount <= 0 {
+				t.Fatalf("expected positive destination count for category %s, got %d", c.ID, c.DestinationCount)
+			}
+		}
+
+		for id, found := range expectedIDs {
+			if !found {
+				t.Fatalf("category %s not found in response", id)
+			}
+		}
+
+		// Filter by category_id pada /destinations
+		reqFilter := httptest.NewRequest(http.MethodGet, "/api/v1/destinations?category_id=cat-religi", nil)
+		recFilter := httptest.NewRecorder()
+		r.ServeHTTP(recFilter, reqFilter)
+
+		if recFilter.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on category_id filter, got %d", recFilter.Code)
+		}
+
+		var filtered []models.Destination
+		_ = json.Unmarshal(recFilter.Body.Bytes(), &filtered)
+		if len(filtered) == 0 {
+			t.Fatal("expected at least 1 destination for cat-religi")
+		}
+		for _, d := range filtered {
+			if d.CategoryID != "cat-religi" {
+				t.Fatalf("expected CategoryID 'cat-religi', got '%s'", d.CategoryID)
+			}
+		}
+	})
+
+	t.Run("TC-12: GET /api/v1/destinations/:id menyajikan cuaca real-time & weather_status per kota/kabupaten", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/destinations/dest-001", nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d", rec.Code)
+		}
+
+		var dest models.Destination
+		if err := json.Unmarshal(rec.Body.Bytes(), &dest); err != nil {
+			t.Fatalf("failed to decode destination: %v", err)
+		}
+
+		if dest.WeatherStatus == "" {
+			t.Fatal("expected weather_status to be non-empty")
+		}
+		if dest.Weather == nil {
+			t.Fatal("expected Weather object to be populated")
+		}
+		if dest.Weather.CityRegency != dest.CityRegency {
+			t.Fatalf("expected weather city '%s', got '%s'", dest.CityRegency, dest.Weather.CityRegency)
+		}
+		if dest.Weather.TemperatureC <= 0 {
+			t.Fatalf("expected positive temperature, got %d", dest.Weather.TemperatureC)
+		}
+		if dest.Weather.Forecast == "" {
+			t.Fatal("expected forecast to be non-empty")
 		}
 	})
 }

@@ -157,69 +157,66 @@ class TravelCategoryGroup {
   });
 }
 
-/// 5 Kluster Struktur Kategori Perjalanan Resmi (Terstruktur & Mudah Dipahami)
+/// 5 Kluster Struktur Kategori Perjalanan Resmi (Poin 6: Master Categories)
 const List<TravelCategoryGroup> kStandardTravelCategories = [
   TravelCategoryGroup(
-    id: 'cat-alam-gunung',
-    name: 'Wisata Alam & Pegunungan',
-    description: 'Eksplorasi puncak gunung api, tebing granit megah, air terjun tersembunyi, dan ngarai hijau.',
+    id: 'cat-alam-geopark',
+    name: 'Alam & Geopark',
+    description: 'Eksplorasi puncak gunung api, tebing granit purba, air terjun alami, ngarai, dan geopark Sumatera Barat.',
     icon: Icons.terrain_rounded,
     primaryColor: Color(0xFF193D22),
     badgeBgColor: Color(0xFFE8F2EC),
     popularKeywords: [
       'harau', 'sarasah', 'tebing', 'gunung', 'marapi', 'singgalang',
-      'talang', 'tandikat', 'ngarai', 'sianok', 'anai', 'lubuk', 'bukit',
-      'air terjun', 'puncak', 'rimba', 'lawang', 'paralayang'
+      'talang', 'tandikat', 'ngarai', 'sianok', 'anai', 'lawang', 'maninjau',
+      'mandeh', 'pasumpahan', 'pagang', 'gandoriah', 'danau', 'geopark'
     ],
   ),
   TravelCategoryGroup(
-    id: 'cat-bahari-pesisir',
-    name: 'Wisata Bahari & Pesisir',
-    description: 'Jelajah gugusan pulau eksotis, teluk tenang Mandeh, terumbu karang, dan pesona pantai Samudera Hindia.',
-    icon: Icons.sailing_rounded,
-    primaryColor: Color(0xFF0369A1),
-    badgeBgColor: Color(0xFFE0F2FE),
-    popularKeywords: [
-      'mandeh', 'pasumpahan', 'pagang', 'sirandah', 'pamutusan',
-      'mentawai', 'suwarnadwipa', 'pantai', 'air manis', 'carocok',
-      'gandoriah', 'pulau', 'bahari', 'snorkeling', 'diving', 'surfing'
-    ],
-  ),
-  TravelCategoryGroup(
-    id: 'cat-sejarah-warisan',
-    name: 'Sejarah & Warisan Minangkabau',
-    description: 'Napak tilas kejayaan kerajaan Pagaruyung, arsitektur gonjong megah, dan cagar budaya bersejarah.',
+    id: 'cat-budaya-nagari',
+    name: 'Budaya & Nagari',
+    description: 'Warisan sejarah Minangkabau, istano basa, rumah gadang, desa adat tertua, dan seni tradisi.',
     icon: Icons.account_balance_rounded,
     primaryColor: Color(0xFF7C2D12),
     badgeBgColor: Color(0xFFFEE2E2),
     popularKeywords: [
-      'pagaruyung', 'istano', 'rumah gadang', 'jam gadang', 'lubang jepang',
-      'benteng', 'fort de kock', 'cagar budaya', 'heritage', 'kota tua'
+      'pagaruyung', 'istano', 'rumah gadang', 'jam gadang', 'pariangan',
+      'pandai sikek', 'desa adat', 'nagari', 'tenun', 'ukiran', 'cagar budaya'
     ],
   ),
   TravelCategoryGroup(
-    id: 'cat-nagari-budaya',
-    name: 'Nagari Adat & Edukasi Budaya',
-    description: 'Pengalaman autentik berinteraksi dengan ninik mamak, desa terindah, tradisi tenun, dan seni randai.',
-    icon: Icons.diversity_3_rounded,
-    primaryColor: Color(0xFF92400E),
-    badgeBgColor: Color(0xFFFEF3C7),
+    id: 'cat-hidden-gem',
+    name: 'Hidden Gem',
+    description: 'Destinasi alami tersembunyi yang asri, minim keramaian, dan membutuhkan edukasi kelestarian tinggi.',
+    icon: Icons.diamond_outlined,
+    primaryColor: Color(0xFF0F766E),
+    badgeBgColor: Color(0xFFCCFBF1),
     popularKeywords: [
-      'pariangan', 'silokek', 'pandai sikek', 'desa adat', 'nagari',
-      'tenun', 'ukiran', 'pacu jawi', 'randai', 'silek', 'budaya', 'pokdarwis'
+      'nyarai', 'lubuk gamaran', 'batu kapal', 'jembatan akar', 'bayang',
+      'silokek', 'ngalau basurek', 'madobag', 'mentawai', 'hidden gem'
     ],
   ),
   TravelCategoryGroup(
-    id: 'cat-kuliner-agro',
-    name: 'Kuliner Otentik & Agrowisata',
-    description: 'Eksplorasi cita rasa rempah rendang asli, pasar kuliner kapau, kebun teh sejuk, dan danau kembar.',
+    id: 'cat-religi',
+    name: 'Religi',
+    description: 'Wisata masjid bersejarah berarsitektur Minang, surau tarekat, dan jejak peradaban Islam Minangkabau.',
+    icon: Icons.mosque_rounded,
+    primaryColor: Color(0xFF047857),
+    badgeBgColor: Color(0xFFD1FAE5),
+    popularKeywords: [
+      'masjid raya', 'masjid', 'surau', 'religi', 'islam', 'tarusan'
+    ],
+  ),
+  TravelCategoryGroup(
+    id: 'cat-kuliner',
+    name: 'Kuliner',
+    description: 'Sentra kuliner Minangkabau otentik, los lambuang pasar tradisional, rumah makan legendaris, dan sentra rendang.',
     icon: Icons.restaurant_rounded,
-    primaryColor: Color(0xFF15803D),
-    badgeBgColor: Color(0xFFDCFCE7),
+    primaryColor: Color(0xFFC2410C),
+    badgeBgColor: Color(0xFFFFEDD5),
     popularKeywords: [
-      'kapau', 'rendang', 'payakumbuh', 'danguang', 'sate', 'kebun teh',
-      'alahan panjang', 'danau', 'singkarak', 'maninjau', 'diatas', 'dibawah',
-      'kopi', 'agrowisata', 'durian'
+      'kapau', 'rendang', 'payakumbuh', 'los lambuang', 'sate', 'ikan bilih',
+      'singkarak', 'kopi kawa', 'kuliner', 'pasar ateh'
     ],
   ),
 ];
@@ -237,7 +234,7 @@ String determineCategoryForDestination(String destinationName) {
   }
 
   // Fallback default kategori resmi
-  return 'Wisata Alam & Pegunungan';
+  return 'Alam & Geopark';
 }
 
 /// Model Data Open Trip Lengkap (Item 1-7 Open Trip & Item 1-5 Trip Planner)
@@ -319,11 +316,12 @@ class OpenTripItem {
 
 /// Data Contoh Resmi Open Trip (Masing-masing 1 Destinasi Tunggal)
 final List<OpenTripItem> kMockOpenTrips = [
-  // TRIP 1: Lembah Harau (Wisata Alam & Tebing)
+  // TRIP 1: Lembah Harau (Alam & Geopark)
   OpenTripItem(
     id: 'TRIP-HARAU-01',
     title: 'Eksplor Kemegahan Tebing Granit Lembah Harau',
     singleDestination: 'Lembah Harau & Sarasah Bunta',
+    category: 'Alam & Geopark',
     coverUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
     departureDate: 'Sabtu, 28 Nov 2026',
     returnDate: 'Minggu, 29 Nov 2026',
@@ -641,11 +639,12 @@ final List<OpenTripItem> kMockOpenTrips = [
     whatsappGroupLink: 'https://chat.whatsapp.com/WisgoHarauTrip2026',
   ),
 
-  // TRIP 2: Kawasan Mandeh (Wisata Bahari & Snorkeling)
+  // TRIP 2: Kawasan Mandeh (Alam & Geopark)
   OpenTripItem(
     id: 'TRIP-MANDEH-02',
     title: 'Island Hopping & Snorkeling Eksotis Kawasan Mandeh',
     singleDestination: 'Kawasan Mandeh (Raja Ampat Minang)',
+    category: 'Alam & Geopark',
     coverUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
     departureDate: 'Minggu, 29 Nov 2026',
     returnDate: 'Minggu, 29 Nov 2026',
@@ -775,11 +774,12 @@ final List<OpenTripItem> kMockOpenTrips = [
     whatsappGroupLink: 'https://chat.whatsapp.com/WisgoMandehTrip2026',
   ),
 
-  // TRIP 3: Puncak Lawang (Paralayang & Panorama)
+  // TRIP 3: Puncak Lawang (Alam & Geopark)
   OpenTripItem(
     id: 'TRIP-LAWANG-03',
     title: 'Pesona Negeri di Atas Awan Puncak Lawang & Danau Maninjau',
     singleDestination: 'Puncak Lawang & Kebun Tebu Tradisional',
+    category: 'Alam & Geopark',
     coverUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800',
     departureDate: 'Sabtu, 5 Des 2026',
     returnDate: 'Sabtu, 5 Des 2026',
@@ -865,11 +865,12 @@ final List<OpenTripItem> kMockOpenTrips = [
     whatsappGroupLink: 'https://chat.whatsapp.com/WisgoLawangTrip2026',
   ),
 
-  // TRIP 4: Istano Basa Pagaruyung (Cagar Budaya & Adat Minang)
+  // TRIP 4: Istano Basa Pagaruyung (Budaya & Nagari)
   OpenTripItem(
     id: 'TRIP-PAGARUYUNG-04',
     title: 'Napak Tilas Kejayaan Kerajaan Minangkabau di Istano Basa Pagaruyung',
     singleDestination: 'Istano Basa Pagaruyung',
+    category: 'Budaya & Nagari',
     coverUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800',
     departureDate: 'Minggu, 6 Des 2026',
     returnDate: 'Minggu, 6 Des 2026',
@@ -953,5 +954,268 @@ final List<OpenTripItem> kMockOpenTrips = [
       ),
     ],
     whatsappGroupLink: 'https://chat.whatsapp.com/WisgoPagaruyungTrip2026',
+  ),
+
+  // TRIP 5: Air Terjun Nyarai (Hidden Gem)
+  OpenTripItem(
+    id: 'TRIP-NYARAI-05',
+    title: 'Jelajah Kolam Hijau Toska & Hutan Asri Air Terjun Nyarai',
+    singleDestination: 'Air Terjun Lubuk Nyarai',
+    category: 'Hidden Gem',
+    coverUrl: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800',
+    departureDate: 'Sabtu, 12 Des 2026',
+    returnDate: 'Sabtu, 12 Des 2026',
+    departureTime: '07.30 WIB',
+    duration: '1 Hari (Day Trip)',
+    meetingPointName: 'Pos Registrasi Pokdarwis Nyarai Lubuk Alung',
+    meetingPointAddress: 'Nagari Salibutan, Kec. Lubuk Alung, Kab. Padang Pariaman',
+    meetingPointLat: -0.6812,
+    meetingPointLng: 100.3915,
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=-0.6812,100.3915',
+    pricePerPerson: 85000,
+    quotaMax: 10,
+    quotaFilled: 6,
+    organizer: const VerifiedOrganizer(
+      id: 'ORG-05',
+      name: 'Ritno Kurniawan (Inisiator Ekowisata Nyarai)',
+      licenseNumber: 'HPI-SB-2021-0088 (Pemandu Ekowisata Utama)',
+      ktpStatus: 'Terverifikasi e-KTP & Pokdarwis Nyarai',
+      rating: 4.96,
+      completedTrips: 76,
+      phone: '0812-6677-8899',
+      organizationName: 'Lembaga Pengelola Hutan Nagari Gamaran',
+    ),
+    offlineRules: const [
+      OfflineTripRule(
+        title: 'Wajib Dipandu Pemandu Resmi Nagari',
+        ruleDescription: 'Jalur hutan Gamaran sepanjang 3.5 km wajib didampingi pemandu berlisensi.',
+        iconCode: 'hiking',
+      ),
+      OfflineTripRule(
+        title: 'Larangan Meninggalkan Sampah Apapun',
+        ruleDescription: 'Zero waste zone: kantong kresek sampah wajib dibawa kembali ke pos registrasi.',
+        iconCode: 'nature_people',
+      ),
+    ],
+    readinessChecklist: [
+      TripReadinessItem(
+        id: 'nyarai_ready_1',
+        title: 'Izin Masuk Hutan Lindung Gamaran',
+        description: 'Telah terdaftar resmi pada Balai Pengelola Ekowisata Nyarai.',
+        isDone: true,
+        category: 'Perizinan',
+      ),
+    ],
+    jobdeskList: [
+      TripJobdeskItem(
+        id: 'ny_job_1',
+        roleTitle: 'Pemandu Trekking Hutan',
+        picName: 'Ritno Kurniawan',
+        picRole: 'Penyelenggara',
+        tasks: ['Memimpin rute jalan setapak', 'Edukasi flora fauna hutan'],
+        status: 'Siap',
+        icon: Icons.hiking_rounded,
+      ),
+    ],
+    packingList: [
+      TripPackingItem(
+        id: 'ny_pack_1',
+        category: 'Pakaian & Alas Kaki',
+        itemName: 'Sepatu Trekking Antiselip / Sandal Gunung',
+        isPacked: true,
+      ),
+    ],
+    itinerary: [
+      TripItineraryStep(
+        time: '07.30 - 08.00 WIB',
+        activity: 'Briefing Jalur di Posko Nyarai',
+        location: 'Pos Ekowisata Lubuk Alung',
+        notes: 'Pemberian instruksi keselamatan dan pengecekan perlengkapan.',
+        status: 'Akan Datang',
+        icon: Icons.place_rounded,
+      ),
+    ],
+    messages: [
+      TripChatMessage(
+        id: 'ny_msg_1',
+        senderName: 'Ritno (Host)',
+        senderRole: 'Host',
+        message: 'Jalur trekking terpantau kering dan jernih, sangat aman untuk berenang!',
+        timestamp: '07.00 WIB',
+      ),
+    ],
+    whatsappGroupLink: 'https://chat.whatsapp.com/WisgoNyaraiTrip2026',
+  ),
+
+  // TRIP 6: Masjid Raya Sumbar (Religi)
+  OpenTripItem(
+    id: 'TRIP-MASJID-06',
+    title: 'Wisata Religi & Kemegahan Mahakarya Arsitektur Minangkabau',
+    singleDestination: 'Masjid Raya Sumatera Barat',
+    category: 'Religi',
+    coverUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800',
+    departureDate: 'Jumat, 18 Des 2026',
+    returnDate: 'Jumat, 18 Des 2026',
+    departureTime: '10.30 WIB',
+    duration: 'Setengah Hari',
+    meetingPointName: 'Pelataran Gerbang Utama Masjid Raya Sumbar',
+    meetingPointAddress: 'Jl. Khatib Sulaiman, Padang Utara, Kota Padang',
+    meetingPointLat: -0.9242,
+    meetingPointLng: 100.3626,
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=-0.9242,100.3626',
+    pricePerPerson: 50000,
+    quotaMax: 15,
+    quotaFilled: 9,
+    organizer: const VerifiedOrganizer(
+      id: 'ORG-06',
+      name: 'Ustadz Ilham Siddiq, M.Ag',
+      licenseNumber: 'SK-MUI-SB-2023-0144 (Pemandu Wisata Religi Minang)',
+      ktpStatus: 'Terverifikasi e-KTP & Pengurus Masjid Raya',
+      rating: 4.97,
+      completedTrips: 45,
+      phone: '0813-7788-9900',
+      organizationName: 'Dewan Kemakmuran Masjid Raya Sumatera Barat',
+    ),
+    offlineRules: const [
+      OfflineTripRule(
+        title: 'Etika Berbusana Muslim Menutup Aurat',
+        ruleDescription: 'Peserta wajib mengenakan pakaian muslim/muslimah rapi dan sopan di area suci masjid.',
+        iconCode: 'checkroom',
+      ),
+    ],
+    readinessChecklist: [
+      TripReadinessItem(
+        id: 'mr_ready_1',
+        title: 'Konfirmasi Tur Sejarah & Filosofi Arsitektur',
+        description: 'Izin resmi pengurus DKM untuk tur ruang shalat & galeri kubah gonjong.',
+        isDone: true,
+        category: 'Perizinan',
+      ),
+    ],
+    jobdeskList: [
+      TripJobdeskItem(
+        id: 'mr_job_1',
+        roleTitle: 'Pemandu Sejarah & Muazin',
+        picName: 'Ustadz Ilham Siddiq',
+        picRole: 'Penyelenggara',
+        tasks: ['Kajian arsitektur gonjong bentang kain hajar aswad'],
+        status: 'Siap',
+        icon: Icons.mosque_rounded,
+      ),
+    ],
+    packingList: [
+      TripPackingItem(
+        id: 'mr_pack_1',
+        category: 'Dokumen & Ibadah',
+        itemName: 'Perlengkapan Shalat Pribadi (Mukena / Sarung)',
+        isPacked: true,
+      ),
+    ],
+    itinerary: [
+      TripItineraryStep(
+        time: '10.30 - 11.45 WIB',
+        activity: 'Eksplorasi Makna Ukiran & Bentang Kain Ka\'bah',
+        location: 'Lantai Utama Masjid Raya',
+        notes: 'Pemaparan filosofi Adat Basandi Syarak, Syarak Basandi Kitabullah.',
+        status: 'Akan Datang',
+        icon: Icons.mosque_rounded,
+      ),
+    ],
+    messages: [
+      TripChatMessage(
+        id: 'mr_msg_1',
+        senderName: 'Ustadz Ilham (Host)',
+        senderRole: 'Host',
+        message: 'Selamat datang jamaah sekalian, kita kumpul di pelataran barat pukul 10.30 WIB.',
+        timestamp: '09.00 WIB',
+      ),
+    ],
+    whatsappGroupLink: 'https://chat.whatsapp.com/WisgoMasjidRaya2026',
+  ),
+
+  // TRIP 7: Los Lambuang Bukittinggi (Kuliner)
+  OpenTripItem(
+    id: 'TRIP-KAPAU-07',
+    title: 'Jelajah Kuliner Otentik Los Lambuang & Sentra Rendang Ranah Minang',
+    singleDestination: 'Los Lambuang Pasar Ateh Bukittinggi',
+    category: 'Kuliner',
+    coverUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800',
+    departureDate: 'Sabtu, 19 Des 2026',
+    returnDate: 'Sabtu, 19 Des 2026',
+    departureTime: '11.00 WIB',
+    duration: '1 Hari (Gourmet Trip)',
+    meetingPointName: 'Depan Janjang 40 (Tangga Pasar Bawah - Pasar Ateh)',
+    meetingPointAddress: 'Kawasan Pasar Ateh, Benteng Pasar Ateh, Kota Bukittinggi',
+    meetingPointLat: -0.3042,
+    meetingPointLng: 100.3698,
+    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=-0.3042,100.3698',
+    pricePerPerson: 125000,
+    quotaMax: 12,
+    quotaFilled: 7,
+    organizer: const VerifiedOrganizer(
+      id: 'ORG-07',
+      name: 'Uni Desi Nasi Kapau (Pakar Kuliner Nagari)',
+      licenseNumber: 'SK-DISPERINDAG-KTB-2022-019 (Kurator Kuliner Tradisi)',
+      ktpStatus: 'Terverifikasi e-KTP & Koperasi Pedagang Pasar Ateh',
+      rating: 4.99,
+      completedTrips: 88,
+      phone: '0812-5544-3322',
+      organizationName: 'Paguyuban Kuliner Los Lambuang Bukittinggi',
+    ),
+    offlineRules: const [
+      OfflineTripRule(
+        title: 'Paket Menu Otentik Telah Termasuk',
+        ruleDescription: 'Harga paket sudah meliputi 1 porsi Nasi Kapau lengkap (Tambusu/Dendeng), Talua Barendo, dan Kawa Daun.',
+        iconCode: 'restaurant',
+      ),
+    ],
+    readinessChecklist: [
+      TripReadinessItem(
+        id: 'kapau_ready_1',
+        title: 'Reservasi Meja Panjang Los Lambuang',
+        description: 'Area duduk khusus rombongan telah diamankan di lapak Uni Desi.',
+        isDone: true,
+        category: 'Akomodasi',
+      ),
+    ],
+    jobdeskList: [
+      TripJobdeskItem(
+        id: 'kp_job_1',
+        roleTitle: 'Pemandu Rasa & Master Chef Kapau',
+        picName: 'Uni Desi',
+        picRole: 'Penyelenggara',
+        tasks: ['Mendemonstrasikan cara sendok kuah centong panjang'],
+        status: 'Siap',
+        icon: Icons.restaurant_menu_rounded,
+      ),
+    ],
+    packingList: [
+      TripPackingItem(
+        id: 'kp_pack_1',
+        category: 'Dokumen & Ibadah',
+        itemName: 'Wadah Makanan / Tas Belanja Ramah Lingkungan',
+        isPacked: true,
+      ),
+    ],
+    itinerary: [
+      TripItineraryStep(
+        time: '11.00 - 13.00 WIB',
+        activity: 'Makan Bersama di Los Lambuang & Demo Gulai Tambusu',
+        location: 'Los Lambuang Pasar Ateh',
+        notes: 'Mencicipi aneka lauk khas dan belajar racikan rempah Minang.',
+        status: 'Akan Datang',
+        icon: Icons.restaurant_rounded,
+      ),
+    ],
+    messages: [
+      TripChatMessage(
+        id: 'kp_msg_1',
+        senderName: 'Uni Desi (Host)',
+        senderRole: 'Host',
+        message: 'Gulai tambusu dan dendeng batokok hangat sudah siap menunggu kedatangan teman-teman!',
+        timestamp: '10.00 WIB',
+      ),
+    ],
+    whatsappGroupLink: 'https://chat.whatsapp.com/WisgoKulinerTrip2026',
   ),
 ];

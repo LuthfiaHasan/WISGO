@@ -21,6 +21,8 @@ type Repository interface {
 	CreateSOSSignal(input SOSEmergencyInput) models.SOSSignal
 	ListSOSSignals() []models.SOSSignal
 	RecordNavigationTelemetry(input NavigationTelemetryInput) (*models.GaodeBehaviorRanking, error)
+	ListEmergencyContacts(corridorFilter string) []models.EmergencyContact
+	FindNearestEmergencyContact(lat, lng float64) *models.EmergencyContact
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -48,22 +50,24 @@ func HaversineMeter(lat1, lon1, lat2, lon2 float64) float64 {
 }
 
 type inMemoryRepository struct {
-	mu           sync.RWMutex
-	shunluPOIs   []models.ShunluPOI
-	microMaps    map[string]models.ScenicMicroMap
-	hazardAlerts []models.HazardAlert
-	sosSignals   []models.SOSSignal
-	telemetries  map[string]*models.GaodeBehaviorRanking
+	mu                sync.RWMutex
+	shunluPOIs        []models.ShunluPOI
+	microMaps         map[string]models.ScenicMicroMap
+	hazardAlerts      []models.HazardAlert
+	sosSignals        []models.SOSSignal
+	telemetries       map[string]*models.GaodeBehaviorRanking
+	emergencyContacts []models.EmergencyContact
 }
 
 // NewRepository membuat instance repositori spasial baru dengan seeder awal
 func NewRepository() Repository {
 	return &inMemoryRepository{
-		shunluPOIs:   SeedShunluPOIs(),
-		microMaps:    SeedMicroMaps(),
-		hazardAlerts: SeedHazardAlerts(),
-		sosSignals:   SeedSOSSignals(),
-		telemetries:  make(map[string]*models.GaodeBehaviorRanking),
+		shunluPOIs:        SeedShunluPOIs(),
+		microMaps:         SeedMicroMaps(),
+		hazardAlerts:      SeedHazardAlerts(),
+		sosSignals:        SeedSOSSignals(),
+		telemetries:       make(map[string]*models.GaodeBehaviorRanking),
+		emergencyContacts: models.GetDefaultEmergencyContacts(),
 	}
 }
 
@@ -185,6 +189,15 @@ func (r *inMemoryRepository) CreateSOSSignal(input SOSEmergencyInput) models.SOS
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// Idempotency: jika sos_code sudah pernah dicatat (misal retry sync offline), kembalikan data yang ada
+	if input.SOSCode != "" {
+		for _, existing := range r.sosSignals {
+			if existing.SOSCode == input.SOSCode {
+				return existing
+			}
+		}
+	}
+
 	if input.TouristName == "" {
 		input.TouristName = "Wisatawan Darurat Rancak.in"
 	}
@@ -216,23 +229,36 @@ func (r *inMemoryRepository) CreateSOSSignal(input SOSEmergencyInput) models.SOS
 	etaMin := int(math.Max(5, math.Round(minDistKm*4.5)))
 
 	seq := len(r.sosSignals) + 1
+	sosCode := input.SOSCode
+	if sosCode == "" {
+		sosCode = fmt.Sprintf("SOS-SUMBAR-202611-%03d", seq)
+	}
+
+	status := "Dipancarkan"
+	if input.IsOfflineSync {
+		status = "Dipancarkan (Sinkronisasi Offline)"
+	}
+
 	signal := models.SOSSignal{
-		ID:                 fmt.Sprintf("sos-%03d", seq),
-		SOSCode:            fmt.Sprintf("SOS-SUMBAR-202611-%03d", seq),
-		TouristName:        input.TouristName,
-		PhoneNumber:        input.PhoneNumber,
-		EmergencyType:      input.EmergencyType,
-		Latitude:           input.Latitude,
-		Longitude:          input.Longitude,
-		BatteryPercent:     input.BatteryPercent,
-		PassengersCount:    input.PassengersCount,
-		NearestCorridor:    nearestCorridor,
-		NearestRescuePost:  nearestPost,
-		DistanceToRescueKm: math.Round(minDistKm*10) / 10,
-		ETARescueMinutes:   etaMin,
-		Status:             "Dipancarkan",
-		Notes:              input.Notes,
-		CreatedAt:          time.Now(),
+		ID:                  fmt.Sprintf("sos-%03d", seq),
+		SOSCode:             sosCode,
+		TouristName:         input.TouristName,
+		PhoneNumber:         input.PhoneNumber,
+		EmergencyType:       input.EmergencyType,
+		Latitude:            input.Latitude,
+		Longitude:           input.Longitude,
+		BatteryPercent:      input.BatteryPercent,
+		PassengersCount:     input.PassengersCount,
+		NearestCorridor:     nearestCorridor,
+		NearestRescuePost:   nearestPost,
+		DistanceToRescueKm:  math.Round(minDistKm*10) / 10,
+		ETARescueMinutes:    etaMin,
+		Status:              status,
+		Notes:               input.Notes,
+		IsOfflineSync:       input.IsOfflineSync,
+		OfflineTriggeredAt:  input.OfflineTriggeredAt,
+		EmergencyCallAction: "tel:112",
+		CreatedAt:           time.Now(),
 	}
 
 	r.sosSignals = append([]models.SOSSignal{signal}, r.sosSignals...)
@@ -243,6 +269,55 @@ func (r *inMemoryRepository) ListSOSSignals() []models.SOSSignal {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.sosSignals
+}
+
+func (r *inMemoryRepository) ListEmergencyContacts(corridorFilter string) []models.EmergencyContact {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	q := strings.ToUpper(strings.TrimSpace(corridorFilter))
+	if q == "" {
+		return r.emergencyContacts
+	}
+
+	var results []models.EmergencyContact
+	for _, c := range r.emergencyContacts {
+		if strings.Contains(strings.ToUpper(c.CorridorCode), q) ||
+			strings.Contains(strings.ToUpper(c.City), q) ||
+			strings.Contains(strings.ToUpper(c.AgencyType), q) {
+			results = append(results, c)
+		}
+	}
+	return results
+}
+
+func (r *inMemoryRepository) FindNearestEmergencyContact(lat, lng float64) *models.EmergencyContact {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if len(r.emergencyContacts) == 0 {
+		return nil
+	}
+
+	var best *models.EmergencyContact
+	minDist := 999999.0
+	for _, c := range r.emergencyContacts {
+		if c.Latitude == 0 && c.Longitude == 0 {
+			continue
+		}
+		d := CalculateSpatialDistanceKm(lat, lng, c.Latitude, c.Longitude)
+		if d < minDist {
+			minDist = d
+			item := c
+			best = &item
+		}
+	}
+
+	if best == nil {
+		first := r.emergencyContacts[0]
+		return &first
+	}
+	return best
 }
 
 func (r *inMemoryRepository) RecordNavigationTelemetry(input NavigationTelemetryInput) (*models.GaodeBehaviorRanking, error) {

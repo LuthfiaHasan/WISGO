@@ -15,6 +15,7 @@ import (
 type Repository interface {
 	FindAllWithSpatial(params SpatialFilterParams) []models.Destination
 	FindByID(idOrSlugOrQR string, hasUserGPS bool, userLat, userLng float64) (*models.Destination, error)
+	GetCategories() []models.Category
 	CreateCMS(input models.Destination) models.Destination
 	UpdateCMS(id string, payload models.Destination) (*models.Destination, error)
 	DeleteCMS(id string) (string, error)
@@ -57,6 +58,7 @@ func (r *inMemoryRepository) FindAllWithSpatial(params SpatialFilterParams) []mo
 	defer r.mu.RUnlock()
 
 	qCat := strings.ToLower(strings.TrimSpace(params.Category))
+	qCatID := strings.ToLower(strings.TrimSpace(params.CategoryID))
 	qCity := strings.ToLower(strings.TrimSpace(params.CityRegency))
 	qCrowd := strings.ToLower(strings.TrimSpace(params.CrowdLevel))
 	qSig := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(params.Signal), "_", " "))
@@ -73,7 +75,10 @@ func (r *inMemoryRepository) FindAllWithSpatial(params SpatialFilterParams) []mo
 			continue
 		}
 
-		if qCat != "" && !strings.Contains(strings.ToLower(d.Category), qCat) {
+		if qCatID != "" && strings.ToLower(d.CategoryID) != qCatID {
+			continue
+		}
+		if qCat != "" && !strings.Contains(strings.ToLower(d.Category), qCat) && strings.ToLower(d.CategoryID) != qCat {
 			continue
 		}
 		if qCity != "" && !strings.Contains(strings.ToLower(d.CityRegency), qCity) {
@@ -126,10 +131,36 @@ func (r *inMemoryRepository) FindByID(idOrSlugOrQR string, hasUserGPS bool, user
 				item.DistanceKm = CalculateSpatialDistanceKm(userLat, userLng, d.Latitude, d.Longitude)
 				item.TravelTimeMin = EstimateSumbarTravelMinutes(item.DistanceKm)
 			}
+			if item.Weather == nil {
+				item.Weather = GetRealtimeWeather(d.Latitude, d.Longitude, item.CityRegency)
+				if item.Weather != nil {
+					item.WeatherStatus = item.Weather.WeatherStatus
+				}
+			}
 			return &item, nil
 		}
 	}
 	return nil, fmt.Errorf("Destinasi '%s' tidak ditemukan", idOrSlugOrQR)
+}
+
+func (r *inMemoryRepository) GetCategories() []models.Category {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	categories := models.GetDefaultCategories()
+	counts := make(map[string]int)
+	for _, d := range r.destinations {
+		if d.VerificationStatus != "pending" && d.VerificationStatus != "rejected" {
+			counts[d.CategoryID]++
+		}
+	}
+
+	for i := range categories {
+		if cnt, ok := counts[categories[i].ID]; ok {
+			categories[i].DestinationCount = cnt
+		}
+	}
+	return categories
 }
 
 func (r *inMemoryRepository) CreateCMS(input models.Destination) models.Destination {

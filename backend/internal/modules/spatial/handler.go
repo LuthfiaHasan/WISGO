@@ -33,6 +33,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/spatial/hazards", h.GetLiveHazardAlerts)
 	rg.GET("/hazards/active", h.GetLiveHazardAlerts)
 	rg.GET("/spatial/nearby", h.GetNearbyDestinations)
+	rg.GET("/spatial/emergency-contacts", h.GetEmergencyContacts)
 	rg.POST("/routes/optimize-tsp", h.PostOptimizeTSP)
 
 	// Rate-limited endpoints (Anti-Spam Token Bucket)
@@ -254,6 +255,13 @@ func (h *Handler) PostOptimizeTSP(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetEmergencyContacts GET /api/v1/spatial/emergency-contacts
+func (h *Handler) GetEmergencyContacts(c *gin.Context) {
+	corridor := c.Query("corridor")
+	resp := h.service.GetEmergencyContacts(corridor)
 	c.JSON(http.StatusOK, resp)
 }
 

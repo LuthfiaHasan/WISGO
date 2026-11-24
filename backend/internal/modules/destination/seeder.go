@@ -6,15 +6,17 @@ import (
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
 
-// Seed20DestinationsSumbar mengembalikan 20 Destinasi Prioritas Sumatera Barat
+// Seed20DestinationsSumbar mengembalikan Destinasi Prioritas Sumatera Barat (Revisi Poin 6, 7, 9)
+// Setiap destinasi dikaitkan secara presisi dengan CategoryID kanonik & status cuaca real-time.
 func Seed20DestinationsSumbar() []models.Destination {
 	now := time.Now()
-	return []models.Destination{
+	destinations := []models.Destination{
 		{
 			ID:            "dest-001",
 			Slug:          "lembah-harau",
 			Name:          "Lembah Harau (Aka Barayun & Sarasah Bunta)",
-			Category:      "Alam & Tebing",
+			CategoryID:    "cat-alam-geopark",
+			Category:      "Alam & Geopark",
 			CityRegency:   "Kab. Lima Puluh Kota",
 			Description:   "Lembah subur dengan tebing granit purba terjal setinggi 150-300 meter dan 7 air terjun alami.",
 			Latitude:      -0.1023,
@@ -59,7 +61,8 @@ func Seed20DestinationsSumbar() []models.Destination {
 			ID:            "dest-002",
 			Slug:          "jam-gadang-bukittinggi",
 			Name:          "Jam Gadang & Taman Panorama Bukittinggi",
-			Category:      "Budaya & Sejarah",
+			CategoryID:    "cat-budaya-nagari",
+			Category:      "Budaya & Nagari",
 			CityRegency:   "Kota Bukittinggi",
 			Description:   "Menara jam ikonik jantung Kota Bukittinggi (1926) dengan mesin kembaran Big Ben London dan latar Gunung Singgalang.",
 			Latitude:      -0.30519,
@@ -105,7 +108,8 @@ func Seed20DestinationsSumbar() []models.Destination {
 			ID:            "dest-003",
 			Slug:          "istano-basa-pagaruyung",
 			Name:          "Istano Basa Pagaruyung Batusangkar",
-			Category:      "Budaya & Sejarah",
+			CategoryID:    "cat-budaya-nagari",
+			Category:      "Budaya & Nagari",
 			CityRegency:   "Kab. Tanah Datar",
 			Description:   "Istana megah Kerajaan Pagaruyung dengan 11 gonjong dan 72 tonggak kayu berukir falsafah Minangkabau.",
 			Latitude:      -0.47126,
@@ -143,7 +147,8 @@ func Seed20DestinationsSumbar() []models.Destination {
 			ID:            "dest-004",
 			Slug:          "air-terjun-nyarai",
 			Name:          "Ekowisata Air Terjun Nyarai & Lubuk Gamaran",
-			Category:      "Alam & Tebing",
+			CategoryID:    "cat-hidden-gem",
+			Category:      "Hidden Gem",
 			CityRegency:   "Kab. Padang Pariaman",
 			Description:   "Hidden gem air terjun di dalam Hutan Lindung Gamaran dengan kolam alami hijau zamrud.",
 			Latitude:      -0.68342,
@@ -177,7 +182,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			},
 		},
 		{
-			ID: "dest-005", Slug: "kawasan-bahari-mandeh", Name: "Kawasan Bahari Terpadu Mandeh", Category: "Bahari", CityRegency: "Kab. Pesisir Selatan",
+			ID: "dest-005", Slug: "kawasan-bahari-mandeh", Name: "Kawasan Bahari Terpadu Mandeh", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kab. Pesisir Selatan",
 			Description: "Teluk tenang berjuluk Raja Ampat dari Barat dengan gugusan pulau bukit hijau dan hutan bakau.", Latitude: -1.19845, Longitude: 100.41528, ElevationM: 120,
 			CrowdLevel: "Sedang", DistanceKm: 56.0, TravelTimeMin: 95, EstimatedCost: 10000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-PSS-005", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-005", DestinationID: "dest-005", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Disarankan"},
@@ -185,7 +190,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-005a", DestinationID: "dest-005", ItemName: "Retribusi Dermaga Tarusan", Price: 10000, Unit: "per orang", RegulationRef: "Perda Kab. Pesisir Selatan No. 5/2023"}},
 		},
 		{
-			ID: "dest-006", Slug: "jembatan-layang-kelok-9", Name: "Jembatan Layang & Panorama Kelok 9", Category: "Alam & Tebing", CityRegency: "Kab. Lima Puluh Kota",
+			ID: "dest-006", Slug: "jembatan-layang-kelok-9", Name: "Jembatan Layang & Panorama Kelok 9", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kab. Lima Puluh Kota",
 			Description: "Mahakarya jembatan layang melingkar di tengah Cagar Alam Air Putih Bukit Barisan.", Latitude: -0.07089, Longitude: 100.69761, ElevationM: 720,
 			CrowdLevel: "Ramai", DistanceKm: 147.0, TravelTimeMin: 220, EstimatedCost: 0, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-LPK-006", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-006", DestinationID: "dest-006", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -193,7 +198,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-006a", DestinationID: "dest-006", ItemName: "Parkir Resmi Mobil Rest Area", Price: 5000, Unit: "per kendaraan", RegulationRef: "Perda Kab. Lima Puluh Kota No. 7/2023"}},
 		},
 		{
-			ID: "dest-007", Slug: "puncak-lawang-maninjau", Name: "Puncak Lawang & Panorama Danau Maninjau", Category: "Alam & Tebing", CityRegency: "Kab. Agam",
+			ID: "dest-007", Slug: "puncak-lawang-maninjau", Name: "Puncak Lawang & Panorama Danau Maninjau", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kab. Agam",
 			Description: "Titik pandang tertinggi di atas kaldera vulkanik Danau Maninjau (1.210 mdpl).", Latitude: -0.26491, Longitude: 100.24075, ElevationM: 1210,
 			CrowdLevel: "Sedang", DistanceKm: 112.0, TravelTimeMin: 175, EstimatedCost: 20000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-AGM-007", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-007", DestinationID: "dest-007", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -201,7 +206,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-007a", DestinationID: "dest-007", ItemName: "Tiket Masuk Puncak Lawang", Price: 20000, Unit: "per orang", RegulationRef: "Perda Kab. Agam No. 3/2023"}},
 		},
 		{
-			ID: "dest-008", Slug: "ngarai-sianok-lobang-jepang", Name: "Geopark Ngarai Sianok & Lobang Jepang", Category: "Sejarah", CityRegency: "Kota Bukittinggi",
+			ID: "dest-008", Slug: "ngarai-sianok-lobang-jepang", Name: "Geopark Ngarai Sianok & Lobang Jepang", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kota Bukittinggi",
 			Description: "Lembah patahan Semangko sedalam 100 meter dengan bunker bersejarah sepanjang 1.470 meter.", Latitude: -0.30982, Longitude: 100.36518, ElevationM: 915,
 			CrowdLevel: "Sedang", DistanceKm: 90.0, TravelTimeMin: 140, EstimatedCost: 15000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-BKT-008", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-008", DestinationID: "dest-008", VehicleAccess: "Mobil OK", TrekkingLevel: "Sedang", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Disarankan"},
@@ -209,7 +214,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-008a", DestinationID: "dest-008", ItemName: "Tiket Taman Panorama & Lobang Jepang", Price: 15000, Unit: "per orang", RegulationRef: "Perda Kota Bukittinggi No. 4/2023"}},
 		},
 		{
-			ID: "dest-009", Slug: "pantai-air-manis", Name: "Pantai Air Manis & Batu Malin Kundang", Category: "Bahari", CityRegency: "Kota Padang",
+			ID: "dest-009", Slug: "pantai-air-manis", Name: "Pantai Air Manis & Batu Malin Kundang", CategoryID: "cat-budaya-nagari", Category: "Budaya & Nagari", CityRegency: "Kota Padang",
 			Description: "Pantai landai keluarga dengan situs relief legenda Malin Kundang dan akses Pulau Pisang Ketek.", Latitude: -0.99642, Longitude: 100.36015, ElevationM: 5,
 			CrowdLevel: "Ramai", DistanceKm: 8.5, TravelTimeMin: 22, EstimatedCost: 10000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-PDG-009", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-009", DestinationID: "dest-009", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -217,7 +222,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-009a", DestinationID: "dest-009", ItemName: "Tiket Masuk Pantai Air Manis", Price: 10000, Unit: "per orang", RegulationRef: "Perda Kota Padang No. 1/2024"}},
 		},
 		{
-			ID: "dest-010", Slug: "geopark-silokek-sijunjung", Name: "Geopark Nasional Silokek & Ngalau Basurek", Category: "Alam & Tebing", CityRegency: "Kab. Sijunjung",
+			ID: "dest-010", Slug: "geopark-silokek-sijunjung", Name: "Geopark Nasional Silokek & Ngalau Basurek", CategoryID: "cat-hidden-gem", Category: "Hidden Gem", CityRegency: "Kab. Sijunjung",
 			Description: "Ngarai batuan karst dan granit berumur 359 juta tahun di tepi aliran Sungai Batang Kuantan.", Latitude: -0.68419, Longitude: 100.99214, ElevationM: 210,
 			CrowdLevel: "Sepi", DistanceKm: 126.0, TravelTimeMin: 195, EstimatedCost: 10000, IsHiddenGem: true, QRPlacardCode: "QR-SMBR-SJJ-010", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-010", DestinationID: "dest-010", VehicleAccess: "Mobil OK", TrekkingLevel: "Sedang", CellularSignal: "Blank Spot", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Disarankan"},
@@ -225,7 +230,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-010a", DestinationID: "dest-010", ItemName: "Retribusi Kawasan Geopark Silokek", Price: 10000, Unit: "per orang", RegulationRef: "Perda Kab. Sijunjung No. 2/2023"}},
 		},
 		{
-			ID: "dest-011", Slug: "danau-kembar-alahan-panjang", Name: "Danau Kembar & Kebun Teh Alahan Panjang", Category: "Alam & Tebing", CityRegency: "Kab. Solok",
+			ID: "dest-011", Slug: "danau-kembar-alahan-panjang", Name: "Danau Kembar & Kebun Teh Alahan Panjang", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kab. Solok",
 			Description: "Kawasan agrowisata dataran tinggi dingin (14-18°C) dengan kebun teh hijau dan dua danau kembar.", Latitude: -1.04512, Longitude: 100.73108, ElevationM: 1530,
 			CrowdLevel: "Sedang", DistanceKm: 65.0, TravelTimeMin: 110, EstimatedCost: 10000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-SLK-011", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-011", DestinationID: "dest-011", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -233,7 +238,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-011a", DestinationID: "dest-011", ItemName: "Tiket Dermaga Danau Diateh", Price: 10000, Unit: "per orang", RegulationRef: "Perda Kab. Solok No. 4/2023"}},
 		},
 		{
-			ID: "dest-012", Slug: "saribu-rumah-gadang", Name: "Kawasan Saribu Rumah Gadang Koto Baru", Category: "Budaya & Sejarah", CityRegency: "Kab. Solok Selatan",
+			ID: "dest-012", Slug: "saribu-rumah-gadang", Name: "Kawasan Saribu Rumah Gadang Koto Baru", CategoryID: "cat-budaya-nagari", Category: "Budaya & Nagari", CityRegency: "Kab. Solok Selatan",
 			Description: "Perkampungan adat hidup dengan lebih dari 125 Rumah Gadang autentik berbagai suku Minangkabau.", Latitude: -1.48231, Longitude: 101.05642, ElevationM: 430,
 			CrowdLevel: "Sepi", DistanceKm: 136.0, TravelTimeMin: 215, EstimatedCost: 10000, IsHiddenGem: true, QRPlacardCode: "QR-SMBR-SLS-012", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-012", DestinationID: "dest-012", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Disarankan"},
@@ -241,7 +246,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-012a", DestinationID: "dest-012", ItemName: "Retribusi Kawasan Adat Koto Baru", Price: 10000, Unit: "per orang", RegulationRef: "Perda Kab. Solok Selatan No. 3/2023"}},
 		},
 		{
-			ID: "dest-013", Slug: "nagari-tuo-pariangan", Name: "Nagari Tuo Pariangan (Desa Terindah)", Category: "Budaya & Sejarah", CityRegency: "Kab. Tanah Datar",
+			ID: "dest-013", Slug: "nagari-tuo-pariangan", Name: "Nagari Tuo Pariangan (Desa Terindah)", CategoryID: "cat-budaya-nagari", Category: "Budaya & Nagari", CityRegency: "Kab. Tanah Datar",
 			Description: "Nagari tertua asal-usul leluhur Minangkabau di lereng Gunung Marapi dengan pancuran air panas alami.", Latitude: -0.45918, Longitude: 100.50192, ElevationM: 680,
 			CrowdLevel: "Sedang", DistanceKm: 95.0, TravelTimeMin: 150, EstimatedCost: 5000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-TND-013", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-013", DestinationID: "dest-013", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Disarankan"},
@@ -249,7 +254,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-013a", DestinationID: "dest-013", ItemName: "Retribusi Kebersihan Nagari Pariangan", Price: 5000, Unit: "per orang", RegulationRef: "Peraturan Nagari Pariangan No. 1/2023"}},
 		},
 		{
-			ID: "dest-014", Slug: "pulau-pagang-pasumpahan", Name: "Gugusan Pulau Pagang & Pulau Pasumpahan", Category: "Bahari", CityRegency: "Kota Padang",
+			ID: "dest-014", Slug: "pulau-pagang-pasumpahan", Name: "Gugusan Pulau Pagang & Pulau Pasumpahan", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kota Padang",
 			Description: "Pulau tropis berpasir putih halus dengan gradasi air laut tiga warna dan spot snorkeling terumbu karang.", Latitude: -1.17142, Longitude: 100.34185, ElevationM: 15,
 			CrowdLevel: "Sedang", DistanceKm: 26.0, TravelTimeMin: 65, EstimatedCost: 35000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-PDG-014", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-014", DestinationID: "dest-014", VehicleAccess: "Mobil OK (Ke Dermaga Sungai Pisang + Perahu)", TrekkingLevel: "Sedang", CellularSignal: "Sinyal Lemah", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Disarankan"},
@@ -257,7 +262,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-014a", DestinationID: "dest-014", ItemName: "Retribusi Masuk Pulau Wisata", Price: 35000, Unit: "per orang", RegulationRef: "Standar Koperasi Bahari Bungus 2024"}},
 		},
 		{
-			ID: "dest-015", Slug: "pantai-gandoriah-angso-duo", Name: "Pantai Gandoriah & Pulau Angso Duo", Category: "Bahari", CityRegency: "Kota Pariaman",
+			ID: "dest-015", Slug: "pantai-gandoriah-angso-duo", Name: "Pantai Gandoriah & Pulau Angso Duo", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kota Pariaman",
 			Description: "Pantai ikonik terintegrasi Stasiun KA Pariaman dan penyeberangan 15 menit ke Pulau Angso Duo.", Latitude: -0.62678, Longitude: 100.11792, ElevationM: 4,
 			CrowdLevel: "Ramai", DistanceKm: 58.0, TravelTimeMin: 85, EstimatedCost: 5000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-PRM-015", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-015", DestinationID: "dest-015", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -265,7 +270,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-015a", DestinationID: "dest-015", ItemName: "Tiket Masuk Pantai Gandoriah", Price: 5000, Unit: "per orang", RegulationRef: "Perda Kota Pariaman No. 2/2023"}},
 		},
 		{
-			ID: "dest-016", Slug: "tambang-ombilin-sawahlunto", Name: "Warisan Dunia UNESCO Tambang Ombilin & Lubang Mbah Soero", Category: "Sejarah", CityRegency: "Kota Sawahlunto",
+			ID: "dest-016", Slug: "tambang-ombilin-sawahlunto", Name: "Warisan Dunia UNESCO Tambang Ombilin & Lubang Mbah Soero", CategoryID: "cat-budaya-nagari", Category: "Budaya & Nagari", CityRegency: "Kota Sawahlunto",
 			Description: "Situs Warisan Dunia UNESCO dengan terowongan tambang batu bara bawah tanah abad ke-19 dan Museum Goedang Ransoem.", Latitude: -0.68145, Longitude: 100.77792, ElevationM: 260,
 			CrowdLevel: "Sepi", DistanceKm: 94.0, TravelTimeMin: 155, EstimatedCost: 15000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-SWL-016", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-016", DestinationID: "dest-016", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Wajib Pemandu"},
@@ -273,7 +278,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-016a", DestinationID: "dest-016", ItemName: "Tiket Masuk Lubang Mbah Soero", Price: 15000, Unit: "per orang", RegulationRef: "Perda Kota Sawahlunto No. 5/2023"}},
 		},
 		{
-			ID: "dest-017", Slug: "jembatan-akar-bayang", Name: "Jembatan Akar Hidup Pulut-Pulut Bayang", Category: "Alam & Tebing", CityRegency: "Kab. Pesisir Selatan",
+			ID: "dest-017", Slug: "jembatan-akar-bayang", Name: "Jembatan Akar Hidup Pulut-Pulut Bayang", CategoryID: "cat-hidden-gem", Category: "Hidden Gem", CityRegency: "Kab. Pesisir Selatan",
 			Description: "Jembatan gantung alami berusia lebih dari 100 tahun dari jalinan akar dua pohon beringin di atas Sungai Batang Bayang.", Latitude: -1.16892, Longitude: 100.56218, ElevationM: 195,
 			CrowdLevel: "Sepi", DistanceKm: 82.0, TravelTimeMin: 130, EstimatedCost: 10000, IsHiddenGem: true, QRPlacardCode: "QR-SMBR-PSS-017", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-017", DestinationID: "dest-017", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "Sinyal Lemah", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -281,7 +286,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-017a", DestinationID: "dest-017", ItemName: "Tiket Masuk Jembatan Akar", Price: 10000, Unit: "per orang", RegulationRef: "Perda Kab. Pesisir Selatan No. 5/2023"}},
 		},
 		{
-			ID: "dest-018", Slug: "danau-singkarak-tanjung-mutiara", Name: "Danau Singkarak & Sentra Kuliner Ikan Bilih", Category: "Kuliner", CityRegency: "Kab. Tanah Datar",
+			ID: "dest-018", Slug: "danau-singkarak-tanjung-mutiara", Name: "Danau Singkarak & Sentra Kuliner Ikan Bilih", CategoryID: "cat-kuliner", Category: "Kuliner", CityRegency: "Kab. Tanah Datar",
 			Description: "Danau tektonik terluas di Sumatera Barat yang menjadi habitat satu-satunya Ikan Bilih endemik di dunia.", Latitude: -0.60125, Longitude: 100.53184, ElevationM: 365,
 			CrowdLevel: "Sedang", DistanceKm: 78.0, TravelTimeMin: 125, EstimatedCost: 10000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-TND-018", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-018", DestinationID: "dest-018", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "4G Kuat", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -289,7 +294,7 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-018a", DestinationID: "dest-018", ItemName: "Tiket Pantai Tanjung Mutiara Singkarak", Price: 10000, Unit: "per orang", RegulationRef: "Perda Kab. Tanah Datar No. 6/2023"}},
 		},
 		{
-			ID: "dest-019", Slug: "air-terjun-lembah-anai", Name: "Cagar Alam & Air Terjun Lembah Anai", Category: "Alam & Tebing", CityRegency: "Kab. Tanah Datar",
+			ID: "dest-019", Slug: "air-terjun-lembah-anai", Name: "Cagar Alam & Air Terjun Lembah Anai", CategoryID: "cat-alam-geopark", Category: "Alam & Geopark", CityRegency: "Kab. Tanah Datar",
 			Description: "Air terjun setinggi 35 meter dari mata air Gunung Singgalang tepat di tepi jalan lintas Padang - Bukittinggi.", Latitude: -0.48324, Longitude: 100.33815, ElevationM: 410,
 			CrowdLevel: "Sedang", DistanceKm: 64.0, TravelTimeMin: 100, EstimatedCost: 5000, IsHiddenGem: false, QRPlacardCode: "QR-SMBR-TND-019", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-019", DestinationID: "dest-019", VehicleAccess: "Mobil OK", TrekkingLevel: "Datar / Mudah", CellularSignal: "Sinyal Lemah", Facilities: "Toilet & Musala Lengkap", GuideNeed: "Mandiri"},
@@ -297,12 +302,97 @@ func Seed20DestinationsSumbar() []models.Destination {
 			Tariffs:        []models.OfficialTariff{{ID: "trf-019a", DestinationID: "dest-019", ItemName: "Tiket Pelataran Air Terjun Lembah Anai", Price: 5000, Unit: "per orang", RegulationRef: "Retribusi Kawasan Konservasi 2024"}},
 		},
 		{
-			ID: "dest-020", Slug: "desa-adat-madobag-mentawai", Name: "Desa Adat Uma Madobag & Kulukubuk Siberut", Category: "Budaya & Sejarah", CityRegency: "Kab. Kepulauan Mentawai",
+			ID: "dest-020", Slug: "desa-adat-madobag-mentawai", Name: "Desa Adat Uma Madobag & Kulukubuk Siberut", CategoryID: "cat-hidden-gem", Category: "Hidden Gem", CityRegency: "Kab. Kepulauan Mentawai",
 			Description: "Jantung kebudayaan Sikerei dan rumah panggung komunal Uma di pedalaman Pulau Siberut Selatan.", Latitude: -1.56412, Longitude: 99.18245, ElevationM: 45,
 			CrowdLevel: "Sepi", DistanceKm: 155.0, TravelTimeMin: 240, EstimatedCost: 50000, IsHiddenGem: true, QRPlacardCode: "QR-SMBR-MTW-020", CreatedAt: now, UpdatedAt: now,
 			MedanIndicator: &models.MedanIndicator{ID: "medan-020", DestinationID: "dest-020", VehicleAccess: "Jalan Kaki (Kapal Cepat Siberut + Pompong Sungai)", TrekkingLevel: "Curam / Ekstrem", CellularSignal: "Blank Spot", Facilities: "Terbatas", GuideNeed: "Wajib Pemandu"},
 			Tips:           []models.LocalTip{{ID: "tip-020", DestinationID: "dest-020", Content: "Tips Menjaga Tempat Ini: Hormati pantangan adat Uma (Punenen) dan wajib didampingi pemandu lokal.", IsImportant: true}},
 			Tariffs:        []models.OfficialTariff{{ID: "trf-020a", DestinationID: "dest-020", ItemName: "Retribusi Kunjungan Budaya Siberut", Price: 50000, Unit: "per orang", RegulationRef: "Perda Kab. Kepulauan Mentawai No. 4/2023"}},
 		},
+		{
+			ID:            "dest-021",
+			Slug:          "masjid-raya-sumatera-barat",
+			Name:          "Masjid Raya Sumatera Barat",
+			CategoryID:    "cat-religi",
+			Category:      "Religi",
+			CityRegency:   "Kota Padang",
+			Description:   "Mahakarya arsitektur vernakular Minangkabau modern tanpa kubah tradisional, bermotif ukiran songket dan bentangan kain Hajar Aswad.",
+			Latitude:      -0.9242,
+			Longitude:     100.3624,
+			ElevationM:    15,
+			CrowdLevel:    "Sedang",
+			DistanceKm:    4.5,
+			TravelTimeMin: 12,
+			EstimatedCost: 0,
+			IsHiddenGem:   false,
+			QRPlacardCode: "QR-SMBR-PDG-021",
+			OpeningHours:  "04.00 - 22.00 WIB",
+			CreatedAt:     now,
+			UpdatedAt:     now,
+			MedanIndicator: &models.MedanIndicator{
+				ID:             "medan-021",
+				DestinationID:  "dest-021",
+				VehicleAccess:  "Mobil OK (Lahan parkir terintegrasi luas)",
+				TrekkingLevel:  "Datar / Mudah",
+				CellularSignal: "4G Kuat",
+				Facilities:     "Toilet & Musala Lengkap",
+				GuideNeed:      "Mandiri",
+				PokdarwisName:  "Pengurus Masjid Raya Sumbar",
+			},
+			Tips: []models.LocalTip{
+				{ID: "tip-021", DestinationID: "dest-021", Title: "Etika Kunjungan Religi", Content: "Berpakaian sopan dan menutup aurat saat memasuki area dalam masjid.", IsImportant: true},
+			},
+			Tariffs: []models.OfficialTariff{
+				{ID: "trf-021a", DestinationID: "dest-021", ItemName: "Tiket Masuk Masjid Raya", Price: 0, Unit: "per orang", RegulationRef: "Kunjungan Bebas Tanpa Tiket"},
+				{ID: "trf-021b", DestinationID: "dest-021", ItemName: "Infaq / Parkir Resmi", Price: 3000, Unit: "per kendaraan", RegulationRef: "Standar Pengelolaan Masjid Raya"},
+			},
+		},
+		{
+			ID:            "dest-022",
+			Slug:          "los-lambuang-pasar-ateh",
+			Name:          "Los Lambuang Sentra Kuliner Nasi Kapau Pasar Ateh",
+			CategoryID:    "cat-kuliner",
+			Category:      "Kuliner",
+			CityRegency:   "Kota Bukittinggi",
+			Description:   "Pusat kuliner legendaris Nasi Kapau dengan deretan panci bertingkat khas Kapau dan sendok bertangkai panjang di Pasar Ateh.",
+			Latitude:      -0.3048,
+			Longitude:     100.3698,
+			ElevationM:    930,
+			CrowdLevel:    "Ramai",
+			DistanceKm:    91.8,
+			TravelTimeMin: 145,
+			EstimatedCost: 35000,
+			IsHiddenGem:   false,
+			QRPlacardCode: "QR-SMBR-BKT-022",
+			OpeningHours:  "07.00 - 18.00 WIB",
+			CreatedAt:     now,
+			UpdatedAt:     now,
+			MedanIndicator: &models.MedanIndicator{
+				ID:             "medan-022",
+				DestinationID:  "dest-022",
+				VehicleAccess:  "Mobil OK (Gedung parkir Pasar Ateh)",
+				TrekkingLevel:  "Datar / Mudah",
+				CellularSignal: "4G Kuat",
+				Facilities:     "Toilet & Musala Lengkap",
+				GuideNeed:      "Mandiri",
+				PokdarwisName:  "Paguyuban Pedagang Los Lambuang",
+			},
+			Tips: []models.LocalTip{
+				{ID: "tip-022", DestinationID: "dest-022", Title: "Tips Santap Kuliner Kapau", Content: "Cicipi Gulai Tambusu dan Rendang Itak khas Uni Lis atau Uni Pit.", IsImportant: false},
+			},
+			Tariffs: []models.OfficialTariff{
+				{ID: "trf-022a", DestinationID: "dest-022", ItemName: "Porsi Standar Nasi Kapau + Gulai Tambusu", Price: 35000, Unit: "per porsi", RegulationRef: "Daftar Menu Transparan Paguyuban 2024"},
+			},
+		},
 	}
+
+	// Integrasi data cuaca real-time otomatis via Open-Meteo per koordinat destinasi (Poin 7)
+	for i := range destinations {
+		destinations[i].Weather = GetRealtimeWeather(destinations[i].Latitude, destinations[i].Longitude, destinations[i].CityRegency)
+		if destinations[i].Weather != nil {
+			destinations[i].WeatherStatus = destinations[i].Weather.WeatherStatus
+		}
+	}
+
+	return destinations
 }

@@ -46,7 +46,8 @@ class DestinationRepository {
     // Filter dari Mock Data lokal
     return _mockDestinations.where((dest) {
       final matchCategory = category == 'Semua' ||
-          dest.category.toLowerCase().contains(category.toLowerCase());
+          dest.category.toLowerCase().contains(category.toLowerCase()) ||
+          dest.categoryId.toLowerCase().contains(category.toLowerCase());
       final query = searchQuery.trim().toLowerCase();
       final matchSearch = query.isEmpty ||
           dest.name.toLowerCase().contains(query) ||
@@ -315,8 +316,30 @@ class DestinationRepository {
     return _mockHazardAlerts;
   }
 
+  /// Mengambil master kontak darurat resmi langsung dari Backend BE-1 (`GET /api/v1/spatial/emergency-contacts`)
+  Future<List<EmergencyContactModel>> getEmergencyContacts() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/spatial/emergency-contacts'))
+          .timeout(const Duration(milliseconds: 3000));
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic> && decoded['contacts'] is List) {
+          final list = decoded['contacts'] as List<dynamic>;
+          if (list.isNotEmpty) {
+            return list
+                .map((item) => EmergencyContactModel.fromJson(item as Map<String, dynamic>))
+                .toList();
+          }
+        }
+      }
+    } catch (_) {}
+
+    return _mockEmergencyContacts;
+  }
+
   /// Mengirim sinyal darurat SOS GPS ke Posko SAR & Satgas Nagari (`POST /api/v1/hazards/sos`)
-  Future<bool> sendSosSignal(SOSSignalModel signal) async {
+  Future<String?> sendSosSignal(SOSSignalModel signal) async {
     try {
       final response = await http
           .post(
@@ -324,13 +347,44 @@ class DestinationRepository {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(signal.toJson()),
           )
-          .timeout(const Duration(milliseconds: 2500));
+          .timeout(const Duration(milliseconds: 3000));
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
+        final dynamic decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic> && decoded['message'] != null) {
+          return decoded['message'] as String;
+        }
+        return 'Sinyal darurat berhasil diterima oleh server backend!';
       }
     } catch (_) {}
-    // Fallback sukses untuk simulasi luring / demo
-    return true;
+    return null;
+  }
+
+  /// Mengambil 5 Master Categories resmi dari database/backend (`GET /api/v1/categories`)
+  Future<List<Map<String, dynamic>>> getMasterCategories() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/categories'))
+          .timeout(const Duration(milliseconds: 2500));
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        final List<dynamic> list = (decoded is List)
+            ? decoded
+            : (decoded is Map<String, dynamic> && decoded['data'] is List
+                ? decoded['data'] as List<dynamic>
+                : <dynamic>[]);
+        if (list.isNotEmpty) {
+          return list.map((item) => item as Map<String, dynamic>).toList();
+        }
+      }
+    } catch (_) {}
+
+    return const [
+      {'id': 'cat-alam-geopark', 'name': 'Alam & Geopark', 'slug': 'alam-geopark'},
+      {'id': 'cat-budaya-nagari', 'name': 'Budaya & Nagari', 'slug': 'budaya-nagari'},
+      {'id': 'cat-hidden-gem', 'name': 'Hidden Gem', 'slug': 'hidden-gem'},
+      {'id': 'cat-religi', 'name': 'Religi', 'slug': 'religi'},
+      {'id': 'cat-kuliner', 'name': 'Kuliner', 'slug': 'kuliner'},
+    ];
   }
 
   /// Mengambil frasa Kamus Saku Audio Minang (`GET /api/v1/culture/audio-phrases`)
@@ -488,15 +542,15 @@ class DestinationRepository {
       slopeGradientDeg: 24,
       message: 'Antrean truk bermuatan di tanjakan panorama 1. Aspal licin akibat hujan rintik. Jaga jarak minimal 20 meter.',
       detourRoute: 'Alternatif: Jalur Padang Panjang - Singkarak (Detour: +35 mnt).',
-      nearestRescuePost: 'Posko Gabungan Dishub & SAR Sitinjau',
-      emergencyContact: '0812-6677-8899 (Posko SAR Sitinjau)',
+      nearestRescuePost: 'Posko Gabungan Damkar & SAR Padang',
+      emergencyContact: '08116606113 (Damkar Padang)',
     ),
     HazardAlertModel(
       id: 'hz-002',
       corridorCode: 'LEMBAH-ANAI',
       location: 'Lembah Anai (Padang Panjang)',
       roadSegment: 'Jl. Raya Padang - Bukittinggi Km 64',
-      cityRegency: 'Kab. Tanah Datar',
+      cityRegency: 'Kab. Padang Pariaman & Tanah Datar',
       latitude: -0.4855,
       longitude: 100.3472,
       severity: 'Siaga',
@@ -505,8 +559,8 @@ class DestinationRepository {
       slopeGradientDeg: 18,
       message: 'Aliran sungai Batang Anai mendekati bibir aspal. Sistem buka-tutup bergantian di pos air terjun.',
       detourRoute: 'Alternatif: Sicincin - Malalak - Bukittinggi (Detour: +40 mnt).',
-      nearestRescuePost: 'Posko Siaga Bencana Silaiang Bawah',
-      emergencyContact: '112 / 0752-82113 (BPBD Tanah Datar)',
+      nearestRescuePost: 'Posko Siaga BPBD Padang Pariaman',
+      emergencyContact: '08116662114 (BPBD Padang Pariaman)',
     ),
     HazardAlertModel(
       id: 'hz-003',
@@ -522,15 +576,15 @@ class DestinationRepository {
       slopeGradientDeg: 12,
       message: 'Jalur jembatan layang lancar dua arah. Dilarang parkir di atas flyover untuk berfoto.',
       detourRoute: 'Tidak ada pengalihan arus.',
-      nearestRescuePost: 'Posko Lantas Kelok Sembilan',
-      emergencyContact: '0752-92110 (Polres 50 Kota)',
+      nearestRescuePost: 'Posko Siaga Bencana BPBD Sumbar',
+      emergencyContact: '(0751) 890721 (BPBD Sumbar)',
     ),
     HazardAlertModel(
       id: 'hz-004',
       corridorCode: 'KELOK-44',
       location: 'Kelok 44 (Danau Maninjau)',
       roadSegment: 'Nagari Maninjau - Matur Km 1 s/d 44',
-      cityRegency: 'Kab. Agam',
+      cityRegency: 'Kab. Agam & Bukittinggi',
       latitude: -0.3012,
       longitude: 100.2245,
       severity: 'Waspada',
@@ -539,8 +593,71 @@ class DestinationRepository {
       slopeGradientDeg: 20,
       message: 'Gunakan gigi rendah saat menurun. Bunyikan klakson di tikungan tanpa cermin cembung.',
       detourRoute: 'Alternatif: Jalur Pariaman - Lubuk Basung.',
-      nearestRescuePost: 'Posko Polsek Tanjung Raya Maninjau',
-      emergencyContact: '0752-61110 (Polsek Tanjung Raya)',
+      nearestRescuePost: 'Posko Siaga Damkar & Penyelamatan',
+      emergencyContact: '085355157883 (Damkar Bukittinggi)',
+    ),
+  ];
+
+  static const List<EmergencyContactModel> _mockEmergencyContacts = [
+    EmergencyContactModel(
+      id: 'emg-001',
+      corridorCode: 'PROV-SUMBAR',
+      agencyType: 'BPBD',
+      agencyName: 'BPBD Sumatera Barat',
+      phoneNumber: '(0751) 890721',
+      city: 'Provinsi Sumatera Barat',
+      latitude: -0.9471,
+      longitude: 100.3543,
+    ),
+    EmergencyContactModel(
+      id: 'emg-002',
+      corridorCode: 'PROV-SUMBAR',
+      agencyType: 'PMI',
+      agencyName: 'PMI Sumatera Barat',
+      phoneNumber: '(0751) 27882',
+      city: 'Kota Padang',
+      latitude: -0.9324,
+      longitude: 100.3621,
+    ),
+    EmergencyContactModel(
+      id: 'emg-003',
+      corridorCode: 'SITINJAU-LAUIK',
+      agencyType: 'Damkar',
+      agencyName: 'Damkar Kota Padang',
+      phoneNumber: '08116606113',
+      city: 'Kota Padang',
+      latitude: -0.9512,
+      longitude: 100.3705,
+    ),
+    EmergencyContactModel(
+      id: 'emg-004',
+      corridorCode: 'LEMBAH-ANAI',
+      agencyType: 'BPBD',
+      agencyName: 'BPBD Padang Pariaman',
+      phoneNumber: '08116662114',
+      city: 'Kab. Padang Pariaman',
+      latitude: -0.6272,
+      longitude: 100.2811,
+    ),
+    EmergencyContactModel(
+      id: 'emg-005',
+      corridorCode: 'MANDEH-PESSEL',
+      agencyType: 'BPBD',
+      agencyName: 'BPBD Pesisir Selatan',
+      phoneNumber: '085269380950',
+      city: 'Kab. Pesisir Selatan',
+      latitude: -1.3502,
+      longitude: 100.5694,
+    ),
+    EmergencyContactModel(
+      id: 'emg-006',
+      corridorCode: 'MALALAK-AGAM',
+      agencyType: 'Damkar',
+      agencyName: 'Damkar Bukittinggi',
+      phoneNumber: '085355157883',
+      city: 'Kota Bukittinggi',
+      latitude: -0.3055,
+      longitude: 100.3692,
     ),
   ];
 
@@ -682,7 +799,8 @@ class DestinationRepository {
     DestinationModel(
       id: 'dest-001',
       name: 'Lembah Harau',
-      category: 'Alam',
+      category: 'Alam & Geopark',
+      categoryId: 'cat-alam-geopark',
       cityRegency: 'Kab. Lima Puluh Kota',
       description:
           'Lembah subur yang dikelilingi tebing granit terjal setinggi 100–500 meter dengan deretan air terjun alami (Sarasah Bunta, Akar Berayun) dan hamparan sawah Nagari Harau.',
@@ -825,7 +943,8 @@ class DestinationRepository {
     DestinationModel(
       id: 'dest-002',
       name: 'Air Terjun Lubuk Nyarai',
-      category: 'Alam',
+      category: 'Hidden Gem',
+      categoryId: 'cat-hidden-gem',
       cityRegency: 'Kab. Padang Pariaman',
       description:
           'Kolam alami berwarna hijau toska di tengah Hutan Lindung Gamaran Nagari Lubuk Alung yang terbentuk dari kikisan batuan cadas alami.',
@@ -907,7 +1026,8 @@ class DestinationRepository {
     DestinationModel(
       id: 'dest-003',
       name: 'Geopark Nasional Silokek',
-      category: 'Alam',
+      category: 'Alam & Geopark',
+      categoryId: 'cat-alam-geopark',
       cityRegency: 'Kab. Sijunjung',
       description:
           'Ngarai batuan karst dan granit berusia 359 juta tahun yang membelah aliran Batang Kuantan dengan pasir putih sungai dan goa purba.',
@@ -952,7 +1072,8 @@ class DestinationRepository {
     DestinationModel(
       id: 'dest-004',
       name: 'Jam Gadang & Panorama Ngarai Sianok',
-      category: 'Sejarah',
+      category: 'Budaya & Nagari',
+      categoryId: 'cat-budaya-nagari',
       cityRegency: 'Kota Bukittinggi',
       description:
           'Ikon bersejarah jantung Kota Bukittinggi dengan mesin jam langka dunia serta terowongan sejarah Lubang Jepang di tepi Ngarai Sianok.',
@@ -1005,7 +1126,8 @@ class DestinationRepository {
     DestinationModel(
       id: 'dest-005',
       name: 'Kampung Adat Sarugo (Saribu Gonjong)',
-      category: 'Budaya',
+      category: 'Budaya & Nagari',
+      categoryId: 'cat-budaya-nagari',
       cityRegency: 'Kab. Lima Puluh Kota',
       description:
           'Perkampungan adat Minangkabau di Nagari Koto Tinggi dengan puluhan Rumah Gadang bergonjong yang masih asli dan dikelilingi kebun jeruk Siam Gunuang Omeh.',
@@ -1050,7 +1172,8 @@ class DestinationRepository {
     DestinationModel(
       id: 'dest-006',
       name: 'Kawasan Bahari Mandeh (Puncak Paku)',
-      category: 'Alam',
+      category: 'Alam & Geopark',
+      categoryId: 'cat-alam-geopark',
       cityRegency: 'Kab. Pesisir Selatan',
       description:
           'Gugusan teluk tenang berair biru jernih dengan pulau-pulau eksotis (Sironjong Ketek, Cubadak, Desa Kapo-Kapo) dan hutan mangrove.',
@@ -1096,6 +1219,7 @@ class DestinationRepository {
       id: 'dest-007',
       name: 'Sentra Kuliner Nasi Kapau Pasar Atas Los Lambuang',
       category: 'Kuliner',
+      categoryId: 'cat-kuliner',
       cityRegency: 'Kota Bukittinggi',
       description:
           'Pusat kuliner otentik Nasi Kapau dengan gulai tambusu, gulai tunjang, dendeng batokok, dan talua barendo langsung dari Uni Kapau.',
@@ -1135,6 +1259,42 @@ class DestinationRepository {
           regulationRef: 'Standar Paguyuban Los Lambuang Bukittinggi',
         ),
       ],
+      scenes360: [],
+    ),
+    DestinationModel(
+      id: 'dest-021',
+      name: 'Masjid Raya Sumatera Barat',
+      category: 'Religi',
+      categoryId: 'cat-religi',
+      cityRegency: 'Kota Padang',
+      description:
+          'Mahakarya arsitektur Islam Minangkabau dengan atap gonjong bentang kain Ka\'bah berukir khas Minang tanpa kubah konvensional.',
+      latitude: -0.9242,
+      longitude: 100.3626,
+      coverImage:
+          'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=800&q=80',
+      crowdLevel: 'Ramai',
+      distanceKm: '0 km',
+      travelTime: 'Pusat Kota',
+      entryFee: 'Gratis',
+      medanIndicator: MedanIndicatorModel(
+        id: 'medan-021',
+        destinationId: 'dest-021',
+        vehicleAccess: 'Mobil OK',
+        trekkingLevel: 'Sangat Mudah',
+        cellularSignal: '4G Kuat',
+        facilities: 'Lengkap (Lift, AC, Parkir Luas)',
+        guideNeed: 'Bisa Mandiri',
+      ),
+      tips: [
+        LocalTipModel(
+          id: 'tip-021',
+          destinationId: 'dest-021',
+          content: 'Patuhi etika berbusana muslim/muslimah rapi dan sopan saat berkunjung.',
+          isImportant: true,
+        ),
+      ],
+      tariffs: [],
       scenes360: [],
     ),
   ];
