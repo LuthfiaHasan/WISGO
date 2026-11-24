@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/network/auth_guard.dart';
+import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/travel_experience_model.dart';
 
@@ -16,7 +18,7 @@ class WisgoQrCodePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final bgPaint = Paint()..color = lightColor;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(10)),
+      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(8)),
       bgPaint,
     );
 
@@ -24,13 +26,11 @@ class WisgoQrCodePainter extends CustomPainter {
       ..color = darkColor
       ..style = PaintingStyle.fill;
 
-    // Grid 21x21 QR Code matrix representatif
     const int matrixSize = 21;
-    final double moduleSize = (size.width - 16) / matrixSize;
-    const double padding = 8.0;
+    final double moduleSize = (size.width - 12) / matrixSize;
+    const double padding = 6.0;
 
     void drawFinderPattern(double startX, double startY) {
-      // Kotak luar 7x7
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(startX, startY, moduleSize * 7, moduleSize * 7),
@@ -38,7 +38,6 @@ class WisgoQrCodePainter extends CustomPainter {
         ),
         darkPaint,
       );
-      // Kotak dalam 5x5 putih
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(
@@ -51,7 +50,6 @@ class WisgoQrCodePainter extends CustomPainter {
         ),
         bgPaint,
       );
-      // Pusat 3x3 hitam
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(
@@ -66,12 +64,10 @@ class WisgoQrCodePainter extends CustomPainter {
       );
     }
 
-    // 3 Finder Patterns (Top-Left, Top-Right, Bottom-Left)
     drawFinderPattern(padding, padding);
     drawFinderPattern(padding + moduleSize * 14, padding);
     drawFinderPattern(padding, padding + moduleSize * 14);
 
-    // Timing & Data Matrix
     final pattern = [
       [8, 2], [8, 4], [8, 5], [9, 8], [11, 8], [13, 8],
       [15, 8], [17, 8], [19, 8], [2, 8], [4, 8], [5, 8],
@@ -95,27 +91,16 @@ class WisgoQrCodePainter extends CustomPainter {
         darkPaint,
       );
     }
-
-    // Logo 'W' kecil di tengah QR
-    final centerW = size.width / 2;
-    final centerH = size.height / 2;
-    canvas.drawCircle(
-      Offset(centerW, centerH),
-      moduleSize * 2.2,
-      Paint()..color = lightColor,
-    );
-    canvas.drawCircle(
-      Offset(centerW, centerH),
-      moduleSize * 1.8,
-      Paint()..color = darkColor,
-    );
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Modal Lembar Template Posting Berbagi Sosial Media (Gaya Post Instagram + Post di Aplikasi)
+/// Modal Lembar Template Posting Berbagi Sosial Media: Jejak WISGO
+/// Mendukung 2 Mode:
+/// 1. Mode Stiker Transparan (PNG Overlay untuk IG Story / TikTok / WA Status)
+/// 2. Mode Kartu Penuh
 class TravelShareCardSheet extends StatefulWidget {
   final TravelExperience experience;
 
@@ -133,17 +118,17 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
   late TabController _tabController;
   late String _selectedPhotoUrl;
   late String _captionText;
-  bool _isLiked = false;
+  bool _isTransparentSticker = true; // true = Mode Stiker Transparan, false = Mode Kartu Penuh
+  bool _showQrCode = true;
   late int _likesCount;
-  bool _isSaved = false;
-  bool _isCopied = false;
   bool _isDownloading = false;
+  bool _isSavingCloud = false;
   bool _hasPostedToApp = false;
 
-  // Preset foto pemandangan petualangan Sumatera Barat untuk upload/ganti foto cepat
+  // Preset foto tempat wisata resmi katalog WISGO
   final List<Map<String, String>> _availableAdventurePhotos = [
     {
-      'title': 'Tebing Granit Harau & Kabut',
+      'title': 'Tebing Granit Lembah Harau',
       'url':
           'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
     },
@@ -153,7 +138,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
           'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1200&q=80',
     },
     {
-      'title': 'Teluk Mandeh & Karang Bahari',
+      'title': 'Teluk Mandeh & Pulau Sirandah',
       'url':
           'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
     },
@@ -163,7 +148,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
           'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1200&q=80',
     },
     {
-      'title': 'Danau Maninjau Sunset Kelok 44',
+      'title': 'Danau Maninjau Kelok 44',
       'url':
           'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80',
     },
@@ -178,9 +163,9 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _selectedPhotoUrl = widget.experience.coverPhotoUrl;
+    _selectedPhotoUrl = widget.experience.activePhotoUrl;
     _captionText =
-        'Menikmati keindahan alam Ranah Minang di ${widget.experience.destinationName}! Menuntaskan rute ${widget.experience.distanceKm} km dengan pemandangan spektakuler. Ayo jelajah Sumbar bersama WISGO! 🏔️✨\n\n#WisataSumbar #WISGO #JelajahRanahMinang #TravelExperience #ExploreSumbar';
+        'Jelajah ${widget.experience.destinationName} bareng WISGO! Stempel #${widget.experience.stampNumber} (${widget.experience.visitedCount}/${widget.experience.totalDestinations} destinasi). Gelar: ${widget.experience.levelTitle}. Dijelajahi bersama WISGO 🏔️✨\n\n#JejakWISGO #WisataSumbar #Minangkabau #WonderfulIndonesia';
     _likesCount = widget.experience.likesCount + 88;
   }
 
@@ -190,7 +175,6 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
     super.dispose();
   }
 
-  // --- Modal Upload / Ganti Gambar Pengalaman Perjalanan ---
   void _showImageUploadModal() {
     showModalBottomSheet(
       context: context,
@@ -225,7 +209,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                       color: AppColors.forest, size: 22),
                   SizedBox(width: 8),
                   Text(
-                    'Unggah Foto Petualangan',
+                    'Ganti Foto Sendiri',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -236,58 +220,64 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
               ),
               const SizedBox(height: 6),
               const Text(
-                'Pilih foto dari album petualangan Sumbar atau unggah foto dari perangkat Anda untuk template posting Instagram.',
+                'Gunakan foto jepretan Anda sendiri dari galeri atau pilih dari katalog resmi destinasi WISGO.',
                 style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
               const SizedBox(height: 16),
 
-              // Opsi Upload Kamera & Galeri Cepat
+              // Tombol Unggah Galeri & Kamera
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(modalCtx);
-                        _pickFromGallerySimulation();
-                      },
-                      icon: const Icon(Icons.photo_library_rounded,
-                          size: 18, color: AppColors.forest),
-                      label: const Text(
-                        'Pilih dari Galeri',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.forest),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: AppColors.sageBorder),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(modalCtx);
+                          _pickFromGallerySimulation();
+                        },
+                        icon: const Icon(Icons.photo_library_rounded,
+                            size: 18, color: AppColors.forest),
+                        label: const Text(
+                          'Pilih dari Galeri',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.forest),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: const BorderSide(color: AppColors.sageBorder),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(modalCtx);
-                        _pickFromCameraSimulation();
-                      },
-                      icon: const Icon(Icons.camera_alt_rounded,
-                          size: 18, color: AppColors.brush),
-                      label: const Text(
-                        'Ambil Foto Kamera',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.brush),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: AppColors.sageBorder),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(modalCtx);
+                          _pickFromCameraSimulation();
+                        },
+                        icon: const Icon(Icons.camera_alt_rounded,
+                            size: 18, color: AppColors.terracotta),
+                        label: const Text(
+                          'Ambil Kamera',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.terracotta),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: const BorderSide(color: AppColors.sageBorder),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
                       ),
                     ),
                   ),
@@ -295,9 +285,8 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
               ),
               const SizedBox(height: 18),
 
-              // Preset Galeri Spot Wisata
               const Text(
-                'PILIHAN FOTO SPOT DESTINASI',
+                'PILIHAN FOTO RESMI KATALOG DESTINASI',
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w800,
@@ -307,7 +296,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: 110,
+                height: 100,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _availableAdventurePhotos.length,
@@ -321,16 +310,9 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                           _selectedPhotoUrl = item['url']!;
                         });
                         Navigator.pop(modalCtx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: AppColors.forest,
-                            behavior: SnackBarBehavior.floating,
-                            content: Text('Foto "${item['title']}" berhasil dipasang!'),
-                          ),
-                        );
                       },
                       child: Container(
-                        width: 100,
+                        width: 95,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
@@ -348,11 +330,6 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                               Image.network(
                                 item['url']!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: AppColors.forest.withValues(alpha: 0.2),
-                                  child: const Icon(Icons.terrain_rounded,
-                                      color: AppColors.forest),
-                                ),
                               ),
                               Positioned(
                                 bottom: 0,
@@ -360,7 +337,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                 right: 0,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 4, vertical: 3),
+                                      horizontal: 4, vertical: 2),
                                   color: Colors.black.withValues(alpha: 0.6),
                                   child: Text(
                                     item['title']!,
@@ -368,7 +345,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 9,
+                                      fontSize: 8.5,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -387,7 +364,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // Input URL Kustom
               Row(
@@ -396,7 +373,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                     child: TextField(
                       controller: customUrlController,
                       decoration: InputDecoration(
-                        hintText: 'Atau tempel URL gambar kustom...',
+                        hintText: 'Tempel URL foto pribadi...',
                         hintStyle:
                             const TextStyle(fontSize: 11, color: AppColors.muted),
                         contentPadding: const EdgeInsets.symmetric(
@@ -414,25 +391,28 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      final url = customUrlController.text.trim();
-                      if (url.isNotEmpty) {
-                        setState(() => _selectedPhotoUrl = url);
-                        Navigator.pop(modalCtx);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.forest,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 11),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final url = customUrlController.text.trim();
+                        if (url.isNotEmpty) {
+                          setState(() => _selectedPhotoUrl = url);
+                          Navigator.pop(modalCtx);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.forest,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 11),
+                      ),
+                      child: const Text('Pasang',
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w800)),
                     ),
-                    child: const Text('Terapkan',
-                        style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w800)),
                   ),
                 ],
               ),
@@ -456,7 +436,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
           children: [
             Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
             SizedBox(width: 8),
-            Text('Foto berhasil diunggah dari galeri perangkat!'),
+            Text('Foto pribadi dari galeri berhasil dipasang pada Jejak WISGO!'),
           ],
         ),
       ),
@@ -470,20 +450,19 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        backgroundColor: AppColors.brush,
+        backgroundColor: AppColors.terracotta,
         behavior: SnackBarBehavior.floating,
         content: Row(
           children: [
             Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
             SizedBox(width: 8),
-            Text('Foto baru dari kamera berhasil diunggah!'),
+            Text('Foto jepretan kamera berhasil dipasang pada Jejak WISGO!'),
           ],
         ),
       ),
     );
   }
 
-  // --- Modal Edit Caption Postingan ---
   void _showEditCaptionModal() {
     final captionController = TextEditingController(text: _captionText);
     showModalBottomSheet(
@@ -521,7 +500,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                         color: AppColors.forest, size: 22),
                     SizedBox(width: 8),
                     Text(
-                      'Tulis Caption Postingan Instagram',
+                      'Tulis Caption Kampanye Jejak WISGO',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -535,7 +514,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                   controller: captionController,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    hintText: 'Ceritakan pengalaman petualangan Anda...',
+                    hintText: 'Tuliskan kesan atau ajakan berwisata ke Ranah Minang...',
                     filled: true,
                     fillColor: AppColors.cream,
                     border: OutlineInputBorder(
@@ -555,22 +534,25 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                           style: TextStyle(color: AppColors.muted)),
                     ),
                     const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        final newCaption = captionController.text.trim();
-                        if (newCaption.isNotEmpty) {
-                          setState(() => _captionText = newCaption);
-                        }
-                        Navigator.pop(modalCtx);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.forest,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final newCaption = captionController.text.trim();
+                          if (newCaption.isNotEmpty) {
+                            setState(() => _captionText = newCaption);
+                          }
+                          Navigator.pop(modalCtx);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.forest,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Simpan Caption',
+                            style: TextStyle(fontWeight: FontWeight.w800)),
                       ),
-                      child: const Text('Simpan Caption',
-                          style: TextStyle(fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
@@ -582,26 +564,79 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
     );
   }
 
+  // --- Aksi Simpan / Catat Share Card ke Cloud (BE-2) ---
+  Future<void> _handleSaveShareCardToCloud() async {
+    final allowed = AuthGuard.check(context);
+    if (!allowed) return;
+
+    setState(() => _isSavingCloud = true);
+    try {
+      final mode = _isTransparentSticker ? 'transparent_sticker' : 'full_card';
+      final res = await ApiService.createShareCard(
+        tripId: widget.experience.id,
+        mode: mode,
+        caption: _captionText,
+      );
+
+      if (!mounted) return;
+      if (res.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.forest,
+            behavior: SnackBarBehavior.floating,
+            content: Row(
+              children: [
+                Icon(Icons.cloud_done_rounded, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Kartu Jejak WISGO berhasil dicatat dan disimpan ke akun Anda!',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.terracotta,
+            content: Text(res.message.isNotEmpty ? res.message : 'Gagal menyimpan kartu'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.terracotta,
+          content: Text('Terjadi kendala: $e'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSavingCloud = false);
+    }
+  }
+
   // --- Aksi Post ke Feed Komunitas WISGO ---
   void _handlePostToAppFeed() {
     final newPost = CommunityPost(
       id: 'post-user-${DateTime.now().millisecondsSinceEpoch}',
-      authorName: 'Anda (Dunsanak)',
-      username: 'dunsanak_petualang',
+      authorName: 'Anda (Wisatawan Minang)',
+      username: 'jejak_wisatawan',
       avatarUrl:
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       destinationName: widget.experience.destinationName,
+      cityRegency: widget.experience.cityRegency,
       photoUrl: _selectedPhotoUrl,
       caption: _captionText,
-      distanceKm: widget.experience.distanceKm,
-      durationFormatted: widget.experience.durationFormatted,
-      elevationGainMeters: widget.experience.elevationGainMeters,
-      caloriesBurned: widget.experience.caloriesBurned,
+      badgeTitle: widget.experience.badgeTitle,
       likesCount: _likesCount,
       isLiked: true,
       commentsCount: 3,
       postedTime: 'Baru saja',
-      tags: const ['#WisataSumbar', '#WISGO', '#StravaTravel', '#RanahMinang'],
+      tags: const ['#JejakWISGO', '#WisataSumbar', '#RanahMinang'],
       isSelfPost: true,
     );
 
@@ -621,7 +656,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                '🎉 Berhasil diposting ke Feed Komunitas WISGO! Postingan Anda kini aktif dan dapat dilihat oleh penjelajah lain.',
+                '🎉 Berhasil diposting ke Feed Komunitas WISGO! Pengalaman Anda kini mempromosikan pariwisata Sumbar.',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
@@ -630,42 +665,49 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
       ),
     );
 
-    // Otomatis pindah ke tab Feed Komunitas untuk melihat hasilnya
     _tabController.animateTo(1);
   }
 
-  // --- Aksi Unduh Gambar Postingan ---
+  // --- Aksi Unduh Gambar / Stiker ---
   void _handleDownloadImage() {
     setState(() => _isDownloading = true);
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
+    Future.delayed(const Duration(milliseconds: 1000), () {
       if (!mounted) return;
       setState(() => _isDownloading = false);
+
+      final modeName = _isTransparentSticker
+          ? 'Stiker Transparan (PNG Overlay)'
+          : 'Kartu Penuh Jejak WISGO';
 
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.download_done_rounded,
+              const Icon(Icons.download_done_rounded,
                   color: Color(0xFF15803D), size: 24),
-              SizedBox(width: 8),
-              Text('Unduh Berhasil!',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.ink)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Unduh $modeName Berhasil!',
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.ink)),
+              ),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Gambar template postingan gaya Instagram telah diunduh dan tersimpan di Galeri HP Anda.',
-                style: TextStyle(fontSize: 12.5, color: AppColors.ink),
+              Text(
+                _isTransparentSticker
+                    ? 'File PNG dengan latar transparan telah disimpan. Anda dapat langsung menempelkannya di atas foto/video Instagram Story, TikTok, atau WhatsApp Status!'
+                    : 'Kartu visual penuh Jejak WISGO telah diunduh ke galeri perangkat Anda.',
+                style: const TextStyle(fontSize: 12.5, color: AppColors.ink, height: 1.35),
               ),
               const SizedBox(height: 12),
               Container(
@@ -676,15 +718,15 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.verified_rounded,
+                    Icon(Icons.campaign_rounded,
                         color: AppColors.forest, size: 18),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Dilengkapi QR Code promosi WISGO untuk langsung dibagikan ke Instagram Feed & WhatsApp Story!',
+                        'Tag @wisgo.sumbar dan gunakan tagar #JejakWISGO untuk mendapatkan repost resmi!',
                         style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.forest),
                       ),
                     ),
@@ -702,10 +744,10 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);
-                _handleCopyLink();
+                _shareToSocial('Instagram Story');
               },
               icon: const Icon(Icons.share_rounded, size: 16),
-              label: const Text('Buka Medsos',
+              label: const Text('Bagikan ke Story',
                   style: TextStyle(fontWeight: FontWeight.w800)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.forest,
@@ -720,34 +762,31 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
     });
   }
 
-  void _handleCopyLink() {
-    setState(() => _isCopied = true);
+  void _shareToSocial(String platform) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: AppColors.forest,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-            SizedBox(width: 8),
-            Text(
-              'Tautan postingan pengalaman berhasil disalin!',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            const Icon(Icons.share_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Membuka $platform dengan stiker Jejak WISGO...',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),
       ),
     );
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _isCopied = false);
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.92,
+      height: MediaQuery.of(context).size.height * 0.94,
       decoration: const BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -767,31 +806,39 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
             ),
           ),
 
-          // Header
+          // Header Kampanye Jejak WISGO
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 12, 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Template Posting Sosial Media',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.ink,
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.campaign_rounded, size: 18, color: AppColors.forest),
+                          SizedBox(width: 6),
+                          Text(
+                            'Jejak WISGO',
+                            style: TextStyle(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ],
                       ),
+                      SizedBox(height: 1),
                       Text(
-                        'Bagikan pencapaian Strava-style & promosikan aplikasi WISGO',
+                        'Kampanye Wisata & Bagikan ke IG Story, TikTok, atau WA Status',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.ink.withValues(alpha: 0.65),
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -805,7 +852,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
             ),
           ),
 
-          // Tab Navigation: [Buat Postingan (Instagram)] | [Feed Komunitas WISGO]
+          // Tab Navigation: [Kartu & Stiker Jejak] | [Feed Komunitas]
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
@@ -828,9 +875,9 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.photo_camera_back_rounded, size: 16),
+                      Icon(Icons.auto_awesome_rounded, size: 16),
                       SizedBox(width: 6),
-                      Text('Gaya Instagram',
+                      Text('Stiker & Kartu',
                           style: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w800)),
                     ],
@@ -867,7 +914,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildInstagramPostCreatorTab(),
+                _buildJejakWisgoCardCreatorTab(),
                 _buildCommunityFeedTab(),
               ],
             ),
@@ -877,8 +924,8 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
     );
   }
 
-  // ================= TAB 1: INSTAGRAM POST CREATOR & PREVIEW =================
-  Widget _buildInstagramPostCreatorTab() {
+  // ================= TAB 1: KARTU & STIKER JEJAK WISGO CREATOR =================
+  Widget _buildJejakWisgoCardCreatorTab() {
     final exp = widget.experience;
 
     return SingleChildScrollView(
@@ -886,846 +933,748 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Quick Toolbar: Upload Foto & Edit Caption
+          // 1. Selector 2 Mode Tampilan: [Stiker Transparan (PNG)] | [Kartu Penuh]
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.sageBorder),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _isTransparentSticker = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: _isTransparentSticker
+                              ? AppColors.forest
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.layers_outlined,
+                              size: 15,
+                              color: _isTransparentSticker
+                                  ? Colors.white
+                                  : AppColors.muted,
+                            ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                'Stiker Transparan (PNG)',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: _isTransparentSticker
+                                      ? Colors.white
+                                      : AppColors.ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _isTransparentSticker = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: !_isTransparentSticker
+                              ? AppColors.forest
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.crop_portrait_rounded,
+                              size: 15,
+                              color: !_isTransparentSticker
+                                  ? Colors.white
+                                  : AppColors.muted,
+                            ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                'Kartu Penuh',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: !_isTransparentSticker
+                                      ? Colors.white
+                                      : AppColors.ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Toolbar Kontrol Cepat: Ganti Foto Sendiri & Toggle QR Code
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.warmBorder),
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _showImageUploadModal,
-                    icon: const Icon(Icons.add_a_photo_rounded, size: 15),
-                    label: const Text('Upload Foto',
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: OutlinedButton.icon(
+                      onPressed: _showImageUploadModal,
+                      icon: const Icon(Icons.add_a_photo_rounded,
+                          size: 14, color: AppColors.forest),
+                      label: const Text(
+                        'Ganti Foto Sendiri',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 11.5, fontWeight: FontWeight.w800)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.forest,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        side: const BorderSide(color: AppColors.sageBorder),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _showEditCaptionModal,
-                    icon: const Icon(Icons.edit_note_rounded,
-                        size: 16, color: AppColors.ink),
-                    label: const Text('Edit Caption',
-                        style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink)),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      side: const BorderSide(color: AppColors.warmBorder),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // KARTU POSTINGAN INSTAGRAM LENGKAP DENGAN QR WISGO
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Header Instagram (Avatar, Username, Geotag, More)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: Row(
-                    children: [
-                      // Story Circle Avatar
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xFF193D22),
-                              Color(0xFFD97706),
-                              Color(0xFF15803D),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(1.5),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          child: const CircleAvatar(
-                            radius: 17,
-                            backgroundColor: AppColors.forest,
-                            child: Icon(
-                              Icons.person_rounded,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: OutlinedButton.icon(
+                      onPressed: () => setState(() => _showQrCode = !_showQrCode),
+                      icon: Icon(
+                        _showQrCode ? Icons.qr_code_2_rounded : Icons.qr_code_scanner_rounded,
+                        size: 15,
+                        color: _showQrCode ? const Color(0xFF15803D) : AppColors.muted,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Text(
-                                  'dunsanak_petualang',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.ink,
-                                  ),
-                                ),
-                                SizedBox(width: 4),
-                                Icon(Icons.verified_rounded,
-                                    size: 14, color: Color(0xFF0284C7)),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on_rounded,
-                                    size: 11, color: Color(0xFFEA4335)),
-                                const SizedBox(width: 2),
-                                Expanded(
-                                  child: Text(
-                                    exp.destinationName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.more_horiz_rounded,
-                            size: 20, color: AppColors.muted),
-                        onPressed: _showImageUploadModal,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 2. Main Photo Container (Aspect Ratio 1:1 Instagram) dengan Overlay Strava
-                ClipRRect(
-                  child: AspectRatio(
-                    aspectRatio: 1.05,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          _selectedPhotoUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: const Color(0xFF142417),
-                            child: const Center(
-                              child: Icon(Icons.landscape_rounded,
-                                  size: 48, color: Colors.white54),
-                            ),
-                          ),
-                        ),
-
-                        // Subtle Gradient Overlay at bottom for readable metrics
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          height: 110,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withValues(alpha: 0.85),
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Watermark WISGO Explorer di pojok kanan atas
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 9, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.60),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.explore_rounded,
-                                    size: 12, color: Color(0xFF68D391)),
-                                SizedBox(width: 4),
-                                Text(
-                                  'WISGO Explorer',
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: 0.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Tombol Quick Upload Floating di pojok kiri atas
-                        Positioned(
-                          top: 12,
-                          left: 12,
-                          child: GestureDetector(
-                            onTap: _showImageUploadModal,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 9, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: AppColors.forest.withValues(alpha: 0.85),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white30),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.camera_alt_rounded,
-                                      size: 12, color: Colors.white),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Ganti Foto',
-                                    style: TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // FLOATING METRIK STRAVA IDENTITY DI ATAS FOTO
-                        Positioned(
-                          left: 12,
-                          right: 12,
-                          bottom: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.70),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildInstagramMetric(
-                                  label: 'Jarak',
-                                  value: '${exp.distanceKm}',
-                                  unit: 'km',
-                                  icon: Icons.straighten_rounded,
-                                ),
-                                _buildMetricDivider(),
-                                _buildInstagramMetric(
-                                  label: 'Waktu',
-                                  value: exp.durationFormatted,
-                                  unit: '',
-                                  icon: Icons.timer_rounded,
-                                ),
-                                _buildMetricDivider(),
-                                _buildInstagramMetric(
-                                  label: 'Elevasi',
-                                  value: '+${exp.elevationGainMeters}',
-                                  unit: 'm',
-                                  icon: Icons.landscape_rounded,
-                                ),
-                                _buildMetricDivider(),
-                                _buildInstagramMetric(
-                                  label: 'Kalori',
-                                  value: '${exp.caloriesBurned}',
-                                  unit: 'kkal',
-                                  icon: Icons.local_fire_department_rounded,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // 3. Instagram Action Bar (Like, Comment, Share, Save)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    children: [
-                      // Like Button
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isLiked = !_isLiked;
-                            _likesCount += _isLiked ? 1 : -1;
-                          });
-                        },
-                        child: Icon(
-                          _isLiked
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                          color: _isLiked
-                              ? const Color(0xFFEF4444)
-                              : AppColors.ink,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      // Comment Button
-                      GestureDetector(
-                        onTap: _showEditCaptionModal,
-                        child: const Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          color: AppColors.ink,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      // Direct Message / Share Button
-                      GestureDetector(
-                        onTap: _handleCopyLink,
-                        child: const Icon(
-                          Icons.near_me_outlined,
-                          color: AppColors.ink,
-                          size: 24,
-                        ),
-                      ),
-                      const Spacer(),
-                      // Save / Bookmark
-                      GestureDetector(
-                        onTap: () {
-                          setState(() => _isSaved = !_isSaved);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: AppColors.forest,
-                              duration: const Duration(milliseconds: 1200),
-                              content: Text(_isSaved
-                                  ? 'Postingan disimpan ke koleksi favorit!'
-                                  : 'Postingan dihapus dari koleksi'),
-                            ),
-                          );
-                        },
-                        child: Icon(
-                          _isSaved
-                              ? Icons.bookmark_rounded
-                              : Icons.bookmark_border_rounded,
-                          color:
-                              _isSaved ? AppColors.forest : AppColors.ink,
-                          size: 26,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 4. Likes Counter & Caption
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Disukai oleh rangga_adventure dan $_likesCount lainnya',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.ink, height: 1.35),
-                          children: [
-                            const TextSpan(
-                              text: 'dunsanak_petualang ',
-                              style: TextStyle(fontWeight: FontWeight.w900),
-                            ),
-                            TextSpan(text: _captionText),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      // Checkpoint info chip
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.forest.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${exp.completedCheckpointsCount}/${exp.checkpoints.length} Checkpoint Tuntas',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.forest,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            exp.tripDate,
-                            style: const TextStyle(
-                                fontSize: 10.5, color: AppColors.muted),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // 5. PROMOSI RESMI WISGO DENGAN QR CODE (Sesuai Aturan & Test Requirement)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D1B0F),
-                    borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(19)),
-                  ),
-                  child: Row(
-                    children: [
-                      // QR Code Generator
-                      CustomPaint(
-                        size: const Size(64, 64),
-                        painter: WisgoQrCodePainter(
-                          darkColor: const Color(0xFF142417),
-                          lightColor: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.qr_code_scanner_rounded,
-                                    color: Color(0xFF68D391), size: 12),
-                                SizedBox(width: 4),
-                                Text(
-                                  'PINDAI UNTUK MENGUNDUH',
-                                  style: TextStyle(
-                                    color: Color(0xFF68D391),
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Aplikasi WISGO Sumatera Barat',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Jelajah rute wisata Sumbar, tarif Perda resmi, open trip berizin & pantau cuaca real-time.',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.70),
-                                fontSize: 9,
-                                height: 1.25,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ACTION BUTTONS: [Post ke Feed WISGO] & [Unduh Gambar]
-          Row(
-            children: [
-              // Tombol Post di Aplikasi
-              Expanded(
-                flex: 6,
-                child: ElevatedButton.icon(
-                  onPressed: _handlePostToAppFeed,
-                  icon: const Icon(Icons.send_rounded, size: 17),
-                  label: const Text(
-                    'Post ke Feed WISGO',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.forest,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 1,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Tombol Unduh
-              Expanded(
-                flex: 5,
-                child: OutlinedButton.icon(
-                  onPressed: _isDownloading ? null : _handleDownloadImage,
-                  icon: _isDownloading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppColors.forest),
-                        )
-                      : const Icon(Icons.download_rounded, size: 17),
-                  label: Text(
-                    _isDownloading ? 'Mengunduh...' : 'Unduh Post',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 12),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.forest,
-                    side: const BorderSide(color: AppColors.forest, width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Tombol Salin Tautan
-          Center(
-            child: TextButton.icon(
-              onPressed: _handleCopyLink,
-              icon: Icon(
-                _isCopied ? Icons.check_rounded : Icons.link_rounded,
-                size: 16,
-                color: AppColors.muted,
-              ),
-              label: Text(
-                _isCopied ? 'Tautan Tersalin' : 'Salin Tautan Pengalaman',
-                style: const TextStyle(fontSize: 11, color: AppColors.muted),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-      ),
-    );
-  }
-
-  // ================= TAB 2: IN-APP COMMUNITY FEED (POST DI APLIKASI) =================
-  Widget _buildCommunityFeedTab() {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: kSampleCommunityPosts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (ctx, index) {
-        final post = kSampleCommunityPosts[index];
-        return _buildFeedPostCard(post);
-      },
-    );
-  }
-
-  Widget _buildFeedPostCard(CommunityPost post) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: post.isSelfPost
-              ? AppColors.forest.withValues(alpha: 0.4)
-              : Colors.grey.shade200,
-          width: post.isSelfPost ? 1.5 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header Postingan Feed
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 17,
-                  backgroundColor: AppColors.forest.withValues(alpha: 0.15),
-                  child: Text(
-                    post.authorName.isNotEmpty ? post.authorName[0] : 'U',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: AppColors.forest,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            post.username,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          if (post.isSelfPost) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.forest.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'Postingan Anda',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.forest,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      Text(
-                        '${post.destinationName} • ${post.postedTime}',
+                      label: Text(
+                        _showQrCode ? 'QR Kode: Aktif' : 'QR Kode: Mati',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 10, color: AppColors.muted),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _showQrCode ? const Color(0xFF15803D) : AppColors.muted,
+                        ),
                       ),
-                    ],
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        side: BorderSide(
+                          color: _showQrCode ? const Color(0xFF86EFAC) : AppColors.warmBorder,
+                        ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 6),
                 IconButton(
-                  icon: const Icon(Icons.more_horiz_rounded,
-                      size: 18, color: AppColors.muted),
-                  onPressed: () {},
+                  onPressed: _showEditCaptionModal,
+                  tooltip: 'Tulis Caption',
+                  icon: const Icon(Icons.edit_note_rounded,
+                      size: 20, color: AppColors.forest),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.forest.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.all(8),
+                    minimumSize: const Size(36, 36),
+                  ),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 12),
 
-          // Foto Postingan dengan Metrik Strava
-          AspectRatio(
-            aspectRatio: 1.15,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(
-                  post.photoUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: const Color(0xFF142417),
-                    child: const Center(
-                      child: Icon(Icons.image_rounded,
-                          size: 40, color: Colors.white54),
-                    ),
-                  ),
+          // ================= PREVIEW AREA KARTU / STIKER JEJAK WISGO =================
+          // Jika Mode Stiker Transparan: container preview diberi aksen gelap semi-transparan (ala Story Editor)
+          Container(
+            decoration: BoxDecoration(
+              color: _isTransparentSticker
+                  ? const Color(0xFF111827) // Kontras gelap agar stiker PNG transparan terbaca jelas
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: _isTransparentSticker
+                    ? const Color(0xFF374151)
+                    : AppColors.warmBorder,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
                 ),
-                // Floating Strava Strip
-                Positioned(
-                  left: 10,
-                  right: 10,
-                  bottom: 10,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.68),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white24),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Stack(
+                children: [
+                  // Mode Stiker indicator badge
+                  if (_isTransparentSticker)
+                    Positioned(
+                      top: 10,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.layers_rounded,
+                                size: 10, color: Color(0xFF34D399)),
+                            SizedBox(width: 4),
+                            Text(
+                              'PNG Transparan',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF34D399),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildInstagramMetric(
-                          label: 'Jarak',
-                          value: '${post.distanceKm}',
-                          unit: 'km',
-                          icon: Icons.straighten_rounded,
+                        // --- 1. 3 BLOK TIPOGRAFI MINIMALIS (ALA STRAVA OVERLAY) ---
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _isTransparentSticker
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: _isTransparentSticker
+                                  ? Colors.white12
+                                  : const Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Blok 1: Destinasi
+                              Expanded(
+                                flex: 4,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'DESTINASI',
+                                      style: TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.8,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFF9CA3AF)
+                                            : AppColors.muted,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      exp.destinationName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: _isTransparentSticker
+                                            ? Colors.white
+                                            : AppColors.ink,
+                                      ),
+                                    ),
+                                    Text(
+                                      exp.cityRegency,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFFD1D5DB)
+                                            : AppColors.brush,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 32,
+                                color: _isTransparentSticker
+                                    ? Colors.white24
+                                    : const Color(0xFFE5E7EB),
+                                margin: const EdgeInsets.symmetric(horizontal: 6),
+                              ),
+
+                              // Blok 2: Jejak Sumbar
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'JEJAK SUMBAR',
+                                      style: TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.8,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFF9CA3AF)
+                                            : AppColors.muted,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Stempel #${exp.stampNumber}',
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFF34D399)
+                                            : const Color(0xFF15803D),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${exp.visitedCount} / ${exp.totalDestinations} Destinasi',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFFD1D5DB)
+                                            : AppColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 32,
+                                color: _isTransparentSticker
+                                    ? Colors.white24
+                                    : const Color(0xFFE5E7EB),
+                                margin: const EdgeInsets.symmetric(horizontal: 6),
+                              ),
+
+                              // Blok 3: Gelar Wisatawan
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'GELAR',
+                                      style: TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.8,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFF9CA3AF)
+                                            : AppColors.muted,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      exp.levelTitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFFFBBF24)
+                                            : const Color(0xFFD97706),
+                                      ),
+                                    ),
+                                    Text(
+                                      exp.tripDate,
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: _isTransparentSticker
+                                            ? const Color(0xFFD1D5DB)
+                                            : AppColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        _buildMetricDivider(),
-                        _buildInstagramMetric(
-                          label: 'Waktu',
-                          value: post.durationFormatted,
-                          unit: '',
-                          icon: Icons.timer_rounded,
+                        const SizedBox(height: 12),
+
+                        // --- 2. BAGIAN TENGAH: BINGKAI FOTO TEMPAT WISATA (PENGGANTI RUTE STRAVA) ---
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _isTransparentSticker
+                                  ? Colors.white.withValues(alpha: 0.25)
+                                  : const Color(0xFFE5E7EB),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: AspectRatio(
+                              aspectRatio: 1.25,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.network(
+                                    _selectedPhotoUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: const Color(0xFF142417),
+                                      child: const Center(
+                                        child: Icon(Icons.landscape_rounded,
+                                            size: 48, color: Colors.white54),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Subtle Badge di Pojok Kiri Bawah Foto
+                                  Positioned(
+                                    bottom: 10,
+                                    left: 10,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.65),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.white24),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.verified_rounded,
+                                              size: 11, color: Color(0xFF34D399)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            exp.badgeTitle,
+                                            style: const TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Tombol Floating Ganti Foto di Sudut Atas
+                                  Positioned(
+                                    top: 10,
+                                    right: 10,
+                                    child: MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      child: GestureDetector(
+                                        onTap: _showImageUploadModal,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.65),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(color: Colors.white30),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.camera_alt_rounded,
+                                                  size: 11, color: Colors.white),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Ganti Foto',
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                        _buildMetricDivider(),
-                        _buildInstagramMetric(
-                          label: 'Elevasi',
-                          value: '+${post.elevationGainMeters}',
-                          unit: 'm',
-                          icon: Icons.landscape_rounded,
-                        ),
-                        _buildMetricDivider(),
-                        _buildInstagramMetric(
-                          label: 'Kalori',
-                          value: '${post.caloriesBurned}',
-                          unit: 'kkal',
-                          icon: Icons.local_fire_department_rounded,
+                        const SizedBox(height: 12),
+
+                        // --- 3. BAGIAN BAWAH: BRANDING KAMPANYE WISGO ---
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _isTransparentSticker
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : const Color(0xFF0D1B0F),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: _isTransparentSticker
+                                  ? Colors.white12
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Brand Logo WISGO & Tagline
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: AppColors.forest,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    'W',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      fontFamily: 'serif',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'WISGO',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                    SizedBox(height: 1),
+                                    Text(
+                                      'Dijelajahi bersama WISGO',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF86EFAC),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Toggleable QR Code Menuju Aplikasi
+                              if (_showQrCode) ...[
+                                const SizedBox(width: 8),
+                                CustomPaint(
+                                  size: const Size(42, 42),
+                                  painter: WisgoQrCodePainter(
+                                    darkColor: const Color(0xFF0D1B0F),
+                                    lightColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 14),
 
-          // Action Buttons Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      post.isLiked = !post.isLiked;
-                      post.likesCount += post.isLiked ? 1 : -1;
-                    });
-                  },
-                  child: Icon(
-                    post.isLiked
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: post.isLiked
-                        ? const Color(0xFFEF4444)
-                        : AppColors.ink,
-                    size: 24,
+          // Action Toolbar: Unduh Stiker/Kartu & Simpan ke Cloud
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: ElevatedButton.icon(
+                    onPressed: _isDownloading ? null : _handleDownloadImage,
+                    icon: _isDownloading
+                        ? const SizedBox(
+                            width: 15,
+                            height: 15,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.download_rounded, size: 16),
+                    label: Text(
+                      _isTransparentSticker
+                          ? 'Unduh Stiker Transparan'
+                          : 'Unduh Kartu Penuh',
+                      style: const TextStyle(
+                          fontSize: 11.5, fontWeight: FontWeight.w800),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.forest,
+                      foregroundColor: Colors.white,
+                      elevation: 1,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                const Icon(Icons.chat_bubble_outline_rounded,
-                    color: AppColors.ink, size: 22),
-                const SizedBox(width: 14),
-                const Icon(Icons.near_me_outlined,
-                    color: AppColors.ink, size: 22),
-                const Spacer(),
-                const Icon(Icons.bookmark_border_rounded,
-                    color: AppColors.ink, size: 24),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: OutlinedButton.icon(
+                    onPressed: _isSavingCloud ? null : _handleSaveShareCardToCloud,
+                    icon: _isSavingCloud
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: AppColors.forest),
+                          )
+                        : const Icon(Icons.cloud_upload_rounded,
+                            size: 16, color: AppColors.forest),
+                    label: const Text(
+                      'Simpan Cloud',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.forest),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: AppColors.forest, width: 1.3),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 12),
 
-          // Likes & Caption
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+          // Pintasan Bagikan ke Media Sosial Organik
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.warmBorder),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${post.likesCount} suka',
-                  style: const TextStyle(
-                    fontSize: 11.5,
+                const Text(
+                  'BAGIKAN LANGSUNG KE MEDIA SOSIAL',
+                  style: TextStyle(
+                    fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
+                    letterSpacing: 0.6,
+                    color: AppColors.muted,
                   ),
                 ),
-                const SizedBox(height: 4),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                        fontSize: 11.5, color: AppColors.ink, height: 1.3),
-                    children: [
-                      TextSpan(
-                        text: '${post.username} ',
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                      TextSpan(text: post.caption),
-                    ],
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildSocialShareButton(
+                      label: 'IG Story',
+                      icon: Icons.camera_alt_outlined,
+                      color: const Color(0xFFE1306C),
+                      onTap: () => _shareToSocial('Instagram Story'),
+                    ),
+                    _buildSocialShareButton(
+                      label: 'TikTok',
+                      icon: Icons.music_note_rounded,
+                      color: Colors.black,
+                      onTap: () => _shareToSocial('TikTok'),
+                    ),
+                    _buildSocialShareButton(
+                      label: 'WhatsApp Status',
+                      icon: Icons.chat_rounded,
+                      color: const Color(0xFF25D366),
+                      onTap: () => _shareToSocial('WhatsApp Status'),
+                    ),
+                    _buildSocialShareButton(
+                      label: 'Post ke Feed',
+                      icon: Icons.forum_rounded,
+                      color: AppColors.forest,
+                      onTap: _handlePostToAppFeed,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Lihat semua ${post.commentsCount} komentar...',
-                  style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
-                ),
-                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -1734,61 +1683,211 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
     );
   }
 
-  // --- Sub-widgets untuk Metrik Strava ---
-  Widget _buildInstagramMetric({
+  Widget _buildSocialShareButton({
     required String label,
-    required String value,
-    required String unit,
     required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
   }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: const Color(0xFF68D391), size: 13),
-        const SizedBox(height: 2),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
           children: [
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(icon, color: color, size: 22),
               ),
             ),
-            if (unit.isNotEmpty) ...[
-              const SizedBox(width: 1),
-              Text(
-                unit,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w600,
-                ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
               ),
-            ],
+            ),
           ],
         ),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFA0AEC0),
-            fontSize: 8,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildMetricDivider() {
-    return Container(
-      width: 1,
-      height: 22,
-      color: Colors.white.withValues(alpha: 0.20),
+  // ================= TAB 2: FEED KOMUNITAS KAMPANYE WISGO =================
+  Widget _buildCommunityFeedTab() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      itemCount: kSampleCommunityPosts.length,
+      itemBuilder: (ctx, index) {
+        final post = kSampleCommunityPosts[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.warmBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Post Header
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 17,
+                      backgroundImage: NetworkImage(post.avatarUrl),
+                      backgroundColor: AppColors.sage,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                post.authorName,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.verified_rounded,
+                                  size: 13, color: Color(0xFF0284C7)),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const Icon(Icons.place_rounded,
+                                  size: 11, color: AppColors.forest),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Text(
+                                  '${post.destinationName} • ${post.cityRegency}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        post.badgeTitle,
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF15803D),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Post Photo Frame
+              ClipRRect(
+                child: AspectRatio(
+                  aspectRatio: 1.25,
+                  child: Image.network(
+                    post.photoUrl,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+
+              // Post Footer Caption & Tags
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.favorite_rounded,
+                            size: 18, color: Color(0xFFDC2626)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${post.likesCount} suka',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Icon(Icons.chat_bubble_outline_rounded,
+                            size: 16, color: AppColors.muted),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${post.commentsCount} komentar',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      post.caption,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.ink,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      children: post.tags.map((tag) {
+                        return Text(
+                          tag,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.forest,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

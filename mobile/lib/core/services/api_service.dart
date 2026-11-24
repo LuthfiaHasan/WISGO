@@ -552,6 +552,30 @@ class ApiService {
     return await ApiClient.get('/gamification/certificate/$userId');
   }
 
+  /// Ambil daftar riwayat Jejak WISGO milik akun wisatawan (BE-2)
+  /// GET /api/v1/gamification/trips?user_id=<uid>
+  static Future<ApiResponse<dynamic>> getGamificationTrips({String? userId}) async {
+    final uid = userId ?? ApiConfig.currentUserId;
+    return await ApiClient.get('/gamification/trips', queryParams: {'user_id': uid});
+  }
+
+  /// Catat / Generate Share Card Jejak WISGO (BE-2)
+  /// POST /api/v1/gamification/share-card
+  static Future<ApiResponse<dynamic>> createShareCard({
+    String? userId,
+    required String tripId,
+    required String mode, // 'transparent_sticker' | 'full_card'
+    required String caption,
+  }) async {
+    final uid = userId ?? ApiConfig.currentUserId;
+    return await ApiClient.post('/gamification/share-card', body: {
+      'user_id': uid,
+      'trip_id': tripId,
+      'mode': mode,
+      'caption': caption,
+    });
+  }
+
   // ============================================================================
   // 12. BUDAYA, JALUR EKSTREM & ANTI-PUNGLI (BE-1 · PILAR 1, 3, 7)
   // ============================================================================

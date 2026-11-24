@@ -7863,10 +7863,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   Widget _buildTravelExperienceProfileSection() {
+    final jejakTrips = ApiConfig.isAuthenticated ? kSampleTravelExperiences : <TravelExperience>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header
+        // Section Header: Jejak WISGO (Item 1-2 Kampanye Sosial)
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Row(
@@ -7879,16 +7881,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     const Row(
                       children: [
                         Icon(
-                          Icons.directions_run_rounded,
+                          Icons.travel_explore_rounded,
                           color: AppColors.forest,
-                          size: 18,
+                          size: 19,
                         ),
                         SizedBox(width: 6),
                         Text(
-                          'Riwayat Perjalanan & Experience',
+                          'Jejak WISGO',
                           style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
                             color: AppColors.ink,
                             letterSpacing: -0.2,
                           ),
@@ -7897,7 +7899,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Pencapaian ala Strava, titik check point & template sharing ber-QR promosi',
+                      'Pamerkan momen wisatamu ke IG Story, TikTok, atau WA Status',
                       style: TextStyle(
                         fontSize: 10.5,
                         color: AppColors.ink.withValues(alpha: 0.65),
@@ -7909,16 +7911,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: const Color(0xFFF0FDF4),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
+                  border: Border.all(color: const Color(0xFF86EFAC)),
                 ),
                 child: const Text(
-                  'Strava-like',
+                  'Viral Share',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFFB45309),
+                    color: Color(0xFF15803D),
                   ),
                 ),
               ),
@@ -7926,7 +7928,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ),
         ),
 
-        // Strava Aggregated Stats Banner
+        // Summary Stats Banner Jejak WISGO (Tanpa Pace, Kalori, Elevasi)
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -7943,215 +7945,311 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ),
           child: Row(
             children: [
-              _buildAggregatedStatItem('42.3', 'km', 'Total Jarak', Icons.straighten_rounded, AppColors.forest),
+              _buildAggregatedStatItem(
+                jejakTrips.isNotEmpty ? '${jejakTrips.first.visitedCount}/${jejakTrips.first.totalDestinations}' : '0/20',
+                '',
+                'Destinasi',
+                Icons.explore_rounded,
+                AppColors.forest,
+              ),
               _buildAggregatedDivider(),
-              _buildAggregatedStatItem('12j 15m', '', 'Waktu Aktif', Icons.schedule_rounded, const Color(0xFF0369A1)),
+              _buildAggregatedStatItem(
+                jejakTrips.isNotEmpty ? '#${jejakTrips.first.stampNumber}' : '#0',
+                '',
+                'Stempel',
+                Icons.verified_rounded,
+                const Color(0xFF15803D),
+              ),
               _buildAggregatedDivider(),
-              _buildAggregatedStatItem('+715', 'm', 'Elevasi Naik', Icons.landscape_rounded, const Color(0xFFD97706)),
+              _buildAggregatedStatItem(
+                jejakTrips.isNotEmpty ? jejakTrips.first.levelTitle : 'Pemula',
+                '',
+                'Gelar',
+                Icons.military_tech_rounded,
+                const Color(0xFFD97706),
+              ),
               _buildAggregatedDivider(),
-              _buildAggregatedStatItem('3', 'Trip', 'Tuntas', Icons.verified_rounded, const Color(0xFF15803D)),
+              _buildAggregatedStatItem(
+                jejakTrips.isNotEmpty ? '450' : '0',
+                'XP',
+                'Poin Wisata',
+                Icons.stars_rounded,
+                const Color(0xFF0369A1),
+              ),
             ],
           ),
         ),
 
         const SizedBox(height: 12),
 
-        // List of Travel Experiences
-        ...kSampleTravelExperiences.map((exp) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
+        // Empty State Jujur atau Daftar Jejak WISGO
+        if (jejakTrips.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: AppColors.warmBorder),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.forest.withValues(alpha: 0.09),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.travel_explore_rounded,
+                    size: 36,
+                    color: AppColors.forest,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Belum Ada Jejak WISGO',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Kunjungi destinasi wisata di Sumatera Barat, lakukan check-in GPS atau ikuti Trip Go untuk menorehkan jejak pertamamu dan membagikannya ke media sosial!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.muted,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() => _activeTabIndex = 0);
+                    },
+                    icon: const Icon(Icons.explore_rounded, size: 15),
+                    label: const Text(
+                      'Jelajahi Destinasi Sekarang',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.forest,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top tag & Date
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.forest.withValues(alpha: 0.09),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          exp.category,
-                          style: const TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.forest,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        exp.tripDate,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.muted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+          )
+        else
+          ...jejakTrips.map((exp) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.warmBorder),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.ink.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-
-                // Title & Destination
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        exp.title,
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          const Icon(Icons.place_rounded, size: 12, color: Color(0xFFD97706)),
-                          const SizedBox(width: 3),
-                          Expanded(
-                            child: Text(
-                              exp.destinationName,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFFB45309),
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top tag & Date
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.forest.withValues(alpha: 0.09),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            exp.category,
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.forest,
                             ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 4 Metric Chips
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 14),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.cream,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildMiniExpMetric('Jarak', '${exp.distanceKm} km'),
-                      _buildMiniExpDivider(),
-                      _buildMiniExpMetric('Waktu', exp.durationFormatted),
-                      _buildMiniExpDivider(),
-                      _buildMiniExpMetric('Elevasi', '+${exp.elevationGainMeters} m'),
-                      _buildMiniExpDivider(),
-                      _buildMiniExpMetric('Check Point', '${exp.completedCheckpointsCount}/${exp.checkpoints.length}'),
-                    ],
-                  ),
-                ),
-
-                // Lencana Pills
-                if (exp.achievements.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: exp.achievements.map((ach) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: ach.ribbonColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: ach.ribbonColor.withValues(alpha: 0.3)),
+                        ),
+                        Text(
+                          exp.tripDate,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.muted,
+                            fontWeight: FontWeight.w600,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(ach.icon, size: 11, color: ach.ribbonColor),
-                              const SizedBox(width: 3),
-                              Text(
-                                ach.title,
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: ach.ribbonColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                        ),
+                      ],
                     ),
                   ),
 
-                const SizedBox(height: 10),
-
-                // 2 Action Buttons
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _openTravelExperienceDetailModal(exp),
-                          icon: const Icon(Icons.fact_check_rounded, size: 14),
-                          label: const Text(
-                            'Check Point',
-                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.forest,
-                            side: const BorderSide(color: AppColors.forest),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                  // Title & Destination
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          exp.title,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _openTravelShareCardModal(exp),
-                          icon: const Icon(Icons.share_rounded, size: 14),
-                          label: const Text(
-                            'Template Posting',
-                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.forest,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(Icons.place_rounded, size: 12, color: AppColors.forest),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                '${exp.destinationName}, ${exp.cityRegency}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.forest,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }),
+
+                  // 3 Blok Info Jejak WISGO
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 14),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.cream,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMiniExpMetric('Stempel', '#${exp.stampNumber}'),
+                        _buildMiniExpDivider(),
+                        _buildMiniExpMetric('Progres', '${exp.visitedCount}/${exp.totalDestinations} Destinasi'),
+                        _buildMiniExpDivider(),
+                        _buildMiniExpMetric('Gelar', exp.levelTitle),
+                      ],
+                    ),
+                  ),
+
+                  // Lencana Pills
+                  if (exp.achievements.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: exp.achievements.map((ach) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: ach.ribbonColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: ach.ribbonColor.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(ach.icon, size: 11, color: ach.ribbonColor),
+                                const SizedBox(width: 3),
+                                Text(
+                                  ach.title,
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: ach.ribbonColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                  const SizedBox(height: 10),
+
+                  // 2 Action Buttons
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _openTravelExperienceDetailModal(exp),
+                              icon: const Icon(Icons.info_outline_rounded, size: 14),
+                              label: const Text(
+                                'Detail Jejak',
+                                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.forest,
+                                side: const BorderSide(color: AppColors.forest),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _openTravelShareCardModal(exp),
+                              icon: const Icon(Icons.share_rounded, size: 14),
+                              label: const Text(
+                                'Stiker & Kartu',
+                                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.forest,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
       ],
     );
   }
@@ -8164,15 +8262,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           const SizedBox(height: 3),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
-                  color: color,
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                  ),
                 ),
               ),
               if (unit.isNotEmpty) ...[
@@ -8191,6 +8294,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           const SizedBox(height: 1),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 8.5,
               color: AppColors.muted,
@@ -8211,24 +8316,32 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   Widget _buildMiniExpMetric(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: AppColors.ink,
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppColors.ink,
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 8.5,
-            color: AppColors.muted,
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 8.5,
+              color: AppColors.muted,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
