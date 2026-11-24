@@ -730,151 +730,135 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
       )}
 
       {/* Header Halaman */}
-      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-        <div className="flex flex-col gap-5">
-          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
-              <Camera className="w-6 h-6" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                  Studio Panorama View &amp; Kondisi Nyata Lokasi
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                  Wide / Equirectangular Viewer
-                </span>
-              </div>
-              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Foto panorama 360° lebar untuk menampilkan kondisi nyata di lokasi destinasi wisata serta penandaan 4 fasilitas esensial (Fasilitas Umum, Mitra UMKM dengan link WA, Loket Info Resmi, dan Navigasi Arah).
-              </p>
-            </div>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
+            Studio Panorama 360°
+          </h1>
+          <p className="text-xs text-[#4A5248] mt-0.5">
+            Foto panorama equirectangular, kondisi nyata destinasi, dan 4 kategori pin fasilitas.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor={destSelectId}
+              className="text-xs font-bold text-[#1B1F1A] shrink-0 hidden sm:inline"
+            >
+              Destinasi:
+            </label>
+            <select
+              id={destSelectId}
+              value={selectedDestId}
+              onChange={(e) => {
+                setSelectedDestId(e.target.value);
+                const dest = destinations.find((d) => d.id === e.target.value);
+                const firstScene = dest?.scenes_360?.[0];
+                setSelectedSceneId(firstScene?.id || '');
+                setSelectedPin(null);
+              }}
+              className="h-9 px-3 py-1 rounded-xl bg-white border border-[#234B24]/15 text-xs font-bold text-[#1B1F1A] shadow-2xs focus:outline-hidden focus:ring-1 focus:ring-[#234B24]"
+            >
+              {destinations.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} ({d.scenes_360?.length || 0} Scene)
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Baris 2: Pemilih Destinasi & Tambah Scene */}
-          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <label
-                htmlFor={destSelectId}
-                className="text-xs font-bold text-[#1B1F1A] shrink-0"
-              >
-                Pilih Destinasi:
-              </label>
-              <select
-                id={destSelectId}
-                value={selectedDestId}
-                onChange={(e) => {
-                  setSelectedDestId(e.target.value);
-                  const dest = destinations.find((d) => d.id === e.target.value);
-                  const firstScene = dest?.scenes_360?.[0];
-                  setSelectedSceneId(firstScene?.id || '');
+          <button
+            type="button"
+            onClick={() => {
+              setEditingScene(null);
+              setSceneFormTitle('');
+              setSceneFormType('aerial');
+              setSceneFormPanoUrl('');
+              setSceneFormAudioUrl('');
+              setSceneFormPitch(0);
+              setSceneFormYaw(0);
+              setIsSceneModalOpen(true);
+            }}
+            className="h-9 px-3.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-1.5 shadow-xs transition"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Tambah Scene</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Tab Navigasi Scene Aktif */}
+      <nav
+        aria-label="Scene Panorama"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+      >
+        <span className="text-xs font-bold text-[#4A5248] px-2 py-1.5 flex items-center gap-1.5 shrink-0">
+          <Layers className="w-3.5 h-3.5 text-[#234B24]" />
+          <span>Scene:</span>
+        </span>
+        {currentScenes.length === 0 ? (
+          <span className="text-xs italic text-[#767676] px-2 py-1.5">
+            Belum ada scene 360°. Silakan tambah scene.
+          </span>
+        ) : (
+          currentScenes.map((scene) => {
+            const isActive = scene.id === activeScene?.id;
+            return (
+              <button
+                key={scene.id}
+                type="button"
+                onClick={() => {
+                  setSelectedSceneId(scene.id);
                   setSelectedPin(null);
                 }}
-                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+                  isActive
+                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-xs'
+                    : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+                }`}
               >
-                {destinations.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} ({d.scenes_360?.length || 0} Scene 360°)
-                  </option>
-                ))}
-              </select>
-            </div>
-
+                <span>{scene.title}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-[#234B24]/10 text-[#234B24]'
+                }`}>
+                  {scene.hotspots?.length || 0} Pin
+                </span>
+              </button>
+            );
+          })
+        )}
+        {activeScene && (
+          <div className="flex items-center gap-1.5 ml-auto shrink-0">
             <button
               type="button"
               onClick={() => {
-                setEditingScene(null);
-                setSceneFormTitle('');
-                setSceneFormType('aerial');
-                setSceneFormPanoUrl('');
-                setSceneFormAudioUrl('');
-                setSceneFormPitch(0);
-                setSceneFormYaw(0);
+                setEditingScene(activeScene);
+                setSceneFormTitle(activeScene.title);
+                setSceneFormType(((activeScene.scene_type || activeScene.type || 'ground') as 'aerial' | 'ground'));
+                setSceneFormPanoUrl(activeScene.panorama_url);
+                setSceneFormAudioUrl(activeScene.spatial_audio_url || activeScene.ambient_audio_url || '');
+                setSceneFormPitch(activeScene.initial_pitch);
+                setSceneFormYaw(activeScene.initial_yaw);
                 setIsSceneModalOpen(true);
               }}
-              className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
+              className="h-9 px-3 rounded-lg bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24] font-bold text-xs flex items-center gap-1.5 border border-[#234B24]/10"
             >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Scene 360° Baru</span>
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Scene</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDeleteScene(activeScene.id)}
+              className="h-9 px-2.5 rounded-lg bg-[#F26B4B]/10 hover:bg-[#F26B4B]/20 text-[#D95637] font-bold text-xs flex items-center gap-1.5"
+              title="Hapus Scene"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus</span>
             </button>
           </div>
-        </div>
-
-        {/* Tab Manajemen Scene */}
-        <div className="mt-6 pt-5 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-[#4A5248] mr-1 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-[#234B24]" />
-              <span>Scene Aktif:</span>
-            </span>
-            {currentScenes.length === 0 ? (
-              <span className="text-xs italic text-[#767676]">
-                Belum ada scene 360°. Silakan unggah panorama pertama.
-              </span>
-            ) : (
-              currentScenes.map((scene) => {
-                const isActive = scene.id === activeScene?.id;
-                return (
-                  <button
-                    key={scene.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSceneId(scene.id);
-                      setSelectedPin(null);
-                    }}
-                    className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                      isActive
-                        ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                        : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#1B1F1A] border border-[#CFD8BE]'
-                    }`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        scene.type === 'aerial' ? 'bg-[#3B82F6]' : 'bg-[#10B981]'
-                      }`}
-                    />
-                    <span>{scene.title}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20">
-                      {scene.hotspots?.length || 0} Pin
-                    </span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-
-          {activeScene && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingScene(activeScene);
-                  setSceneFormTitle(activeScene.title);
-                  setSceneFormType(((activeScene.scene_type || activeScene.type || 'ground') as 'aerial' | 'ground'));
-                  setSceneFormPanoUrl(activeScene.panorama_url);
-                  setSceneFormAudioUrl(activeScene.spatial_audio_url || activeScene.ambient_audio_url || '');
-                  setSceneFormPitch(activeScene.initial_pitch);
-                  setSceneFormYaw(activeScene.initial_yaw);
-                  setIsSceneModalOpen(true);
-                }}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg bg-[#E4E9DA] hover:bg-[#D5DFC9] text-[#234B24] font-bold text-xs flex items-center gap-1.5"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Scene</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteScene(activeScene.id)}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg bg-[#F26B4B]/15 hover:bg-[#F26B4B]/25 text-[#D95637] font-bold text-xs flex items-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Hapus</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
+        )}
+      </nav>
 
       {/* Main Content: Interactive Canvas & Pin List */}
       {activeScene ? (

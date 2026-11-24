@@ -144,118 +144,80 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#142618] flex flex-col lg:flex-row font-sans">
+    <div className="min-h-[100dvh] bg-[#F6F3EC] text-[#1B1F1A] flex flex-col lg:flex-row font-sans">
       {/* Panel Identitas Resmi Dinas Pariwisata Sumatera Barat */}
-      <section className="lg:w-5/12 bg-[#193D22] text-[#FAF3E6] p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
+      <section className="lg:w-5/12 bg-[#234B24] text-[#F6F3EC] p-6 sm:p-8 lg:p-10 flex flex-col justify-between shrink-0 relative overflow-hidden">
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <div className="h-12 w-12 rounded-2xl bg-[#FAF3E6] p-1.5 flex items-center justify-center shadow-sm shrink-0 border border-white/20">
+            <div className="h-10 w-10 rounded-xl bg-white/10 p-1.5 flex items-center justify-center border border-white/20 shrink-0">
               <img src="/logo_icon.png" alt="WISGO" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <span className="font-extrabold text-2xl tracking-tight text-[#FAF3E6]">
-                WISGO Sumbar
-              </span>
-            </div>
+            <span className="font-extrabold text-xl tracking-tight text-[#F6F3EC]">
+              WISGO Sumbar
+            </span>
           </div>
 
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-bold tracking-wide text-[#A7F3D0]">
-            <Building2 className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#A7F3D0] text-[11px] font-semibold tracking-wide">
+            <Building2 className="w-3.5 h-3.5 text-[#1E9E5A]" aria-hidden="true" />
             <span>PEMERINTAH PROVINSI SUMATERA BARAT</span>
           </div>
 
-          <h1 className="mt-6 text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
-            Pusat Komando Terpadu WISGO
+          <h1 className="mt-4 text-2xl lg:text-3xl font-extrabold leading-tight tracking-tight text-[#F6F3EC]">
+            Pusat Komando Wisata Sumatera Barat
           </h1>
-          <p className="mt-4 text-sm lg:text-base text-[#DFECE2]/90 leading-relaxed">
-            Portal otoritas terpadu Dinas Pariwisata Provinsi Sumatera Barat:
-            Manajemen Destinasi &amp; 5 Indikator Medan, Standar Tarif Resmi Perda &amp; Smart QR,
-            Studio Virtual 360°, Penindakan Aduan Pungli Satgas Saber Pungli, serta Koordinasi Siaga Darurat SOS Tim SAR di 19 Kabupaten/Kota.
+          <p className="mt-3 text-xs lg:text-sm text-[#F6F3EC]/80 leading-relaxed max-w-md">
+            Portal otoritas terpadu Dinas Pariwisata: manajemen destinasi, tarif resmi Perda, tur 360°, dan siaga komando SOS di 19 Kabupaten/Kota.
           </p>
         </div>
 
-        <div className="my-8 space-y-3.5">
-          <div className="p-4 rounded-2xl bg-black/20 border border-white/10">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#A7F3D0]">
-              <ShieldCheck className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
-              <span>Otoritas Komando Tunggal Terintegrasi</span>
-            </div>
-            <p className="mt-1.5 text-xs text-[#E4E9DA]/90 leading-relaxed">
-              Seluruh kendali destinasi, tarif resmi Perda, tur virtual 360°,
-              laporan pelanggaran pungli dari wisatawan, dan sinyal darurat SOS terpusat
-              di bawah kendali Administrator Utama dengan enkripsi sesi resmi.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between px-4 py-3.5 rounded-2xl bg-white/10 border border-white/15 text-xs">
-            <span className="flex items-center gap-2 font-semibold text-[#F6F3EC]">
-              <CheckCircle2
-                className="w-4 h-4 text-[#1E9E5A] shrink-0"
-                aria-hidden="true"
-              />
-              <span>
-                {backendOnline
-                  ? 'Status Sistem: Terhubung (Database Utama)'
-                  : 'Status Sistem: Mode Lokal Aktif (Sinkronisasi Otomatis)'}
-              </span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-bold text-[#A7F3D0]">
-              <span className="w-2 h-2 rounded-full bg-[#1E9E5A]" />
-              Siap Operasional
-            </span>
-          </div>
+        <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between text-xs text-[#F6F3EC]/70">
+          <span className="inline-flex items-center gap-2 font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#1E9E5A] animate-pulse" />
+            <span>{backendOnline ? 'Sistem Online' : 'Mode Lokal Aktif'}</span>
+          </span>
+          <span>&copy; 2026 Dispar Sumbar</span>
         </div>
-
-        <p className="text-xs text-[#E4E9DA]/75">
-          &copy; 2026 Dinas Pariwisata Provinsi Sumatera Barat · Portal Pusat Komando Resmi WISGO Sumbar
-        </p>
       </section>
 
       {/* Panel Formulir Otentikasi Otoritas */}
-      <main className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-lg bg-white rounded-[28px] p-7 lg:p-10 shadow-md border border-[#D5E2D7]">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="w-full max-w-md bg-white rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(35,75,36,0.05)] border border-[#234B24]/10">
           {onBackToLanding && (
             <button
               type="button"
               onClick={onBackToLanding}
-              className="mb-5 text-xs font-bold text-[#143D2B] hover:text-[#0E2E20] inline-flex items-center gap-1.5 transition group"
+              className="mb-4 text-xs font-semibold text-[#234B24] hover:text-[#1B3B1C] inline-flex items-center gap-1.5 transition group"
             >
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
               <span>Kembali ke Beranda Publik</span>
             </button>
           )}
 
-          <div className="flex items-center gap-3.5 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-[#FAF3E6] p-2 flex items-center justify-center shadow-sm border border-[#D5E2D7]">
-              <img src="/logo_icon.png" alt="WISGO" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <h2
-                id="login-heading"
-                className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]"
-              >
-                Otentikasi Administrator Utama
-              </h2>
-              <p className="text-xs text-[#4A5248] mt-0.5">
-                Pusat Komando Terpadu Dispar, Penindakan Pungli &amp; Siaga SAR Sumbar
-              </p>
-            </div>
+          <div className="mb-5">
+            <h2
+              id="login-heading"
+              className="text-xl font-extrabold text-[#1B1F1A]"
+            >
+              Otentikasi Administrator
+            </h2>
+            <p className="text-xs text-[#4A5248] mt-0.5">
+              Pusat Komando Terpadu Dispar Sumbar
+            </p>
           </div>
 
-          {/* Akses Cepat Otoritas Tunggal */}
-          <div className="mb-6 p-4 rounded-2xl bg-[#E4E9DA]/65 border border-[#CFD8BE]">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#234B24] mb-2.5">
-              <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Akses Cepat Otoritas (Mode Pengujian Internal)</span>
+          {/* Akses Cepat Ringkas 1 Baris */}
+          <div className="mb-5 flex items-center justify-between p-2.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#4A5248]">
+              <UserCheck className="w-4 h-4 text-[#234B24]" />
+              <span>Mode Pengujian</span>
             </div>
             <button
               type="button"
               disabled={submitting}
               onClick={handleQuickAuthorityAccess}
-              className="w-full min-h-[48px] text-xs font-bold px-4 py-2.5 rounded-xl bg-[#234B24] text-[#F6F3EC] hover:bg-[#1B3B1C] transition shadow-sm flex items-center justify-center gap-2 text-center"
+              className="text-xs font-bold text-[#234B24] hover:underline hover:text-[#1B3B1C]"
             >
-              <Radio className="w-4 h-4 text-[#A7F3D0] shrink-0" aria-hidden="true" />
-              <span>Masuk sebagai Administrator Utama (Pusat Komando Dispar, Penindakan Pungli &amp; Siaga SAR)</span>
+              Masuk Cepat (Demo)
             </button>
           </div>
 
@@ -265,17 +227,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             aria-labelledby="login-heading"
             onSubmit={handleSubmit}
             noValidate
+            className="space-y-4"
           >
             {/* Input Email Dinas */}
-            <div className="mb-5 flex flex-col items-start gap-1.5">
+            <div className="flex flex-col items-start gap-1">
               <label
                 htmlFor="admin-email"
                 className="text-xs font-bold text-[#1B1F1A]"
               >
-                Alamat Email Kedinasan{' '}
-                <span aria-hidden="true" className="text-[#F26B4B]">
-                  *
-                </span>
+                Alamat Email Kedinasan
               </label>
               <input
                 ref={emailRef}
@@ -300,69 +260,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 enterKeyHint="next"
                 required
                 aria-invalid={emailError ? 'true' : 'false'}
-                aria-describedby={emailError ? 'email-error' : 'email-help'}
-                className="w-full min-h-[48px] px-4 py-2.5 rounded-2xl bg-[#F6F3EC] border border-[#767676] text-base text-[#1B1F1A] font-medium"
+                className="w-full h-11 px-3.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/15 text-sm text-[#1B1F1A] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
               />
-              <span id="email-help" className="text-[11px] text-[#4A5248]">
-                Akun resmi Administrator Utama berdomain @sumbarprov.go.id
-              </span>
               {emailError && (
                 <p
-                  id="email-error"
                   role="status"
                   aria-live="polite"
                   className="text-xs font-semibold text-[#D95637] flex items-center gap-1 mt-0.5"
                 >
-                  <AlertCircle
-                    className="w-3.5 h-3.5 shrink-0"
-                    aria-hidden="true"
-                  />
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   <span>{emailError}</span>
                 </p>
               )}
             </div>
 
             {/* Input Kata Sandi */}
-            <div className="mb-6 flex flex-col items-start gap-1.5">
+            <div className="flex flex-col items-start gap-1">
               <div className="w-full flex items-center justify-between">
                 <label
                   htmlFor="admin-password"
                   className="text-xs font-bold text-[#1B1F1A]"
                 >
-                  Kata Sandi Otoritas{' '}
-                  <span aria-hidden="true" className="text-[#F26B4B]">
-                    *
-                  </span>
+                  Kata Sandi Otoritas
                 </label>
                 <button
                   id="toggle-password"
                   type="button"
                   aria-pressed={showPassword}
-                  aria-label={
-                    showPassword
-                      ? 'Sembunyikan kata sandi'
-                      : 'Tampilkan kata sandi'
-                  }
-                  aria-describedby="toggle-warning"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-[#234B24] px-2.5 py-1 rounded-lg hover:bg-[#E4E9DA]/60 min-h-[44px]"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#234B24] hover:underline"
                 >
                   {showPassword ? (
                     <>
-                      <EyeOff className="w-4 h-4" aria-hidden="true" />
+                      <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Sembunyikan</span>
                     </>
                   ) : (
                     <>
-                      <Eye className="w-4 h-4" aria-hidden="true" />
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Tampilkan</span>
                     </>
                   )}
                 </button>
-                <span id="toggle-warning" className="visually-hidden">
-                  Peringatan: tombol ini akan menampilkan kata sandi Anda di
-                  layar.
-                </span>
               </div>
 
               <input
@@ -386,28 +325,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 enterKeyHint="done"
                 required
                 aria-invalid={passwordError ? 'true' : 'false'}
-                aria-describedby={
-                  passwordError ? 'password-error' : 'password-constraints'
-                }
-                className="w-full min-h-[48px] px-4 py-2.5 rounded-2xl bg-[#F6F3EC] border border-[#767676] text-base text-[#1B1F1A] font-medium"
+                className="w-full h-11 px-3.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/15 text-sm text-[#1B1F1A] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
               />
-              <span
-                id="password-constraints"
-                className="text-[11px] text-[#4A5248]"
-              >
-                Minimal 6 karakter. Sesi terpusat dilindungi enkripsi JWT Bearer Token.
-              </span>
               {passwordError && (
                 <p
-                  id="password-error"
                   role="status"
                   aria-live="polite"
                   className="text-xs font-semibold text-[#D95637] flex items-center gap-1 mt-0.5"
                 >
-                  <AlertCircle
-                    className="w-3.5 h-3.5 shrink-0"
-                    aria-hidden="true"
-                  />
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   <span>{passwordError}</span>
                 </p>
               )}
@@ -417,35 +343,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <div
                 role="status"
                 aria-live="polite"
-                className="mb-4 p-3.5 rounded-2xl bg-[#F26B4B]/15 border border-[#F26B4B] text-xs font-bold text-[#1B1F1A] flex items-center gap-2"
+                className="p-3 rounded-xl bg-[#F26B4B]/15 border border-[#F26B4B] text-xs font-bold text-[#1B1F1A] flex items-center gap-2"
               >
-                <AlertCircle
-                  className="w-4 h-4 text-[#F26B4B] shrink-0"
-                  aria-hidden="true"
-                />
+                <AlertCircle className="w-4 h-4 text-[#F26B4B] shrink-0" aria-hidden="true" />
                 <span>{formError}</span>
               </div>
             )}
 
-            {/* Tombol Utama Kapsul 52px */}
+            {/* Tombol Masuk Utama */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-[52px] rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] disabled:opacity-60 text-[#F6F3EC] font-bold text-sm flex items-center justify-center gap-2 shadow-md transition"
+              className="w-full h-11 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] disabled:opacity-60 text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition"
             >
-              <Lock className="w-4 h-4" aria-hidden="true" />
+              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
               <span>
                 {submitting
-                  ? 'Mengotentikasi Administrator Utama...'
-                  : 'Masuk sebagai Administrator Utama'}
+                  ? 'Mengotentikasi...'
+                  : 'Masuk sebagai Administrator'}
               </span>
             </button>
 
             {/* Pemisah Alternatif Login */}
-            <div className="relative my-4 flex items-center justify-center">
+            <div className="relative my-3 flex items-center justify-center">
               <div className="w-full border-t border-[#234B24]/10" />
-              <span className="absolute bg-white px-3 text-[11px] font-bold text-[#767676] uppercase">
-                atau masuk dengan
+              <span className="absolute bg-white px-2.5 text-[10px] font-bold text-[#767676] uppercase">
+                atau
               </span>
             </div>
 
@@ -454,14 +377,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               type="button"
               disabled={submitting}
               onClick={handleGoogleLogin}
-              className="w-full h-[48px] rounded-2xl bg-white hover:bg-[#F6F3EC] border border-[#234B24]/20 text-[#1B1F1A] font-bold text-xs flex items-center justify-center gap-3 shadow-xs transition"
+              className="w-full h-11 rounded-xl bg-white hover:bg-[#F6F3EC] border border-[#234B24]/20 text-[#1B1F1A] font-bold text-xs flex items-center justify-center gap-2.5 shadow-2xs transition"
             >
               <img
                 src="/assets/synced/google_logo.png"
                 alt="Google"
                 className="w-4 h-4 object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg';
+                  (e.target as HTMLImageElement).src =
+                    'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg';
                 }}
               />
               <span>Masuk dengan Akun Google</span>

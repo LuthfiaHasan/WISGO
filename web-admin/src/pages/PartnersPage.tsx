@@ -257,99 +257,81 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Halaman */}
-      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-        <div className="flex flex-col gap-5">
-          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
-              <Store className="w-6 h-6" aria-hidden="true" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                  Direktori &amp; Verifikasi 5 Kategori Mitra UMKM Nagari
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#234B24]/8 text-[#234B24]">
-                  Ekonomi Nagari &amp; Transaksi Langsung P2P
-                </span>
-              </div>
-              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Kelola 5 kategori mitra UMKM nagari (Homestay, Kapal, Pemandu Pokdarwis, Kuliner Halal, Sewa Busana Adat), konektivitas kontak langsung WhatsApp (P2P), pemantauan Open Trip wisatawan, dan kurasi tempat wisata komunitas.
-              </p>
-            </div>
-          </div>
-
-          {/* Baris 2: Informasi Otoritas & Tombol Aksi */}
-          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-[#4A5248]">
-              <span>Kemitraan Resmi:</span>
-              <strong className="text-[#234B24]">Verifikasi Pokdarwis &amp; Pemprov Sumbar</strong>
-            </div>
-
-            {activeSubTab === 'partners_directory' && (
-              <button
-                type="button"
-                onClick={handleOpenCreate}
-                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition duration-200 shrink-0"
-              >
-                <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-                <span>Tambah Mitra Nagari Baru</span>
-              </button>
-            )}
-          </div>
-
-          {/* Baris 3: 3 Sub-Tabs Navigasi Header Modern Clean */}
-          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('partners_directory')}
-              className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-                activeSubTab === 'partners_directory'
-                  ? 'bg-[#234B24] text-white shadow-sm'
-                  : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-              }`}
-            >
-              <Store className="w-4 h-4" aria-hidden="true" />
-              <span>Direktori 5 Mitra UMKM &amp; 360°</span>
-              <span
-                className={`ml-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${
-                  activeSubTab === 'partners_directory'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#234B24]/8 text-[#234B24]'
-                }`}
-              >
-                {partners.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('open_trips')}
-              className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-                activeSubTab === 'open_trips'
-                  ? 'bg-[#234B24] text-white shadow-sm'
-                  : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-              }`}
-            >
-              <Users className="w-4 h-4" aria-hidden="true" />
-              <span>Pantau Open Trip Wisatawan</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('community_curation')}
-              className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-                activeSubTab === 'community_curation'
-                  ? 'bg-[#234B24] text-white shadow-sm'
-                  : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-              }`}
-            >
-              <Compass className="w-4 h-4" aria-hidden="true" />
-              <span>Verifikasi Usulan Komunitas</span>
-            </button>
-          </div>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
+            Mitra UMKM &amp; Open Trip
+          </h1>
+          <p className="text-xs text-[#4A5248] mt-0.5">
+            5 kategori mitra nagari, kontak WhatsApp langsung P2P, Open Trip, dan kurasi komunitas.
+          </p>
         </div>
+
+        {activeSubTab === 'partners_directory' && (
+          <button
+            type="button"
+            onClick={handleOpenCreate}
+            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-2 shadow-xs transition duration-200 shrink-0"
+          >
+            <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+            <span>Tambah Mitra Baru</span>
+          </button>
+        )}
       </header>
+
+      {/* Sub-Tabs Navigasi */}
+      <nav
+        aria-label="Sub-tab Mitra"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+      >
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('partners_directory')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'partners_directory'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Store className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Direktori Mitra</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              activeSubTab === 'partners_directory'
+                ? 'bg-white/20 text-white'
+                : 'bg-[#234B24]/10 text-[#234B24]'
+            }`}
+          >
+            {partners.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('open_trips')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'open_trips'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Open Trip Wisatawan</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('community_curation')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'community_curation'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Usulan Komunitas</span>
+        </button>
+      </nav>
 
       {activeSubTab === 'partners_directory' && (
         <>

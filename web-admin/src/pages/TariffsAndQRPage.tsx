@@ -189,41 +189,33 @@ export const TariffsAndQRPage: React.FC<TariffsAndQRPageProps> = ({
   return (
     <div className="p-6 lg:p-8 space-y-8">
       {/* Header Halaman */}
-      <header className="no-print flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <header className="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E4E9DA] text-[#234B24] text-xs font-bold">
-            <ShieldCheck
-              className="w-3.5 h-3.5 text-[#1E9E5A]"
-              aria-hidden="true"
-            />
-            <span>STANDAR TARIF RESMI PERDA &amp; PLANG SMART QR</span>
-          </div>
-          <h1 className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#1B1F1A]">
-            Pengelolaan Fair-Price Barometer &amp; Plang QR Kawasan
+          <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
+            Tarif Resmi Perda &amp; Smart QR
           </h1>
-          <p className="text-sm text-[#4A5248] mt-0.5">
-            Tetapkan standar tarif resmi Peraturan Daerah / Nagari, batas harga
-            wajar, dan cetak plang fisik Smart QR anti-pungli.
+          <p className="text-xs text-[#4A5248] mt-0.5">
+            Standar tarif resmi Perda/Nagari, barometer harga wajar, dan cetak plang Smart QR anti-pungli.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={() => window.print()}
-            className="min-h-[48px] px-5 py-2.5 rounded-pill bg-white border border-[#CFD8BE] hover:bg-[#E4E9DA]/60 text-[#1B1F1A] font-bold text-xs inline-flex items-center gap-2 transition shadow-sm"
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-[#234B24]/15 hover:bg-[#F6F3EC] text-[#1B1F1A] font-bold text-xs inline-flex items-center gap-2 transition shadow-2xs"
           >
-            <Printer className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
-            <span>Cetak Plang QR Destinasi Ini</span>
+            <Printer className="w-3.5 h-3.5 text-[#234B24]" aria-hidden="true" />
+            <span>Cetak Plang QR</span>
           </button>
 
           <button
             type="button"
             onClick={handleOpenAddTariff}
-            className="h-[52px] px-6 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-sm inline-flex items-center gap-2 shadow-sm transition"
+            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs inline-flex items-center gap-2 shadow-xs transition"
           >
             <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-            <span>Tambah Komponen Tarif Resmi</span>
+            <span>Tambah Tarif</span>
           </button>
         </div>
       </header>

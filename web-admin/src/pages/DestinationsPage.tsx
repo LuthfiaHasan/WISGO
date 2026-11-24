@@ -501,147 +501,137 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   return (
     <div className="p-6 lg:p-8 space-y-6 no-print">
       {/* Header Utama Halaman */}
-      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#234B24]/8 text-[#234B24] text-xs font-bold">
-              <CheckCircle2
-                className="w-3.5 h-3.5 text-[#1E9E5A]"
-                aria-hidden="true"
-              />
-              <span>
-                {backendOnline
-                  ? 'Status Sistem: Terhubung (Database Utama)'
-                  : 'Status Sistem: Mode Lokal Aktif (Sinkronisasi Otomatis)'}
-              </span>
-            </div>
-            <h1 className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#1B1F1A] tracking-tight">
-              Manajemen Destinasi Wisata &amp; Kesiapan Medan
-            </h1>
-            <p className="text-xs text-[#4A5248] mt-1 max-w-2xl leading-relaxed">
-              Direktori resmi destinasi unggulan, 5 indikator kesiapan medan, kamus audio Minang, kalender budaya, dan Gaode ranking.
-            </p>
-          </div>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A] tracking-tight">
+            Manajemen Destinasi Wisata &amp; Kesiapan Medan
+          </h1>
+          <p className="text-xs text-[#4A5248] mt-0.5">
+            Direktori destinasi unggulan, 5 indikator kesiapan medan, kamus audio Minang, dan Gaode ranking.
+          </p>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-[#234B24]/15 hover:bg-[#F6F3EC] text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition duration-200 shadow-2xs"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 text-[#234B24] ${
+                loading ? 'animate-spin' : ''
+              }`}
+              aria-hidden="true"
+            />
+            <span>Sinkronisasi Data</span>
+          </button>
+
+          {activeSubTab === 'directory' && (
             <button
               type="button"
-              onClick={onRefresh}
-              disabled={loading}
-              className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#234B24]/15 hover:bg-[#F6F3EC] text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition duration-200 shadow-xs"
+              onClick={handleOpenNewModal}
+              className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-xs transition duration-200"
             >
-              <RefreshCw
-                className={`w-3.5 h-3.5 text-[#234B24] ${
-                  loading ? 'animate-spin' : ''
-                }`}
-                aria-hidden="true"
-              />
-              <span>Sinkronisasi Data</span>
+              <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
+              <span>Tambah Destinasi</span>
             </button>
-
-            {activeSubTab === 'directory' && (
-              <button
-                type="button"
-                onClick={handleOpenNewModal}
-                className="min-h-[44px] px-5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-sm transition duration-200"
-              >
-                <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-                <span>Tambah Destinasi Baru</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Sub-Tabs Navigasi Header Modern Clean */}
-        <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('directory')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeSubTab === 'directory'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-            }`}
-          >
-            <Compass className="w-4 h-4" aria-hidden="true" />
-            <span>Direktori Destinasi &amp; 5 Medan</span>
-            <span
-              className={`ml-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${
-                activeSubTab === 'directory'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-[#234B24]/8 text-[#234B24]'
-              }`}
-            >
-              {destinations.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('minang_dictionary')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeSubTab === 'minang_dictionary'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-            }`}
-          >
-            <Volume2 className="w-4 h-4" aria-hidden="true" />
-            <span>Kamus Saku Audio Minang</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('culture_calendar')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeSubTab === 'culture_calendar'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-            }`}
-          >
-            <Calendar className="w-4 h-4" aria-hidden="true" />
-            <span>Kalender Budaya Sumbar</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('gaode_ranking')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeSubTab === 'gaode_ranking'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-            }`}
-          >
-            <TrendingUp className="w-4 h-4" aria-hidden="true" />
-            <span>Rekalkulasi Gaode Ranking</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('ugc_submissions')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeSubTab === 'ugc_submissions'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-            }`}
-          >
-            <Inbox className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-            <span>Usulan Destinasi (UGC)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('reviews_moderation')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeSubTab === 'reviews_moderation'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" aria-hidden="true" />
-            <span>Pengalaman &amp; Kondisi Lapangan</span>
-          </button>
+          )}
         </div>
       </header>
+
+      {/* Sub-Tabs Navigasi Header Modern Clean */}
+      <nav
+        aria-label="Sub-tab Destinasi"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+      >
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('directory')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'directory'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Direktori Destinasi</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              activeSubTab === 'directory'
+                ? 'bg-white/20 text-white'
+                : 'bg-[#234B24]/10 text-[#234B24]'
+            }`}
+          >
+            {destinations.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('minang_dictionary')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'minang_dictionary'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Volume2 className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Kamus Audio Minang</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('culture_calendar')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'culture_calendar'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Kalender Budaya</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('gaode_ranking')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'gaode_ranking'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Gaode Ranking</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('ugc_submissions')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'ugc_submissions'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Inbox className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
+          <span>Usulan Destinasi</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('reviews_moderation')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeSubTab === 'reviews_moderation'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Ulasan &amp; Kondisi Lapangan</span>
+        </button>
+      </nav>
 
       {activeSubTab === 'directory' && (
         <>

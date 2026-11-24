@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Compass,
   QrCode,
@@ -8,13 +8,12 @@ import {
   MessageSquare,
   BarChart3,
   LogOut,
-  CheckCircle2,
-  Database,
-  ExternalLink,
-  Users,
-  Monitor,
   Trophy,
   Globe,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+  ExternalLink,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
 
@@ -46,6 +45,9 @@ interface SidebarProps {
   isShowcaseMode?: boolean;
   onToggleShowcaseMode?: () => void;
   onLogout: () => void;
+  // Mobile Drawer
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -60,291 +62,428 @@ export const Sidebar: React.FC<SidebarProps> = ({
   openSosCount = 2,
   onOpenLandingPage,
   onOpenPublicQR,
-  onOpenGroupInvite,
-  onOpenSystemBenchmark,
-  isShowcaseMode = false,
-  onToggleShowcaseMode,
   onLogout,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const currentKey =
     activeMenu === 'saber_pungli' ? 'command_center' : activeMenu;
 
   const totalEmergencyAlerts = openPungliCount + openSosCount;
 
+  // Persist collapsed state for desktop
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('wisgo_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('wisgo_sidebar_collapsed', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
   const navItems: Array<{
     key: AdminMenuKey;
     label: string;
-    sublabel: string;
     badge?: string;
     badgeColor?: string;
     icon: React.ReactNode;
   }> = [
     {
       key: 'destinations',
-      label: 'Manajemen Destinasi & Medan',
-      sublabel: 'Direktori & 5 Indikator Medan',
-      badge: `${totalDestinations} Lokasi`,
-      icon: <Compass className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'Destinasi',
+      badge: `${totalDestinations || 20}`,
+      icon: <Compass className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'tariffs_qr',
-      label: 'Standar Tarif Perda & QR',
-      sublabel: 'Fair-Price Barometer & Plang QR',
-      badge: `${totalTariffs} Tarif`,
-      icon: <QrCode className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'Tarif & QR',
+      badge: `${totalTariffs || 9}`,
+      icon: <QrCode className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'cms_360',
-      label: 'Studio Panorama View',
-      sublabel: 'Kondisi Nyata & Pin Fasilitas',
-      icon: <Camera className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'Panorama 360°',
+      icon: <Camera className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'challenges',
-      label: 'Gamifikasi Challenge Wisata',
-      sublabel: 'Checklist Tempat & Hadiah',
-      badge: 'Ceklis',
-      icon: <Trophy className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'Challenge',
+      icon: <Trophy className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'command_center',
-      label: 'Pusat Komando Pungli & SOS',
-      sublabel: 'Penindakan Saber & Siaga SAR',
-      badge: totalEmergencyAlerts > 0 ? `${totalEmergencyAlerts} Siaga` : 'Terkendali',
-      badgeColor: totalEmergencyAlerts > 0 ? 'bg-[#F26B4B] text-white' : 'bg-[#1E9E5A] text-white',
-      icon: <Radio className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'Komando SOS',
+      badge: totalEmergencyAlerts > 0 ? `${totalEmergencyAlerts}` : undefined,
+      badgeColor: 'bg-[#F26B4B] text-white',
+      icon: <Radio className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'partners',
-      label: 'Direktori & Verifikasi Mitra UMKM',
-      sublabel: '5 Kategori UMKM & Kontak WA P2P',
-      badge: `${totalPartners} Mitra`,
-      icon: <Store className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'UMKM & Trip',
+      badge: `${totalPartners || 5}`,
+      icon: <Store className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'wa_simulator',
-      label: 'Simulator Interaksi WA Mitra',
-      sublabel: 'Chat Langsung P2P & Leads 360°',
-      icon: <MessageSquare className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'Simulator WA',
+      icon: <MessageSquare className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
     {
       key: 'dispar_analytics',
-      label: 'Analitik Eksekutif Dispar',
-      sublabel: 'Heatmap 19 Kab/Kota & Cetak PDF',
-      icon: <BarChart3 className="w-5 h-5 shrink-0" aria-hidden="true" />,
+      label: 'Analitik',
+      icon: <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />,
     },
   ];
 
+  const handleItemClick = (key: AdminMenuKey) => {
+    onSelectMenu(key);
+    if (onCloseMobile) {
+      onCloseMobile();
+    }
+  };
+
+  // Nav content used in desktop and mobile drawer
+  const renderNavList = (collapsed: boolean) => (
+    <ul className="space-y-1">
+      {navItems.map((item) => {
+        const isActive = currentKey === item.key;
+        return (
+          <li key={item.key} className="relative group">
+            <button
+              type="button"
+              aria-current={isActive ? 'page' : undefined}
+              onClick={() => handleItemClick(item.key)}
+              className={`w-full text-left rounded-xl transition-all duration-150 flex items-center min-h-[40px] text-xs font-semibold ${
+                collapsed
+                  ? 'justify-center p-2.5'
+                  : 'justify-between px-3 py-2.5 gap-2.5'
+              } ${
+                isActive
+                  ? 'bg-[#F6F3EC] text-[#234B24] font-bold shadow-xs'
+                  : 'text-white/80 hover:text-white hover:bg-white/8'
+              }`}
+            >
+              <div
+                className={`flex items-center min-w-0 ${
+                  collapsed ? 'justify-center' : 'gap-2.5 flex-1'
+                }`}
+              >
+                <span
+                  className={`shrink-0 transition-colors ${
+                    isActive ? 'text-[#234B24]' : 'text-white/70'
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                {!collapsed && (
+                  <span className="truncate whitespace-nowrap">{item.label}</span>
+                )}
+              </div>
+
+              {!collapsed && item.badge && (
+                <span
+                  className={`text-[10.5px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap leading-none ${
+                    item.badgeColor
+                      ? item.badgeColor
+                      : isActive
+                      ? 'bg-[#234B24]/10 text-[#234B24]'
+                      : 'bg-white/10 text-white/90'
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              )}
+
+              {collapsed && item.badge && (
+                <span
+                  className={`absolute top-2 right-2 w-2 h-2 rounded-full ${
+                    item.badgeColor ? 'bg-[#F26B4B]' : 'bg-[#A7F3D0]'
+                  }`}
+                />
+              )}
+            </button>
+
+            {/* Tooltip saat Sidebar dilipat (Mini-Rail) */}
+            {collapsed && (
+              <div
+                role="tooltip"
+                className="opacity-0 group-hover:opacity-100 pointer-events-none fixed ml-14 left-0 z-50 px-2.5 py-1 rounded-md bg-[#1B1F1A] text-white text-[11px] font-bold whitespace-nowrap shadow-lg transition-opacity duration-150"
+              >
+                {item.label}
+                {item.badge ? ` (${item.badge})` : ''}
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+
   return (
-    <aside
-      aria-label="Navigasi Utama Pusat Komando Terpadu WISGO"
-      className="w-72 lg:w-80 shrink-0 h-screen sticky top-0 overflow-y-auto sidebar-scroll flex flex-col justify-between z-30 bg-[#234B24] text-[#F6F3EC] border-b lg:border-b-0 lg:border-r border-black/10 no-print shadow-[4px_0_24px_rgba(35,75,36,0.08)]"
-    >
-      <div>
-        {/* Identitas Resmi Instansi */}
-        <div className="p-5 lg:p-6 border-b border-white/8 shrink-0">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#F6F3EC] p-2 flex items-center justify-center shadow-md shrink-0 border border-white/30">
-              <img
-                src="/assets/synced/logo_icon.png"
-                alt="Logo WISGO"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/logo_icon.png';
-                }}
-                className="w-full h-full object-contain"
-              />
+    <>
+      {/* ==================================================================== */}
+      {/* 1. DESKTOP SIDEBAR (lg: ke atas) — Collapsible w-60 vs w-[72px]       */}
+      {/* ==================================================================== */}
+      <aside
+        aria-label="Navigasi Utama WISGO Admin"
+        className={`hidden lg:flex flex-col justify-between shrink-0 h-screen sticky top-0 z-30 bg-[#234B24] text-[#F6F3EC] border-r border-black/10 no-print transition-all duration-200 select-none ${
+          isCollapsed ? 'w-[72px]' : 'w-60'
+        }`}
+      >
+        <div className="flex flex-col min-h-0 flex-1">
+          {/* Header Sidebar Desktop */}
+          <div
+            className={`border-b border-white/8 shrink-0 flex items-center justify-between transition-all duration-200 ${
+              isCollapsed ? 'p-3 flex-col gap-2' : 'p-4'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-[#F6F3EC] p-1.5 flex items-center justify-center shrink-0 shadow-xs">
+                <img
+                  src="/assets/synced/logo_icon.png"
+                  alt="WISGO"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/logo_icon.png';
+                  }}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              {!isCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <span className="font-extrabold text-sm tracking-tight text-white block truncate leading-none">
+                    WISGO
+                  </span>
+                  <span className="text-[10px] text-white/60 font-semibold tracking-wider uppercase block mt-0.5">
+                    Admin Portal
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="min-w-0 flex-1">
-              <span className="font-extrabold text-lg tracking-tight text-[#F6F3EC] truncate block">
-                WISGO Sumbar
-              </span>
-              <p className="text-[11px] text-[#E4E9DA]/80 font-medium truncate mt-0.5">
-                Pusat Komando Dinas Pariwisata
-              </p>
-            </div>
+
+            {/* Tombol Collapse / Expand Desktop */}
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              title={isCollapsed ? 'Buka Sidebar' : 'Lipat Sidebar'}
+              className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+              aria-label={isCollapsed ? 'Buka navigasi sidebar' : 'Lipat navigasi sidebar'}
+            >
+              {isCollapsed ? (
+                <PanelLeftOpen className="w-4 h-4" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4" />
+              )}
+            </button>
           </div>
 
-          {/* Indikator Status Sistem */}
-          <button
-            type="button"
-            onClick={onOpenSystemBenchmark}
-            title="Klik untuk membuka Health & Benchmark Sistem"
-            className="mt-4 w-full text-left px-3.5 py-2.5 rounded-xl bg-white/6 hover:bg-white/10 border border-white/8 hover:border-white/20 flex items-center gap-2.5 text-xs transition duration-200 cursor-pointer group"
+          {/* Nav List */}
+          <nav
+            aria-label="Menu Utama"
+            className="flex-1 overflow-y-auto sidebar-scroll p-3 space-y-3"
           >
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1E9E5A] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#1E9E5A]"></span>
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-[#F6F3EC] text-[11px] leading-tight flex items-center justify-between">
-                <span>
-                  {backendOnline
-                    ? 'Database Terhubung'
-                    : 'Mode Offline Sinkron'}
-                </span>
-                <span className="text-[10px] text-[#A7F3D0] opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Health &rsaquo;</span>
-              </div>
-            </div>
-          </button>
-        </div>
+            {renderNavList(isCollapsed)}
 
-        {/* Menu Navigasi Operasional */}
-        <nav aria-label="Menu Operasional Pusat Komando" className="p-3 lg:p-4">
-          <p className="px-3 mb-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[#E4E9DA]/60">
-            Menu Otoritas Terpadu
-          </p>
-          <ul className="space-y-1.5">
-            {navItems.map((item) => {
-              const isActive = currentKey === item.key;
-              return (
-                <li key={item.key}>
-                  <button
-                    type="button"
-                    aria-current={isActive ? 'page' : undefined}
-                    onClick={() => onSelectMenu(item.key)}
-                    className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center justify-between min-h-[46px] gap-2.5 ${
-                      isActive
-                        ? 'bg-[#F6F3EC] text-[#234B24] font-bold shadow-[0_4px_16px_rgba(0,0,0,0.08)] border-l-4 border-[#F26B4B]'
-                        : 'text-[#F6F3EC]/85 hover:text-white hover:bg-white/8 font-medium'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <span
-                        className={`shrink-0 transition-colors ${
-                          isActive ? 'text-[#234B24]' : 'text-[#E4E9DA]/80'
-                        }`}
-                      >
-                        {item.icon}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[13px] font-semibold leading-snug truncate">
-                          {item.label}
-                        </div>
-                        <div
-                          className={`text-[10.5px] leading-tight truncate mt-0.5 ${
-                            isActive ? 'text-[#4A5248]' : 'text-[#E4E9DA]/60'
-                          }`}
-                        >
-                          {item.sublabel}
-                        </div>
-                      </div>
-                    </div>
-
-                    {item.badge && (
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap shadow-xs ${
-                          item.badgeColor
-                            ? item.badgeColor
-                            : isActive
-                            ? 'bg-[#234B24] text-[#F6F3EC]'
-                            : 'bg-white/12 text-[#F6F3EC]'
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Pratinjau Halaman Web Publik Instan */}
-          <div className="mt-5 pt-3.5 border-t border-white/8">
-            <p className="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-wider text-[#A7F3D0]/80">
-              Pratinjau Web Publik Wisatawan
-            </p>
-            <div className="space-y-1">
+            {/* Quick Links Publik */}
+            <div className="pt-3 border-t border-white/8 space-y-1">
               {onOpenLandingPage && (
                 <button
                   type="button"
                   onClick={onOpenLandingPage}
-                  className="w-full text-left px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#F6F3EC] flex items-center justify-between transition min-h-[38px] group"
+                  title="Buka Beranda Publik"
+                  className={`w-full text-left rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all flex items-center min-h-[36px] text-xs font-semibold ${
+                    isCollapsed ? 'justify-center p-2' : 'px-3 py-2 gap-2.5'
+                  }`}
                 >
-                  <span className="flex items-center gap-2 truncate">
-                    <Globe className="w-4 h-4 text-[#A7F3D0] shrink-0" aria-hidden="true" />
-                    <span className="truncate">Beranda Publik (/)</span>
-                  </span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#E4E9DA]/60 group-hover:text-white shrink-0 transition" aria-hidden="true" />
+                  <Globe className="w-4 h-4 shrink-0 text-[#A7F3D0]" />
+                  {!isCollapsed && <span className="truncate">Beranda Publik</span>}
                 </button>
               )}
               {onOpenPublicQR && (
                 <button
                   type="button"
                   onClick={onOpenPublicQR}
-                  className="w-full text-left px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#F6F3EC] flex items-center justify-between transition min-h-[38px] group"
+                  title="Lihat Plang Smart QR"
+                  className={`w-full text-left rounded-xl text-white/70 hover:text-white hover:bg-white/8 transition-all flex items-center min-h-[36px] text-xs font-semibold ${
+                    isCollapsed ? 'justify-center p-2' : 'px-3 py-2 gap-2.5'
+                  }`}
                 >
-                  <span className="flex items-center gap-2 truncate">
-                    <QrCode className="w-4 h-4 text-[#F26B4B] shrink-0" aria-hidden="true" />
-                    <span className="truncate">Web Plang Smart QR (/qr)</span>
-                  </span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#E4E9DA]/60 group-hover:text-white shrink-0 transition" aria-hidden="true" />
-                </button>
-              )}
-              {onOpenGroupInvite && (
-                <button
-                  type="button"
-                  onClick={onOpenGroupInvite}
-                  className="w-full text-left px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#F6F3EC] flex items-center justify-between transition min-h-[38px] group"
-                >
-                  <span className="flex items-center gap-2 truncate">
-                    <Users className="w-4 h-4 text-[#A7F3D0] shrink-0" aria-hidden="true" />
-                    <span className="truncate">Web Group Invite (/join)</span>
-                  </span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#E4E9DA]/60 group-hover:text-white shrink-0 transition" aria-hidden="true" />
+                  <QrCode className="w-4 h-4 shrink-0 text-[#F26B4B]" />
+                  {!isCollapsed && <span className="truncate">Smart QR (/qr)</span>}
                 </button>
               )}
             </div>
-          </div>
-        </nav>
-      </div>
-
-      {/* Profil Pejabat Aktif Single Admin & Tombol Keluar */}
-      <div className="p-4 border-t border-white/8 bg-black/10">
-        {onToggleShowcaseMode && (
-          <button
-            type="button"
-            onClick={onToggleShowcaseMode}
-            className={`w-full px-3.5 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition mb-3 ${
-              isShowcaseMode
-                ? 'bg-[#F26B4B] text-white shadow-md'
-                : 'bg-white/8 hover:bg-white/12 text-[#A7F3D0] border border-white/10'
-            }`}
-          >
-            <span className="flex items-center gap-2 truncate">
-              <Monitor className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
-              <span>{isShowcaseMode ? 'Tutup Showcase' : 'Showcase 1 Layar'}</span>
-            </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-black/30 font-semibold">Live</span>
-          </button>
-        )}
-
-        <div className="p-3.5 rounded-2xl bg-white/6 border border-white/8 mb-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#A7F3D0]">
-            <CheckCircle2
-              className="w-3.5 h-3.5 text-[#1E9E5A] shrink-0"
-              aria-hidden="true"
-            />
-            <span>Pusat Komando Terpadu</span>
-          </div>
-          <p className="text-xs font-bold text-[#F6F3EC] mt-1 truncate">
-            {session.user.full_name || 'Administrator Utama'}
-          </p>
-          <p className="text-[10.5px] text-[#E4E9DA]/75 truncate mt-0.5">
-            {session.user.agency || 'Dinas Pariwisata Provinsi Sumatera Barat'}
-          </p>
+          </nav>
         </div>
 
-        <button
-          type="button"
-          onClick={onLogout}
-          className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-[#F26B4B] hover:bg-[#D95637] text-white font-bold text-xs flex items-center justify-center gap-2 transition duration-200 shadow-sm"
+        {/* Footer Sidebar Desktop */}
+        <div className="p-3 border-t border-white/8 bg-black/10 shrink-0">
+          {!isCollapsed ? (
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <span className="text-xs font-bold text-white block truncate leading-none">
+                  {session.user.full_name || 'Admin Otoritas'}
+                </span>
+                <span className="text-[10px] text-white/50 block truncate mt-1">
+                  {backendOnline ? 'Online' : 'Offline Cache'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onLogout}
+                title="Keluar"
+                className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-[#F26B4B] transition-colors shrink-0"
+                aria-label="Keluar dari akun admin"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={onLogout}
+                title="Keluar"
+                className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-[#F26B4B] transition-colors"
+                aria-label="Keluar dari akun admin"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* ==================================================================== */}
+      {/* 2. MOBILE DRAWER (< lg) — Slide-over Drawer                          */}
+      {/* ==================================================================== */}
+      {isMobileOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu Navigasi Mobile"
+          className="fixed inset-0 z-50 lg:hidden"
         >
-          <LogOut className="w-4 h-4" aria-hidden="true" />
-          <span>Keluar dari Pusat Komando</span>
-        </button>
-      </div>
-    </aside>
+          {/* Backdrop gelap tipis */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={onCloseMobile}
+            aria-hidden="true"
+          />
+
+          {/* Slide-over Drawer Panel */}
+          <aside className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-[#234B24] text-[#F6F3EC] shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-left duration-200">
+            <div className="flex flex-col min-h-0 flex-1">
+              {/* Header Drawer */}
+              <div className="p-4 border-b border-white/8 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#F6F3EC] p-1.5 flex items-center justify-center shrink-0 shadow-xs">
+                    <img
+                      src="/assets/synced/logo_icon.png"
+                      alt="WISGO"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/logo_icon.png';
+                      }}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-sm tracking-tight text-white block leading-none">
+                      WISGO Sumbar
+                    </span>
+                    <span className="text-[10px] text-white/60 font-semibold tracking-wider uppercase block mt-0.5">
+                      Pusat Komando
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onCloseMobile}
+                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="Tutup menu navigasi"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Nav List Mobile */}
+              <nav className="flex-1 overflow-y-auto p-3 space-y-3">
+                {renderNavList(false)}
+
+                <div className="pt-3 border-t border-white/8 space-y-1">
+                  {onOpenLandingPage && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenLandingPage();
+                        onCloseMobile?.();
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/8 text-xs font-semibold flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Globe className="w-4 h-4 text-[#A7F3D0]" />
+                        <span>Beranda Publik</span>
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 text-white/50" />
+                    </button>
+                  )}
+                  {onOpenPublicQR && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenPublicQR();
+                        onCloseMobile?.();
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/8 text-xs font-semibold flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <QrCode className="w-4 h-4 text-[#F26B4B]" />
+                        <span>Smart QR (/qr)</span>
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 text-white/50" />
+                    </button>
+                  )}
+                </div>
+              </nav>
+            </div>
+
+            {/* Footer Drawer */}
+            <div className="p-4 border-t border-white/8 bg-black/10 shrink-0 flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <span className="text-xs font-bold text-white block truncate leading-none">
+                  {session.user.full_name || 'Admin Otoritas'}
+                </span>
+                <span className="text-[10px] text-white/60 block truncate mt-1">
+                  {session.user.email}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onLogout();
+                  onCloseMobile?.();
+                }}
+                className="p-2 rounded-lg bg-[#F26B4B] hover:bg-[#D95637] text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+                title="Keluar"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Keluar</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
   );
 };
-

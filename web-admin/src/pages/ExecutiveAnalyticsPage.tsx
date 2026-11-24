@@ -1208,55 +1208,33 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* ==================================================================== */}
       {/* 1. HEADER UTAMA LAYAR ADMIN (No-Print)                               */}
       {/* ==================================================================== */}
-      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] no-print">
-        <div className="flex flex-col gap-5">
-          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
-              <BarChart3 className="w-6 h-6" aria-hidden="true" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                  Dasbor Manajemen Kunjungan &amp; Analitik Eksekutif
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#234B24]/8 text-[#234B24]">
-                  Pusat Komando Dispar Sumbar
-                </span>
-              </div>
-              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Pemantauan spasial 19 Kabupaten/Kota, prediksi lonjakan rombongan berbasis Auto-Itinerary, evaluasi perputaran leads WhatsApp UMKM nagari (P2P), dan rekapitulasi penyelesaian insiden lapangan.
-              </p>
-            </div>
-          </div>
+      <header className="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
+            Analitik Eksekutif
+          </h1>
+          <p className="text-xs text-[#4A5248] mt-0.5">
+            Pemantauan kunjungan, mitigasi risiko &amp; rekapitulasi data 19 Kab/Kota Sumbar.
+          </p>
+        </div>
 
-          {/* Baris 2: Quick Action Ekspor */}
-          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-[#4A5248]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#1E9E5A] animate-ping" />
-              <span>Status Operasional:</span>
-              <strong className="text-[#234B24]">Semua Sensor GPS &amp; Rombongan Wisatawan Terhubung Real-Time</strong>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24] text-xs font-bold flex items-center gap-2 border border-[#CFD8BE] transition shadow-xs"
-              >
-                <Download className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
-                <span>Unduh Data Mentah (CSV)</span>
-              </button>
-              <button
-                type="button"
-                onClick={handlePrintOfficialReport}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm transition duration-200"
-              >
-                <Printer className="w-4 h-4 text-[#A7F3D0]" aria-hidden="true" />
-                <span>Cetak / Unduh PDF Resmi</span>
-              </button>
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white hover:bg-[#F6F3EC] text-[#234B24] text-xs font-bold flex items-center gap-2 border border-[#234B24]/15 transition shadow-2xs"
+          >
+            <Download className="w-3.5 h-3.5 text-[#234B24]" aria-hidden="true" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={handlePrintOfficialReport}
+            className="min-h-[40px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-xs transition duration-200"
+          >
+            <Printer className="w-3.5 h-3.5 text-[#A7F3D0]" aria-hidden="true" />
+            <span>Cetak PDF</span>
+          </button>
         </div>
       </header>
 
@@ -1265,210 +1243,111 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* ==================================================================== */}
       <section
         aria-label="Panel Filter Laporan Eksekutif"
-        className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] no-print space-y-4"
+        className="bg-white rounded-xl p-3 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.03)] no-print flex flex-wrap items-center gap-2.5"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#234B24]/10 pb-3">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-[#234B24]" />
-            <h2 className="text-xs font-black uppercase tracking-wider text-[#234B24]">
-              Filter &amp; Parameter Laporan Eksekutif
-            </h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24]">
-              Reaktif Real-Time
-            </span>
-          </div>
+        {/* Periode */}
+        <select
+          value={periodPreset}
+          onChange={(e) => setPeriodPreset(e.target.value as PeriodPreset)}
+          className="h-9 px-2.5 py-1 rounded-lg bg-[#F6F3EC] border border-[#234B24]/10 text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-1 focus:ring-[#234B24]"
+        >
+          <option value="all">Semua Periode</option>
+          <option value="today">Hari Ini</option>
+          <option value="7d">7 Hari Terakhir</option>
+          <option value="30d">30 Hari Terakhir</option>
+          <option value="this_month">Bulan Ini</option>
+          <option value="this_year">Tahun Ini</option>
+          <option value="custom">Pilih Tanggal</option>
+        </select>
 
-          <div className="flex items-center gap-2">
-            {isFilterActive && (
-              <button
-                type="button"
-                onClick={handleResetFilter}
-                className="px-3 py-1.5 rounded-xl bg-[#F26B4B]/10 hover:bg-[#F26B4B]/20 text-[#D95637] text-xs font-bold flex items-center gap-1.5 transition border border-[#F26B4B]/30 shadow-xs"
-                title="Kembalikan semua filter ke kondisi awal"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset Filter</span>
-              </button>
-            )}
-          </div>
+        {/* Wilayah 19 Kab/Kota */}
+        <select
+          value={selectedRegion}
+          onChange={(e) => setSelectedRegion(e.target.value)}
+          className="h-9 px-2.5 py-1 rounded-lg bg-[#F6F3EC] border border-[#234B24]/10 text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-1 focus:ring-[#234B24]"
+        >
+          <option value="all">Semua Wilayah (19 Kab/Kota)</option>
+          {SUMBAR_19_REGIONS.map((region) => (
+            <option key={region} value={region}>
+              {region}
+            </option>
+          ))}
+        </select>
+
+        {/* Kategori Destinasi */}
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="h-9 px-2.5 py-1 rounded-lg bg-[#F6F3EC] border border-[#234B24]/10 text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-1 focus:ring-[#234B24]"
+        >
+          <option value="all">Semua Kategori</option>
+          {destinationCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Segmen Wisatawan Pills */}
+        <div className="flex items-center gap-1 bg-[#F6F3EC] p-0.5 rounded-lg border border-[#234B24]/10">
+          <button
+            type="button"
+            onClick={() => setSelectedSegment('all')}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition ${
+              selectedSegment === 'all'
+                ? 'bg-[#234B24] text-white shadow-2xs'
+                : 'text-[#4A5248] hover:text-[#1B1F1A]'
+            }`}
+          >
+            Semua
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedSegment('personal')}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition ${
+              selectedSegment === 'personal'
+                ? 'bg-[#234B24] text-white shadow-2xs'
+                : 'text-[#4A5248] hover:text-[#1B1F1A]'
+            }`}
+          >
+            Personal
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedSegment('group')}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition ${
+              selectedSegment === 'group'
+                ? 'bg-[#F26B4B] text-white shadow-2xs'
+                : 'text-[#4A5248] hover:text-[#1B1F1A]'
+            }`}
+          >
+            Rombongan
+          </button>
         </div>
 
-        {/* Kontrol Filter Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {/* 1. Periode Waktu */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-[#234B24]" />
-              <span>Periode Waktu:</span>
-            </label>
-            <select
-              value={periodPreset}
-              onChange={(e) => setPeriodPreset(e.target.value as PeriodPreset)}
-              className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
-            >
-              <option value="all">Semua Periode</option>
-              <option value="today">Hari Ini</option>
-              <option value="7d">7 Hari Terakhir</option>
-              <option value="30d">30 Hari Terakhir</option>
-              <option value="this_month">Bulan Ini</option>
-              <option value="this_year">Tahun Ini</option>
-              <option value="custom">Pilih Tanggal (Custom)</option>
-            </select>
-          </div>
+        {/* Checkbox GPS Terverifikasi */}
+        <label className="flex items-center gap-1.5 cursor-pointer select-none text-xs font-semibold text-[#1B1F1A] ml-1">
+          <input
+            type="checkbox"
+            checked={onlyValidGps}
+            onChange={(e) => setOnlyValidGps(e.target.checked)}
+            className="w-3.5 h-3.5 rounded text-[#234B24] accent-[#234B24] border-[#234B24]/20 focus:ring-0 cursor-pointer"
+          />
+          <span>GPS Terverifikasi</span>
+        </label>
 
-          {/* 2. Wilayah 19 Kab/Kota */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-[#234B24]" />
-              <span>Wilayah (19 Kab/Kota):</span>
-            </label>
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
-            >
-              <option value="all">Semua 19 Kab/Kota Sumbar</option>
-              {SUMBAR_19_REGIONS.map((region) => (
-                <option key={region} value={region}>
-                  {region}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 3. Kategori Destinasi */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5 text-[#234B24]" />
-              <span>Kategori Destinasi:</span>
-            </label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A] focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
-            >
-              <option value="all">Semua Kategori ({destinationCategories.length})</option>
-              {destinationCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 4. Segmen Wisatawan */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[#4A5248] flex items-center gap-1">
-              <Users className="w-3.5 h-3.5 text-[#234B24]" />
-              <span>Segmen Wisatawan:</span>
-            </label>
-            <div className="grid grid-cols-3 gap-1 bg-[#F6F3EC] p-1 rounded-xl border border-[#CFD8BE]">
-              <button
-                type="button"
-                onClick={() => setSelectedSegment('all')}
-                className={`py-1.5 text-[11px] font-bold rounded-lg transition ${
-                  selectedSegment === 'all'
-                    ? 'bg-[#234B24] text-white shadow-xs'
-                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
-                }`}
-              >
-                Semua
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedSegment('personal')}
-                className={`py-1.5 text-[11px] font-bold rounded-lg transition ${
-                  selectedSegment === 'personal'
-                    ? 'bg-[#234B24] text-white shadow-xs'
-                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
-                }`}
-                title="Personal Mandiri (stemp_visit)"
-              >
-                Personal
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedSegment('group')}
-                className={`py-1.5 text-[11px] font-bold rounded-lg transition ${
-                  selectedSegment === 'group'
-                    ? 'bg-[#F26B4B] text-white shadow-xs'
-                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
-                }`}
-                title="Rombongan (open_trips)"
-              >
-                Rombongan
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Input Rentang Tanggal Custom (Jika periodPreset === 'custom') */}
-        {periodPreset === 'custom' && (
-          <div className="p-3.5 bg-[#F6F3EC] rounded-xl border border-[#CFD8BE] flex flex-wrap items-center gap-4">
-            <span className="text-xs font-bold text-[#234B24]">Rentang Tanggal Custom:</span>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-[#4A5248] font-medium">Dari:</label>
-              <input
-                type="date"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="px-3 py-1.5 bg-white rounded-lg border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-[#4A5248] font-medium">Sampai:</label>
-              <input
-                type="date"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="px-3 py-1.5 bg-white rounded-lg border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-              />
-            </div>
-            {(customStartDate || customEndDate) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                }}
-                className="text-[11px] font-bold text-[#D95637] hover:underline"
-              >
-                Bersihkan Tanggal
-              </button>
-            )}
-          </div>
+        {/* Reset Filter Button */}
+        {isFilterActive && (
+          <button
+            type="button"
+            onClick={handleResetFilter}
+            className="h-9 px-2.5 rounded-lg bg-[#F26B4B]/10 hover:bg-[#F26B4B]/20 text-[#D95637] text-xs font-bold flex items-center gap-1 transition ml-auto"
+            title="Reset filter"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset</span>
+          </button>
         )}
-
-        {/* Baris Bawah: Toggle Sensor GPS + Ringkasan Chips Filter Aktif */}
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-[#234B24]/10">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={onlyValidGps}
-              onChange={(e) => setOnlyValidGps(e.target.checked)}
-              className="w-4 h-4 rounded text-[#234B24] accent-[#234B24] border-[#CFD8BE] focus:ring-0 cursor-pointer"
-            />
-            <span className="font-bold text-[#1B1F1A]">
-              Hanya GPS Valid (<code className="text-[11px] font-mono text-[#234B24]">is_gps_valid = true</code>)
-            </span>
-          </label>
-
-          {/* Chips Filter Aktif */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-medium text-[#767676]">Filter Aktif:</span>
-            {activeFilterChips.map((chip, idx) => (
-              <span
-                key={idx}
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24] border border-[#CFD8BE]"
-              >
-                {chip}
-              </span>
-            ))}
-            <span className="text-[11px] text-[#4A5248] ml-1 font-semibold">
-              ({matchingDestinations.length} Destinasi Lolos)
-            </span>
-          </div>
-        </div>
       </section>
 
       {/* ==================================================================== */}
@@ -1478,128 +1357,60 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         aria-label="4 Kartu Metrik Makro Utama Kunjungan Dispar Sumbar"
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 no-print"
       >
-        {/* Kartu 1: Total Wisatawan Terlacak (Breakdown Personal vs Rombongan) */}
+        {/* Kartu 1: Total Wisatawan Terlacak */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#4A5248]">Total Wisatawan Terlacak</span>
-            <div className="w-8 h-8 rounded-xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center">
-              <Users className="w-4 h-4" aria-hidden="true" />
-            </div>
+            <span className="text-xs text-slate-500 font-semibold">Total Wisatawan Terlacak</span>
+            <Users className="w-4 h-4 text-[#234B24]/70" aria-hidden="true" />
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#234B24] flex items-baseline gap-2">
-              <span>{totalVisitorsDisplay.toLocaleString('id-ID')}</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#1E9E5A]/15 text-[#166534]">
-                +14.2% MoM
-              </span>
-            </div>
-            {/* Visualisasi Terpisah Personal vs Rombongan */}
-            <div className="mt-3 pt-2.5 border-t border-[#234B24]/10 grid grid-cols-2 gap-2">
-              <div
-                className={`p-2 rounded-xl border transition ${
-                  selectedSegment === 'group'
-                    ? 'bg-gray-50 border-gray-200 opacity-60'
-                    : 'bg-[#234B24]/5 border-[#234B24]/10'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold text-[#234B24] block uppercase">Personal</span>
-                  {selectedSegment === 'group' && (
-                    <span className="text-[9px] font-bold text-gray-500">(Dikecualikan)</span>
-                  )}
-                </div>
-                <span className="text-sm font-black text-[#234B24]">
-                  {personalVisitsCount.toLocaleString('id-ID')}
-                </span>
-                <span className="text-[10px] text-[#4A5248] block">
-                  {onlyValidGps ? 'GPS Valid' : 'stemp_visit'}
-                </span>
-              </div>
-              <div
-                className={`p-2 rounded-xl border transition ${
-                  selectedSegment === 'personal'
-                    ? 'bg-gray-50 border-gray-200 opacity-60'
-                    : 'bg-[#F26B4B]/10 border-[#F26B4B]/20'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold text-[#C2410C] block uppercase">Rombongan</span>
-                  {selectedSegment === 'personal' && (
-                    <span className="text-[9px] font-bold text-gray-500">(Dikecualikan)</span>
-                  )}
-                </div>
-                <span className="text-sm font-black text-[#F26B4B]">
-                  {groupVisitsCount.toLocaleString('id-ID')}
-                </span>
-                <span className="text-[10px] text-[#4A5248] block">open_trips</span>
-              </div>
-            </div>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
+            {totalVisitorsDisplay.toLocaleString('id-ID')}
           </div>
+          <p className="text-xs text-slate-500">
+            {personalVisitsCount.toLocaleString('id-ID')} Personal · {groupVisitsCount.toLocaleString('id-ID')} Grup
+          </p>
         </div>
 
-        {/* Kartu 2: Total Rombongan / Open Trip Aktif */}
+        {/* Kartu 2: Open Trip & Rombongan */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#4A5248]">Rombongan / Open Trip Aktif</span>
-            <div className="w-8 h-8 rounded-xl bg-[#F26B4B]/10 text-[#F26B4B] flex items-center justify-center">
-              <Calendar className="w-4 h-4" aria-hidden="true" />
-            </div>
+            <span className="text-xs text-slate-500 font-semibold">Open Trip &amp; Rombongan</span>
+            <Calendar className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#F26B4B] flex items-baseline gap-2">
-              <span>{activeGroupsCount} Rombongan</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
-                {groupTouristsCount.toLocaleString('id-ID')} Wisatawan
-              </span>
-            </div>
-            <p className="text-[11px] text-[#4A5248] mt-1 font-medium">
-              {selectedSegment === 'personal'
-                ? 'Dikecualikan oleh filter segmen Personal'
-                : 'Terjadwal via Group Invite & Open Trip'}
-            </p>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#F26B4B]">
+            {activeGroupsCount} Rombongan
           </div>
+          <p className="text-xs text-slate-500">
+            {groupTouristsCount.toLocaleString('id-ID')} Wisatawan terjadwal
+          </p>
         </div>
 
-        {/* Kartu 3: Skor Keaslian Gaode & Dwell Time (gaode_behavior_rankings) */}
+        {/* Kartu 3: Skor Keaslian Gaode */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#4A5248]">Skor Keaslian Gaode (Avg)</span>
-            <div className="w-8 h-8 rounded-xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
-            </div>
+            <span className="text-xs text-slate-500 font-semibold">Skor Keaslian Gaode</span>
+            <Sparkles className="w-4 h-4 text-[#234B24]/70" aria-hidden="true" />
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#234B24] flex items-baseline gap-2">
-              <span>{avgGaodeScore}</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#1E9E5A]/15 text-[#166534]">
-                Anti-Fake Verified
-              </span>
-            </div>
-            <p className="text-[11px] text-[#4A5248] mt-1 font-medium">
-              Rata-rata Dwell Time: <strong>{avgDwellHours} Jam</strong> (Sumber: gaode_behavior_rankings)
-            </p>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
+            {avgGaodeScore}
           </div>
+          <p className="text-xs text-slate-500">
+            Dwell time {avgDwellHours} jam · Anti-Fake Verified
+          </p>
         </div>
 
-        {/* Kartu 4: Telemetri Latensi & SLA Database (api_telemetry_logs) */}
+        {/* Kartu 4: Telemetri Layanan & SLA */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#4A5248]">Telemetri SLA &amp; API PostGIS</span>
-            <div className="w-8 h-8 rounded-xl bg-[#1E9E5A]/10 text-[#1E9E5A] flex items-center justify-center">
-              <Activity className="w-4 h-4" aria-hidden="true" />
-            </div>
+            <span className="text-xs text-slate-500 font-semibold">Telemetri SLA &amp; API</span>
+            <Activity className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#1E9E5A] flex items-baseline gap-2">
-              <span>{apiSlaLatency} ms</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#1E9E5A]/15 text-[#166534]">
-                Cache Hit {apiCacheHitRate}%
-              </span>
-            </div>
-            <p className="text-[11px] text-[#4A5248] mt-1 font-medium">
-              PostgreSQL 16 + PostGIS SLA Optimal (api_telemetry_logs)
-            </p>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#1E9E5A]">
+            {apiSlaLatency} ms
           </div>
+          <p className="text-xs text-slate-500">
+            Cache hit {apiCacheHitRate}% · SLA optimal
+          </p>
         </div>
       </section>
 
@@ -1608,72 +1419,71 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* ==================================================================== */}
       <nav
         aria-label="Tab Manajemen Kunjungan & Analitik"
-        className="bg-white rounded-2xl p-2 border border-[#234B24]/8 shadow-[0_2px_12px_rgba(35,75,36,0.03)] flex flex-wrap gap-2 no-print"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs no-print"
       >
         <button
           type="button"
           onClick={() => setActiveTab('heatmap_prediction')}
-          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
             activeTab === 'heatmap_prediction'
-              ? 'bg-[#234B24] text-white shadow-sm'
-              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
           }`}
         >
-          <Compass className="w-4 h-4" aria-hidden="true" />
-          <span>1. Heatmap Kepadatan &amp; Prediksi Kunjungan</span>
+          <Compass className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Heatmap &amp; Prediksi</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('partner_performance')}
-          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
             activeTab === 'partner_performance'
-              ? 'bg-[#234B24] text-white shadow-sm'
-              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
           }`}
         >
-          <Store className="w-4 h-4" aria-hidden="true" />
-          <span>2. Interaksi Mitra UMKM &amp; Top 5 Gaode</span>
+          <Store className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>UMKM &amp; Gaode</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('incident_recap')}
-          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
             activeTab === 'incident_recap'
-              ? 'bg-[#234B24] text-white shadow-sm'
-              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
           }`}
         >
-          <AlertTriangle className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-          <span>3. Rekapitulasi Insiden &amp; Rasio Tanggap</span>
+          <AlertTriangle className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
+          <span>Insiden &amp; SOS</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('export_report')}
-          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
             activeTab === 'export_report'
-              ? 'bg-[#234B24] text-white shadow-sm'
-              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
           }`}
         >
-          <FileText className="w-4 h-4" aria-hidden="true" />
-          <span>4. Ekspor Laporan Resmi (PDF/CSV)</span>
+          <FileText className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Laporan</span>
         </button>
 
-        {/* Tab 5: Health & Benchmark SLA (Use Case 10) */}
         <button
           type="button"
           onClick={() => setActiveTab('system_benchmark')}
-          className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-1.5 ml-auto ${
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ml-auto ${
             activeTab === 'system_benchmark'
-              ? 'bg-[#234B24] text-white shadow-sm'
-              : 'bg-white hover:bg-[#F6F3EC] text-[#4A5248] border border-[#234B24]/12'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
           }`}
           title="Telemetri SLA & Benchmark Sistem"
         >
-          <Activity className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
+          <Activity className="w-3.5 h-3.5 text-[#1E9E5A]" aria-hidden="true" />
           <span>Benchmark SLA</span>
         </button>
       </nav>
@@ -1688,32 +1498,24 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
             aria-label="Grafik Prediksi Lonjakan Kunjungan 7 Hari ke Depan"
             className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-6"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#234B24]/10 pb-5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-[#F26B4B]" />
-                  <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A]">
-                    Prediksi Kunjungan &amp; Lonjakan Rombongan 7 Hari ke Depan
-                  </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-[#F26B4B]/15 text-[#D95637]">
-                    Predictive Analytics
-                  </span>
-                </div>
-                <p className="text-xs text-[#4A5248] mt-1">
-                  Sistem membaca jadwal Auto-Itinerary dari rombongan-rombongan grup wisatawan via Group Invite untuk mengantisipasi kepadatan destinasi.
-                </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#234B24]/10 pb-4">
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4 text-[#F26B4B]" />
+                <h3 className="text-sm font-bold text-[#1B1F1A]">
+                  Prediksi Kunjungan 7 Hari ke Depan
+                </h3>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#234B24]/10 text-[#234B24] text-xs font-bold">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#234B24]" />
-                  <span>Personal (Mandiri)</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#234B24]/10 text-[#234B24] text-[11px] font-bold">
+                  <span className="w-2 h-2 rounded-full bg-[#234B24]" />
+                  <span>Personal</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F26B4B]/15 text-[#C2410C] text-xs font-bold">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#F26B4B]" />
-                  <span>Rombongan (Grup / Open Trip)</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F26B4B]/15 text-[#C2410C] text-[11px] font-bold">
+                  <span className="w-2 h-2 rounded-full bg-[#F26B4B]" />
+                  <span>Rombongan</span>
                 </div>
-                <span className="px-3 py-1 rounded-xl bg-[#234B24] text-white text-xs font-bold shadow-xs">
+                <span className="px-2.5 py-1 rounded-lg bg-[#234B24] text-white text-[11px] font-bold">
                   {selectedPredictionDay.dayName}, {selectedPredictionDay.date}
                 </span>
               </div>

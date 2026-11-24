@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Smartphone,
   ExternalLink,
+  Menu,
 } from 'lucide-react';
 import {
   AdminAuthResponse,
@@ -97,6 +98,7 @@ export const App: React.FC = () => {
   const [isShowcaseMode, setIsShowcaseMode] = useState<boolean>(false);
   const [showcaseRightTab, setShowcaseRightTab] = useState<'wa' | 'qr'>('wa');
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'intel_heatmap' | 'system_benchmark'>('intel_heatmap');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
@@ -436,9 +438,44 @@ export const App: React.FC = () => {
         isShowcaseMode={isShowcaseMode}
         onToggleShowcaseMode={() => setIsShowcaseMode((prev) => !prev)}
         onLogout={handleLogout}
+        isMobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
       <main className="flex-1 min-w-0 overflow-x-hidden relative flex flex-col">
+        {/* Mobile Header Bar */}
+        <header className="lg:hidden sticky top-0 z-30 bg-[#234B24] text-[#F6F3EC] px-4 py-3 flex items-center justify-between border-b border-[#234B24]/20 shadow-sm shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="p-1.5 rounded-lg text-[#F6F3EC] hover:bg-white/10 active:scale-95 transition-all"
+              aria-label="Buka Menu Navigasi"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center font-black text-xs text-[#F6F3EC]">
+                W
+              </div>
+              <span className="font-bold text-sm tracking-tight text-[#F6F3EC]">
+                WISGO <span className="font-normal text-xs text-[#F6F3EC]/70">Admin</span>
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-full bg-white/10 text-[#F6F3EC] font-medium text-[11px]">
+              {activeMenu === 'destinations' ? 'Destinasi' :
+               activeMenu === 'tariffs_qr' ? 'Tarif & QR' :
+               activeMenu === 'cms_360' ? 'Panorama 360°' :
+               activeMenu === 'challenges' ? 'Challenge' :
+               activeMenu === 'command_center' || activeMenu === 'saber_pungli' ? 'Komando SOS' :
+               activeMenu === 'partners' ? 'UMKM & Trip' :
+               activeMenu === 'wa_simulator' ? 'Simulator WA' : 'Analitik'}
+            </span>
+          </div>
+        </header>
+
         {/* Notifikasi Toast Halus */}
         {toastMessage && (
           <div

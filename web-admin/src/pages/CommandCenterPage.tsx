@@ -360,113 +360,101 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Utama Pusat Komando */}
-      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-        <div className="flex flex-col gap-5">
-          {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
-          <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0 mt-0.5">
-              <Radio className="w-6 h-6" aria-hidden="true" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                  Pusat Komando Terpadu Pungli &amp; SOS SAR
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#234B24]/8 text-[#234B24]">
-                  Siaga 24/7 Sumbar
-                </span>
-              </div>
-              <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Kendali penuh Administrator Utama: Penindakan aduan pungli &amp; pelanggaran tarif resmi Perda, respon sinyal darurat SOS GPS wisatawan, dan pemantauan jalur ekstrem rawan bencana di 19 Kabupaten/Kota.
-              </p>
-            </div>
-          </div>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
+            Pusat Komando Terpadu Pungli &amp; SOS SAR
+          </h1>
+          <p className="text-xs text-[#4A5248] mt-0.5">
+            Penindakan aduan pungli, respon darurat SOS SAR, dan peringatan dini cuaca 19 Kab/Kota.
+          </p>
+        </div>
 
-          {/* Baris 2: Barisan Tab Navigasi Pusat Komando */}
-          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('pungli')}
-                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-                  activeTab === 'pungli'
-                    ? 'bg-[#234B24] text-white shadow-sm'
-                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-                }`}
-              >
-                <ShieldAlert className="w-4 h-4" aria-hidden="true" />
-                <span>Aduan Pungli &amp; Fasilitas</span>
-                {countBaru > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white font-bold">
-                    {countBaru} Baru
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('sos')}
-                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-                  activeTab === 'sos'
-                    ? 'bg-[#234B24] text-white shadow-sm'
-                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-                }`}
-              >
-                <LifeBuoy className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-                <span>Nomor Darurat &amp; Siaga SOS SAR</span>
-                {activeSosCount > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse font-bold">
-                    {activeSosCount} Sinyal
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('hazard')}
-                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-                  activeTab === 'hazard'
-                    ? 'bg-[#234B24] text-white shadow-sm'
-                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-                }`}
-              >
-                <AlertTriangle className="w-4 h-4 text-[#CA8A04]" aria-hidden="true" />
-                <span>Peringatan Jalur Rawan</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/8 text-[#234B24] font-bold">
-                  {hazardAlerts.length} Jalur
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('weather')}
-                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-                  activeTab === 'weather'
-                    ? 'bg-[#234B24] text-white shadow-sm'
-                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-                }`}
-              >
-                <CloudSun className="w-4 h-4 text-[#3B82F6]" aria-hidden="true" />
-                <span>Cuaca Real-Time Wisata</span>
-                {extremeWeatherCount > 0 ? (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-600 text-white animate-pulse font-black">
-                    {extremeWeatherCount} Ekstrem
-                  </span>
-                ) : (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/8 text-[#234B24] font-bold">
-                    {weatherList.length} Titik
-                  </span>
-                )}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-[#4A5248]">
-              <span>Kesiagaan Wilayah:</span>
-              <strong className="text-[#234B24]">Satgas Saber Pungli &amp; Basarnas Padang</strong>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-[#234B24] shrink-0 bg-white px-3 py-1.5 rounded-xl border border-[#234B24]/10 shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-[#1E9E5A] animate-pulse" />
+          <span>Siaga 24/7 · Satgas &amp; Basarnas</span>
         </div>
       </header>
+
+      {/* Sub-Tabs Navigasi Pusat Komando */}
+      <nav
+        aria-label="Tab Pusat Komando"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+      >
+        <button
+          type="button"
+          onClick={() => setActiveTab('pungli')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'pungli'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Aduan Pungli</span>
+          {countBaru > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white font-bold">
+              {countBaru} Baru
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('sos')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'sos'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <LifeBuoy className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
+          <span>Siaga SOS SAR</span>
+          {activeSosCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse font-bold">
+              {activeSosCount} Sinyal
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('hazard')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'hazard'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-[#CA8A04]" aria-hidden="true" />
+          <span>Jalur Rawan</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/10 text-[#234B24] font-bold">
+            {hazardAlerts.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('weather')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'weather'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <CloudSun className="w-3.5 h-3.5 text-[#3B82F6]" aria-hidden="true" />
+          <span>Cuaca Real-Time</span>
+          {extremeWeatherCount > 0 ? (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-600 text-white animate-pulse font-black">
+              {extremeWeatherCount} Ekstrem
+            </span>
+          ) : (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/10 text-[#234B24] font-bold">
+              {weatherList.length} Titik
+            </span>
+          )}
+        </button>
+      </nav>
 
       {/* ==================================================================== */}
       {/* TAB 1: PENINDAKAN ADUAN PUNGLI & FASILITAS                           */}

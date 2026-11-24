@@ -619,149 +619,143 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
   return (
     <div className="space-y-6 overflow-x-hidden">
       {/* Header Halaman */}
-      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
-              <span className="px-3 py-1 rounded-full bg-[#234B24]/8 text-[#234B24] font-extrabold text-[11px] uppercase tracking-wider">
-                Gamifikasi &amp; Partisipasi Wisatawan
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#F26B4B]/10 text-[#F26B4B] font-bold text-[10px]">
-                5 Level Petualang • Strava-Style Profile
-              </span>
-            </div>
-            <h1 className="text-2xl font-black text-[#1B1F1A] tracking-tight">
-              Gamifikasi Check-In, Lencana Petualang &amp; Profil Pengguna
-            </h1>
-            <p className="text-xs text-[#4A5248] mt-1">
-              Kelola tantangan check-in lokasi, kriteria 5 tingkat level petualang, validasi profil experience ala Strava, serta template posting share &amp; QR unduh.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {activeTab === 'checkin' && (
-              <button
-                type="button"
-                onClick={handleOpenCreateModal}
-                className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-sm transition duration-200"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Buat Tantangan Baru</span>
-              </button>
-            )}
-          </div>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
+            Gamifikasi &amp; Check-In Challenge
+          </h1>
+          <p className="text-xs text-[#4A5248] mt-0.5">
+            Tantangan wisata, 5 level petualang, profil experience ala Strava, dan template posting.
+          </p>
         </div>
 
-        {/* 4 Kartu Metrik Makro */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-[#234B24]/8">
-          <div className="p-5 rounded-2xl bg-white border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-            <div className="flex items-center justify-between text-[#234B24]">
-              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#4A5248]">Tantangan Aktif</span>
-              <Trophy className="w-4 h-4 text-[#234B24]" />
-            </div>
-            <div className="text-2xl font-black text-[#1B1F1A] mt-2">
-              {totalActiveChallenges}
-            </div>
-            <p className="text-[11px] text-[#4A5248] mt-1">
-              Dari total {challenges.length} program aktif
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-            <div className="flex items-center justify-between text-[#234B24]">
-              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#4A5248]">Wisatawan Ikut Serta</span>
-              <Users className="w-4 h-4 text-[#1E9E5A]" />
-            </div>
-            <div className="text-2xl font-black text-[#1B1F1A] mt-2">
-              {totalParticipants.toLocaleString('id-ID')}
-            </div>
-            <p className="text-[11px] text-[#4A5248] mt-1">
-              Melalui aplikasi mobile WISGO
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-            <div className="flex items-center justify-between text-[#C2410C]">
-              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#C2410C]">Siap Klaim Hadiah</span>
-              <Sparkles className="w-4 h-4 text-[#F26B4B]" />
-            </div>
-            <div className="text-2xl font-black text-[#C2410C] mt-2">
-              {totalReadyToClaim} Wisatawan
-            </div>
-            <p className="text-[11px] text-[#9A3412] mt-1">
-              Menunggu verifikasi &amp; serah hadiah
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-            <div className="flex items-center justify-between text-[#0D9488]">
-              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#0D9488]">Profil Petualang Terdaftar</span>
-              <Award className="w-4 h-4 text-[#0D9488]" />
-            </div>
-            <div className="text-2xl font-black text-[#0D9488] mt-2">
-              {userProfiles.length} Pengguna
-            </div>
-            <p className="text-[11px] text-[#0F766E] mt-1">
-              5 Tingkatan Level Aktif Terlacak
-            </p>
-          </div>
-        </div>
-
-        {/* 4 SUB-TAB NAVIGATION BAR */}
-        <div className="flex items-center gap-2 mt-6 pt-4 border-t border-[#234B24]/8 flex-wrap">
+        {activeTab === 'checkin' && (
           <button
             type="button"
-            onClick={() => setActiveTab('checkin')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeTab === 'checkin'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-            }`}
+            onClick={handleOpenCreateModal}
+            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-xs transition duration-200 shrink-0"
           >
-            <Trophy className="w-4 h-4" />
-            <span>Tab 1: Check-In &amp; Tantangan</span>
+            <Plus className="w-4 h-4 text-[#F26B4B]" />
+            <span>Buat Tantangan</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('levels')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeTab === 'levels'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-            }`}
-          >
-            <Award className="w-4 h-4 text-[#F59E0B]" />
-            <span>Tab 2: 5 Level &amp; Lencana Petualang</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('profiles')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeTab === 'profiles'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-            }`}
-          >
-            <Users className="w-4 h-4 text-[#3B82F6]" />
-            <span>Tab 3: Profil &amp; Experience Pengguna</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('templates')}
-            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
-              activeTab === 'templates'
-                ? 'bg-[#234B24] text-white shadow-sm'
-                : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
-            }`}
-          >
-            <Share2 className="w-4 h-4 text-[#F26B4B]" />
-            <span>Tab 4: Template Share &amp; Unduh QR</span>
-          </button>
-        </div>
+        )}
       </header>
+
+      {/* 4 Kartu Metrik Makro */}
+      <section
+        aria-label="Metrik Gamifikasi"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-semibold">Tantangan Aktif</span>
+            <Trophy className="w-4 h-4 text-[#234B24]/70" />
+          </div>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
+            {totalActiveChallenges}
+          </div>
+          <p className="text-xs text-slate-500">
+            Dari {challenges.length} program terdaftar
+          </p>
+        </div>
+
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-semibold">Wisatawan Ikut Serta</span>
+            <Users className="w-4 h-4 text-[#1E9E5A]" />
+          </div>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
+            {totalParticipants.toLocaleString('id-ID')}
+          </div>
+          <p className="text-xs text-slate-500">
+            Aplikasi mobile WISGO
+          </p>
+        </div>
+
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-semibold">Siap Klaim Hadiah</span>
+            <Sparkles className="w-4 h-4 text-[#F26B4B]" />
+          </div>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#F26B4B]">
+            {totalReadyToClaim} Wisatawan
+          </div>
+          <p className="text-xs text-slate-500">
+            Menunggu verifikasi Dispar
+          </p>
+        </div>
+
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-semibold">Profil Petualang</span>
+            <Award className="w-4 h-4 text-[#234B24]/70" />
+          </div>
+          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
+            {userProfiles.length}
+          </div>
+          <p className="text-xs text-slate-500">
+            5 Tingkatan level aktif
+          </p>
+        </div>
+      </section>
+
+      {/* 4 SUB-TAB NAVIGATION BAR */}
+      <nav
+        aria-label="Tab Gamifikasi"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+      >
+        <button
+          type="button"
+          onClick={() => setActiveTab('checkin')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'checkin'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          <span>Check-In &amp; Tantangan</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('levels')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'levels'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Award className="w-3.5 h-3.5 text-[#F59E0B]" />
+          <span>5 Level &amp; Lencana</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('profiles')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'profiles'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5 text-[#3B82F6]" />
+          <span>Profil Experience</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('templates')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            activeTab === 'templates'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Share2 className="w-3.5 h-3.5 text-[#F26B4B]" />
+          <span>Template Share &amp; QR</span>
+        </button>
+      </nav>
 
       {/* ==================================================================== */}
       {/* TAB 1: CHECK-IN & TANTANGAN WISATA                                   */}
