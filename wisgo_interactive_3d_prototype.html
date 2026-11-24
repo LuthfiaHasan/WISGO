@@ -560,7 +560,7 @@
       </button>
       <button onclick="triggerScenario('loaded')" id="scen-loaded"
         class="btn-press py-1.5 px-1 rounded-xl text-[10px] font-semibold bg-[#F3EBDC] text-[#142618] hover:bg-[#DFECE2] text-center">
-        5. Tersimpan
+        5. Open Trip
       </button>
       <button onclick="triggerScenario('shimmer')" id="scen-shimmer"
         class="btn-press py-1.5 px-1 rounded-xl text-[10px] font-semibold bg-[#F3EBDC] text-[#142618] hover:bg-[#DFECE2] text-center">
@@ -851,188 +851,74 @@
     <!-- =================================================================== -->
     <!-- VIEW 1: LAYAR 04 — SAVED PLACES (TERSIMPAN) + SKELETON + EMPTY      -->
     <!-- =================================================================== -->
-    <section id="view-saved" class="app-view flex-1 overflow-hidden">
+    <section id="view-saved" class="app-view flex-1 overflow-hidden relative">
 
-      <!-- Screen Header Open Trip -->
-      <div class="px-4 pt-3.5 pb-3 bg-[#FAF3E6] border-b border-[#E5DEC9] shrink-0">
-        <div class="flex items-baseline justify-between px-1">
-          <div>
-            <span class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#1E5B82]">
-              KOLABORASI & CARI BARENGAN
-            </span>
-            <h1 class="text-[20px] font-extrabold text-[#142618] tracking-tight leading-tight">
-              Open Trip Sumbar
-            </h1>
-          </div>
+      <!-- Screen Header Open Trip (Sesuai Desain Resmi Screenshot WISGO) -->
+      <div class="px-4 pt-3.5 pb-2.5 bg-[#FAF3E6] border-b border-[#E5DEC9] shrink-0 space-y-2.5">
+        <!-- Top Caption & Active Badge -->
+        <div class="flex items-center justify-between px-1">
+          <span class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#5A6B5D]">
+            KOLABORASI & CARI BARENGAN
+          </span>
           <span
-            class="px-2.5 py-1 rounded-full bg-[#E8F1F8] text-[#1E5B82] text-[11px] font-extrabold shrink-0 border border-[#1E5B82]/30">
-            3 Trip Aktif
+            class="px-3 py-1 rounded-full bg-[#EAF3EC] text-[#193D22] text-[10.5px] font-black shrink-0 border border-[#D5E2D7] flex items-center gap-1.5 shadow-xs">
+            <svg class="w-3.5 h-3.5 text-[#193D22]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span id="ot-active-count-badge">4 Trip Aktif</span>
           </span>
         </div>
 
-        <!-- Clean In-Screen State Switcher (Segmented Control for Testing UI States) -->
-        <div class="mt-2.5 p-1 rounded-xl bg-[#F3EBDC] border border-[#E5DEC9] grid grid-cols-4 gap-1">
-          <button onclick="setSavedViewState('loaded')" id="state-tab-loaded"
-            class="btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] text-center transition-all">
-            Daftar (<span id="tab-count-num" class="tnum">4</span>)
-          </button>
-          <button onclick="setSavedViewState('shimmer')" id="state-tab-shimmer"
-            class="btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-semibold text-[#5A6B5D] hover:text-[#142618] text-center transition-all">
-            Efek Memuat
-          </button>
-          <button onclick="setSavedViewState('empty')" id="state-tab-empty"
-            class="btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-semibold text-[#5A6B5D] hover:text-[#142618] text-center transition-all">
-            Kosong
-          </button>
-          <button onclick="toggleOfflineBanner()" id="state-tab-offline"
-            class="btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-semibold text-[#5A6B5D] hover:text-[#142618] text-center transition-all">
-            Luring: Mati
+        <!-- Title & Notification Bell -->
+        <div class="flex items-center justify-between px-1">
+          <h1 class="text-[22px] font-black text-[#142618] tracking-tight leading-tight">
+            Open Trip Sumbar
+          </h1>
+          <button onclick="showToast('Notifikasi Open Trip: Kuota Lembah Harau tersisa 3 kursi!')"
+            class="btn-press w-9 h-9 rounded-xl bg-white border border-[#D5E2D7] flex items-center justify-center text-[#142618] shadow-xs relative">
+            <svg class="w-4 h-4 text-[#193D22]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span class="w-2 h-2 rounded-full bg-[#E65F2B] absolute top-2 right-2 ring-2 ring-white"></span>
           </button>
         </div>
 
-        <!-- Region Navigator Bar inside Saved Places -->
-        <div id="saved-region-filter" class="mt-2.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
-          <button onclick="filterSavedByRegion('ALL')" data-reg="ALL"
-            class="reg-chip btn-press shrink-0 px-3 py-1 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] transition-all">
-            Semua Daerah
+        <!-- Category Filter Chips (Horizontal Scrollable) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5" id="opentrip-category-chips">
+          <button onclick="filterOpenTripByCategory('ALL')" data-ot-cat="ALL"
+            class="ot-cat-chip btn-press shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] flex items-center gap-1.5 shadow-sm transition-all">
+            <span>✓ Semua</span>
           </button>
-          <button onclick="filterSavedByRegion('Padang')" data-reg="Padang"
-            class="reg-chip btn-press shrink-0 px-3 py-1 rounded-lg text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all">
-            Padang
+          <button onclick="filterOpenTripByCategory('Wisata Alam & Pegunungan')" data-ot-cat="Wisata Alam & Pegunungan"
+            class="ot-cat-chip btn-press shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all">
+            Wisata Alam & Pegunungan
           </button>
-          <button onclick="filterSavedByRegion('Payakumbuh & 50 Kota')" data-reg="Payakumbuh & 50 Kota"
-            class="reg-chip btn-press shrink-0 px-3 py-1 rounded-lg text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all">
-            Payakumbuh & 50 Kota
+          <button onclick="filterOpenTripByCategory('Wisata Bahari & Pantai')" data-ot-cat="Wisata Bahari & Pantai"
+            class="ot-cat-chip btn-press shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all">
+            Wisata Bahari & Pantai
           </button>
-          <button onclick="filterSavedByRegion('Bukittinggi & Agam')" data-reg="Bukittinggi & Agam"
-            class="reg-chip btn-press shrink-0 px-3 py-1 rounded-lg text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all">
-            Bukittinggi
-          </button>
-          <button onclick="filterSavedByRegion('Daerah Terpencil')" data-reg="Daerah Terpencil"
-            class="reg-chip btn-press shrink-0 px-3 py-1 rounded-lg text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all">
-            Daerah Terpencil
+          <button onclick="filterOpenTripByCategory('Wisata Budaya & Nagari')" data-ot-cat="Wisata Budaya & Nagari"
+            class="ot-cat-chip btn-press shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all">
+            Wisata Budaya & Nagari
           </button>
         </div>
       </div>
 
-      <!-- Scrollable Body of Layar 04 -->
-      <div class="flex-1 overflow-y-auto no-scrollbar px-4 py-3.5 pb-24">
-
-        <!-- =============================================================== -->
-        <!-- STATE A: LOADED SAVED PLACES LIST (WITH IMAGE & VERTICAL FEES)  -->
-        <!-- =============================================================== -->
-        <div id="saved-list-container" class="space-y-4">
-          <!-- Populated dynamically via JS renderSavedCards() -->
+      <!-- Subheader: Jadwal Open Trip Terbuka (4) • 1 Destinasi Tunggal -->
+      <div class="px-4 pt-3 pb-1 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-[13px] font-black text-[#142618]">Jadwal Open Trip Terbuka</span>
+          <span id="ot-count-pill" class="px-2 py-0.5 rounded-full bg-[#E5DEC9] text-[#142618] text-[10.5px] font-black">4</span>
         </div>
-
-        <!-- =============================================================== -->
-        <!-- STATE B: SKELETON SHIMMER LOADER (MATCHING IMAGE + VERTICAL UI) -->
-        <!-- =============================================================== -->
-        <div id="saved-shimmer-container" class="hidden space-y-4" aria-busy="true"
-          aria-label="Memuat daftar destinasi tersimpan">
-          <!-- Shimmer Card 1 -->
-          <div class="bg-white rounded-2xl overflow-hidden border border-[#E5DEC9]">
-            <div class="h-36 w-full skeleton-box"></div>
-            <div class="p-4 space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="h-4 w-28 rounded skeleton-box"></div>
-                <div class="h-4 w-20 rounded skeleton-box"></div>
-              </div>
-              <div class="h-5 w-4/5 rounded skeleton-box"></div>
-              <div class="h-3.5 w-3/5 rounded skeleton-box"></div>
-              <!-- Vertical Fee Skeleton Rows -->
-              <div class="p-3 rounded-xl bg-[#FAF3E6] border border-[#E5DEC9] space-y-2.5">
-                <div class="flex justify-between">
-                  <div class="h-3.5 w-28 rounded skeleton-box"></div>
-                  <div class="h-3.5 w-20 rounded skeleton-box"></div>
-                </div>
-                <div class="flex justify-between pt-2 border-t border-[#E5DEC9]">
-                  <div class="h-3.5 w-32 rounded skeleton-box"></div>
-                  <div class="h-3.5 w-16 rounded skeleton-box"></div>
-                </div>
-                <div class="flex justify-between pt-2 border-t border-[#E5DEC9]">
-                  <div class="h-3.5 w-28 rounded skeleton-box"></div>
-                  <div class="h-3.5 w-16 rounded skeleton-box"></div>
-                </div>
-              </div>
-              <div class="flex gap-2 pt-1">
-                <div class="h-10 flex-1 rounded-xl skeleton-box"></div>
-                <div class="h-10 w-20 rounded-xl skeleton-box"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Shimmer Card 2 -->
-          <div class="bg-white rounded-2xl overflow-hidden border border-[#E5DEC9]">
-            <div class="h-36 w-full skeleton-box"></div>
-            <div class="p-4 space-y-3">
-              <div class="h-5 w-3/4 rounded skeleton-box"></div>
-              <div class="p-3 rounded-xl bg-[#FAF3E6] border border-[#E5DEC9] space-y-2.5">
-                <div class="flex justify-between">
-                  <div class="h-3.5 w-28 rounded skeleton-box"></div>
-                  <div class="h-3.5 w-20 rounded skeleton-box"></div>
-                </div>
-                <div class="flex justify-between pt-2 border-t border-[#E5DEC9]">
-                  <div class="h-3.5 w-32 rounded skeleton-box"></div>
-                  <div class="h-3.5 w-16 rounded skeleton-box"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- =============================================================== -->
-        <!-- ITEM 6B: EMPTY STATE UI (SAAT BELUM ADA BOOKMARK)               -->
-        <!-- =============================================================== -->
-        <div id="saved-empty-container" class="hidden py-4">
-          <div
-            class="bg-white rounded-3xl p-6 border border-[#D5E2D7] text-center shadow-[0_6px_24px_rgba(20,38,24,0.04)]">
-            <div
-              class="inline-flex items-center justify-center px-3.5 py-1 rounded-full bg-[#F3EBDC] border border-[#E5DEC9] text-[10.5px] font-extrabold tracking-[0.15em] text-[#5A6B5D] uppercase">
-              Daftar Tersimpan Kosong
-            </div>
-
-            <h2 class="mt-3.5 text-[18px] font-extrabold text-[#142618] tracking-tight">
-              Belum Ada Destinasi Disimpan
-            </h2>
-
-            <p class="mt-1.5 text-[12px] text-[#5A6B5D] leading-relaxed max-w-[290px] mx-auto">
-              Simpan destinasi wisata dari wilayah Padang, Payakumbuh, Bukittinggi, atau Daerah Terpencil agar foto
-              lokasi, panduan akses jalan, dan rincian biaya resmi tetap bisa dibuka tanpa sinyal.
-            </p>
-
-            <!-- Vertical Preview of What Gets Saved -->
-            <div class="mt-4 p-3.5 rounded-2xl bg-[#FAF3E6] border border-[#E5DEC9] text-left space-y-2">
-              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[#193D22]">
-                Data yang Tersimpan Luring di Perangkat:
-              </div>
-              <div class="divide-y divide-[#E5DEC9] text-[11.5px]">
-                <div class="py-1.5 flex items-center justify-between">
-                  <span class="text-[#5A6B5D]">Foto & Panduan Medan Jalan</span>
-                  <span class="font-bold text-[#142618]">Tersedia Luring</span>
-                </div>
-                <div class="py-1.5 flex items-center justify-between">
-                  <span class="text-[#5A6B5D]">Tarif Tiket & Parkir Resmi Perda</span>
-                  <span class="font-bold text-[#193D22]">Vertikal Lengkap</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="mt-5 space-y-2">
-              <button onclick="restoreDefaultBookmarks()"
-                class="btn-press w-full py-3 px-4 rounded-xl bg-[#193D22] hover:bg-[#2F663E] text-[#FAF3E6] text-[12.5px] font-bold">
-                Muat 4 Destinasi Unggulan Sumbar
-              </button>
-              <button onclick="switchMainTab('explore')"
-                class="btn-press w-full py-2.5 px-4 rounded-xl bg-[#DFECE2] text-[#193D22] text-[12px] font-bold">
-                Cari dari Navigator Daerah
-              </button>
-            </div>
-          </div>
-        </div>
-
+        <span class="text-[10.5px] font-semibold text-[#5A6B5D]">1 Destinasi Tunggal</span>
       </div>
+
+      <!-- Scrollable Open Trip Feed with Exact Cards -->
+      <div id="opentrip-cards-container" class="flex-1 overflow-y-auto no-scrollbar px-4 py-2 pb-28 space-y-4">
+        <!-- Rendered dynamically by renderOpenTripCards() -->
+      </div>
+
+      
+
     </section>
 
     <!-- =================================================================== -->
@@ -4562,7 +4448,336 @@ Day 2
 
     <!-- MODAL: DETAIL FASILITAS LINGKUNGAN KAWASAN                          -->
     <!-- =================================================================== -->
-    <div id="modal-facility-detail"
+    
+    <!-- =================================================================== -->
+    <!-- MODAL: TITIK KUMPUL GOOGLE MAPS INTEGRATED (ITEM 5 OPEN TRIP)       -->
+    <!-- =================================================================== -->
+    <div id="modal-meeting-point-maps"
+      class="hidden absolute inset-0 z-50 bg-[#142618]/75 backdrop-blur-sm flex flex-col justify-end transition-all">
+      <div class="w-full bg-[#FAF3E6] rounded-t-[32px] border-t-4 border-[#DC2626] p-5 space-y-3.5 max-h-[88vh] overflow-y-auto">
+        <div class="w-10 h-1 rounded-full bg-[#D5E2D7] mx-auto"></div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#FEE2E2] border border-[#FCA5A5]/60 flex items-center justify-center text-[#DC2626]">
+              📍
+            </div>
+            <div>
+              <h2 class="text-[16px] font-black text-[#142618]">Titik Kumpul Google Maps</h2>
+              <p class="text-[10px] text-[#5A6B5D]">Terintegrasi Navigasi Langsung ke Titik Kumpul</p>
+            </div>
+          </div>
+          <button onclick="closeMeetingPointMapsModal()"
+            class="w-8 h-8 rounded-full bg-[#F3EBDC] border border-[#E5DEC9] flex items-center justify-center text-[#5A6B5D]">✕</button>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-white border border-[#D5E2D7] space-y-2">
+          <span class="text-[9.5px] font-black uppercase tracking-wider text-[#DC2626] block">LOKASI TITIK KUMPUL RESMI</span>
+          <div id="mp-modal-name" class="text-[13px] font-black text-[#142618]">Rest Area Simpang Harau (Depan Kantor Nagari)</div>
+          <div class="flex items-center gap-2 text-[10.5px] text-[#5A6B5D] font-mono">
+            <span>Koordinat GPS:</span>
+            <span id="mp-modal-coords" class="font-bold text-[#142618]">-0.1042, 100.6728</span>
+          </div>
+        </div>
+
+        <!-- Simulated Interactive Map Preview -->
+        <div class="h-44 rounded-2xl bg-[#EDE4D3] border border-[#D5E2D7] relative overflow-hidden flex flex-col items-center justify-center shadow-inner">
+          <svg class="w-full h-full opacity-50" viewBox="0 0 300 150" preserveAspectRatio="none">
+            <path d="M 20,40 Q 90,80 180,30 T 290,90" stroke="#193D22" stroke-width="3" fill="none" />
+            <path d="M 50,130 Q 140,50 250,110" stroke="#DC2626" stroke-width="2" stroke-dasharray="4" fill="none" />
+            <circle cx="160" cy="65" r="20" fill="#FEE2E2" stroke="#DC2626" stroke-width="2" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+            <div class="w-10 h-10 rounded-full bg-[#DC2626] text-white flex items-center justify-center text-lg font-black shadow-lg animate-bounce">
+              📍
+            </div>
+            <span id="mp-modal-pin-label" class="mt-1 px-3 py-1 rounded-full bg-white/95 text-[#142618] text-[10.5px] font-black shadow-md border border-[#D5E2D7]">
+              Rest Area Simpang Harau
+            </span>
+          </div>
+        </div>
+
+        <!-- Guidance Box -->
+        <div class="p-3 rounded-2xl bg-[#FEF2F2] border border-[#FCA5A5]/60 text-[11px] text-[#991B1B] space-y-1">
+          <div class="font-black flex items-center gap-1.5">
+            <span>⚠️ Petunjuk Waktu Kedatangan:</span>
+          </div>
+          <p class="text-[10px] leading-relaxed">
+            Peserta diwajibkan telah berkumpul di titik kumpul <strong>30 menit sebelum keberangkatan</strong> untuk absensi dan briefing keselamatan bersama pemandu nagari.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button id="mp-modal-open-gmaps-btn" onclick="openExternalGoogleMaps()"
+            class="btn-press py-3 rounded-xl bg-[#DC2626] text-white text-[11.5px] font-black text-center flex items-center justify-center gap-1.5 shadow-md">
+            <span>Buka Google Maps ↗</span>
+          </button>
+          <button onclick="closeMeetingPointMapsModal()"
+            class="btn-press py-3 rounded-xl bg-white border border-[#D5E2D7] text-[#142618] text-[11.5px] font-extrabold text-center">
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODAL: VERIFIKASI PENYELENGGARA OPEN TRIP (ITEM 6 OPEN TRIP)        -->
+    <!-- =================================================================== -->
+    <div id="modal-verified-organizer"
+      class="hidden absolute inset-0 z-50 bg-[#142618]/75 backdrop-blur-sm flex flex-col justify-end transition-all">
+      <div class="w-full bg-[#FAF3E6] rounded-t-[32px] border-t-4 border-[#15803D] p-5 space-y-3.5 max-h-[88vh] overflow-y-auto">
+        <div class="w-10 h-1 rounded-full bg-[#D5E2D7] mx-auto"></div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#DCFCE7] border border-[#86EFAC]/60 flex items-center justify-center text-[#15803D]">
+              🛡️
+            </div>
+            <div>
+              <h2 class="text-[16px] font-black text-[#142618]">Verifikasi Penyelenggara</h2>
+              <p class="text-[10px] text-[#5A6B5D]">Jaminan Keamanan & Kredibilitas Open Trip WISGO</p>
+            </div>
+          </div>
+          <button onclick="closeVerifiedOrganizerModal()"
+            class="w-8 h-8 rounded-full bg-[#F3EBDC] border border-[#E5DEC9] flex items-center justify-center text-[#5A6B5D]">✕</button>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white border border-[#D5E2D7] shadow-sm space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-[#15803D] text-white flex items-center justify-center text-xl font-black shadow-sm">
+              ✓
+            </div>
+            <div>
+              <h3 id="org-modal-name" class="text-[14px] font-black text-[#142618]">Rahmat Hidayat (Guide Berlisensi Nagari)</h3>
+              <p id="org-modal-role" class="text-[11px] text-[#5A6B5D]">Pemandu Lokal Resmi Pokdarwis Nagari Harau</p>
+              <div class="flex items-center gap-1 text-[10.5px] font-extrabold text-[#15803D] mt-0.5">
+                <span>★ 4.95 Rating</span>
+                <span>•</span>
+                <span id="org-modal-trips">24 Trip Berhasil</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-[#F0FDF4] border border-[#86EFAC]/50 space-y-1.5 text-[10.5px]">
+            <div class="font-black text-[#15803D] flex items-center gap-1.5">
+              <span>✓ Status Verifikasi: AKTIF & TERVERIFIKASI RESMI</span>
+            </div>
+            <div class="text-[#166534] leading-relaxed">
+              Nomor Lisensi BNSP/Dispar: <strong>KBLI-79120-2024-SUMBAR</strong><br/>
+              KTA Pokdarwis Nagari: <strong>POK-HARAU-042</strong>
+            </div>
+          </div>
+
+          <p id="org-modal-desc" class="text-[11.5px] text-[#5A6B5D] leading-relaxed">
+            Pemandu lokal bersertifikat BNSP & Dinas Pariwisata Limapuluh Kota, berpengalaman 8 tahun memandu trekking tebing Harau.
+          </p>
+        </div>
+
+        <!-- Escrow Protection Guarantee -->
+        <div class="p-3.5 rounded-2xl bg-[#EAF3EC] border border-[#86EFAC]/70 flex items-start gap-3">
+          <span class="text-xl">🔒</span>
+          <div>
+            <span class="text-[11px] font-black text-[#193D22] block">Jaminan Rekening Escrow WISGO:</span>
+            <p class="text-[10px] text-[#5A6B5D] leading-relaxed mt-0.5">
+              Uang pendaftaran Anda aman dan ditahan di sistem Escrow WISGO sampai seluruh aktivitas trip selesai dilaksanakan dengan selamat.
+            </p>
+          </div>
+        </div>
+
+        <button onclick="closeVerifiedOrganizerModal()"
+          class="btn-press w-full py-3 rounded-xl bg-[#193D22] text-white text-[12px] font-extrabold text-center shadow-md">
+          Tutup Informasi Penyelenggara
+        </button>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODAL: INFORMASI CUACA DESTINASI (REAL-TIME WEATHER)                 -->
+    <!-- =================================================================== -->
+    <div id="modal-destination-weather"
+      class="hidden absolute inset-0 z-50 bg-[#142618]/75 backdrop-blur-sm flex flex-col justify-end transition-all">
+      <div class="w-full bg-[#FAF3E6] rounded-t-[32px] border-t-4 border-[#0284C7] p-5 space-y-3.5 max-h-[88vh] overflow-y-auto">
+        <div class="w-10 h-1 rounded-full bg-[#D5E2D7] mx-auto"></div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0369A1] text-lg">
+              ☁
+            </div>
+            <div>
+              <h2 class="text-[16px] font-black text-[#142618]">Informasi Cuaca Destinasi</h2>
+              <p class="text-[10px] text-[#5A6B5D]">Prakiraan Cuaca Real-Time Tingkat Wilayah</p>
+            </div>
+          </div>
+          <button onclick="closeDestinationWeatherModal()"
+            class="w-8 h-8 rounded-full bg-[#F3EBDC] border border-[#E5DEC9] flex items-center justify-center text-[#5A6B5D]">✕</button>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="p-4 rounded-2xl bg-gradient-to-br from-[#0284C7] to-[#0369A1] text-white shadow-md space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span id="weather-modal-dest-title" class="text-[14px] font-black block">Lembah Harau & Sarasah Bunta</span>
+              <span class="text-[10px] text-white/80">Pembaruan: Baru saja (Real-time)</span>
+            </div>
+            <span class="text-3xl">⛅</span>
+          </div>
+
+          <div class="flex items-baseline gap-2">
+            <span id="weather-modal-temp" class="text-4xl font-black">24°C</span>
+            <span id="weather-modal-cond" class="text-[13px] font-bold text-white/90">Cerah Berawan</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/20 text-center text-[10px]">
+            <div>
+              <div class="text-white/70">Kelembapan</div>
+              <div class="font-extrabold text-[12px]">78%</div>
+            </div>
+            <div>
+              <div class="text-white/70">Kecepatan Angin</div>
+              <div class="font-extrabold text-[12px]">12 km/j</div>
+            </div>
+            <div>
+              <div class="text-white/70">Indeks UV</div>
+              <div class="font-extrabold text-[12px]">Sedang (4)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Advisory -->
+        <div class="p-3.5 rounded-2xl bg-white border border-[#BAE6FD] space-y-1">
+          <span class="text-[9.5px] font-black uppercase tracking-wider text-[#0284C7] block">REKOMENDASI PERJALANAN:</span>
+          <p id="weather-modal-warning" class="text-[11.5px] text-[#142618] font-bold leading-relaxed">
+            Aman untuk trekking tebing dan wisata air. Angin sejuk dan visibilitas tebing sangat jernih.
+          </p>
+        </div>
+
+        <button onclick="closeDestinationWeatherModal()"
+          class="btn-press w-full py-3 rounded-xl bg-[#0369A1] text-white text-[12px] font-extrabold text-center shadow-md">
+          Tutup Info Cuaca
+        </button>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODAL: KONDISI NYATA DI LOKASI (GROUND CONDITION REPORT)            -->
+    <!-- =================================================================== -->
+    <div id="modal-ground-condition"
+      class="hidden absolute inset-0 z-50 bg-[#142618]/75 backdrop-blur-sm flex flex-col justify-end transition-all">
+      <div class="w-full bg-[#FAF3E6] rounded-t-[32px] border-t-4 border-[#15803D] p-5 space-y-3.5 max-h-[88vh] overflow-y-auto">
+        <div class="w-10 h-1 rounded-full bg-[#D5E2D7] mx-auto"></div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#DCFCE7] border border-[#86EFAC]/60 flex items-center justify-center text-[#15803D] text-lg">
+              👁
+            </div>
+            <div>
+              <h2 class="text-[16px] font-black text-[#142618]">Kondisi Riil di Lokasi</h2>
+              <p class="text-[10px] text-[#5A6B5D]">Laporan Nyata Petugas & Pemandu di Lapangan</p>
+            </div>
+          </div>
+          <button onclick="closeGroundConditionModal()"
+            class="w-8 h-8 rounded-full bg-[#F3EBDC] border border-[#E5DEC9] flex items-center justify-center text-[#5A6B5D]">✕</button>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white border border-[#D5E2D7] shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-full bg-[#DCFCE7] text-[#15803D] text-[10px] font-extrabold">
+              ✓ Terverifikasi Petugas Lapangan
+            </span>
+            <span id="gc-modal-time" class="text-[10px] text-[#5A6B5D]">1 jam lalu</span>
+          </div>
+
+          <p id="gc-modal-report" class="text-[12.5px] text-[#142618] leading-relaxed font-semibold">
+            Jalur trekking tebing granit kering dan kokoh. Air terjun Sarasah Bunta mengalir jernih debit normal. Warung UMKM buka dan akses jalan Simpang Harau lancar.
+          </p>
+
+          <div class="pt-2 border-t border-[#E5DEC9] flex items-center justify-between text-[10.5px]">
+            <span class="text-[#5A6B5D]">Pelapor:</span>
+            <span id="gc-modal-author" class="font-extrabold text-[#193D22]">Rahmat Hidayat (Pemandu Harau)</span>
+          </div>
+        </div>
+
+        <button onclick="closeGroundConditionModal()"
+          class="btn-press w-full py-3 rounded-xl bg-[#193D22] text-white text-[12px] font-extrabold text-center shadow-md">
+          Tutup Kondisi Riil
+        </button>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODAL: DAFTAR & BAYAR TRANSAKSI ESCROW (ITEM 3 OPEN TRIP)           -->
+    <!-- =================================================================== -->
+    <div id="modal-opentrip-payment"
+      class="hidden absolute inset-0 z-50 bg-[#142618]/80 backdrop-blur-sm flex flex-col justify-end transition-all">
+      <div class="w-full bg-[#FAF3E6] rounded-t-[32px] border-t-4 border-[#193D22] p-5 space-y-3.5 max-h-[92vh] overflow-y-auto">
+        <div class="w-10 h-1 rounded-full bg-[#D5E2D7] mx-auto"></div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#DFECE2] border border-[#193D22]/30 flex items-center justify-center text-[#193D22] text-lg">
+              💳
+            </div>
+            <div>
+              <h2 class="text-[16px] font-black text-[#142618]">Daftar & Transaksi Escrow</h2>
+              <p class="text-[10px] text-[#5A6B5D]">Transaksi Langsung Melalui Sistem WISGO</p>
+            </div>
+          </div>
+          <button onclick="closeOpenTripPaymentModal()"
+            class="w-8 h-8 rounded-full bg-[#F3EBDC] border border-[#E5DEC9] flex items-center justify-center text-[#5A6B5D]">✕</button>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-white border border-[#D5E2D7] space-y-2">
+          <div class="flex items-center justify-between">
+            <span id="pay-modal-dest" class="text-[10px] font-extrabold text-[#15803D] uppercase">Lembah Harau & Sarasah Bunta</span>
+            <span class="px-2 py-0.5 rounded-md bg-[#F0FDF4] border border-[#86EFAC] text-[#15803D] text-[9.5px] font-black">🔒 Escrow Protected</span>
+          </div>
+          <h3 id="pay-modal-title" class="text-[13px] font-black text-[#142618]">Eksplor Kemegahan Tebing Granit Lembah Harau</h3>
+          
+          <!-- Participant Selector -->
+          <div class="flex items-center justify-between pt-2 border-t border-[#E5DEC9]">
+            <span class="text-[11px] font-bold text-[#5A6B5D]">Jumlah Peserta:</span>
+            <div class="flex items-center gap-2">
+              <button onclick="changeOtParticipantCount(-1)" class="w-7 h-7 rounded-lg bg-[#FAF3E6] border border-[#D5E2D7] font-black text-sm flex items-center justify-center">-</button>
+              <span id="pay-participant-count" class="font-black text-[13px] text-[#142618] w-6 text-center">1</span>
+              <button onclick="changeOtParticipantCount(1)" class="w-7 h-7 rounded-lg bg-[#FAF3E6] border border-[#D5E2D7] font-black text-sm flex items-center justify-center">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div class="p-3.5 rounded-2xl bg-[#FAF3E6] border border-[#E5DEC9] space-y-2 text-[11px]">
+          <div class="flex items-center justify-between">
+            <span class="text-[#5A6B5D]">Biaya Per Peserta:</span>
+            <span id="pay-modal-unit-price" class="font-bold text-[#142618]">Rp 135.000</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[#5A6B5D]">Asuransi & Perlindungan Escrow:</span>
+            <span class="font-bold text-[#15803D]">GRATIS (Ditanggung WISGO)</span>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-[#E5DEC9] text-[13px]">
+            <span class="font-black text-[#142618]">Total Pembayaran:</span>
+            <span id="pay-modal-total-price" class="font-black text-[#193D22] text-[16px]">Rp 135.000</span>
+          </div>
+        </div>
+
+        <!-- Simulated QRIS Barcode -->
+        <div class="p-4 rounded-2xl bg-white border border-[#D5E2D7] text-center space-y-2">
+          <span class="text-[10px] font-black text-[#5A6B5D] uppercase tracking-wider block">QRIS WISGO ESCROW PAYMENT</span>
+          <div class="w-36 h-36 mx-auto bg-[#F3EBDC] border-2 border-dashed border-[#193D22] rounded-xl flex flex-col items-center justify-center p-2">
+            <div class="grid grid-cols-4 gap-1 w-28 h-28 bg-white p-2 rounded-lg">
+              <div class="bg-black"></div><div class="bg-white"></div><div class="bg-black"></div><div class="bg-black"></div>
+              <div class="bg-black"></div><div class="bg-black"></div><div class="bg-white"></div><div class="bg-black"></div>
+              <div class="bg-white"></div><div class="bg-black"></div><div class="bg-black"></div><div class="bg-white"></div>
+              <div class="bg-black"></div><div class="bg-white"></div><div class="bg-black"></div><div class="bg-black"></div>
+            </div>
+          </div>
+          <span class="text-[9.5px] text-[#5A6B5D] block">Scan dengan GoPay, OVO, Dana, BCA, atau Livin' Mandiri</span>
+        </div>
+
+        <button onclick="completeOpenTripPayment()"
+          class="btn-press w-full py-3.5 rounded-xl bg-[#193D22] text-white text-[12.5px] font-black text-center shadow-lg hover:bg-[#142618]">
+          Konfirmasi Bayar & Dapatkan Akses Grup WA
+        </button>
+      </div>
+    </div>
+<div id="modal-facility-detail"
       class="hidden absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end transition-all">
       <div
         class="bg-[#FAF3E6] rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border-t border-[#D5E2D7]">
@@ -6029,6 +6244,7 @@ Day 2
         renderExploreCards();
       } else if (tabName === 'saved') {
         renderSavedCards();
+      renderOpenTripCards();
       } else if (tabName === 'barometer') {
         renderBarometerPills();
         renderBarometerTable();
@@ -6164,15 +6380,529 @@ Day 2
         showToast('Disimpan ke memori perangkat (Tersimpan)');
       }
       updateSavedCounters();
+      renderOpenTripCards();
       renderExploreCards();
       if (currentSavedState === 'loaded') {
         renderSavedCards();
+      renderOpenTripCards();
       }
     }
 
+    
+    // =========================================================================
+    // OPEN TRIP SUMBAR: DATA RESMI & CARD GENERATOR (SESUAI GAMBAR PENGGUNA)
+    // =========================================================================
+    const ALL_OPEN_TRIPS = [
+      {
+        id: 'ot-1',
+        title: 'Eksplor Kemegahan Tebing Granit Lembah Harau',
+        singleDestination: 'Lembah Harau & Sarasah Bunta',
+        category: 'Wisata Alam & Pegunungan',
+        categoryIcon: '🌿',
+        coverUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
+        departureDate: 'Sabtu, 28 Nov 2026',
+        departureTime: '06.00 WIB',
+        duration: '2 Hari 1 Malam',
+        meetingPointName: 'Rest Area Simpang Harau (Depan Kantor Nagari)',
+        meetingPointMapsUrl: 'https://maps.google.com/?q=-0.1042,100.6728',
+        meetingPointCoord: '-0.1042, 100.6728',
+        quotaFilled: 5,
+        quotaMax: 8,
+        price: 135000,
+        organizer: {
+          name: 'Rahmat Hidayat (Guide Berlisensi Nagari)',
+          role: 'Pemandu Lokal Resmi Nagari Harau (Pokdarwis)',
+          verificationBadge: 'Penyelenggara Terverifikasi WISGO',
+          rating: 4.95,
+          phone: '081267889900',
+          tripsCompleted: 24,
+          escrowProtected: true,
+          description: 'Pemandu lokal bersertifikat BNSP & Dinas Pariwisata Limapuluh Kota, berpengalaman 8 tahun memandu trekking tebing Harau.'
+        },
+        weather: {
+          temp: '24°C',
+          condition: 'Cerah Berawan',
+          humidity: '78%',
+          wind: '12 km/j',
+          warning: 'Aman untuk trekking tebing dan wisata air. Angin sejuk dan visibilitas tebing sangat jernih.'
+        },
+        groundCondition: {
+          report: 'Jalur trekking tebing granit kering dan kokoh, tidak licin. Air terjun Sarasah Bunta mengalir jernih debit normal. Warung UMKM nagari buka dan akses jalan Simpang Harau lancar.',
+          author: 'Rahmat Hidayat (Pemandu Harau)',
+          time: '1 jam lalu'
+        },
+        destId: 'lembah-harau'
+      },
+      {
+        id: 'ot-2',
+        title: 'Menyusuri Keheningan Ngarai Sianok & Gua Jepang',
+        singleDestination: 'Ngarai Sianok & Great Wall Koto Gadang',
+        category: 'Wisata Alam & Pegunungan',
+        categoryIcon: '🌿',
+        coverUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800',
+        departureDate: 'Minggu, 29 Nov 2026',
+        departureTime: '07.30 WIB',
+        duration: '1 Hari Penuh',
+        meetingPointName: 'Taman Panorama Bukittinggi (Pintu Masuk Utama)',
+        meetingPointMapsUrl: 'https://maps.google.com/?q=-0.3055,100.3692',
+        meetingPointCoord: '-0.3055, 100.3692',
+        quotaFilled: 8,
+        quotaMax: 10,
+        price: 95000,
+        organizer: {
+          name: 'Budi Saputra (HPI Bukittinggi)',
+          role: 'Tour Leader Budaya Minang',
+          verificationBadge: 'Penyelenggara Terverifikasi WISGO',
+          rating: 4.90,
+          phone: '081377881122',
+          tripsCompleted: 31,
+          escrowProtected: true,
+          description: 'Anggota Himpunan Pramuwisata Indonesia (HPI) Cabang Bukittinggi spesialis sejarah geologi dan budaya Ngarai Sianok.'
+        },
+        weather: {
+          temp: '22°C',
+          condition: 'Sejuk & Cerah',
+          humidity: '72%',
+          wind: '10 km/j',
+          warning: 'Kondisi udara sangat segar. Sinar matahari pagi optimal untuk fotografi panorama ngarai.'
+        },
+        groundCondition: {
+          report: 'Janjang Koto Gadang bersih, tangga aman, warung kopi lokal di dasar ngarai buka penuh.',
+          author: 'Budi Saputra',
+          time: '2 jam lalu'
+        },
+        destId: 'ngarai-sianok'
+      },
+      {
+        id: 'ot-3',
+        title: 'Island Hopping & Snorkeling Pesona Mandeh',
+        singleDestination: 'Kawasan Wisata Bahari Mandeh',
+        category: 'Wisata Bahari & Pantai',
+        categoryIcon: '🌊',
+        coverUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+        departureDate: 'Sabtu, 5 Des 2026',
+        departureTime: '07.00 WIB',
+        duration: '1 Hari Penuh',
+        meetingPointName: 'Dermaga TPI Carocok Tarusan (Posko Wisata Mandeh)',
+        meetingPointMapsUrl: 'https://maps.google.com/?q=-1.2050,100.4150',
+        meetingPointCoord: '-1.2050, 100.4150',
+        quotaFilled: 4,
+        quotaMax: 12,
+        price: 185000,
+        organizer: {
+          name: 'Capt. Hendra (Komunitas Boat Mandeh)',
+          role: 'Nahkoda & Guide Bahari Pesisir Selatan',
+          verificationBadge: 'Penyelenggara Terverifikasi WISGO',
+          rating: 4.98,
+          phone: '082155667788',
+          tripsCompleted: 45,
+          escrowProtected: true,
+          description: 'Nahkoda kapal berlisensi kelautan resmi dengan perlengkapan life vest standar dan tim penyelamat bersertifikasi.'
+        },
+        weather: {
+          temp: '29°C',
+          condition: 'Cerah Berawan',
+          humidity: '80%',
+          wind: '15 km/j',
+          warning: 'Gelombang laut tenang 0.3 - 0.6 meter. Visibilitas terumbu karang prima untuk snorkeling.'
+        },
+        groundCondition: {
+          report: 'Spot snorkeling Pulau Setan dan Sironjong Ketek jernih tanpa arus deras. Standar keselamatan pelampung lengkap.',
+          author: 'Capt. Hendra',
+          time: '3 jam lalu'
+        },
+        destId: 'mandeh'
+      },
+      {
+        id: 'ot-4',
+        title: 'Jelajah Nagari Tertua Pariangan & Jejak Prasasti',
+        singleDestination: 'Desa Adat Nagari Pariangan',
+        category: 'Wisata Budaya & Nagari',
+        categoryIcon: '🏛️',
+        coverUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800',
+        departureDate: 'Minggu, 6 Des 2026',
+        departureTime: '08.00 WIB',
+        duration: '1 Hari Penuh',
+        meetingPointName: 'Masjid Ishlah Pariangan (Pancuran Tujuah)',
+        meetingPointMapsUrl: 'https://maps.google.com/?q=-0.4497,100.4936',
+        meetingPointCoord: '-0.4497, 100.4936',
+        quotaFilled: 6,
+        quotaMax: 10,
+        price: 80000,
+        organizer: {
+          name: 'Mak Datuak Maruhun (Tokoh Adat Pokdarwis)',
+          role: 'Pamong Budaya Nagari Pariangan',
+          verificationBadge: 'Penyelenggara Terverifikasi WISGO',
+          rating: 4.97,
+          phone: '081299887766',
+          tripsCompleted: 19,
+          escrowProtected: true,
+          description: 'Tetua adat Nagari Tuo Pariangan pembina pemandu warisan budaya Minangkabau asli lereng Marapi.'
+        },
+        weather: {
+          temp: '21°C',
+          condition: 'Sejuk Pegunungan',
+          humidity: '82%',
+          wind: '8 km/j',
+          warning: 'Suhu sejuk lereng Gunung Marapi, dianjurkan membawa jaket ringan.'
+        },
+        groundCondition: {
+          report: 'Pancuran tujuah air panas alami mengalir deras, homestay adat dan rumah gadang siap menyambut rombongan.',
+          author: 'Mak Datuak Maruhun',
+          time: '4 jam lalu'
+        },
+        destId: 'desa-pariangan'
+      }
+    ];
+
+    let currentOpenTripCategoryFilter = 'ALL';
+    let currentSelectedPaymentTrip = ALL_OPEN_TRIPS[0];
+    let currentParticipantCount = 1;
+    let currentActiveMapsTrip = ALL_OPEN_TRIPS[0];
+
+    function filterOpenTripByCategory(cat) {
+      currentOpenTripCategoryFilter = cat;
+      const chips = document.querySelectorAll('.ot-cat-chip');
+      chips.forEach(btn => {
+        const isMatch = btn.getAttribute('data-ot-cat') === cat;
+        if (isMatch) {
+          btn.className = 'ot-cat-chip btn-press shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] flex items-center gap-1.5 shadow-sm transition-all';
+          btn.innerHTML = `<span>✓ ${cat === 'ALL' ? 'Semua' : cat}</span>`;
+        } else {
+          btn.className = 'ot-cat-chip btn-press shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-white border border-[#D5E2D7] text-[#5A6B5D] hover:text-[#142618] transition-all';
+          const label = btn.getAttribute('data-ot-cat');
+          btn.innerHTML = label === 'ALL' ? 'Semua' : label;
+        }
+      });
+      renderOpenTripCards();
+    }
+
+    function renderOpenTripCards() {
+      const container = document.getElementById('opentrip-cards-container');
+      if (!container) return;
+
+      const filtered = ALL_OPEN_TRIPS.filter(trip => {
+        if (currentOpenTripCategoryFilter === 'ALL') return true;
+        return trip.category === currentOpenTripCategoryFilter;
+      });
+
+      const badge = document.getElementById('ot-active-count-badge');
+      if (badge) badge.textContent = `${filtered.length} Trip Aktif`;
+
+      const pill = document.getElementById('ot-count-pill');
+      if (pill) pill.textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-6 border border-[#D5E2D7] text-center shadow-sm space-y-2">
+            <span class="text-3xl">🌿</span>
+            <h3 class="text-[14px] font-black text-[#142618]">Belum Ada Open Trip di Kategori Ini</h3>
+            <p class="text-[11px] text-[#5A6B5D]">Coba pilih kategori lain atau buat open trip baru Anda sendiri!</p>
+            <button onclick="filterOpenTripByCategory('ALL')" class="btn-press mt-2 px-4 py-2 rounded-xl bg-[#193D22] text-[#FAF3E6] text-xs font-bold">
+              Tampilkan Semua Kategori
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(trip => `
+        <article class="opentrip-card bg-white rounded-3xl overflow-hidden border border-[#D5E2D7] shadow-[0_6px_20px_rgba(20,38,24,0.06)] transition-all" data-hover-bound="true" style="cursor: pointer; opacity: 1; transform: translateY(0px) scale(1);">
+          <!-- 1. Cover Image with Auto-Category & Quota Badges & Single Dest -->
+          <div class="relative h-44 w-full bg-[#193D22] overflow-hidden">
+            <img src="${trip.coverUrl}" alt="${trip.title}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35"></div>
+
+            <!-- Badges on Top -->
+            <div class="absolute top-3 inset-x-3 flex items-center justify-between gap-2">
+              <!-- Auto Category Badge -->
+              <span class="px-2.5 py-1 rounded-full bg-[#193D22]/85 backdrop-blur-md text-[#FAF3E6] text-[10px] font-black border border-white/20 flex items-center gap-1 shadow-sm">
+                <span>${trip.categoryIcon}</span>
+                <span>${trip.category}</span>
+              </span>
+
+              <!-- Quota Status -->
+              <span class="px-2.5 py-1 rounded-full bg-[#15803D] text-white text-[10.5px] font-black shadow-md flex items-center gap-1">
+                <span>${trip.quotaFilled}/${trip.quotaMax} (Sisa ${trip.quotaMax - trip.quotaFilled})</span>
+              </span>
+            </div>
+
+            <!-- Single Destination Tag on Bottom of Image -->
+            <div class="absolute bottom-2.5 inset-x-3">
+              <div class="px-3 py-1.5 rounded-xl bg-white/95 backdrop-blur-md text-[#142618] text-[10.5px] font-extrabold flex items-center gap-1.5 shadow-sm border border-white/40">
+                <span class="text-[#15803D] text-xs">📍</span>
+                <span class="truncate">Tujuan: <strong>${trip.singleDestination}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Card Content -->
+          <div class="p-4 space-y-2.5">
+            <!-- Title -->
+            <h3 class="text-[16px] font-extrabold text-[#142618] leading-snug">
+              ${trip.title}
+            </h3>
+
+            <!-- Departure Date & Duration -->
+            <div class="flex items-center justify-between text-[#5A6B5D] pt-0.5">
+              <div class="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#142618]">
+                <span>📅</span>
+                <span>${trip.departureDate} • ${trip.departureTime}</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-md bg-[#E8F1F8] border border-[#1E5B82]/20 text-[#1E5B82] text-[10px] font-bold">
+                ${trip.duration}
+              </span>
+            </div>
+
+            <!-- Meeting Point (Google Maps Integrated) -->
+            <div class="p-2.5 rounded-xl bg-[#FDF2F0] border border-[#FCA5A5]/50 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-full bg-[#FEE2E2] flex items-center justify-center text-[#DC2626] text-xs font-black shrink-0">
+                  📍
+                </div>
+                <div class="min-w-0">
+                  <span class="text-[9px] font-black uppercase tracking-wider text-[#991B1B] block">TITIK KUMPUL</span>
+                  <span class="text-[11px] font-bold text-[#142618] truncate block" title="${trip.meetingPointName}">
+                    ${trip.meetingPointName}
+                  </span>
+                </div>
+              </div>
+              <button onclick="openGoogleMapsMeetingPointModal('${trip.id}')"
+                class="btn-press text-[#DC2626] hover:underline text-[10.5px] font-black flex items-center gap-0.5 shrink-0">
+                <span>Peta Maps ↗</span>
+              </button>
+            </div>
+
+            <!-- Penyelenggara Terverifikasi Badge (Item 6 Open Trip) -->
+            <div class="p-2.5 rounded-xl bg-[#F0FDF4] border border-[#86EFAC]/60 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-full bg-[#15803D] flex items-center justify-center text-white text-xs font-black shrink-0">
+                  ✓
+                </div>
+                <div class="min-w-0">
+                  <span class="text-[11.5px] font-extrabold text-[#142618] truncate block">
+                    ${trip.organizer.name}
+                  </span>
+                  <span class="text-[9.5px] font-extrabold text-[#15803D] block">
+                    ${trip.organizer.verificationBadge} ★ ${trip.organizer.rating}
+                  </span>
+                </div>
+              </div>
+              <button onclick="openVerifiedOrganizerModal('${trip.id}')" title="Detail Verifikasi Penyelenggara"
+                class="btn-press w-6 h-6 rounded-full bg-[#DCFCE7] text-[#15803D] text-[11px] font-black flex items-center justify-center shrink-0 shadow-xs">
+                ⓘ
+              </button>
+            </div>
+
+            <!-- Bilah Pintasan Cepat: Cuaca Real-time, Kondisi Nyata & Panorama 360° -->
+            <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+              <button onclick="openDestinationWeatherModal('${trip.destId}', '${trip.singleDestination}')"
+                class="btn-press py-2 px-1.5 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] text-[#0369A1] text-[10.5px] font-extrabold flex items-center justify-center gap-1 shadow-xs hover:bg-[#BAE6FD]/60">
+                <span>☁</span>
+                <span>Info Cuaca</span>
+              </button>
+              <button onclick="openGroundConditionModal('${trip.id}')"
+                class="btn-press py-2 px-1.5 rounded-xl bg-[#DCFCE7] border border-[#BBF7D0] text-[#15803D] text-[10.5px] font-extrabold flex items-center justify-center gap-1 shadow-xs hover:bg-[#BBF7D0]/60">
+                <span>👁</span>
+                <span>Kondisi Riil</span>
+              </button>
+              <button onclick="open360Modal('${trip.destId}')"
+                class="btn-press py-2 px-1.5 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-[#B45309] text-[10.5px] font-extrabold flex items-center justify-center gap-1 shadow-xs hover:bg-[#FDE68A]/60">
+                <span>📷</span>
+                <span>Foto 360°</span>
+              </button>
+            </div>
+
+            <!-- Pricing & Escrow Guarantee -->
+            <div class="pt-2.5 border-t border-[#E5DEC9] flex items-center justify-between">
+              <div>
+                <span class="text-[9.5px] text-[#5A6B5D] font-medium block">Transaksi Khusus Open Trip (Escrow):</span>
+                <div class="flex items-baseline gap-1 mt-0.5">
+                  <span class="text-[18px] font-black text-[#142618]">${formatRupiah(trip.price)}</span>
+                  <span class="text-[11px] text-[#5A6B5D]">/ org</span>
+                </div>
+              </div>
+              <div class="px-2.5 py-1 rounded-lg bg-[#F0FDF4] border border-[#86EFAC]/70 text-[#15803D] text-[10.5px] font-extrabold flex items-center gap-1 shadow-xs">
+                <span>🔒</span>
+                <span>Escrow</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons: Trip Planner + Daftar & Bayar -->
+            <div class="flex items-center gap-2 pt-1">
+              <button onclick="openTripPlannerModalForTrip('${trip.id}')"
+                class="btn-press py-2.5 px-3 rounded-xl bg-white border border-[#D5E2D7] text-[#142618] text-[11px] font-extrabold flex items-center justify-center gap-1.5 shadow-xs hover:bg-[#FAF3E6]">
+                <span>📋</span>
+                <span>Trip Planner</span>
+              </button>
+              <button onclick="openOpenTripPaymentModal('${trip.id}')"
+                class="btn-press flex-1 py-2.5 px-4 rounded-xl bg-[#193D22] text-[#FAF3E6] text-[11.5px] font-black flex items-center justify-center gap-1.5 shadow-md hover:bg-[#142618]">
+                <span>💳</span>
+                <span>Daftar & Bayar</span>
+              </button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      setTimeout(() => {
+        if (typeof initGsapScrollTriggerSplitText === 'function') initGsapScrollTriggerSplitText();
+        if (typeof initMotionCardsAndHover === 'function') initMotionCardsAndHover();
+      }, 50);
+    }
+
+    // Modal Handlers: Google Maps Titik Kumpul
+    function openGoogleMapsMeetingPointModal(tripId) {
+      const trip = ALL_OPEN_TRIPS.find(t => t.id === tripId) || ALL_OPEN_TRIPS[0];
+      currentActiveMapsTrip = trip;
+      const elName = document.getElementById('mp-modal-name');
+      if (elName) elName.textContent = trip.meetingPointName;
+      const elCoords = document.getElementById('mp-modal-coords');
+      if (elCoords) elCoords.textContent = trip.meetingPointCoord;
+      const elPin = document.getElementById('mp-modal-pin-label');
+      if (elPin) elPin.textContent = trip.meetingPointName.split('(')[0].trim();
+
+      const modal = document.getElementById('modal-meeting-point-maps');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeMeetingPointMapsModal() {
+      const modal = document.getElementById('modal-meeting-point-maps');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openExternalGoogleMaps() {
+      if (currentActiveMapsTrip && currentActiveMapsTrip.meetingPointMapsUrl) {
+        window.open(currentActiveMapsTrip.meetingPointMapsUrl, '_blank');
+        showToast('Membuka rute titik kumpul di Google Maps...');
+      }
+    }
+
+    // Modal Handlers: Verifikasi Penyelenggara
+    function openVerifiedOrganizerModal(tripId) {
+      const trip = ALL_OPEN_TRIPS.find(t => t.id === tripId) || ALL_OPEN_TRIPS[0];
+      const elName = document.getElementById('org-modal-name');
+      if (elName) elName.textContent = trip.organizer.name;
+      const elRole = document.getElementById('org-modal-role');
+      if (elRole) elRole.textContent = trip.organizer.role;
+      const elTrips = document.getElementById('org-modal-trips');
+      if (elTrips) elTrips.textContent = `${trip.organizer.tripsCompleted} Trip Berhasil`;
+      const elDesc = document.getElementById('org-modal-desc');
+      if (elDesc) elDesc.textContent = trip.organizer.description;
+
+      const modal = document.getElementById('modal-verified-organizer');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeVerifiedOrganizerModal() {
+      const modal = document.getElementById('modal-verified-organizer');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Modal Handlers: Informasi Cuaca Real-time
+    function openDestinationWeatherModal(destId, destName) {
+      const trip = ALL_OPEN_TRIPS.find(t => t.destId === destId) || ALL_OPEN_TRIPS[0];
+      const elTitle = document.getElementById('weather-modal-dest-title');
+      if (elTitle) elTitle.textContent = destName || trip.singleDestination;
+      const elTemp = document.getElementById('weather-modal-temp');
+      if (elTemp) elTemp.textContent = trip.weather.temp;
+      const elCond = document.getElementById('weather-modal-cond');
+      if (elCond) elCond.textContent = trip.weather.condition;
+      const elWarn = document.getElementById('weather-modal-warning');
+      if (elWarn) elWarn.textContent = trip.weather.warning;
+
+      const modal = document.getElementById('modal-destination-weather');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeDestinationWeatherModal() {
+      const modal = document.getElementById('modal-destination-weather');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Modal Handlers: Kondisi Nyata Lapangan
+    function openGroundConditionModal(tripId) {
+      const trip = ALL_OPEN_TRIPS.find(t => t.id === tripId) || ALL_OPEN_TRIPS[0];
+      const elReport = document.getElementById('gc-modal-report');
+      if (elReport) elReport.textContent = trip.groundCondition.report;
+      const elAuthor = document.getElementById('gc-modal-author');
+      if (elAuthor) elAuthor.textContent = trip.groundCondition.author;
+      const elTime = document.getElementById('gc-modal-time');
+      if (elTime) elTime.textContent = trip.groundCondition.time;
+
+      const modal = document.getElementById('modal-ground-condition');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeGroundConditionModal() {
+      const modal = document.getElementById('modal-ground-condition');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Modal Handlers: Daftar & Bayar Escrow
+    function openOpenTripPaymentModal(tripId) {
+      const trip = ALL_OPEN_TRIPS.find(t => t.id === tripId) || ALL_OPEN_TRIPS[0];
+      currentSelectedPaymentTrip = trip;
+      currentParticipantCount = 1;
+
+      const elDest = document.getElementById('pay-modal-dest');
+      if (elDest) elDest.textContent = trip.singleDestination;
+      const elTitle = document.getElementById('pay-modal-title');
+      if (elTitle) elTitle.textContent = trip.title;
+      const elUnitPrice = document.getElementById('pay-modal-unit-price');
+      if (elUnitPrice) elUnitPrice.textContent = `${formatRupiah(trip.price)}`;
+      const elCount = document.getElementById('pay-participant-count');
+      if (elCount) elCount.textContent = currentParticipantCount;
+      const elTotalPrice = document.getElementById('pay-modal-total-price');
+      if (elTotalPrice) elTotalPrice.textContent = `Rp ${formatRupiah(trip.price * currentParticipantCount)}`;
+
+      const modal = document.getElementById('modal-opentrip-payment');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeOpenTripPaymentModal() {
+      const modal = document.getElementById('modal-opentrip-payment');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function changeOtParticipantCount(delta) {
+      currentParticipantCount = Math.max(1, Math.min(4, currentParticipantCount + delta));
+      const elCount = document.getElementById('pay-participant-count');
+      if (elCount) elCount.textContent = currentParticipantCount;
+      const elTotalPrice = document.getElementById('pay-modal-total-price');
+      if (elTotalPrice && currentSelectedPaymentTrip) {
+        elTotalPrice.textContent = `Rp ${formatRupiah(currentSelectedPaymentTrip.price * currentParticipantCount)}`;
+      }
+    }
+
+    function completeOpenTripPayment() {
+      if (!currentSelectedPaymentTrip) return;
+      closeOpenTripPaymentModal();
+      currentSelectedPaymentTrip.quotaFilled += currentParticipantCount;
+      renderOpenTripCards();
+      userJoinStatus = 'accepted';
+      showToast(`Pembayaran Escrow Rp ${formatRupiah(currentSelectedPaymentTrip.price * currentParticipantCount)} Berhasil! Anda resmi bergabung.`);
+      setTimeout(() => {
+        openTripPlannerModalForTrip(currentSelectedPaymentTrip.id);
+      }, 500);
+    }
+
+    function openTripPlannerModalForTrip(tripId) {
+      const trip = ALL_OPEN_TRIPS.find(t => t.id === tripId) || ALL_OPEN_TRIPS[0];
+      openTripPlannerModal();
+      switchOpenTripTab('preview');
+      const elName = document.getElementById('ot-preview-name');
+      if (elName) elName.textContent = trip.title;
+      const elDest = document.getElementById('ot-preview-dest-name');
+      if (elDest) elDest.textContent = trip.singleDestination;
+    }
+
+
     function renderSavedCards() {
       updateSavedCounters();
+      if (typeof renderOpenTripCards === 'function') renderOpenTripCards();
       const container = document.getElementById('saved-list-container');
+      if (!container) return;
       const savedPlaces = getSavedDestinationsList();
 
       if (savedPlaces.length === 0) {
@@ -6211,28 +6941,28 @@ Day 2
       const tabEmpty = document.getElementById('state-tab-empty');
 
       [tabLoaded, tabShimmer, tabEmpty].forEach(t => {
-        t.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-semibold text-[#5A6B5D] hover:text-[#142618] text-center transition-all';
+        if (t) t.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-semibold text-[#5A6B5D] hover:text-[#142618] text-center transition-all';
       });
 
       if (state === 'loaded') {
-        tabLoaded.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] text-center transition-all';
-        listEl.classList.remove('hidden');
-        shimmerEl.classList.add('hidden');
-        emptyEl.classList.add('hidden');
-        filterEl.classList.remove('hidden');
-        renderSavedCards();
+        if (tabLoaded) tabLoaded.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] text-center transition-all';
+        if (listEl) listEl.classList.remove('hidden');
+        if (shimmerEl) shimmerEl.classList.add('hidden');
+        if (emptyEl) emptyEl.classList.add('hidden');
+        if (filterEl) filterEl.classList.remove('hidden');
+        if (typeof renderOpenTripCards === 'function') renderOpenTripCards();
       } else if (state === 'shimmer') {
-        tabShimmer.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] text-center transition-all';
-        listEl.classList.add('hidden');
-        shimmerEl.classList.remove('hidden');
-        emptyEl.classList.add('hidden');
-        filterEl.classList.add('hidden');
+        if (tabShimmer) tabShimmer.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] text-center transition-all';
+        if (listEl) listEl.classList.add('hidden');
+        if (shimmerEl) shimmerEl.classList.remove('hidden');
+        if (emptyEl) emptyEl.classList.add('hidden');
+        if (filterEl) filterEl.classList.add('hidden');
       } else if (state === 'empty') {
-        tabEmpty.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] text-center transition-all';
-        listEl.classList.add('hidden');
-        shimmerEl.classList.add('hidden');
-        emptyEl.classList.remove('hidden');
-        filterEl.classList.add('hidden');
+        if (tabEmpty) tabEmpty.className = 'btn-press py-1.5 px-1.5 rounded-lg text-[11px] font-bold bg-[#193D22] text-[#FAF3E6] text-center transition-all';
+        if (listEl) listEl.classList.add('hidden');
+        if (shimmerEl) shimmerEl.classList.add('hidden');
+        if (emptyEl) emptyEl.classList.remove('hidden');
+        if (filterEl) filterEl.classList.add('hidden');
       }
     }
 
@@ -6274,6 +7004,7 @@ Day 2
         }
       });
       renderSavedCards();
+      renderOpenTripCards();
     }
 
     function restoreDefaultBookmarks() {
@@ -6628,6 +7359,7 @@ Day 2
     window.onload = function () {
       renderExploreCards();
       renderSavedCards();
+      renderOpenTripCards();
       renderBarometerPills();
       renderBarometerTable();
       updateCalculatorUI();
