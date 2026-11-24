@@ -27,6 +27,7 @@ import {
   Compass,
   Inbox,
   MessageSquare,
+  Phone,
 } from 'lucide-react';
 import {
   Destination,
@@ -65,7 +66,7 @@ interface DestinationsPageProps {
 
 type SortColumn = 'name' | 'city_regency' | 'distance' | 'price';
 type SortDirection = 'ascending' | 'descending';
-type EditorTabKey = 'A' | 'B' | 'C' | 'D';
+type EditorTabKey = 'A' | 'B' | 'C' | 'D' | 'E';
 
 const collator = new Intl.Collator('id', {
   numeric: true,
@@ -500,10 +501,10 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   return (
     <div className="p-6 lg:p-8 space-y-6 no-print">
       {/* Header Utama Halaman */}
-      <header className="bg-white rounded-[24px] p-6 border border-[#CFD8BE] shadow-sm space-y-4">
+      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-5">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E4E9DA] text-[#234B24] text-xs font-bold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#234B24]/8 text-[#234B24] text-xs font-bold">
               <CheckCircle2
                 className="w-3.5 h-3.5 text-[#1E9E5A]"
                 aria-hidden="true"
@@ -517,7 +518,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             <h1 className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#1B1F1A] tracking-tight">
               Manajemen Destinasi Wisata &amp; Kesiapan Medan
             </h1>
-            <p className="text-sm text-[#4A5248] mt-0.5">
+            <p className="text-xs text-[#4A5248] mt-1 max-w-2xl leading-relaxed">
               Direktori resmi destinasi unggulan, 5 indikator kesiapan medan, kamus audio Minang, kalender budaya, dan Gaode ranking.
             </p>
           </div>
@@ -527,10 +528,10 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               type="button"
               onClick={onRefresh}
               disabled={loading}
-              className="min-h-[48px] px-4 py-2.5 rounded-pill bg-white border border-[#CFD8BE] hover:bg-[#E4E9DA]/50 text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition shadow-sm"
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-white border border-[#234B24]/15 hover:bg-[#F6F3EC] text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition duration-200 shadow-xs"
             >
               <RefreshCw
-                className={`w-4 h-4 text-[#234B24] ${
+                className={`w-3.5 h-3.5 text-[#234B24] ${
                   loading ? 'animate-spin' : ''
                 }`}
                 aria-hidden="true"
@@ -542,7 +543,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               <button
                 type="button"
                 onClick={handleOpenNewModal}
-                className="h-[48px] px-5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-sm flex items-center gap-2 shadow-sm transition"
+                className="min-h-[44px] px-5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-sm transition duration-200"
               >
                 <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
                 <span>Tambah Destinasi Baru</span>
@@ -551,24 +552,24 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           </div>
         </div>
 
-        {/* 4 Sub-Tabs Navigasi Header */}
-        <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap gap-2">
+        {/* Sub-Tabs Navigasi Header Modern Clean */}
+        <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setActiveSubTab('directory')}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
               activeSubTab === 'directory'
-                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                ? 'bg-[#234B24] text-white shadow-sm'
+                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
             }`}
           >
             <Compass className="w-4 h-4" aria-hidden="true" />
             <span>Direktori Destinasi &amp; 5 Medan</span>
             <span
-              className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+              className={`ml-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${
                 activeSubTab === 'directory'
                   ? 'bg-white/20 text-white'
-                  : 'bg-[#234B24]/10 text-[#234B24]'
+                  : 'bg-[#234B24]/8 text-[#234B24]'
               }`}
             >
               {destinations.length}
@@ -578,10 +579,10 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           <button
             type="button"
             onClick={() => setActiveSubTab('minang_dictionary')}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
               activeSubTab === 'minang_dictionary'
-                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                ? 'bg-[#234B24] text-white shadow-sm'
+                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
             }`}
           >
             <Volume2 className="w-4 h-4" aria-hidden="true" />
@@ -591,10 +592,10 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           <button
             type="button"
             onClick={() => setActiveSubTab('culture_calendar')}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
               activeSubTab === 'culture_calendar'
-                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                ? 'bg-[#234B24] text-white shadow-sm'
+                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
             }`}
           >
             <Calendar className="w-4 h-4" aria-hidden="true" />
@@ -604,10 +605,10 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           <button
             type="button"
             onClick={() => setActiveSubTab('gaode_ranking')}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
               activeSubTab === 'gaode_ranking'
-                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                ? 'bg-[#234B24] text-white shadow-sm'
+                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
             }`}
           >
             <TrendingUp className="w-4 h-4" aria-hidden="true" />
@@ -617,10 +618,10 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           <button
             type="button"
             onClick={() => setActiveSubTab('ugc_submissions')}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
               activeSubTab === 'ugc_submissions'
-                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                ? 'bg-[#234B24] text-white shadow-sm'
+                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
             }`}
           >
             <Inbox className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
@@ -630,14 +631,14 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
           <button
             type="button"
             onClick={() => setActiveSubTab('reviews_moderation')}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
               activeSubTab === 'reviews_moderation'
-                ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                ? 'bg-[#234B24] text-white shadow-sm'
+                : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
             }`}
           >
             <MessageSquare className="w-4 h-4" aria-hidden="true" />
-            <span>Ulasan &amp; Komentar</span>
+            <span>Pengalaman &amp; Kondisi Lapangan</span>
           </button>
         </div>
       </header>
@@ -649,79 +650,79 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             aria-label="Ringkasan Statistik Destinasi Sumatera Barat"
             className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
           >
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E4E9DA] shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
-            Destinasi Terdaftar
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#234B24]">
-              {stats.total}
-            </span>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#1E9E5A]/15 text-[#1E9E5A]">
-              Terverifikasi Dispar
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#4A5248]">
-            Mencakup {stats.uniqueRegencies} Kabupaten/Kota Sumatera Barat
-          </p>
-        </div>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+              <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
+                Destinasi Terdaftar
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-extrabold text-[#234B24]">
+                  {stats.total}
+                </span>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#1E9E5A]/15 text-[#1E9E5A]">
+                  Terverifikasi Dispar
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-[#4A5248]">
+                Mencakup {stats.uniqueRegencies} Kabupaten/Kota Sumatera Barat
+              </p>
+            </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E4E9DA] shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
-            Kawasan Blank Spot (Zero-Signal)
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#F26B4B]">
-              {stats.blankSpots}
-            </span>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
-              Paket Offline Aktif
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#4A5248]">
-            Mengaktifkan unduhan peta &amp; panduan suara luring
-          </p>
-        </div>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+              <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
+                Kawasan Blank Spot (Zero-Signal)
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-extrabold text-[#F26B4B]">
+                  {stats.blankSpots}
+                </span>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
+                  Paket Offline Aktif
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-[#4A5248]">
+                Mengaktifkan unduhan peta &amp; panduan suara luring
+              </p>
+            </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E4E9DA] shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
-            Komponen Tarif Resmi Perda
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
-              {stats.totalTariffItems}
-            </span>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E85D1A]/15 text-[#E85D1A]">
-              Fair-Price Barometer
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#4A5248]">
-            Tercetak pada Plang Smart QR di tiap gerbang kawasan
-          </p>
-        </div>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+              <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
+                Komponen Tarif Resmi Perda
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
+                  {stats.totalTariffItems}
+                </span>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
+                  Fair-Price Barometer
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-[#4A5248]">
+                Tercetak pada Plang Smart QR di tiap gerbang kawasan
+              </p>
+            </div>
 
-        <div className="bg-[#E4E9DA] p-4 sm:p-5 rounded-2xl border border-[#CFD8BE] shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#234B24]">
-            Pemetaan Kesiapan Medan
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#234B24]">
-              5 Indikator
-            </span>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#234B24] text-[#F6F3EC]">
-              Standar Lapangan
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#1B1F1A]">
-            Kendaraan, Trekking, Sinyal, Fasilitas &amp; Pemandu
-          </p>
-        </div>
-      </section>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+              <div className="text-xs font-bold uppercase tracking-wider text-[#234B24]">
+                Pemetaan Kesiapan Medan
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span className="text-2xl sm:text-3xl font-extrabold text-[#234B24]">
+                  5 Indikator
+                </span>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#234B24] text-[#F6F3EC]">
+                  Standar Lapangan
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-[#4A5248]">
+                Kendaraan, Trekking, Sinyal, Fasilitas &amp; Pemandu
+              </p>
+            </div>
+          </section>
 
       {/* Bilah Pencarian dan Filter (<search> dari modern-web-guidance: forms) */}
       <search
         aria-label="Pencarian dan Penyaringan Direktori Destinasi"
-        className="bg-white p-5 lg:p-6 rounded-2xl border border-[#E4E9DA] shadow-sm"
+        className="bg-white p-5 lg:p-6 rounded-2xl border border-[#234B24]/10 shadow-sm"
       >
         <form
           method="get"
@@ -829,7 +830,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
         <div
           role="status"
           aria-live="polite"
-          className="mt-3.5 pt-3.5 border-t border-[#E4E9DA] flex flex-wrap items-center justify-between gap-2 text-xs text-[#4A5248]"
+          className="mt-3.5 pt-3.5 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-2 text-xs text-[#4A5248]"
         >
           <span>
             Menampilkan{' '}
@@ -876,17 +877,16 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
         tabIndex={0}
         role="region"
         aria-labelledby="destinations-table-caption"
-        className="table-wrapper bg-white rounded-3xl border border-[#E4E9DA] shadow-sm"
+        className="table-wrapper bg-white rounded-2xl border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] overflow-hidden"
       >
         <table className="wisgo-table text-left text-sm">
           <caption
             id="destinations-table-caption"
-            className="p-4 lg:px-6 text-left font-bold text-xs uppercase tracking-wider text-[#234B24] bg-[#E4E9DA]/50 border-b border-[#E4E9DA]"
+            className="p-4 lg:px-6 text-left font-bold text-xs uppercase tracking-wider text-[#234B24] bg-[#F6F3EC]/70 border-b border-[#234B24]/8"
           >
-            Direktori Resmi Destinasi Wisata Sumatera Barat — Klik judul kolom
-            untuk mengurutkan data
+            Direktori Resmi Destinasi Wisata Sumatera Barat — Klik judul kolom untuk mengurutkan data
           </caption>
-          <thead className="bg-[#234B24] text-[#F6F3EC] text-xs uppercase tracking-wider">
+          <thead className="bg-[#F6F3EC]/90 text-[#234B24] text-[11px] font-extrabold uppercase tracking-wider border-b border-[#234B24]/10 backdrop-blur-xs">
             <tr>
               <th
                 scope="col"
@@ -971,7 +971,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                   {/* Kolom 1: Sticky Row Header Nama Destinasi */}
                   <th
                     scope="row"
-                    className="py-5 px-5 font-bold text-[#1B1F1A] min-w-[250px] border-r border-[#E4E9DA]/60"
+                    className="py-5 px-5 font-bold text-[#1B1F1A] min-w-[250px] border-r border-[#234B24]/10/60"
                   >
                     <div className="flex items-start gap-3.5">
                       <img
@@ -1162,60 +1162,54 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                   </td>
 
                   {/* Kolom 7: Tindakan Pengelolaan Lengkap */}
-                  <td className="py-5 px-5 text-right whitespace-nowrap">
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="inline-flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setViewingDest(dest)}
-                          className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#1B1F1A] border border-[#CFD8BE] font-bold text-xs inline-flex items-center gap-1.5 transition"
-                        >
-                          <Eye
-                            className="w-3.5 h-3.5 text-[#234B24]"
-                            aria-hidden="true"
-                          />
-                          <span>Detail</span>
-                        </button>
+                  <td className="py-4 px-4 text-right whitespace-nowrap">
+                    <div className="inline-flex items-center gap-1.5 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setViewingDest(dest)}
+                        className="min-h-[36px] px-3 py-1.5 rounded-xl bg-stone-50 hover:bg-[#234B24]/8 text-[#234B24] border border-[#234B24]/12 font-bold text-xs inline-flex items-center gap-1.5 transition duration-150"
+                      >
+                        <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Detail</span>
+                      </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditModal(dest)}
-                          className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs inline-flex items-center gap-1.5 transition shadow-sm"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Edit</span>
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(dest)}
+                        className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-xs inline-flex items-center gap-1.5 transition duration-150 shadow-xs"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
+                        <span>Edit</span>
+                      </button>
 
-                      <div className="inline-flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => onOpenTariffManager(dest.id)}
-                          className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#E4E9DA]/80 hover:bg-[#234B24] hover:text-white text-[#234B24] font-bold text-xs inline-flex items-center gap-1.5 transition"
-                        >
-                          <Receipt className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Kelola Tarif &amp; QR</span>
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => onOpenTariffManager(dest.id)}
+                        title="Kelola Standar Tarif & Smart QR"
+                        className="min-h-[36px] px-3 py-1.5 rounded-xl bg-[#234B24]/5 hover:bg-[#234B24]/10 text-[#234B24] border border-[#234B24]/10 font-bold text-xs inline-flex items-center gap-1.5 transition duration-150"
+                      >
+                        <Receipt className="w-3.5 h-3.5 text-[#E85D1A]" aria-hidden="true" />
+                        <span>Tarif &amp; QR</span>
+                      </button>
 
-                        <button
-                          type="button"
-                          onClick={() => onOpenSmartQRModal(dest)}
-                          title="Pratinjau & Cetak Plang Smart QR"
-                          className="min-h-[38px] px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#1E9E5A] hover:text-white text-[#1E9E5A] border border-[#1E9E5A]/40 font-bold text-xs inline-flex items-center gap-1 transition"
-                        >
-                          <QrCode className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Plang QR</span>
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => onOpenSmartQRModal(dest)}
+                        title="Pratinjau & Cetak Plang Smart QR"
+                        className="min-h-[36px] p-2 rounded-xl bg-white hover:bg-[#1E9E5A]/10 text-[#1E9E5A] border border-[#1E9E5A]/25 transition duration-150"
+                      >
+                        <QrCode className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
 
-                        <button
-                          type="button"
-                          aria-label={`Hapus destinasi ${dest.name}`}
-                          onClick={() => setDeletingDest(dest)}
-                          className="min-h-[38px] px-2.5 py-1.5 rounded-xl bg-[#F26B4B]/10 hover:bg-[#F26B4B] hover:text-white text-[#D95637] border border-[#F26B4B]/30 font-bold text-xs inline-flex items-center justify-center transition"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Hapus destinasi ${dest.name}`}
+                        onClick={() => setDeletingDest(dest)}
+                        title="Hapus Destinasi"
+                        className="min-h-[36px] p-2 rounded-xl bg-[#F26B4B]/10 hover:bg-[#F26B4B] hover:text-white text-[#D95637] border border-[#F26B4B]/20 transition duration-150"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1302,13 +1296,13 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
               aria-label="Tahapan Pengisian Data Destinasi"
               className="shrink-0 bg-[#F6F3EC] border-b border-[#234B24]/15 px-6 py-3"
             >
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {(
                   [
                     {
                       key: 'A',
                       step: '1',
-                      title: 'Profil & 4 Statistik',
+                      title: 'Profil & Statistik',
                     },
                     {
                       key: 'B',
@@ -1318,12 +1312,17 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                     {
                       key: 'C',
                       step: '3',
-                      title: 'Edukasi & Adat',
+                      title: 'Check Point & Darurat',
                     },
                     {
                       key: 'D',
                       step: '4',
-                      title: 'Foto & Media Lokal',
+                      title: 'Edukasi & Adat',
+                    },
+                    {
+                      key: 'E',
+                      step: '5',
+                      title: 'Foto & Media',
                     },
                   ] as const
                 ).map((tab) => {
@@ -2050,11 +2049,256 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                 </div>
               </div>
 
-              {/* PANEL BAGIAN C: EDUKASI & ADAT (TIPS MENJAGA TEMPAT INI) */}
+              {/* PANEL BAGIAN C: CHECK POINT LOKASI & KONTAK DARURAT OFFLINE */}
               <div
                 role="tabpanel"
                 aria-labelledby="editor-tab-C"
                 hidden={editorTab !== 'C'}
+              >
+                <div className="space-y-6">
+                  {/* 1. CHECK POINT LOKASI */}
+                  <div className="p-4 rounded-2xl bg-white border border-[#234B24]/10 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-extrabold text-[#234B24] flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-[#F26B4B]" />
+                          Check Point Lokasi (Experience &amp; Challenge Wisatawan)
+                        </h3>
+                        <p className="text-xs text-[#4A5248]">
+                          Titik-titik penting di area destinasi yang dapat dikunjungi wisatawan untuk check-in GPS dan klaim reward gamifikasi.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentCps = editingDest.checkpoints || [];
+                          const newCp = {
+                            id: `cp-${Date.now()}`,
+                            destination_id: editingDest.id,
+                            name: `Check Point #${currentCps.length + 1}`,
+                            latitude: editingDest.latitude,
+                            longitude: editingDest.longitude,
+                            is_mandatory_challenge: true,
+                            notes: '',
+                          };
+                          setEditingDest({
+                            ...editingDest,
+                            checkpoints: [...currentCps, newCp],
+                          });
+                        }}
+                        className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C] transition flex items-center gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Tambah Check Point
+                      </button>
+                    </div>
+
+                    {(!editingDest.checkpoints || editingDest.checkpoints.length === 0) ? (
+                      <div className="p-4 rounded-xl bg-[#F6F3EC] border border-dashed border-[#CFD8BE] text-center text-xs text-[#767676]">
+                        Belum ada check point lokasi. Klik "Tambah Check Point" di atas untuk menambahkan spot tantangan.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {editingDest.checkpoints.map((cp, idx) => (
+                          <div
+                            key={cp.id || idx}
+                            className="p-3.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex flex-col md:flex-row md:items-center justify-between gap-3"
+                          >
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                              <div>
+                                <label className="text-[10px] font-bold text-[#4A5248] uppercase">Nama Check Point *</label>
+                                <input
+                                  type="text"
+                                  value={cp.name}
+                                  onChange={(e) => {
+                                    const next = [...(editingDest.checkpoints || [])];
+                                    next[idx] = { ...cp, name: e.target.value };
+                                    setEditingDest({ ...editingDest, checkpoints: next });
+                                  }}
+                                  placeholder="Contoh: Sarasah Bunta Point"
+                                  className="w-full px-3 py-1.5 rounded-lg bg-white border border-[#CFD8BE] text-xs font-bold text-[#234B24]"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-[#4A5248] uppercase">Koordinat Lat, Lng (Opsional)</label>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  <input
+                                    type="number"
+                                    step="any"
+                                    value={cp.latitude || ''}
+                                    onChange={(e) => {
+                                      const next = [...(editingDest.checkpoints || [])];
+                                      next[idx] = { ...cp, latitude: Number(e.target.value) };
+                                      setEditingDest({ ...editingDest, checkpoints: next });
+                                    }}
+                                    placeholder="Lat"
+                                    className="px-2 py-1.5 rounded-lg bg-white border border-[#CFD8BE] text-xs"
+                                  />
+                                  <input
+                                    type="number"
+                                    step="any"
+                                    value={cp.longitude || ''}
+                                    onChange={(e) => {
+                                      const next = [...(editingDest.checkpoints || [])];
+                                      next[idx] = { ...cp, longitude: Number(e.target.value) };
+                                      setEditingDest({ ...editingDest, checkpoints: next });
+                                    }}
+                                    placeholder="Lng"
+                                    className="px-2 py-1.5 rounded-lg bg-white border border-[#CFD8BE] text-xs"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 pt-3">
+                                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#234B24]">
+                                  <input
+                                    type="checkbox"
+                                    checked={!!cp.is_mandatory_challenge}
+                                    onChange={(e) => {
+                                      const next = [...(editingDest.checkpoints || [])];
+                                      next[idx] = { ...cp, is_mandatory_challenge: e.target.checked };
+                                      setEditingDest({ ...editingDest, checkpoints: next });
+                                    }}
+                                    className="rounded border-[#CFD8BE] text-[#234B24] focus:ring-[#234B24]"
+                                  />
+                                  <span>Wajib Challenge</span>
+                                </label>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = (editingDest.checkpoints || []).filter((_, i) => i !== idx);
+                                setEditingDest({ ...editingDest, checkpoints: next });
+                              }}
+                              className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 self-end md:self-center transition"
+                              title="Hapus Check Point"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. NOMOR DARURAT LOKAL OFFLINE */}
+                  <div className="p-4 rounded-2xl bg-white border border-[#234B24]/10 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-extrabold text-[#234B24] flex items-center gap-1.5">
+                          <Phone className="w-4 h-4 text-red-600" />
+                          Nomor Darurat Lokal Offline (Cache Blank Spot)
+                        </h3>
+                        <p className="text-xs text-[#4A5248]">
+                          Kontak posko keamanan, puskesmas, atau SAR terdekat yang disimpan di memori HP wisatawan untuk ditelepon saat kehilangan sinyal internet.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentContacts = editingDest.offline_emergency_contacts || [];
+                          const newContact = {
+                            id: `oec-${Date.now()}`,
+                            destination_id: editingDest.id,
+                            unit_name: '',
+                            phone_number: '',
+                            service_type: 'Pos Pengelola',
+                            notes: '',
+                          };
+                          setEditingDest({
+                            ...editingDest,
+                            offline_emergency_contacts: [...currentContacts, newContact],
+                          });
+                        }}
+                        className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C] transition flex items-center gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Tambah Kontak Darurat
+                      </button>
+                    </div>
+
+                    {(!editingDest.offline_emergency_contacts || editingDest.offline_emergency_contacts.length === 0) ? (
+                      <div className="p-4 rounded-xl bg-[#F6F3EC] border border-dashed border-[#CFD8BE] text-center text-xs text-[#767676]">
+                        Belum ada kontak darurat offline. Tambahkan posko darurat lokal agar tersimpan di cache offline wisatawan.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {editingDest.offline_emergency_contacts.map((contact, idx) => (
+                          <div
+                            key={contact.id || idx}
+                            className="p-3.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] flex flex-col md:flex-row md:items-center justify-between gap-3"
+                          >
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                              <div>
+                                <label className="text-[10px] font-bold text-[#4A5248] uppercase">Nama Unit / Petugas *</label>
+                                <input
+                                  type="text"
+                                  value={contact.unit_name}
+                                  onChange={(e) => {
+                                    const next = [...(editingDest.offline_emergency_contacts || [])];
+                                    next[idx] = { ...contact, unit_name: e.target.value };
+                                    setEditingDest({ ...editingDest, offline_emergency_contacts: next });
+                                  }}
+                                  placeholder="Contoh: Posko Pokdarwis / Puskesmas"
+                                  className="w-full px-3 py-1.5 rounded-lg bg-white border border-[#CFD8BE] text-xs font-bold text-[#234B24]"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-[#4A5248] uppercase">Nomor Telepon / HP *</label>
+                                <input
+                                  type="text"
+                                  value={contact.phone_number}
+                                  onChange={(e) => {
+                                    const next = [...(editingDest.offline_emergency_contacts || [])];
+                                    next[idx] = { ...contact, phone_number: e.target.value };
+                                    setEditingDest({ ...editingDest, offline_emergency_contacts: next });
+                                  }}
+                                  placeholder="Contoh: 0852-6311-2233 atau 0752-xxx"
+                                  className="w-full px-3 py-1.5 rounded-lg bg-white border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-[#4A5248] uppercase">Kategori Layanan *</label>
+                                <select
+                                  value={contact.service_type}
+                                  onChange={(e) => {
+                                    const next = [...(editingDest.offline_emergency_contacts || [])];
+                                    next[idx] = { ...contact, service_type: e.target.value };
+                                    setEditingDest({ ...editingDest, offline_emergency_contacts: next });
+                                  }}
+                                  className="w-full px-3 py-1.5 rounded-lg bg-white border border-[#CFD8BE] text-xs font-bold text-[#234B24]"
+                                >
+                                  <option value="Pos Pengelola">Pos Pengelola / Pokdarwis</option>
+                                  <option value="Puskesmas">Puskesmas / Medis</option>
+                                  <option value="Polsek">Polsek / Kamtibmas</option>
+                                  <option value="SAR">SAR / BPBD</option>
+                                </select>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = (editingDest.offline_emergency_contacts || []).filter((_, i) => i !== idx);
+                                setEditingDest({ ...editingDest, offline_emergency_contacts: next });
+                              }}
+                              className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 self-end md:self-center transition"
+                              title="Hapus Kontak"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* PANEL BAGIAN D: EDUKASI & ADAT (TIPS MENJAGA TEMPAT INI) */}
+              <div
+                role="tabpanel"
+                aria-labelledby="editor-tab-D"
+                hidden={editorTab !== 'D'}
               >
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2142,11 +2386,11 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                 </div>
               </div>
 
-              {/* PANEL BAGIAN D: FOTO & MEDIA LOKAL */}
+              {/* PANEL BAGIAN E: FOTO & MEDIA LOKAL */}
               <div
                 role="tabpanel"
-                aria-labelledby="editor-tab-D"
-                hidden={editorTab !== 'D'}
+                aria-labelledby="editor-tab-E"
+                hidden={editorTab !== 'E'}
               >
                 <div className="space-y-5">
                   <div className="p-4 rounded-2xl bg-[#E4E9DA] border border-[#CFD8BE] text-xs text-[#1B1F1A]">
@@ -2249,7 +2493,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                   type="button"
                   disabled={editorTab === 'A'}
                   onClick={() => {
-                    const tabs: EditorTabKey[] = ['A', 'B', 'C', 'D'];
+                    const tabs: EditorTabKey[] = ['A', 'B', 'C', 'D', 'E'];
                     const currIdx = tabs.indexOf(editorTab);
                     if (currIdx > 0) setEditorTab(tabs[currIdx - 1]);
                   }}
@@ -2259,9 +2503,9 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                 </button>
                 <button
                   type="button"
-                  disabled={editorTab === 'D'}
+                  disabled={editorTab === 'E'}
                   onClick={() => {
-                    const tabs: EditorTabKey[] = ['A', 'B', 'C', 'D'];
+                    const tabs: EditorTabKey[] = ['A', 'B', 'C', 'D', 'E'];
                     const currIdx = tabs.indexOf(editorTab);
                     if (currIdx < tabs.length - 1) setEditorTab(tabs[currIdx + 1]);
                   }}

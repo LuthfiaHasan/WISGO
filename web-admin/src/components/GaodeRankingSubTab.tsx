@@ -117,7 +117,7 @@ export const GaodeRankingSubTab: React.FC<GaodeRankingSubTabProps> = ({
       {/* Panel Pengaturan Bobot Algoritma Gaode */}
       <section
         aria-label="Panel Konfigurasi Bobot Algoritma Gaode"
-        className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-5"
+        className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-5"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -287,8 +287,8 @@ export const GaodeRankingSubTab: React.FC<GaodeRankingSubTabProps> = ({
       </section>
 
       {/* Tabel Gaode Ranking 20 Destinasi */}
-      <div className="bg-white rounded-3xl border border-[#E4E9DA] shadow-sm overflow-hidden">
-        <div className="p-5 lg:p-6 border-b border-[#E4E9DA] flex items-center justify-between">
+      <div className="bg-white rounded-3xl border border-[#234B24]/10 shadow-sm overflow-hidden">
+        <div className="p-5 lg:p-6 border-b border-[#234B24]/10 flex items-center justify-between">
           <div>
             <h3 className="text-base font-extrabold text-[#1B1F1A]">
               Peringkat Resmi Gaode 20 Destinasi Wisata Sumatera Barat

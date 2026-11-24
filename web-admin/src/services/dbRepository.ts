@@ -6,6 +6,8 @@
 import {
   Category,
   Destination,
+  DestinationCheckpoint,
+  OfflineEmergencyContact,
   IndikatorMedan,
   AturanDestinasi,
   OfficialTariff,
@@ -30,6 +32,13 @@ import {
   User,
   OpenTrip,
   Notifikasi,
+  OpenTripOrganizer,
+  OpenTripTransaction,
+  PackingTemplate,
+  WeatherMonitoringItem,
+  AdventurerLevelConfig,
+  UserProfileExperience,
+  PostingShareTemplate,
 } from '../types/contract';
 
 import {
@@ -59,12 +68,19 @@ import {
   SEED_USERS,
   SEED_OPEN_TRIPS,
   SEED_NOTIFIKASI,
+  SEED_ORGANIZERS,
+  SEED_OPEN_TRIP_TRANSACTIONS,
+  SEED_PACKING_TEMPLATES,
+  SEED_WEATHER_MONITORING,
+  SEED_ADVENTURER_LEVELS,
+  SEED_USER_PROFILES,
+  SEED_POSTING_TEMPLATES,
 } from '../data/mockDatabaseV2';
 
 import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
 const DB_VERSION_KEY = 'wisgo_v2_db_version';
-const CURRENT_DB_VERSION = '2.0.0';
+const CURRENT_DB_VERSION = '2.1.0';
 
 // Prefiks tabel penyimpanan lokal baru
 export const DB_KEYS = {
@@ -94,12 +110,20 @@ export const DB_KEYS = {
   USERS: 'wisgo_v2_db_users',
   OPEN_TRIPS: 'wisgo_v2_db_open_trips',
   NOTIFIKASI: 'wisgo_v2_db_notifikasi',
+  ORGANIZERS: 'wisgo_v2_db_organizers',
+  OPEN_TRIP_TRANSACTIONS: 'wisgo_v2_db_open_trip_transactions',
+  PACKING_TEMPLATES: 'wisgo_v2_db_packing_templates',
+  WEATHER_MONITORING: 'wisgo_v2_db_weather_monitoring',
+  ADVENTURER_LEVELS: 'wisgo_v2_db_adventurer_levels',
+  USER_PROFILES: 'wisgo_v2_db_user_profiles',
+  POSTING_TEMPLATES: 'wisgo_v2_db_posting_templates',
+  REVIEW_SETTINGS: 'wisgo_v2_db_review_settings',
 } as const;
 
 /**
  * Mekanisme Auto-Reset & Migration:
  * Membersihkan cache localStorage versi lama (v1/rancakin) yang strukturnya bentrok,
- * lalu menginisialisasi dengan dataset 26 tabel versi 2.0.0.
+ * lalu menginisialisasi dengan dataset 26 tabel versi 2.1.0.
  */
 export function initializeAndMigrateDatabase(): void {
   try {
@@ -131,7 +155,7 @@ export function initializeAndMigrateDatabase(): void {
         localStorage.removeItem(k);
       }
 
-      // Tulis seed baru jika belum ada
+      // Tulis seed baru
       safeSetLocalStorage(DB_KEYS.CATEGORIES, JSON.stringify(SEED_CATEGORIES));
       safeSetLocalStorage(DB_KEYS.DESTINATIONS, JSON.stringify(SEED_DESTINATIONS));
       safeSetLocalStorage(DB_KEYS.INDIKATOR_MEDAN, JSON.stringify(SEED_INDIKATOR_MEDAN));
@@ -158,6 +182,14 @@ export function initializeAndMigrateDatabase(): void {
       safeSetLocalStorage(DB_KEYS.USERS, JSON.stringify(SEED_USERS));
       safeSetLocalStorage(DB_KEYS.OPEN_TRIPS, JSON.stringify(SEED_OPEN_TRIPS));
       safeSetLocalStorage(DB_KEYS.NOTIFIKASI, JSON.stringify(SEED_NOTIFIKASI));
+      safeSetLocalStorage(DB_KEYS.ORGANIZERS, JSON.stringify(SEED_ORGANIZERS));
+      safeSetLocalStorage(DB_KEYS.OPEN_TRIP_TRANSACTIONS, JSON.stringify(SEED_OPEN_TRIP_TRANSACTIONS));
+      safeSetLocalStorage(DB_KEYS.PACKING_TEMPLATES, JSON.stringify(SEED_PACKING_TEMPLATES));
+      safeSetLocalStorage(DB_KEYS.WEATHER_MONITORING, JSON.stringify(SEED_WEATHER_MONITORING));
+      safeSetLocalStorage(DB_KEYS.ADVENTURER_LEVELS, JSON.stringify(SEED_ADVENTURER_LEVELS));
+      safeSetLocalStorage(DB_KEYS.USER_PROFILES, JSON.stringify(SEED_USER_PROFILES));
+      safeSetLocalStorage(DB_KEYS.POSTING_TEMPLATES, JSON.stringify(SEED_POSTING_TEMPLATES));
+      safeSetLocalStorage(DB_KEYS.REVIEW_SETTINGS, JSON.stringify({ min_character_limit: 40 }));
 
       localStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION);
     }
@@ -438,6 +470,48 @@ export const PungliReportsRepo = {
 export const DestinationReviewsRepo = {
   getAll: (): DestinationReview[] =>
     readTable<DestinationReview>(DB_KEYS.DESTINATION_REVIEWS, SEED_DESTINATION_REVIEWS),
+  save: (review: DestinationReview): DestinationReview[] => {
+    const list = DestinationReviewsRepo.getAll();
+    const idx = list.findIndex((r) => r.id === review.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = review;
+    else updated.unshift(review);
+    writeTable(DB_KEYS.DESTINATION_REVIEWS, updated);
+    return updated;
+  },
+  toggleImportant: (reviewId: string): DestinationReview[] => {
+    const list = DestinationReviewsRepo.getAll();
+    const updated = list.map((r) =>
+      r.id === reviewId ? { ...r, is_important: !r.is_important } : r
+    );
+    writeTable(DB_KEYS.DESTINATION_REVIEWS, updated);
+    return updated;
+  },
+  toggleVisibility: (reviewId: string): DestinationReview[] => {
+    const list = DestinationReviewsRepo.getAll();
+    const updated = list.map((r) =>
+      r.id === reviewId ? { ...r, is_hidden: !r.is_hidden } : r
+    );
+    writeTable(DB_KEYS.DESTINATION_REVIEWS, updated);
+    return updated;
+  },
+  getMinCharacterLimit: (): number => {
+    try {
+      const raw = localStorage.getItem(DB_KEYS.REVIEW_SETTINGS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.min_character_limit === 'number') {
+          return parsed.min_character_limit;
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return 30;
+  },
+  setMinCharacterLimit: (limit: number): void => {
+    safeSetLocalStorage(DB_KEYS.REVIEW_SETTINGS, JSON.stringify({ min_character_limit: limit }));
+  },
   deleteWithNotice: (reviewId: string, adminReason?: string): DestinationReview[] => {
     const list = DestinationReviewsRepo.getAll();
     const target = list.find((r) => r.id === reviewId);
@@ -739,5 +813,193 @@ export const CulturalEventsRepo = {
     const filtered = CulturalEventsRepo.getAll().filter((e) => e.id !== id);
     writeTable(DB_KEYS.CULTURAL_EVENTS, filtered);
     return filtered;
+  },
+};
+
+// ============================================================================
+// 15. REPOSITORY: OPEN TRIP ORGANIZERS
+// ============================================================================
+export const OpenTripOrganizersRepo = {
+  getAll: (): OpenTripOrganizer[] =>
+    readTable<OpenTripOrganizer>(DB_KEYS.ORGANIZERS, SEED_ORGANIZERS),
+  updateStatus: (id: string, status: 'Menunggu' | 'Terverifikasi' | 'Ditolak', notes?: string): OpenTripOrganizer[] => {
+    const list = OpenTripOrganizersRepo.getAll();
+    const updated = list.map((org) =>
+      org.id === id
+        ? {
+            ...org,
+            status,
+            notes: notes !== undefined ? notes : org.notes,
+            verified_at: status === 'Terverifikasi' ? new Date().toISOString() : org.verified_at,
+          }
+        : org
+    );
+    writeTable(DB_KEYS.ORGANIZERS, updated);
+    return updated;
+  },
+  save: (organizer: OpenTripOrganizer): OpenTripOrganizer[] => {
+    const list = OpenTripOrganizersRepo.getAll();
+    const idx = list.findIndex((o) => o.id === organizer.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = organizer;
+    else updated.unshift(organizer);
+    writeTable(DB_KEYS.ORGANIZERS, updated);
+    return updated;
+  },
+};
+
+// ============================================================================
+// 16. REPOSITORY: OPEN TRIP TRANSACTIONS
+// ============================================================================
+export const OpenTripTransactionsRepo = {
+  getAll: (): OpenTripTransaction[] =>
+    readTable<OpenTripTransaction>(DB_KEYS.OPEN_TRIP_TRANSACTIONS, SEED_OPEN_TRIP_TRANSACTIONS),
+  save: (tx: OpenTripTransaction): OpenTripTransaction[] => {
+    const list = OpenTripTransactionsRepo.getAll();
+    const idx = list.findIndex((t) => t.id === tx.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = tx;
+    else updated.unshift(tx);
+    writeTable(DB_KEYS.OPEN_TRIP_TRANSACTIONS, updated);
+    return updated;
+  },
+  getTotalRevenueIdr: (): number => {
+    return OpenTripTransactionsRepo.getAll()
+      .filter((t) => t.status === 'BERHASIL')
+      .reduce((sum, t) => sum + t.amount_idr, 0);
+  },
+};
+
+// ============================================================================
+// 17. REPOSITORY: PACKING TEMPLATES
+// ============================================================================
+export const PackingTemplatesRepo = {
+  getAll: (): PackingTemplate[] =>
+    readTable<PackingTemplate>(DB_KEYS.PACKING_TEMPLATES, SEED_PACKING_TEMPLATES),
+  getByCategory: (categoryName: string): PackingTemplate[] => {
+    return PackingTemplatesRepo.getAll().filter((p) => p.category_name === categoryName);
+  },
+  save: (template: PackingTemplate): PackingTemplate[] => {
+    const list = PackingTemplatesRepo.getAll();
+    const idx = list.findIndex((p) => p.id === template.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = template;
+    else updated.unshift(template);
+    writeTable(DB_KEYS.PACKING_TEMPLATES, updated);
+    return updated;
+  },
+  delete: (id: string): PackingTemplate[] => {
+    const filtered = PackingTemplatesRepo.getAll().filter((p) => p.id !== id);
+    writeTable(DB_KEYS.PACKING_TEMPLATES, filtered);
+    return filtered;
+  },
+};
+
+// ============================================================================
+// 18. REPOSITORY: WEATHER MONITORING
+// ============================================================================
+export const WeatherMonitoringRepo = {
+  getAll: (): WeatherMonitoringItem[] =>
+    readTable<WeatherMonitoringItem>(DB_KEYS.WEATHER_MONITORING, SEED_WEATHER_MONITORING),
+  updateCondition: (
+    id: string,
+    condition: string,
+    temp_c: number,
+    is_extreme: boolean,
+    warning_text?: string
+  ): WeatherMonitoringItem[] => {
+    const list = WeatherMonitoringRepo.getAll();
+    const updated = list.map((w) =>
+      w.id === id
+        ? {
+            ...w,
+            condition,
+            current_temp_c: temp_c,
+            is_extreme_weather: is_extreme,
+            extreme_warning_text: warning_text || w.extreme_warning_text,
+            updated_at: new Date().toISOString(),
+          }
+        : w
+    );
+    writeTable(DB_KEYS.WEATHER_MONITORING, updated);
+    return updated;
+  },
+  broadcastHazardAlert: (item: WeatherMonitoringItem): HazardAlert[] => {
+    const newAlert: HazardAlert = {
+      id: `hz-${Date.now()}`,
+      corridor_code: `CORR-WEATHER-${Date.now().toString().slice(-4)}`,
+      location: item.destination_name,
+      road_segment: `Kawasan ${item.destination_name}`,
+      city_regency: item.city_regency,
+      latitude: -0.94924,
+      longitude: 100.48512,
+      radius_meter: 4000,
+      severity: item.is_extreme_weather ? 'Waspada' : 'Aman',
+      hazard_type: `Peringatan Cuaca: ${item.condition}`,
+      weather_status: `${item.condition} (${item.current_temp_c}°C)`,
+      slope_gradient_deg: 18,
+      message: item.extreme_warning_text || `Kondisi cuaca terkini: ${item.condition} dengan suhu ${item.current_temp_c}°C. Tetap waspada di jalur wisata.`,
+      detour_route: 'Patuhi instruksi petugas posko siaga darurat setempat.',
+      detour_route_geojson: null,
+      nearest_rescue_post: `Posko Siaga BPBD & SAR ${item.city_regency}`,
+      emergency_contact: '0811-6600-2026',
+      triggered_by_admin: 'usr-admin-01',
+      updated_at: new Date().toISOString(),
+    };
+    return HazardAlertsRepo.save(newAlert);
+  },
+};
+
+// ============================================================================
+// 19. REPOSITORY: 5 LEVEL & LENCANA PETUALANG
+// ============================================================================
+export const AdventurerLevelsRepo = {
+  getAll: (): AdventurerLevelConfig[] =>
+    readTable<AdventurerLevelConfig>(DB_KEYS.ADVENTURER_LEVELS, SEED_ADVENTURER_LEVELS),
+  updateLevel: (updatedConfig: AdventurerLevelConfig): AdventurerLevelConfig[] => {
+    const list = AdventurerLevelsRepo.getAll();
+    const idx = list.findIndex((l) => l.level === updatedConfig.level);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = updatedConfig;
+    else updated.push(updatedConfig);
+    writeTable(DB_KEYS.ADVENTURER_LEVELS, updated);
+    return updated;
+  },
+};
+
+// ============================================================================
+// 20. REPOSITORY: USER PROFILES & STRAVA-STYLE EXPERIENCES
+// ============================================================================
+export const UserProfilesRepo = {
+  getAll: (): UserProfileExperience[] =>
+    readTable<UserProfileExperience>(DB_KEYS.USER_PROFILES, SEED_USER_PROFILES),
+  getById: (id: string): UserProfileExperience | undefined => {
+    return UserProfilesRepo.getAll().find((u) => u.id === id || u.user_id === id);
+  },
+  save: (profile: UserProfileExperience): UserProfileExperience[] => {
+    const list = UserProfilesRepo.getAll();
+    const idx = list.findIndex((u) => u.id === profile.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = profile;
+    else updated.unshift(profile);
+    writeTable(DB_KEYS.USER_PROFILES, updated);
+    return updated;
+  },
+};
+
+// ============================================================================
+// 21. REPOSITORY: POSTING TEMPLATES & QR
+// ============================================================================
+export const PostingTemplatesRepo = {
+  getAll: (): PostingShareTemplate[] =>
+    readTable<PostingShareTemplate>(DB_KEYS.POSTING_TEMPLATES, SEED_POSTING_TEMPLATES),
+  save: (template: PostingShareTemplate): PostingShareTemplate[] => {
+    const list = PostingTemplatesRepo.getAll();
+    const idx = list.findIndex((t) => t.id === template.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = template;
+    else updated.unshift(template);
+    writeTable(DB_KEYS.POSTING_TEMPLATES, updated);
+    return updated;
   },
 };

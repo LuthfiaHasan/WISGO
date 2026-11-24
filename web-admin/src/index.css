@@ -3,20 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --cream: #FAF3E6;
-  --cream-subtle: #F3EBDC;
+  --cream: #F6F3EC;
+  --cream-subtle: #EDE8DD;
   --cream-100: #F6F3EC;
-  --forest: #193D22;
+  --forest: #234B24;
   --brush: #2F663E;
   --sage: #DFECE2;
   --sage-border: #D5E2D7;
   --warm-border: #E5DEC9;
-  --terracotta: #E65F2B;
-  --coral-tint: #F9E4DC;
+  --terracotta: #F26B4B;
+  --coral-tint: #FDF2E9;
   --green-800: #234B24;
   --green-500: #1E9E5A;
-  --ink: #142618;
-  --ink-900: #142618;
+  --ink: #1B1F1A;
+  --ink-900: #1B1F1A;
   --muted: #5A6B5D;
   --coral-500: #F26B4B;
   --orange-500: #E85D1A;
@@ -28,6 +28,7 @@ body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   background-color: var(--cream);
   color: var(--ink);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Visually hidden helper from modern-web-guidance (forms & sortable-table) */
@@ -80,6 +81,30 @@ dialog::backdrop {
   position: absolute;
   inset: auto 0 0;
   border-block-end: 3px solid var(--coral-500);
+}
+
+/* Clean & Elegant design system utilities */
+.card-clean {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  border: 1px solid rgba(35, 75, 36, 0.08);
+  box-shadow: 0 4px 24px rgba(35, 75, 36, 0.04);
+}
+
+.pill-subtab-active {
+  background-color: #234B24;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(35, 75, 36, 0.15);
+}
+
+.pill-subtab-inactive {
+  background-color: #FFFFFF;
+  color: #4A5248;
+  border: 1px solid rgba(35, 75, 36, 0.12);
+}
+.pill-subtab-inactive:hover {
+  background-color: rgba(35, 75, 36, 0.05);
+  color: #234B24;
 }
 
 /* Custom smooth scrollbar for dark green Sidebar */

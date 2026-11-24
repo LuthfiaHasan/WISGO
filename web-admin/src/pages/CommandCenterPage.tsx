@@ -22,6 +22,12 @@ import {
   X,
   Save,
   Navigation,
+  CloudSun,
+  Wind,
+  Thermometer,
+  Droplets,
+  WifiOff,
+  Send,
 } from 'lucide-react';
 import {
   HazardSeverity,
@@ -31,6 +37,7 @@ import {
   PungliStatus,
   SosEmergencyStatus,
   SosEmergencyTicket,
+  WeatherMonitoringItem,
 } from '../types/contract';
 import {
   fetchHazardAlerts,
@@ -41,6 +48,7 @@ import {
   updateSosTicketStatus,
 } from '../services/api';
 import { EmergencyContactsManager } from '../components/EmergencyContactsManager';
+import { WeatherMonitoringRepo } from '../services/dbRepository';
 
 interface CommandCenterPageProps {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -59,15 +67,29 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   const hazardMsgId = useId();
   const hazardDetourId = useId();
 
-  // Active Tab: 3 Operational Panels
-  const [activeTab, setActiveTab] = useState<'pungli' | 'sos' | 'hazard'>('pungli');
+  // Active Tab: 4 Operational Panels
+  const [activeTab, setActiveTab] = useState<'pungli' | 'sos' | 'hazard' | 'weather'>('pungli');
   const [sosSubView, setSosSubView] = useState<'view_reports' | 'input_contacts'>('view_reports');
 
   // Data States
   const [pungliReports, setPungliReports] = useState<PungliReport[]>([]);
   const [sosTickets, setSosTickets] = useState<SosEmergencyTicket[]>([]);
   const [hazardAlerts, setHazardAlerts] = useState<HazardZoneAlert[]>([]);
+  const [weatherList, setWeatherList] = useState<WeatherMonitoringItem[]>(() =>
+    WeatherMonitoringRepo.getAll()
+  );
   const [loading, setLoading] = useState(true);
+
+  const extremeWeatherCount = weatherList.filter((w) => w.is_extreme_weather).length;
+
+  const handleBroadcastWeatherHazard = (wtr: WeatherMonitoringItem) => {
+    const updatedHazards = WeatherMonitoringRepo.broadcastHazardAlert(wtr);
+    setHazardAlerts(updatedHazards);
+    showToast(
+      `Peringatan Cuaca Ekstrem (${wtr.condition}) untuk ${wtr.destination_name} berhasil disiarkan ke radar wisatawan!`,
+      'success'
+    );
+  };
 
   // Tab 1 Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -338,7 +360,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Utama Pusat Komando */}
-      <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
+      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
         <div className="flex flex-col gap-5">
           {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
           <div className="flex items-start gap-3.5">
@@ -350,7 +372,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Pusat Komando Terpadu Pungli &amp; SOS SAR
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#234B24]/8 text-[#234B24]">
                   Siaga 24/7 Sumbar
                 </span>
               </div>
@@ -361,21 +383,21 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           </div>
 
           {/* Baris 2: Barisan Tab Navigasi Pusat Komando */}
-          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center p-1.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]">
+          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => setActiveTab('pungli')}
-                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
                   activeTab === 'pungli'
-                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                    ? 'bg-[#234B24] text-white shadow-sm'
+                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
                 }`}
               >
                 <ShieldAlert className="w-4 h-4" aria-hidden="true" />
                 <span>Aduan Pungli &amp; Fasilitas</span>
                 {countBaru > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white font-bold">
                     {countBaru} Baru
                   </span>
                 )}
@@ -384,16 +406,16 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('sos')}
-                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
                   activeTab === 'sos'
-                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                    ? 'bg-[#234B24] text-white shadow-sm'
+                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
                 }`}
               >
                 <LifeBuoy className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
                 <span>Nomor Darurat &amp; Siaga SOS SAR</span>
                 {activeSosCount > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse font-bold">
                     {activeSosCount} Sinyal
                   </span>
                 )}
@@ -402,17 +424,39 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('hazard')}
-                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
                   activeTab === 'hazard'
-                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                    : 'text-[#4A5248] hover:text-[#1B1F1A]'
+                    ? 'bg-[#234B24] text-white shadow-sm'
+                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
                 }`}
               >
                 <AlertTriangle className="w-4 h-4 text-[#CA8A04]" aria-hidden="true" />
                 <span>Peringatan Jalur Rawan</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24] font-bold">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/8 text-[#234B24] font-bold">
                   {hazardAlerts.length} Jalur
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('weather')}
+                className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+                  activeTab === 'weather'
+                    ? 'bg-[#234B24] text-white shadow-sm'
+                    : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+                }`}
+              >
+                <CloudSun className="w-4 h-4 text-[#3B82F6]" aria-hidden="true" />
+                <span>Cuaca Real-Time Wisata</span>
+                {extremeWeatherCount > 0 ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-600 text-white animate-pulse font-black">
+                    {extremeWeatherCount} Ekstrem
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/8 text-[#234B24] font-bold">
+                    {weatherList.length} Titik
+                  </span>
+                )}
               </button>
             </div>
 
@@ -431,7 +475,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
         <div className="space-y-6">
           {/* 4 Kartu KPI Ringkasan Aduan */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#D95637]">Laporan Baru</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#F26B4B] animate-ping" />
@@ -444,7 +488,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
               <span className="text-xs font-bold text-[#854D0E]">
                 Sedang Diverifikasi
               </span>
@@ -456,7 +500,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
               <span className="text-xs font-bold text-[#1E40AF]">
                 Ditindaklanjuti Lapangan
               </span>
@@ -468,7 +512,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
               <span className="text-xs font-bold text-[#166534]">
                 Selesai Ditertibkan
               </span>
@@ -482,7 +526,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           </div>
 
           {/* Filter Bar & Search */}
-          <div className="bg-white rounded-[24px] p-5 shadow-sm border border-[#E4E9DA] flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="relative flex-1">
               <label htmlFor={searchInputId} className="sr-only">
                 Cari laporan aduan
@@ -537,11 +581,11 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           </div>
 
           {/* Tabel Tiket Aduan Pungli & Fasilitas */}
-          <div className="bg-white rounded-[24px] shadow-sm border border-[#E4E9DA] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E4E9DA] bg-[#F6F3EC]/70 text-[11px] font-bold text-[#4A5248] uppercase tracking-wider">
+                  <tr className="border-b border-[#234B24]/10 bg-[#F6F3EC]/90 text-[11px] font-extrabold text-[#234B24] uppercase tracking-wider">
                     <th scope="col" className="py-3.5 px-4">
                       Tiket / Tanggal
                     </th>
@@ -733,7 +777,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
             <>
               {/* Alert Peringatan Siaga SAR Aktif */}
           {activeSosCount > 0 ? (
-            <div className="p-5 rounded-[24px] bg-[#F26B4B]/15 border-2 border-[#F26B4B] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-5 rounded-2xl bg-[#F26B4B]/15 border-2 border-[#F26B4B] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-2xl bg-[#F26B4B] text-white flex items-center justify-center animate-bounce shrink-0">
                   <LifeBuoy className="w-6 h-6" aria-hidden="true" />
@@ -752,7 +796,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-[20px] bg-[#DCFCE7] border border-[#86EFAC] flex items-center gap-3">
+            <div className="p-4 rounded-2xl bg-[#DCFCE7] border border-[#86EFAC] flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-[#16A34A] shrink-0" aria-hidden="true" />
               <p className="text-xs font-bold text-[#166534]">
                 Kondisi Lapangan Terkendali — Tidak ada sinyal darurat SOS wisatawan aktif saat ini.
@@ -761,7 +805,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           )}
 
           {/* Daftar Tiket Sinyal Darurat SOS */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E4E9DA] space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
@@ -801,19 +845,32 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                           </div>
                         </div>
 
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-extrabold shadow-xs ${
-                            statusMeta.bg
-                          } ${statusMeta.text} ${
-                            statusMeta.pulse ? 'animate-pulse' : ''
-                          }`}
-                        >
-                          {ticket.status}
-                        </span>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-extrabold shadow-xs ${
+                              statusMeta.bg
+                            } ${statusMeta.text} ${
+                              statusMeta.pulse ? 'animate-pulse' : ''
+                            }`}
+                          >
+                            {ticket.status}
+                          </span>
+                          {ticket.delivery_method === 'offline_fallback' ? (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-xs">
+                              <WifiOff className="w-3 h-3 text-amber-600" />
+                              <span>Offline Fallback (SMS Gateway / Cache)</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-xs">
+                              <Wifi className="w-3 h-3 text-emerald-600" />
+                              <span>Online GPS Langsung</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Lokasi & Telemetri */}
-                      <div className="mt-3 p-3 rounded-xl bg-white border border-[#E4E9DA] space-y-2">
+                      <div className="mt-3 p-3 rounded-xl bg-white border border-[#234B24]/10 space-y-2">
                         <div className="flex items-start justify-between gap-2 text-xs">
                           <div className="flex items-center gap-1.5 font-bold text-[#1B1F1A]">
                             <MapPin className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
@@ -854,6 +911,17 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                             <span>{ticket.signal_status}</span>
                           </div>
                         </div>
+
+                        {ticket.last_signal_at && (
+                          <div className="text-[10px] text-[#767676] flex flex-wrap items-center justify-between pt-1 border-t border-black/5 gap-1">
+                            <span>Sinyal Terakhir: {new Date(ticket.last_signal_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                            {ticket.last_known_coords && (
+                              <span className="font-mono text-[9px] text-[#4A5248] bg-[#F6F3EC] px-1.5 py-0.5 rounded">
+                                GPS Terakhir: {ticket.last_known_coords}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Catatan Medis & Situasi Darurat */}
@@ -912,7 +980,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       {activeTab === 'hazard' && (
         <div className="space-y-6">
           {/* Banner Peringatan Siaga Darurat */}
-          <div className="bg-[#234B24] text-[#F6F3EC] rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#1E9E5A] flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-[#234B24] text-[#F6F3EC] rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-2xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0 shadow-md">
                 <AlertTriangle className="w-6 h-6 animate-pulse" aria-hidden="true" />
@@ -939,7 +1007,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           </div>
 
           {/* Panel Kontrol Status Jalur Rawan Bencana (Hazard Zone Alerts) */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E4E9DA] space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
@@ -1014,6 +1082,166 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       )}
 
       {/* ==================================================================== */}
+      {/* 4. TAB MONITORING CUACA REAL-TIME PER KAB/KOTA & DESTINASI          */}
+      {/* ==================================================================== */}
+      {activeTab === 'weather' && (
+        <div className="space-y-6">
+          {/* Banner Peringatan Cuaca Ekstrem jika ada */}
+          {extremeWeatherCount > 0 ? (
+            <div className="p-5 rounded-2xl bg-red-500/15 border-2 border-red-500 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center shrink-0 shadow-md animate-pulse">
+                  <Wind className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-600 text-white">
+                    PERINGATAN BMKG &amp; SENSOR WISGO AKTIF
+                  </span>
+                  <h3 className="text-base font-extrabold text-[#1B1F1A] mt-1">
+                    Terdeteksi {extremeWeatherCount} Wilayah Destinasi Mengalami Cuaca Ekstrem!
+                  </h3>
+                  <p className="text-xs text-[#4A5248]">
+                    Hujan lebat, angin kencang, atau kabut tebal berisiko memicu longsoran tebing dan jarak pandang minim.
+                  </p>
+                </div>
+              </div>
+              <div className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold self-start md:self-center">
+                SIAGA CUACA BURUK
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-[#DCFCE7] border border-[#86EFAC] flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-[#16A34A] shrink-0" />
+              <div className="text-xs text-[#166534]">
+                <strong>Seluruh Kawasan Wisata Terpantau Aman:</strong> Tidak ada anomali cuaca ekstrem saat ini di 19 Kab/Kota Sumbar.
+              </div>
+            </div>
+          )}
+
+          {/* Kartu Grid Pemantauan Cuaca Real-Time */}
+          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#234B24]/10">
+              <div>
+                <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
+                  <CloudSun className="w-5 h-5 text-[#3B82F6]" />
+                  <span>Kondisi Cuaca Real-Time per Kab/Kota &amp; Destinasi Wisata</span>
+                </h3>
+                <p className="text-xs text-[#4A5248] mt-0.5">
+                  Suhu saat ini, kondisi visual, prakiraan per jam ke depan, serta tombol broadcast peringatan cepat ke wisatawan.
+                </p>
+              </div>
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#234B24]/10 text-[#234B24]">
+                {weatherList.length} Titik Sensor Terhubung
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {weatherList.map((item) => (
+                <div
+                  key={item.id}
+                  className={`p-5 rounded-3xl border transition flex flex-col justify-between ${
+                    item.is_extreme_weather
+                      ? 'border-red-300 bg-red-50/30 ring-2 ring-red-400/20'
+                      : 'border-[#CFD8BE] bg-[#F6F3EC]/50 hover:border-[#234B24]'
+                  }`}
+                >
+                  <div className="space-y-3.5">
+                    {/* Header: Kab/Kota & Destinasi */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#767676] block">
+                          {item.city_regency}
+                        </span>
+                        <h4 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
+                          {item.destination_name}
+                        </h4>
+                      </div>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                          item.is_extreme_weather
+                            ? 'bg-red-600 text-white animate-pulse'
+                            : 'bg-[#1E9E5A]/15 text-[#166534]'
+                        }`}
+                      >
+                        {item.is_extreme_weather ? 'CUACA EKSTREM' : 'AMAN'}
+                      </span>
+                    </div>
+
+                    {/* Suhu & Kondisi Saat Ini */}
+                    <div className="p-4 rounded-2xl bg-white border border-[#234B24]/10 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center font-bold text-xl">
+                          <Thermometer className="w-6 h-6 text-[#F26B4B]" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-black text-[#234B24] font-mono">
+                            {item.current_temp_c}°C
+                          </div>
+                          <span className="text-xs font-bold text-[#4A5248]">
+                            {item.condition}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-right text-[11px] text-[#767676] space-y-1">
+                        <div className="flex items-center justify-end gap-1">
+                          <Droplets className="w-3.5 h-3.5 text-blue-500" />
+                          <span>{item.humidity_pct}% Lembap</span>
+                        </div>
+                        <div className="flex items-center justify-end gap-1">
+                          <Wind className="w-3.5 h-3.5 text-gray-500" />
+                          <span>{item.wind_speed_kmh} km/jam</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Warning text jika ekstrem */}
+                    {item.is_extreme_weather && item.extreme_warning_text && (
+                      <div className="p-3 rounded-xl bg-red-100/70 border border-red-300 text-[11px] text-red-900 leading-snug">
+                        <strong>Perhatian:</strong> {item.extreme_warning_text}
+                      </div>
+                    )}
+
+                    {/* Prakiraan Jam ke Depan */}
+                    <div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A5248] block mb-1.5">
+                        Prakiraan 6 Jam ke Depan:
+                      </span>
+                      <div className="grid grid-cols-3 gap-1.5 text-center">
+                        {item.hourly_forecast.slice(0, 3).map((hf, i) => (
+                          <div key={i} className="p-2 rounded-xl bg-white border border-[#234B24]/10">
+                            <span className="text-[10px] font-mono text-[#767676] block">{hf.hour}</span>
+                            <strong className="text-xs font-extrabold text-[#234B24] block mt-0.5">{hf.temp_c}°C</strong>
+                            <span className="text-[9px] text-[#4A5248] block truncate">{hf.condition}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tombol Cepat: Siarkan Peringatan Cuaca */}
+                  <div className="mt-4 pt-3.5 border-t border-[#CFD8BE]">
+                    <button
+                      type="button"
+                      onClick={() => handleBroadcastWeatherHazard(item)}
+                      className={`w-full min-h-[40px] px-3.5 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-xs ${
+                        item.is_extreme_weather
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-[#234B24] hover:bg-[#1B3A1C] text-white'
+                      }`}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Siarkan Peringatan Cuaca ke Wisatawan</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
       {/* MODAL VERIFIKASI & PENINDAKAN LAPORAN PUNGLI                        */}
       {/* ==================================================================== */}
       {selectedPungli && (
@@ -1023,8 +1251,8 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           aria-labelledby="pungli-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 lg:p-7 shadow-2xl border border-[#E4E9DA] max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E4E9DA]">
+          <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
                   <ShieldAlert className="w-5 h-5" aria-hidden="true" />
@@ -1156,7 +1384,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
               </div>
 
               {/* Tombol Perubahan Status Laporan */}
-              <div className="pt-4 border-t border-[#E4E9DA]">
+              <div className="pt-4 border-t border-[#234B24]/10">
                 <span className="block text-xs font-bold text-[#1B1F1A] mb-2.5">
                   Tindakan Otoritas &amp; Pembaruan Status Tiket:
                 </span>
@@ -1207,8 +1435,8 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           aria-labelledby="sos-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#E4E9DA]">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E4E9DA]">
+          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10">
+            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
                   <LifeBuoy className="w-5 h-5" aria-hidden="true" />
@@ -1293,7 +1521,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#E4E9DA]">
+              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
                 <button
                   type="button"
                   onClick={() => setSelectedSos(null)}
@@ -1326,8 +1554,8 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           aria-labelledby="hazard-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#E4E9DA]">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E4E9DA]">
+          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10">
+            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-xs">
                   <Navigation className="w-5 h-5" aria-hidden="true" />
@@ -1412,7 +1640,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#E4E9DA]">
+              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
                 <button
                   type="button"
                   onClick={() => setSelectedHazard(null)}

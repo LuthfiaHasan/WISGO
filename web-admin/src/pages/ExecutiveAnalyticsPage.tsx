@@ -32,6 +32,7 @@ import {
   FileSpreadsheet,
   RotateCcw,
   SlidersHorizontal,
+  CreditCard,
 } from 'lucide-react';
 import {
   Destination,
@@ -58,6 +59,7 @@ import {
   PungliReportsRepo,
   SosSignalsRepo,
   DestinationsRepo,
+  OpenTripTransactionsRepo,
 } from '../services/dbRepository';
 import { SystemHealthBenchmarkSubTab } from '../components/SystemHealthBenchmarkSubTab';
 
@@ -837,6 +839,13 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
     });
   }, [selectedRegion, selectedCategoryObj]);
 
+  const openTripTransactions = useMemo(() => OpenTripTransactionsRepo.getAll(), []);
+  const openTripTotalRevenue = useMemo(() => OpenTripTransactionsRepo.getTotalRevenueIdr(), []);
+  const openTripSuccessCount = useMemo(
+    () => openTripTransactions.filter((tx) => tx.status === 'BERHASIL').length,
+    [openTripTransactions]
+  );
+
   const filteredTop5Gaode = useMemo(() => {
     return TOP_5_GAODE_DESTINATIONS.filter((d) => {
       return selectedRegion === 'all' || d.cityRegency.toLowerCase() === selectedRegion.toLowerCase();
@@ -933,6 +942,8 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       `# Tanggal Ekspor: ${new Date().toLocaleString('id-ID')}`,
       `# Parameter Filter: Wilayah="${selectedRegion}", Kategori="${catName}", Periode="${periodPreset}", Segmen="${selectedSegment}", GPS_Valid_Only="${onlyValidGps}"`,
       `# Total Kunjungan: ${totalVisitorsDisplay.toLocaleString('id-ID')} Wisatawan (Personal: ${personalVisitsCount.toLocaleString('id-ID')} | Rombongan: ${groupVisitsCount.toLocaleString('id-ID')})`,
+      `# Total Omset Transaksi Sistem (Khusus Open Trip): Rp ${openTripTotalRevenue.toLocaleString('id-ID')}`,
+      `# Total Interaksi Leads WA Mitra UMKM (P2P): ${totalWaLeadsDisplay.toLocaleString('id-ID')} Klik`,
       `# ============================================================================`,
     ];
 
@@ -1074,25 +1085,30 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         </div>
 
         {/* Ringkasan Makro Print */}
-        <div className="grid grid-cols-4 gap-3 mb-6 p-3 bg-gray-50 border border-gray-300 rounded text-center text-xs">
+        <div className="grid grid-cols-5 gap-2 mb-6 p-3 bg-gray-50 border border-gray-300 rounded text-center text-xs">
           <div>
-            <span className="text-[10px] text-gray-600 block">Total Kunjungan Terlacak</span>
-            <strong className="text-base text-black">{totalVisitorsDisplay.toLocaleString('id-ID')} Wisatawan</strong>
+            <span className="text-[10px] text-gray-600 block">Total Kunjungan</span>
+            <strong className="text-sm text-black">{totalVisitorsDisplay.toLocaleString('id-ID')} Wisatawan</strong>
             <span className="text-[9px] text-gray-600 block">Personal: {personalVisitsCount.toLocaleString('id-ID')} | Rombongan: {groupVisitsCount.toLocaleString('id-ID')}</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Rombongan Terdaftar</span>
-            <strong className="text-base text-black">{activeGroupsCount} Rombongan</strong>
+            <strong className="text-sm text-black">{activeGroupsCount} Rombongan</strong>
             <span className="text-[9px] text-gray-500 block">{groupTouristsCount.toLocaleString('id-ID')} Wisatawan Terjadwal</span>
           </div>
           <div>
+            <span className="text-[10px] text-gray-600 block">Omset Transaksi Open Trip</span>
+            <strong className="text-sm text-black font-mono">Rp {openTripTotalRevenue.toLocaleString('id-ID')}</strong>
+            <span className="text-[9px] text-emerald-700 block">Sistem Terpusat WISGO</span>
+          </div>
+          <div>
             <span className="text-[10px] text-gray-600 block">Interaksi Leads WA Mitra</span>
-            <strong className="text-base text-black">{totalWaLeadsDisplay.toLocaleString('id-ID')} Klik P2P</strong>
+            <strong className="text-sm text-black">{totalWaLeadsDisplay.toLocaleString('id-ID')} Klik P2P</strong>
             <span className="text-[9px] text-gray-500 block">Pemberdayaan UMKM</span>
           </div>
           <div>
             <span className="text-[10px] text-gray-600 block">Rasio Selesai Pungli &amp; SAR</span>
-            <strong className="text-base text-black">92.6% (18 Menit SLA)</strong>
+            <strong className="text-sm text-black">92.6% (18 Menit SLA)</strong>
             <span className="text-[9px] text-gray-500 block">{totalIncidentsCount} Total Laporan Terfilter</span>
           </div>
         </div>
@@ -1192,7 +1208,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* ==================================================================== */}
       {/* 1. HEADER UTAMA LAYAR ADMIN (No-Print)                               */}
       {/* ==================================================================== */}
-      <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA] no-print">
+      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] no-print">
         <div className="flex flex-col gap-5">
           {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
           <div className="flex items-start gap-3.5">
@@ -1204,7 +1220,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Dasbor Manajemen Kunjungan &amp; Analitik Eksekutif
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#234B24]/8 text-[#234B24]">
                   Pusat Komando Dispar Sumbar
                 </span>
               </div>
@@ -1215,7 +1231,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </div>
 
           {/* Baris 2: Quick Action Ekspor */}
-          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs text-[#4A5248]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#1E9E5A] animate-ping" />
               <span>Status Operasional:</span>
@@ -1234,7 +1250,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               <button
                 type="button"
                 onClick={handlePrintOfficialReport}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm transition"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm transition duration-200"
               >
                 <Printer className="w-4 h-4 text-[#A7F3D0]" aria-hidden="true" />
                 <span>Cetak / Unduh PDF Resmi</span>
@@ -1249,9 +1265,9 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* ==================================================================== */}
       <section
         aria-label="Panel Filter Laporan Eksekutif"
-        className="bg-white rounded-2xl p-5 shadow-sm border border-[#E4E9DA] no-print space-y-4"
+        className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] no-print space-y-4"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E4E9DA] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#234B24]/10 pb-3">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-[#234B24]" />
             <h2 className="text-xs font-black uppercase tracking-wider text-[#234B24]">
@@ -1424,7 +1440,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         )}
 
         {/* Baris Bawah: Toggle Sensor GPS + Ringkasan Chips Filter Aktif */}
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-[#E4E9DA]">
+        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-[#234B24]/10">
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -1463,7 +1479,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 no-print"
       >
         {/* Kartu 1: Total Wisatawan Terlacak (Breakdown Personal vs Rombongan) */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Total Wisatawan Terlacak</span>
             <div className="w-8 h-8 rounded-xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center">
@@ -1478,7 +1494,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               </span>
             </div>
             {/* Visualisasi Terpisah Personal vs Rombongan */}
-            <div className="mt-3 pt-2.5 border-t border-[#E4E9DA] grid grid-cols-2 gap-2">
+            <div className="mt-3 pt-2.5 border-t border-[#234B24]/10 grid grid-cols-2 gap-2">
               <div
                 className={`p-2 rounded-xl border transition ${
                   selectedSegment === 'group'
@@ -1522,7 +1538,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         </div>
 
         {/* Kartu 2: Total Rombongan / Open Trip Aktif */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Rombongan / Open Trip Aktif</span>
             <div className="w-8 h-8 rounded-xl bg-[#F26B4B]/10 text-[#F26B4B] flex items-center justify-center">
@@ -1545,7 +1561,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         </div>
 
         {/* Kartu 3: Skor Keaslian Gaode & Dwell Time (gaode_behavior_rankings) */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Skor Keaslian Gaode (Avg)</span>
             <div className="w-8 h-8 rounded-xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center">
@@ -1566,7 +1582,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         </div>
 
         {/* Kartu 4: Telemetri Latensi & SLA Database (api_telemetry_logs) */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#4A5248]">Telemetri SLA &amp; API PostGIS</span>
             <div className="w-8 h-8 rounded-xl bg-[#1E9E5A]/10 text-[#1E9E5A] flex items-center justify-center">
@@ -1592,15 +1608,15 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* ==================================================================== */}
       <nav
         aria-label="Tab Manajemen Kunjungan & Analitik"
-        className="bg-white rounded-2xl p-2 shadow-sm border border-[#E4E9DA] flex flex-wrap gap-2 no-print"
+        className="bg-white rounded-2xl p-2 border border-[#234B24]/8 shadow-[0_2px_12px_rgba(35,75,36,0.03)] flex flex-wrap gap-2 no-print"
       >
         <button
           type="button"
           onClick={() => setActiveTab('heatmap_prediction')}
-          className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
             activeTab === 'heatmap_prediction'
-              ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-              : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
           }`}
         >
           <Compass className="w-4 h-4" aria-hidden="true" />
@@ -1610,10 +1626,10 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('partner_performance')}
-          className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
             activeTab === 'partner_performance'
-              ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-              : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
           }`}
         >
           <Store className="w-4 h-4" aria-hidden="true" />
@@ -1623,10 +1639,10 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('incident_recap')}
-          className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
             activeTab === 'incident_recap'
-              ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-              : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
           }`}
         >
           <AlertTriangle className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
@@ -1636,10 +1652,10 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('export_report')}
-          className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
             activeTab === 'export_report'
-              ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-              : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
           }`}
         >
           <FileText className="w-4 h-4" aria-hidden="true" />
@@ -1650,10 +1666,10 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('system_benchmark')}
-          className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ml-auto ${
+          className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-1.5 ml-auto ${
             activeTab === 'system_benchmark'
-              ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-              : 'bg-white hover:bg-[#F6F3EC] text-[#4A5248] border border-[#CFD8BE]'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-white hover:bg-[#F6F3EC] text-[#4A5248] border border-[#234B24]/12'
           }`}
           title="Telemetri SLA & Benchmark Sistem"
         >
@@ -1670,9 +1686,9 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           {/* A. GRAFIK PREDIKSI LONJAKAN (LINE CHART 7 HARI KE DEPAN) */}
           <section
             aria-label="Grafik Prediksi Lonjakan Kunjungan 7 Hari ke Depan"
-            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-6"
+            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-6"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#E4E9DA] pb-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#234B24]/10 pb-5">
               <div>
                 <div className="flex items-center gap-2">
                   <Flame className="w-5 h-5 text-[#F26B4B]" />
@@ -1896,7 +1912,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           {/* B. PETA / GRID STATUS SAAT INI (19 KABUPATEN / KOTA) */}
           <section
             aria-label="Peta Status Kepadatan 19 Kabupaten dan Kota di Sumatera Barat"
-            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-6"
+            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-6"
           >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -2036,12 +2052,126 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* ==================================================================== */}
       {activeTab === 'partner_performance' && (
         <div className="space-y-6 no-print">
+          {/* TRANSAKSI SISTEM WISGO: KHUSUS OPEN TRIP */}
+          <section
+            aria-label="Rekapitulasi Transaksi Khusus Open Trip"
+            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-5"
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#234B24]/10 pb-5">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#234B24] text-white">
+                    TRANSAKSI SISTEM WISGO
+                  </span>
+                  <span className="text-xs font-bold text-[#F26B4B]">
+                    HANYA BERLAKU UNTUK OPEN TRIP
+                  </span>
+                </div>
+                <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] mt-1 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-[#234B24]" />
+                  <span>Rekapitulasi Transaksi Pembayaran Resmi Open Trip</span>
+                </h3>
+                <p className="text-xs text-[#4A5248] mt-0.5">
+                  Dana pembayaran peserta Open Trip masuk langsung lewat sistem WISGO. Untuk Mitra UMKM umum (homestay, pemandu, kuliner), ekosistem menggunakan 100% Direct Leads WhatsApp tanpa potongan biaya sistem.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <div className="p-3 rounded-2xl bg-[#234B24]/10 border border-[#234B24]/20 text-right">
+                  <span className="text-[10px] font-bold text-[#4A5248] block uppercase">
+                    Total Omset Open Trip
+                  </span>
+                  <strong className="text-lg font-black text-[#234B24] font-mono">
+                    Rp {openTripTotalRevenue.toLocaleString('id-ID')}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid 3 Kartu Status Transaksi */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                <span className="text-[10px] font-extrabold uppercase text-[#767676] block">Total Transaksi</span>
+                <span className="text-xl font-black text-[#1B1F1A] mt-1 block font-mono">
+                  {openTripTransactions.length} Transaksi
+                </span>
+                <span className="text-[11px] text-[#4A5248]">Tercatat di sistem terpusat</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-[#DCFCE7] border border-[#86EFAC]">
+                <span className="text-[10px] font-extrabold uppercase text-[#166534] block">Pembayaran Berhasil</span>
+                <span className="text-xl font-black text-[#166534] mt-1 block font-mono">
+                  {openTripSuccessCount} Sukses
+                </span>
+                <span className="text-[11px] text-[#15803D]">Telah diverifikasi lunas</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-[#FEF3C7] border border-[#FCD34D]">
+                <span className="text-[10px] font-extrabold uppercase text-[#92400E] block">Interaksi Mitra UMKM</span>
+                <span className="text-xl font-black text-[#92400E] mt-1 block font-mono">
+                  {totalWaLeadsDisplay.toLocaleString('id-ID')} Klik P2P
+                </span>
+                <span className="text-[11px] text-[#B45309]">Bebas komisi (Direct WA)</span>
+              </div>
+            </div>
+
+            {/* Tabel Mini Transaksi Open Trip */}
+            <div className="overflow-x-auto rounded-2xl border border-[#CFD8BE]">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#234B24] text-[#F6F3EC] font-bold">
+                  <tr>
+                    <th className="py-2.5 px-3">Kode Transaksi</th>
+                    <th className="py-2.5 px-3">Judul Open Trip</th>
+                    <th className="py-2.5 px-3">Peserta</th>
+                    <th className="py-2.5 px-3">Kursi</th>
+                    <th className="py-2.5 px-3">Nominal</th>
+                    <th className="py-2.5 px-3">Metode / Channel</th>
+                    <th className="py-2.5 px-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4E9DA]">
+                  {openTripTransactions.slice(0, 5).map((tx) => (
+                    <tr key={tx.id} className="hover:bg-[#F6F3EC]/50">
+                      <td className="py-2.5 px-3 font-mono font-bold text-[#234B24]">
+                        {tx.transaction_code}
+                      </td>
+                      <td className="py-2.5 px-3 font-medium text-[#1B1F1A]">
+                        {tx.trip_title}
+                      </td>
+                      <td className="py-2.5 px-3 font-medium text-[#1B1F1A]">
+                        {tx.participant_name}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#4A5248]">
+                        {tx.seats_booked} Kursi
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-[#1B1F1A]">
+                        Rp {tx.amount_idr.toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-[10px] text-[#767676]">
+                        {tx.payment_channel}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                            tx.status === 'BERHASIL'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {tx.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           {/* A. BAR CHART INTERAKSI WA PER DESTINASI (LEADS KE MITRA UMKM) */}
           <section
             aria-label="Grafik Batang Interaksi WA ke Mitra UMKM Nagari"
-            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-6"
+            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-6"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#E4E9DA] pb-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#234B24]/10 pb-5">
               <div>
                 <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-[#234B24]" />
@@ -2107,7 +2237,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
             </div>
 
             {/* Ringkasan Distribusi Kategori Mitra */}
-            <div className="pt-4 border-t border-[#E4E9DA] grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
+            <div className="pt-4 border-t border-[#234B24]/10 grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
               <div className="p-3 bg-[#F6F3EC] rounded-2xl border border-[#CFD8BE]">
                 <span className="text-[10px] font-bold uppercase text-[#4A5248] block">Homestay Nagari</span>
                 <span className="text-base font-extrabold text-[#234B24]">38%</span>
@@ -2139,9 +2269,9 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           {/* B. TABEL TOP 5 GAODE RANKING (SKOR KEPUASAN & KETERTIBAN TERTINGGI) */}
           <section
             aria-label="Tabel Top 5 Gaode Ranking Destinasi Wisata"
-            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-6"
+            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-6"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#E4E9DA] pb-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#234B24]/10 pb-5">
               <div>
                 <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] flex items-center gap-2">
                   <Star className="w-5 h-5 text-[#F59E0B] fill-[#F59E0B]" />
@@ -2161,7 +2291,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[#E4E9DA] text-[#4A5248] font-bold">
+                  <tr className="border-b border-[#234B24]/10 text-[#4A5248] font-bold">
                     <th className="py-3 px-3">Peringkat</th>
                     <th className="py-3 px-3">Nama Destinasi &amp; Wilayah</th>
                     <th className="py-3 px-3 text-center">Skor Gaode</th>
@@ -2263,7 +2393,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           {/* GRID: DONUT CHART KOMPOSISI & KARTU RESOLUTION RATE */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Donut Chart SVG Komposisi Aduan */}
-            <div className="lg:col-span-6 bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] flex flex-col justify-between space-y-6">
+            <div className="lg:col-span-6 bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 flex flex-col justify-between space-y-6">
               <div>
                 <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-[#F26B4B]" />
@@ -2340,7 +2470,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
             </div>
 
             {/* Kartu Rasio Penyelesaian & Kecepatan Respons (Resolution Rate) */}
-            <div className="lg:col-span-6 bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] flex flex-col justify-between space-y-6">
+            <div className="lg:col-span-6 bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 flex flex-col justify-between space-y-6">
               <div>
                 <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-[#234B24]" />
@@ -2411,7 +2541,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           {/* TABEL LOG AKSI CEPAT SATGAS SABER & SAR TERAKHIR */}
           <section
             aria-label="Tabel Aksi Cepat Satgas Saber Pungli & SAR"
-            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-4"
+            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-4"
           >
             <div className="flex items-center justify-between">
               <h4 className="text-sm lg:text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
@@ -2424,7 +2554,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[#E4E9DA] text-[#4A5248] font-bold">
+                  <tr className="border-b border-[#234B24]/10 text-[#4A5248] font-bold">
                     <th className="py-2.5 px-3">Waktu</th>
                     <th className="py-2.5 px-3">Lokasi Destinasi</th>
                     <th className="py-2.5 px-3">Jenis Laporan</th>
@@ -2469,9 +2599,9 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           {/* Panel Konfigurasi & Unduh Laporan */}
           <section
             aria-label="Panel Konfigurasi Ekspor Laporan Resmi"
-            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-6"
+            className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-6"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#E4E9DA] pb-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#234B24]/10 pb-5">
               <div>
                 <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] flex items-center gap-2">
                   <FileText className="w-5 h-5 text-[#234B24]" />
@@ -2547,7 +2677,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
             </div>
 
             {/* Pratinjau Tampilan Dokumen di Layar */}
-            <div className="pt-4 border-t border-[#E4E9DA]">
+            <div className="pt-4 border-t border-[#234B24]/10">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-xs font-bold text-[#4A5248] uppercase tracking-wider">
                   Pratinjau Dokumen Resmi Dinas Pariwisata Prov. Sumbar

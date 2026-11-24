@@ -251,7 +251,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
         aria-label="Ringkasan Statistik Kalender Budaya Sumbar"
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Festival Terjadwal
           </div>
@@ -268,7 +268,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Sedang Berlangsung (Live)
           </div>
@@ -283,7 +283,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Agenda Akan Datang
           </div>
@@ -319,7 +319,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
       </section>
 
       {/* Filter & Baris Pencarian Event */}
-      <div className="bg-white p-5 lg:p-6 rounded-3xl border border-[#E4E9DA] shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-white p-5 lg:p-6 rounded-3xl border border-[#234B24]/10 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]" />
           <input
@@ -383,7 +383,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
 
       {/* Grid Kartu Kalender Budaya */}
       {filteredEvents.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-[#E4E9DA] p-12 text-center text-[#4A5248] space-y-2">
+        <div className="bg-white rounded-3xl border border-[#234B24]/10 p-12 text-center text-[#4A5248] space-y-2">
           <Calendar className="w-10 h-10 text-[#234B24]/40 mx-auto" />
           <p className="text-sm font-bold text-[#1B1F1A]">
             Tidak ada agenda budaya yang sesuai filter.
@@ -400,7 +400,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
             return (
               <div
                 key={evt.id}
-                className="bg-white rounded-3xl border border-[#E4E9DA] shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition"
+                className="bg-white rounded-3xl border border-[#234B24]/10 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition"
               >
                 <div>
                   {/* Poster Thumbnail */}
@@ -462,7 +462,7 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
                 </div>
 
                 {/* Footer Kartu & Tombol Aksi */}
-                <div className="p-4 bg-[#F6F3EC] border-t border-[#E4E9DA] flex items-center justify-between">
+                <div className="p-4 bg-[#F6F3EC] border-t border-[#234B24]/10 flex items-center justify-between">
                   <span className="text-[11px] text-[#4A5248]">
                     ID: <strong>{evt.id}</strong>
                   </span>

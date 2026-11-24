@@ -170,6 +170,28 @@ export interface OfflineBundle {
 }
 
 // ============================================================================
+// CHECK POINT LOKASI & KONTAK DARURAT OFFLINE (Destinasi)
+// ============================================================================
+export interface DestinationCheckpoint {
+  id: string;
+  destination_id: string;
+  name: string;
+  latitude?: number;
+  longitude?: number;
+  is_mandatory_challenge?: boolean;
+  notes?: string;
+}
+
+export interface OfflineEmergencyContact {
+  id: string;
+  destination_id: string;
+  unit_name: string;
+  phone_number: string;
+  service_type: 'SAR' | 'Puskesmas' | 'Polsek' | 'Pos Pengelola' | string;
+  notes?: string;
+}
+
+// ============================================================================
 // 8. DESTINASI UTAMA (destinations)
 // ============================================================================
 export type CrowdLevel = 'Sepi' | 'Sedang' | 'Ramai' | string;
@@ -211,6 +233,8 @@ export interface Destination {
   scenes_360?: PanoramaScene[];
   panorama_scenes?: PanoramaScene[];
   offline_bundle?: OfflineBundle;
+  checkpoints?: DestinationCheckpoint[];
+  offline_emergency_contacts?: OfflineEmergencyContact[];
 }
 
 // ============================================================================
@@ -310,8 +334,15 @@ export interface DestinationReview {
   destination_name?: string;
   comment?: string;
   tourist_name?: string;
+  author_badge?: string;
+  tags?: string[];
+  helpful_count?: number;
   is_hidden?: boolean;
   admin_moderation_reason?: string;
+  raw_text?: string;
+  is_important?: boolean;
+  character_count?: number;
+  visited_at?: string;
 }
 export type TouristReview = DestinationReview;
 
@@ -423,8 +454,35 @@ export interface SosSignal {
   signal_status?: string;
   medical_notes?: string;
   sar_unit_assigned?: string;
+  delivery_method?: 'online' | 'offline_fallback';
+  last_signal_at?: string;
+  last_known_coords?: string;
+  sms_gateway_ref?: string;
 }
 export type SosEmergencyTicket = SosSignal;
+
+// ============================================================================
+// MONITORING CUACA REAL-TIME KAWASAN WISATA
+// ============================================================================
+export interface WeatherHourlyForecast {
+  hour: string;
+  temp_c: number;
+  condition: string;
+}
+
+export interface WeatherMonitoringItem {
+  id: string;
+  city_regency: string;
+  destination_name: string;
+  current_temp_c: number;
+  condition: 'Cerah' | 'Cerah Berawan' | 'Hujan Ringan' | 'Hujan Lebat & Angin' | 'Kabut Tebal' | string;
+  humidity_pct: number;
+  wind_speed_kmh: number;
+  hourly_forecast: WeatherHourlyForecast[];
+  is_extreme_weather: boolean;
+  extreme_warning_text?: string;
+  updated_at: string;
+}
 
 // ============================================================================
 // 16. KAMUS SAKU MINANG (minang_phrases)
@@ -584,6 +642,8 @@ export interface Challenge {
   reward_description?: string;
   duration_days?: number;
   target_destinations?: string[];
+  target_checkpoints?: string[];
+  checkin_tagline?: string;
   participant_count?: number;
   completed_count?: number;
   category?: string;
@@ -671,8 +731,127 @@ export interface OpenTrip {
   notes?: string;
   status?: 'Terverifikasi' | 'Menunggu' | 'Ditangguhkan' | string;
   pokdarwis_verified?: boolean;
+
+  // Single Destination & Auto-Category Constraint
+  destination_id?: string;
+  destination_name?: string;
+  travel_category?: string;
+  meeting_point_name?: string;
+  meeting_point_gmaps_url?: string;
+  meeting_point_coords?: string;
+  external_activity_terms?: string;
+
+  // Trip Planner Detail
+  trip_planner?: {
+    checklist: string[];
+    jobdesk_assignments: { role: string; person_name: string }[];
+    packing_checklist: string[];
+    itinerary: { day: number; time: string; activity: string }[];
+  };
 }
 export type OpenTripItem = OpenTrip;
+
+// ============================================================================
+// VERIFIKASI PENYELENGGARA OPEN TRIP (Kredibilitas Komunitas/Pemandu)
+// ============================================================================
+export interface OpenTripOrganizer {
+  id: string;
+  name: string;
+  agency_name: string;
+  phone_number: string;
+  doc_ktp_url?: string;
+  doc_sk_pokdarwis_url?: string;
+  doc_guide_cert_url?: string;
+  status: 'Menunggu' | 'Terverifikasi' | 'Ditolak';
+  submitted_at: string;
+  verified_at?: string;
+  notes?: string;
+}
+
+// ============================================================================
+// TRANSAKSI SISTEM KHUSUS OPEN TRIP (Sistem Transaksi HANYA untuk Open Trip)
+// ============================================================================
+export interface OpenTripTransaction {
+  id: string;
+  transaction_code: string;
+  trip_id: string;
+  trip_title: string;
+  participant_name: string;
+  participant_phone: string;
+  seats_booked: number;
+  amount_idr: number;
+  payment_channel: string;
+  status: 'BERHASIL' | 'MENUNGGU' | 'REFUND';
+  paid_at: string;
+}
+
+// ============================================================================
+// TEMPLATE BARANG BAWAAN BERDASARKAN KATEGORI PERJALANAN
+// ============================================================================
+export interface PackingTemplate {
+  id: string;
+  category_name: string; // 'Wisata Alam & Pegunungan' | 'Wisata Bahari & Pesisir' | 'Sejarah & Warisan Minangkabau' | 'Nagari Adat & Edukasi Budaya' | 'Kuliner Otentik & Agrowisata'
+  item_name: string;
+  is_mandatory: boolean;
+  notes?: string;
+}
+
+// ============================================================================
+// 5 LEVEL PETUALANG RESMI WISGO (Leveling & Lencana)
+// ============================================================================
+export interface AdventurerLevelConfig {
+  level: 1 | 2 | 3 | 4 | 5;
+  name: string; // 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer'
+  title: string;
+  min_trips: number;
+  min_checkpoints: number;
+  min_xp: number;
+  badge_icon: string;
+  badge_color: string;
+  perk_description: string;
+}
+
+// ============================================================================
+// PROFIL & EXPERIENCE PENGGUNA (Statistik Strava-style & Verifikasi Klaim)
+// ============================================================================
+export interface UserProfileExperience {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  phone_number: string;
+  google_avatar?: string;
+  is_google_auth: boolean;
+  current_level: 1 | 2 | 3 | 4 | 5;
+  level_name: string;
+  total_trips: number;
+  total_checkpoints: number;
+  total_distance_km: number;
+  total_xp: number;
+  last_active_at: string;
+  experience_history: {
+    date: string;
+    destination_name: string;
+    checkpoint_name?: string;
+    xp_earned: number;
+    notes?: string;
+    status?: 'verified' | 'pending';
+  }[];
+}
+
+// ============================================================================
+// TEMPLATE POSTING SHARE & QR UNDUH
+// ============================================================================
+export interface PostingShareTemplate {
+  id: string;
+  template_name: string;
+  watermark_text: string;
+  qr_download_url: string;
+  qr_image_url: string;
+  background_banner_url: string;
+  badge_placeholder_text: string;
+  preview_strava_style: boolean;
+}
 
 // ============================================================================
 // 26. NOTIFIKASI PENGGUNA (notifikasi)

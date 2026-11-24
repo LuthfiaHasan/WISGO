@@ -348,7 +348,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-[#E4E9DA] flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-white border border-[#234B24]/10 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-extrabold text-[#767676] uppercase tracking-wider">
               Ditolak / Belum Layak
@@ -367,7 +367,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
       </div>
 
       {/* Filter & Action Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#E4E9DA] flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl p-4 border border-[#234B24]/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap flex-1">
           <div className="relative min-w-[240px] flex-1 max-w-sm">
             <Search className="w-3.5 h-3.5 text-[#767676] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -426,7 +426,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
       </div>
 
       {/* Tabel Usulan Destinasi (UGC) */}
-      <div className="bg-white rounded-2xl border border-[#E4E9DA] overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border border-[#234B24]/10 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F6F3EC] text-[#234B24] font-extrabold uppercase text-[10px] tracking-wider border-b border-[#CFD8BE]">
@@ -576,8 +576,8 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#E4E9DA] max-h-[92vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E4E9DA] shrink-0">
+          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-xs">
                   <Inbox className="w-5 h-5" />
@@ -714,7 +714,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                 />
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-[#E4E9DA] shrink-0">
+              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}

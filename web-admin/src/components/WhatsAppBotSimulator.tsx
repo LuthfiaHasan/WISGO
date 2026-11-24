@@ -210,7 +210,7 @@ export const WhatsAppBotSimulator: React.FC<WhatsAppBotSimulatorProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Halaman Simulator */}
-      <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
+      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
         <div className="flex flex-col gap-5">
           {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
           <div className="flex items-start gap-3.5">
@@ -320,7 +320,7 @@ export const WhatsAppBotSimulator: React.FC<WhatsAppBotSimulatorProps> = ({
                     className={`max-w-[85%] sm:max-w-[78%] rounded-2xl p-3.5 shadow-sm text-xs leading-relaxed ${
                       isMitra
                         ? 'bg-[#D9FDD3] text-[#111B21] rounded-tr-xs'
-                        : 'bg-white text-[#111B21] rounded-tl-xs border border-[#E4E9DA]'
+                        : 'bg-white text-[#111B21] rounded-tl-xs border border-[#234B24]/10'
                     }`}
                   >
                     {!isMitra && (
@@ -407,7 +407,7 @@ export const WhatsAppBotSimulator: React.FC<WhatsAppBotSimulatorProps> = ({
         {/* Dashboard Informasi Direct P2P & Metrik Leads (Col 5) */}
         <div className="lg:col-span-5 space-y-5">
           {/* Kartu Status Interaksi Saat Ini */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E4E9DA]">
+          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
             <h3 className="text-sm font-extrabold text-[#1B1F1A] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#234B24]" aria-hidden="true" />
               <span>Status Interaksi &amp; Profil Kontak Langsung (P2P)</span>
@@ -480,7 +480,7 @@ export const WhatsAppBotSimulator: React.FC<WhatsAppBotSimulatorProps> = ({
           </div>
 
           {/* Integrasi Titik Pin 360° */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E4E9DA]">
+          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-extrabold text-[#1B1F1A] flex items-center gap-2">
                 <Camera className="w-4 h-4 text-[#1D4ED8]" aria-hidden="true" />
@@ -505,7 +505,7 @@ export const WhatsAppBotSimulator: React.FC<WhatsAppBotSimulatorProps> = ({
           </div>
 
           {/* Panduan Otoritas Dinas Pariwisata */}
-          <div className="bg-[#234B24] text-[#F6F3EC] rounded-[24px] p-5 shadow-sm border border-[#1E9E5A]">
+          <div className="bg-[#234B24] text-[#F6F3EC] rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#A7F3D0] flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Prinsip Direct P2P Tanpa Perantara Escrow</span>

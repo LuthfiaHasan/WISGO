@@ -15,478 +15,910 @@ import {
   ArrowRight,
   Eye,
   X,
+  FileText,
+  Check,
+  Ban,
+  ExternalLink,
+  Plus,
+  Trash2,
+  ListChecks,
+  Briefcase,
+  Luggage,
+  Sparkles,
+  Layers,
+  CreditCard,
+  Receipt,
+  UserCheck,
 } from 'lucide-react';
 import {
+  OpenTrip,
   OpenTripItem,
   OpenTripStatus,
+  OpenTripOrganizer,
+  OpenTripTransaction,
+  PackingTemplate,
 } from '../types/contract';
 import {
-  fetchOpenTrips,
-  updateOpenTripStatus,
-} from '../services/api';
+  OpenTripsRepo,
+  OpenTripOrganizersRepo,
+  OpenTripTransactionsRepo,
+  PackingTemplatesRepo,
+} from '../services/dbRepository';
+import { DESTINATION_CATEGORIES } from '../data/mockDestinations';
 
 interface OpenTripsSubTabProps {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
 }
 
+type OpenTripModuleSubTab =
+  | 'monitoring_cards'
+  | 'organizers_verification'
+  | 'transactions_recap'
+  | 'packing_templates';
+
+export const getCategoryIconSvg = (cat: string) => {
+  if (cat.includes('Alam') || cat.includes('Pegunungan')) return '/assets/synced/cat_alam_gunung.svg';
+  if (cat.includes('Bahari') || cat.includes('Pesisir')) return '/assets/synced/cat_bahari_pesisir.svg';
+  if (cat.includes('Sejarah') || cat.includes('Warisan')) return '/assets/synced/cat_sejarah_warisan.svg';
+  if (cat.includes('Nagari') || cat.includes('Budaya')) return '/assets/synced/cat_nagari_budaya.svg';
+  if (cat.includes('Kuliner') || cat.includes('Agrowisata')) return '/assets/synced/cat_kuliner_agro.svg';
+  return '/assets/synced/cat_alam_gunung.svg';
+};
+
 export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
   showToast,
 }) => {
-  const [trips, setTrips] = useState<OpenTripItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeModuleTab, setActiveModuleTab] =
+    useState<OpenTripModuleSubTab>('monitoring_cards');
+
+  // Data states from Repository
+  const [trips, setTrips] = useState<OpenTrip[]>(() => OpenTripsRepo.getAll());
+  const [organizers, setOrganizers] = useState<OpenTripOrganizer[]>(() =>
+    OpenTripOrganizersRepo.getAll()
+  );
+  const [transactions, setTransactions] = useState<OpenTripTransaction[]>(() =>
+    OpenTripTransactionsRepo.getAll()
+  );
+  const [packingTemplates, setPackingTemplates] = useState<PackingTemplate[]>(() =>
+    PackingTemplatesRepo.getAll()
+  );
+
+  // Filters for Monitoring Cards
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedTrip, setSelectedTrip] = useState<OpenTripItem | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchOpenTrips();
-      setTrips(data);
-    } catch {
-      showToast('Gagal memuat data pengawasan Open Trip.', 'error');
-    } finally {
-      setLoading(false);
-    }
+  // Selected Trip for Trip Planner Modal
+  const [selectedPlannerTrip, setSelectedPlannerTrip] = useState<OpenTrip | null>(null);
+
+  // New Packing Item Form
+  const [newTemplateCat, setNewTemplateCat] = useState<string>('Wisata Alam & Pegunungan');
+  const [newTemplateItem, setNewTemplateItem] = useState('');
+  const [newTemplateMandatory, setNewTemplateMandatory] = useState(true);
+  const [newTemplateNotes, setNewTemplateNotes] = useState('');
+
+  // Update Organizer Verification Status
+  const handleUpdateOrganizerStatus = (
+    id: string,
+    status: 'Menunggu' | 'Terverifikasi' | 'Ditolak'
+  ) => {
+    const updated = OpenTripOrganizersRepo.updateStatus(id, status);
+    setOrganizers(updated);
+    showToast(
+      status === 'Terverifikasi'
+        ? 'Penyelenggara Open Trip berhasil diverifikasi dan disetujui.'
+        : 'Status pengajuan penyelenggara telah diperbarui.',
+      status === 'Terverifikasi' ? 'success' : 'info'
+    );
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const handleUpdateStatus = async (tripId: string, newStatus: OpenTripStatus) => {
-    try {
-      const updated = await updateOpenTripStatus(tripId, newStatus);
-      setTrips(updated);
-      if (selectedTrip?.id === tripId) {
-        setSelectedTrip((prev) => (prev ? { ...prev, status: newStatus } : null));
-      }
-      showToast(`Status trip berhasil diubah menjadi: "${newStatus}"`, 'success');
-    } catch {
-      showToast('Gagal memperbarui status open trip.', 'error');
+  // Add Packing Item
+  const handleAddPackingItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTemplateItem.trim()) {
+      showToast('Nama barang bawaan wajib diisi.', 'warning');
+      return;
     }
+    const item: PackingTemplate = {
+      id: `pkt-${Date.now()}`,
+      category_name: newTemplateCat,
+      item_name: newTemplateItem.trim(),
+      is_mandatory: newTemplateMandatory,
+      notes: newTemplateNotes.trim() || undefined,
+    };
+    const updated = PackingTemplatesRepo.save(item);
+    setPackingTemplates(updated);
+    setNewTemplateItem('');
+    setNewTemplateNotes('');
+    showToast(`Barang bawaan berhasil ditambahkan ke kategori ${newTemplateCat}.`, 'success');
   };
 
+  // Delete Packing Item
+  const handleDeletePackingItem = (id: string) => {
+    const updated = PackingTemplatesRepo.delete(id);
+    setPackingTemplates(updated);
+    showToast('Item barang bawaan berhasil dihapus.', 'info');
+  };
+
+  // Filtered Open Trips
   const filteredTrips = useMemo(() => {
     return trips.filter((t) => {
       const q = searchQuery.trim().toLowerCase();
-      const tripCode = t.trip_code || t.id || '';
-      const leaderName = t.leader_name || t.contact_wa || '';
-      const partner = t.pokdarwis_partner || 'Pokdarwis Nagari';
-      const city = t.city_regency || 'Sumatera Barat';
-      const routes = t.destination_routes || (t.destination_route ? t.destination_route.split('|').map((s) => s.trim()) : []);
+      const tripId = t.id || '';
+      const leaderName = t.trip_leader_name || t.leader_name || '';
+      const destName = t.destination_name || t.destination_route || '';
+      const cat = t.travel_category || '';
 
       const matchQuery =
         !q ||
-        tripCode.toLowerCase().includes(q) ||
+        tripId.toLowerCase().includes(q) ||
         t.title.toLowerCase().includes(q) ||
         leaderName.toLowerCase().includes(q) ||
-        partner.toLowerCase().includes(q) ||
-        city.toLowerCase().includes(q) ||
-        routes.some((r: string) => r.toLowerCase().includes(q));
+        destName.toLowerCase().includes(q);
 
       const matchStatus =
         statusFilter === 'all' || t.status === statusFilter;
 
-      return matchQuery && matchStatus;
+      const matchCat =
+        categoryFilter === 'all' || cat === categoryFilter;
+
+      return matchQuery && matchStatus && matchCat;
     });
-  }, [trips, searchQuery, statusFilter]);
+  }, [trips, searchQuery, statusFilter, categoryFilter]);
 
-  const stats = useMemo(() => {
-    const total = trips.length;
-    const confirmed = trips.filter((t) => t.status === 'Terkonfirmasi & Siaga').length;
-    const pending = trips.filter((t) => t.status === 'Menunggu Kuota').length;
-    const suspended = trips.filter((t) => t.status === 'Ditangguhkan').length;
-    return { total, confirmed, pending, suspended };
-  }, [trips]);
+  // Statistics
+  const totalRevenue = useMemo(() => {
+    return transactions
+      .filter((t) => t.status === 'BERHASIL')
+      .reduce((sum, t) => sum + t.amount_idr, 0);
+  }, [transactions]);
 
-  const getStatusBadge = (status: OpenTripStatus) => {
-    switch (status) {
-      case 'Terkonfirmasi & Siaga':
-        return {
-          bg: 'bg-[#1E9E5A]/15',
-          text: 'text-[#166534]',
-          border: 'border-[#1E9E5A]/30',
-        };
-      case 'Berjalan':
-        return {
-          bg: 'bg-[#3B82F6]/15',
-          text: 'text-[#1D4ED8]',
-          border: 'border-[#3B82F6]/30',
-        };
-      case 'Menunggu Kuota':
-        return {
-          bg: 'bg-[#F26B4B]/15',
-          text: 'text-[#D95637]',
-          border: 'border-[#F26B4B]/30',
-        };
-      case 'Ditangguhkan':
-        return {
-          bg: 'bg-red-100',
-          text: 'text-red-700',
-          border: 'border-red-300',
-        };
-      default:
-        return {
-          bg: 'bg-[#1E9E5A]/15',
-          text: 'text-[#166534]',
-          border: 'border-[#1E9E5A]/30',
-        };
-    }
-  };
+  const verifiedOrganizersCount = organizers.filter((o) => o.status === 'Terverifikasi').length;
+  const pendingOrganizersCount = organizers.filter((o) => o.status === 'Menunggu').length;
 
   return (
     <div className="space-y-6">
-      {/* 4 Kartu KPI Pengawasan Open Trip */}
-      <section
-        aria-label="Ringkasan Statistik Pengawasan Open Trip"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
-            Total Open Trip Terdata
+      {/* BANNER ATURAN TEGAS TRANSAKSI WISGO */}
+      <div className="p-4 rounded-2xl bg-[#234B24] text-[#F6F3EC] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+            <Receipt className="w-5 h-5 text-[#F26B4B]" />
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#234B24]">
-              {stats.total}
-            </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#1E9E5A]/15 text-[#1E9E5A]">
-              Terpantau Satgas
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#4A5248]">
-            Rombongan wisatawan nusantara &amp; wisman
-          </p>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
-            Terkonfirmasi &amp; Siaga
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#1E9E5A]">
-              {stats.confirmed}
-            </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#1E9E5A]/15 text-[#166534]">
-              Pokdarwis Ready
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#4A5248]">
-            Verifikasi Pokdarwis &amp; transportasi nagari terhubung P2P
-          </p>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
-            Menunggu Kuota
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#F26B4B]">
-              {stats.pending}
-            </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
-              Cari Barengan
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#4A5248]">
-            Tautan share link group invite aktif
-          </p>
-        </div>
-
-        <div className="bg-[#E4E9DA] p-5 rounded-3xl border border-[#CFD8BE] shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wider text-[#234B24]">
-            Ditangguhkan (Hazard Alert)
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#D95637]">
-              {stats.suspended}
-            </span>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-700">
-              Perlindungan SAR
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-[#1B1F1A]">
-            Jalur cuaca ekstrem / bencana alam ditahan sementara
-          </p>
-        </div>
-      </section>
-
-      {/* Filter & Baris Pencarian Open Trip */}
-      <div className="bg-white p-5 lg:p-6 rounded-3xl border border-[#E4E9DA] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari kode trip, ketua rombongan, Pokdarwis, atau rute destinasi..."
-            className="w-full min-h-[46px] pl-10 pr-4 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="min-h-[46px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-          >
-            <option value="all">Semua Status Open Trip</option>
-            <option value="Terkonfirmasi & Siaga">Terkonfirmasi &amp; Siaga</option>
-            <option value="Menunggu Kuota">Menunggu Kuota</option>
-            <option value="Berjalan">Berjalan</option>
-            <option value="Ditangguhkan">Ditangguhkan</option>
-          </select>
-
-          <span className="text-xs text-[#4A5248] hidden sm:inline">
-            Menampilkan: <strong>{filteredTrips.length} Rombongan</strong>
-          </span>
-        </div>
-      </div>
-
-      {/* Tabel Pengawasan Open Trip */}
-      <div className="bg-white rounded-3xl border border-[#E4E9DA] shadow-sm overflow-hidden">
-        <div className="p-5 lg:p-6 border-b border-[#E4E9DA] flex items-center justify-between">
           <div>
-            <h3 className="text-base font-extrabold text-[#1B1F1A]">
-              Tabel Pengawasan Open Trip &amp; Cari Barengan Wisatawan
-            </h3>
-            <p className="text-xs text-[#4A5248] mt-0.5">
-              Pantau kepatuhan ketua rombongan, integrasi mitra Pokdarwis, split-bill transparan, serta proteksi keamanan jalur ekstrem.
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-extrabold tracking-wide uppercase">
+                Aturan Tegas Transaksi Sistem WISGO
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#F26B4B] text-white">
+                Khusus Open Trip
+              </span>
+            </div>
+            <p className="text-xs text-[#E4E9DA] mt-0.5 leading-relaxed">
+              Sistem pembayaran escrow / transaksi di dalam aplikasi <strong>HANYA berlaku untuk Open Trip</strong> demi keamanan split-bill peserta.
+              Untuk <strong>Mitra UMKM Nagari biasa</strong> (Kuliner, Homestay, Sewa Baju Adat), transaksi 100% langsung (Direct WhatsApp P2P) tanpa potongan sistem dan diukur lewat metrik <strong>Klik Leads WA</strong>.
             </p>
           </div>
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#E4E9DA] text-[#234B24]">
-            Pusat Komando
-          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-[#F6F3EC] border-b border-[#CFD8BE] text-[#4A5248] font-extrabold uppercase tracking-wider">
-                <th className="py-3.5 px-4">Kode Trip</th>
-                <th className="py-3.5 px-4 min-w-[200px]">Agenda Trip &amp; Rute Destinasi</th>
-                <th className="py-3.5 px-4 min-w-[180px]">Ketua &amp; Pokdarwis</th>
-                <th className="py-3.5 px-4 text-center">Keberangkatan</th>
-                <th className="py-3.5 px-4 text-center">Kuota Terisi</th>
-                <th className="py-3.5 px-4 text-right">Split-Bill / Orang</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4 text-center min-w-[140px]">Tindakan</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E4E9DA]">
-              {filteredTrips.map((trip) => {
-                const statusMeta = getStatusBadge(trip.status || 'Terkonfirmasi & Siaga');
-                const qFilled = trip.quota_filled ?? (trip.total_quota ? trip.total_quota - trip.available_seats : 6);
-                const qMax = trip.quota_max ?? (trip.total_quota || 10);
-                const isFull = qFilled >= qMax;
-                const tripRoutes = trip.destination_routes || (trip.destination_route ? trip.destination_route.split('|').map((s) => s.trim()) : []);
-                const splitIdr = trip.split_bill_idr ?? trip.cost_per_person ?? 350000;
-                const splitMyr = trip.split_bill_myr ?? Math.round(splitIdr / 3500);
-
-                return (
-                  <tr key={trip.id} className="hover:bg-[#F6F3EC]/70 transition">
-                    {/* Kode Trip */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#234B24]">
-                      {trip.trip_code || trip.id}
-                    </td>
-
-                    {/* Judul & Rute */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-extrabold text-[#1B1F1A] text-sm">
-                        {trip.title}
-                      </div>
-                      <div className="text-[11px] text-[#4A5248] flex items-center gap-1.5 flex-wrap mt-0.5">
-                        <MapPin className="w-3 h-3 text-[#234B24] shrink-0" />
-                        <span>{tripRoutes.join(' → ')}</span>
-                      </div>
-                    </td>
-
-                    {/* Ketua & Pokdarwis */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#1B1F1A]">
-                        {trip.leader_name || trip.contact_wa}
-                      </div>
-                      <div className="text-[11px] text-[#234B24] font-semibold flex items-center gap-1 mt-0.5">
-                        <Building2 className="w-3 h-3" />
-                        <span>{trip.pokdarwis_partner || 'Pokdarwis Nagari'}</span>
-                      </div>
-                      <div className="text-[10px] text-[#767676]">
-                        {trip.leader_phone || trip.contact_wa}
-                      </div>
-                    </td>
-
-                    {/* Keberangkatan */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="font-bold text-[#1B1F1A]">
-                        {trip.departure_date}
-                      </div>
-                      <div className="text-[10px] text-[#767676]">
-                        {trip.duration_days || 3} Hari
-                      </div>
-                    </td>
-
-                    {/* Kuota */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="font-bold text-[#1B1F1A]">
-                        {qFilled} / {qMax} Orang
-                      </div>
-                      <div className="w-20 mx-auto bg-neutral-200 h-1.5 rounded-full overflow-hidden mt-1">
-                        <div
-                          className={`h-full rounded-full ${
-                            isFull ? 'bg-[#1E9E5A]' : 'bg-[#F26B4B]'
-                          }`}
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              (qFilled / qMax) * 100
-                            )}%`,
-                          }}
-                        />
-                      </div>
-                    </td>
-
-                    {/* Split-Bill */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="font-mono font-bold text-[#234B24]">
-                        Rp {splitIdr.toLocaleString('id-ID')}
-                      </div>
-                      <div className="text-[10px] font-mono text-[#767676]">
-                        ≈ MYR {splitMyr}
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
-                      >
-                        {trip.status}
-                      </span>
-                    </td>
-
-                    {/* Tindakan */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                        {trip.status !== 'Terkonfirmasi & Siaga' && trip.status !== 'Berjalan' && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpdateStatus(trip.id, 'Terkonfirmasi & Siaga')
-                            }
-                            className="px-2.5 py-1 rounded-lg bg-[#1E9E5A] hover:bg-[#166534] text-white text-[10px] font-bold transition shadow-xs"
-                          >
-                            Verifikasi
-                          </button>
-                        )}
-                        {trip.status !== 'Ditangguhkan' && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpdateStatus(trip.id, 'Ditangguhkan')
-                            }
-                            className="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-bold transition"
-                          >
-                            Tangguhkan
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedTrip(trip)}
-                          className="px-2 py-1 rounded-lg bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24] text-[10px] font-bold border border-[#CFD8BE]"
-                        >
-                          Detail
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="shrink-0 flex items-center gap-2 bg-white/10 px-3.5 py-2 rounded-xl text-xs font-semibold">
+          <span>Total Transaksi Open Trip:</span>
+          <strong className="text-[#F26B4B] font-mono text-sm">
+            Rp {totalRevenue.toLocaleString('id-ID')}
+          </strong>
         </div>
       </div>
 
-      {/* Modal Detail Open Trip */}
-      {selectedTrip && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-[#F6F3EC] text-[#1B1F1A] rounded-[28px] border border-[#CFD8BE] shadow-2xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#CFD8BE] pb-3">
+      {/* SUB-TAB NAVIGASI MODUL OPEN TRIP */}
+      <div className="bg-white p-2 rounded-2xl border border-[#234B24]/8 shadow-[0_2px_12px_rgba(35,75,36,0.03)] flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveModuleTab('monitoring_cards')}
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+            activeModuleTab === 'monitoring_cards'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+          }`}
+        >
+          <Compass className="w-4 h-4" />
+          <span>Monitoring Open Trip (Tampilan Card)</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/20">
+            {trips.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveModuleTab('organizers_verification')}
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+            activeModuleTab === 'organizers_verification'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>Verifikasi Penyelenggara Open Trip</span>
+          {pendingOrganizersCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-black animate-pulse">
+              {pendingOrganizersCount} Menunggu
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveModuleTab('transactions_recap')}
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+            activeModuleTab === 'transactions_recap'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>Transaksi Open Trip (Sistem)</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/20">
+            {transactions.length} Trx
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveModuleTab('packing_templates')}
+          className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
+            activeModuleTab === 'packing_templates'
+              ? 'bg-[#234B24] text-white shadow-sm'
+              : 'bg-[#F6F3EC]/70 text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/8 border border-[#234B24]/8'
+          }`}
+        >
+          <Luggage className="w-4 h-4" />
+          <span>Template Barang Bawaan (Trip Planner)</span>
+        </button>
+      </div>
+
+      {/* 1. SUB-TAB: MONITORING OPEN TRIP (TAMPILAN CARD) */}
+      {activeModuleTab === 'monitoring_cards' && (
+        <div className="space-y-6">
+          {/* Baris Filter & Pencarian */}
+          <div className="bg-white p-4 rounded-2xl border border-[#234B24]/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap flex-1">
+              <div className="relative min-w-[240px] flex-1 max-w-sm">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#767676]" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari open trip, ketua rombongan, atau meeting point..."
+                  className="w-full min-h-[40px] pl-9 pr-3.5 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs text-[#1B1F1A]"
+                />
+              </div>
+
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+              >
+                <option value="all">Semua Kategori Perjalanan</option>
+                {DESTINATION_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+              >
+                <option value="all">Semua Status</option>
+                <option value="Terverifikasi">Terverifikasi</option>
+                <option value="Menunggu">Menunggu</option>
+                <option value="Ditangguhkan">Ditangguhkan</option>
+              </select>
+            </div>
+
+            <div className="text-xs font-semibold text-[#4A5248]">
+              Menampilkan <strong className="text-[#234B24]">{filteredTrips.length}</strong> open trip aktif
+            </div>
+          </div>
+
+          {/* GRID CARD TAMPILAN BERSIH */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredTrips.map((trip) => {
+              const destName = trip.destination_name || trip.destination_route || 'Destinasi Terdaftar';
+              const catName = trip.travel_category || 'Wisata Alam & Pegunungan';
+              const gmapsUrl = trip.meeting_point_gmaps_url || (trip.meeting_point_coords ? `https://maps.google.com/?q=${trip.meeting_point_coords}` : '#');
+
+              return (
+                <div
+                  key={trip.id}
+                  className="bg-white rounded-2xl p-5 sm:p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] hover:shadow-[0_8px_32px_rgba(35,75,36,0.08)] hover:border-[#234B24]/20 transition-all duration-300 flex flex-col justify-between"
+                >
+                  <div className="space-y-4">
+                    {/* Top Header Card: Kategori Otomatis & Status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#234B24]/8 text-[#234B24] border border-[#234B24]/12 flex items-center gap-1.5">
+                        <img
+                          src={getCategoryIconSvg(catName)}
+                          alt=""
+                          className="w-3.5 h-3.5 object-contain"
+                        />
+                        <span>{catName}</span>
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#1E9E5A]/12 text-[#166534]">
+                        {trip.status || 'Terverifikasi'}
+                      </span>
+                    </div>
+
+                    {/* Judul & 1 Target Destinasi */}
+                    <div>
+                      <h4 className="text-base font-extrabold text-[#1B1F1A] line-clamp-2 leading-snug">
+                        {trip.title}
+                      </h4>
+                      <div className="flex items-center gap-1.5 mt-1.5 text-xs font-bold text-[#234B24]">
+                        <MapPin className="w-3.5 h-3.5 text-[#F26B4B] shrink-0" />
+                        <span>Destinasi: {destName}</span>
+                      </div>
+                    </div>
+
+                    {/* Meeting Point & Koordinat Google Maps */}
+                    <div className="p-3.5 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/8 space-y-1.5">
+                      <div className="text-[10.5px] font-bold text-[#4A5248] uppercase tracking-wider flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <img
+                            src="/assets/synced/pin_meeting_point.svg"
+                            alt=""
+                            className="w-3.5 h-4 object-contain inline-block"
+                          />
+                          <span>Meeting Point</span>
+                        </span>
+                        {gmapsUrl !== '#' && (
+                          <a
+                            href={gmapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#0D9488] hover:underline flex items-center gap-0.5 text-[10px] font-extrabold"
+                          >
+                            <span>Google Maps</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-xs font-semibold text-[#1B1F1A]">
+                        {trip.meeting_point_name || 'Ditetapkan panitia di Bukittinggi'}
+                      </p>
+                      {trip.meeting_point_coords && (
+                        <p className="text-[10px] font-mono text-[#767676]">
+                          Koordinat: {trip.meeting_point_coords}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Info Rombongan & Biaya Split-Bill */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 rounded-xl bg-white border border-[#234B24]/8 shadow-2xs">
+                        <span className="text-[10px] font-bold text-[#767676] block">Ketua Rombongan</span>
+                        <strong className="text-[#1B1F1A] truncate block mt-0.5">
+                          {trip.trip_leader_name || trip.leader_name || 'Pemandu Pokdarwis'}
+                        </strong>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-white border border-[#234B24]/8 shadow-2xs">
+                        <span className="text-[10px] font-bold text-[#767676] block">Sisa Kuota</span>
+                        <strong className="text-[#1E9E5A] block mt-0.5">
+                          {trip.available_seats} Kursi Tersedia
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold text-[#767676]">Biaya / Orang:</span>
+                      <strong className="text-sm font-extrabold text-[#234B24] font-mono">
+                        Rp {trip.cost_per_person.toLocaleString('id-ID')}
+                      </strong>
+                    </div>
+
+                    {/* Ketentuan Aktivitas di Luar Aplikasi */}
+                    {trip.external_activity_terms && (
+                      <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 leading-relaxed">
+                        <strong>Ketentuan Khusus:</strong> {trip.external_activity_terms}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tombol Aksi: Lihat Detail Trip Planner */}
+                  <div className="mt-4 pt-3.5 border-t border-[#234B24]/8">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlannerTrip(trip)}
+                      className="w-full min-h-[42px] px-4 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3B1C] transition duration-200 flex items-center justify-center gap-2 shadow-xs"
+                    >
+                      <ListChecks className="w-4 h-4 text-[#F26B4B]" />
+                      <span>Lihat Detail Trip Planner</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 2. SUB-TAB: VERIFIKASI PENYELENGGARA OPEN TRIP */}
+      {activeModuleTab === 'organizers_verification' && (
+        <div className="space-y-5">
+          <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-extrabold text-[#234B24] flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-[#1E9E5A]" />
+                Verifikasi &amp; Legalitas Penyelenggara Open Trip
+              </h3>
+              <p className="text-xs text-[#4A5248] mt-0.5">
+                Pemeriksaan berkas KTP, SK Pokdarwis/Nagari, dan Sertifikat Pemandu BNSP untuk menjamin keamanan wisatawan rombongan.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-bold text-[#4A5248]">
+              <span className="px-3 py-1.5 rounded-xl bg-[#1E9E5A]/15 text-[#166534]">
+                {verifiedOrganizersCount} Penyelenggara Resmi
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-[#234B24]/10 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#F6F3EC] border-b border-[#CFD8BE] text-[#4A5248] font-extrabold uppercase tracking-wider">
+                    <th className="py-3.5 px-4">Nama Penyelenggara</th>
+                    <th className="py-3.5 px-4">Komunitas / Asosiasi Pokdarwis</th>
+                    <th className="py-3.5 px-4">Nomor WhatsApp</th>
+                    <th className="py-3.5 px-4 text-center">Dokumen Legalitas</th>
+                    <th className="py-3.5 px-4 text-center">Status Verifikasi</th>
+                    <th className="py-3.5 px-4 text-center min-w-[160px]">Tindakan Admin</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4E9DA]">
+                  {organizers.map((org) => (
+                    <tr key={org.id} className="hover:bg-[#F6F3EC]/50 transition">
+                      <td className="py-3.5 px-4 font-bold text-[#1B1F1A]">
+                        {org.name}
+                      </td>
+                      <td className="py-3.5 px-4 text-[#4A5248]">
+                        {org.agency_name}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[#234B24]">
+                        +{org.phone_number}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                          {org.doc_ktp_url ? (
+                            <a
+                              href={org.doc_ktp_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-1 rounded bg-[#E4E9DA] text-[#234B24] font-bold text-[10px] hover:underline"
+                            >
+                              KTP
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-gray-400">-</span>
+                          )}
+                          {org.doc_sk_pokdarwis_url && (
+                            <a
+                              href={org.doc_sk_pokdarwis_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-1 rounded bg-[#E4E9DA] text-[#234B24] font-bold text-[10px] hover:underline"
+                            >
+                              SK Pokdarwis
+                            </a>
+                          )}
+                          {org.doc_guide_cert_url && (
+                            <a
+                              href={org.doc_guide_cert_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-1 rounded bg-[#E4E9DA] text-[#234B24] font-bold text-[10px] hover:underline"
+                            >
+                              Sertifikat Pemandu
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black ${
+                            org.status === 'Terverifikasi'
+                              ? 'bg-[#1E9E5A]/15 text-[#166534]'
+                              : org.status === 'Menunggu'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {org.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {org.status !== 'Terverifikasi' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateOrganizerStatus(org.id, 'Terverifikasi')}
+                              className="px-3 py-1 rounded-lg bg-[#1E9E5A] hover:bg-[#166534] text-white font-bold text-xs transition"
+                            >
+                              Setujui
+                            </button>
+                          )}
+                          {org.status !== 'Ditolak' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateOrganizerStatus(org.id, 'Ditolak')}
+                              className="px-3 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs transition"
+                            >
+                              Tolak
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. SUB-TAB: TRANSAKSI OPEN TRIP */}
+      {activeModuleTab === 'transactions_recap' && (
+        <div className="space-y-5">
+          <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-extrabold text-[#234B24] flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-[#F26B4B]" />
+                Rekap Transaksi Pembayaran Khusus Open Trip
+              </h3>
+              <p className="text-xs text-[#4A5248] mt-0.5">
+                Daftar pembayaran tiket/kuota open trip yang disetor peserta langsung melalui gateway resmi WISGO.
+              </p>
+            </div>
+            <div className="p-3 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] text-right">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#767676] block">
+                Total Penerimaan Escrow
+              </span>
+              <strong className="text-lg font-black text-[#234B24] font-mono">
+                Rp {totalRevenue.toLocaleString('id-ID')}
+              </strong>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-[#234B24]/10 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#F6F3EC] border-b border-[#CFD8BE] text-[#4A5248] font-extrabold uppercase tracking-wider">
+                    <th className="py-3.5 px-4">Kode Transaksi</th>
+                    <th className="py-3.5 px-4 min-w-[200px]">Agenda Open Trip</th>
+                    <th className="py-3.5 px-4">Nama Peserta</th>
+                    <th className="py-3.5 px-4 text-center">Kursi</th>
+                    <th className="py-3.5 px-4 text-right">Nominal (IDR)</th>
+                    <th className="py-3.5 px-4">Kanal Pembayaran</th>
+                    <th className="py-3.5 px-4 text-center">Status</th>
+                    <th className="py-3.5 px-4 text-center">Waktu Bayar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4E9DA]">
+                  {transactions.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-[#F6F3EC]/50 transition">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#234B24]">
+                        {tx.transaction_code}
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-[#1B1F1A]">
+                        {tx.trip_title}
+                      </td>
+                      <td className="py-3.5 px-4 text-[#4A5248]">
+                        <div className="font-bold text-[#1B1F1A]">{tx.participant_name}</div>
+                        <div className="text-[10px] font-mono text-[#767676]">+{tx.participant_phone}</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-bold">
+                        {tx.seats_booked} Pax
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-[#234B24]">
+                        Rp {tx.amount_idr.toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-[#4A5248]">
+                        {tx.payment_channel}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black ${
+                            tx.status === 'BERHASIL'
+                              ? 'bg-[#1E9E5A]/15 text-[#166534]'
+                              : tx.status === 'MENUNGGU'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-mono text-[11px] text-[#767676]">
+                        {new Date(tx.paid_at).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. SUB-TAB: TEMPLATE BARANG BAWAAN (TRIP PLANNER) */}
+      {activeModuleTab === 'packing_templates' && (
+        <div className="space-y-6">
+          <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-extrabold text-[#234B24] flex items-center gap-2">
+                <Luggage className="w-5 h-5 text-[#F26B4B]" />
+                Template Rekomendasi Checklist Barang Bawaan
+              </h3>
+              <p className="text-xs text-[#4A5248] mt-0.5">
+                Kelola barang bawaan default per kategori perjalanan untuk menyuplai fitur Trip Planner di aplikasi mobile wisatawan.
+              </p>
+            </div>
+          </div>
+
+          {/* Form Tambah Item Checklist */}
+          <form
+            onSubmit={handleAddPackingItem}
+            className="p-5 rounded-3xl bg-[#F6F3EC] border border-[#CFD8BE] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end"
+          >
+            <div>
+              <label className="text-[11px] font-bold text-[#4A5248] uppercase block mb-1">
+                Kategori Perjalanan *
+              </label>
+              <select
+                value={newTemplateCat}
+                onChange={(e) => setNewTemplateCat(e.target.value)}
+                className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-white border border-[#CFD8BE] text-xs font-bold text-[#234B24]"
+              >
+                {DESTINATION_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-[#4A5248] uppercase block mb-1">
+                Nama Barang / Perlengkapan *
+              </label>
+              <input
+                type="text"
+                value={newTemplateItem}
+                onChange={(e) => setNewTemplateItem(e.target.value)}
+                placeholder="Contoh: Sepatu trekking anti-selip"
+                className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-white border border-[#CFD8BE] text-xs font-semibold text-[#1B1F1A]"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-[#4A5248] uppercase block mb-1">
+                Catatan Penggunaan
+              </label>
+              <input
+                type="text"
+                value={newTemplateNotes}
+                onChange={(e) => setNewTemplateNotes(e.target.value)}
+                placeholder="Contoh: Wajib untuk keselamatan jalur"
+                className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-white border border-[#CFD8BE] text-xs text-[#1B1F1A]"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-xs font-bold text-[#234B24] cursor-pointer pb-2">
+                <input
+                  type="checkbox"
+                  checked={newTemplateMandatory}
+                  onChange={(e) => setNewTemplateMandatory(e.target.checked)}
+                  className="rounded border-[#CFD8BE] text-[#234B24] focus:ring-[#234B24]"
+                />
+                <span>Wajib Dibawa</span>
+              </label>
+              <button
+                type="submit"
+                className="flex-1 min-h-[42px] px-4 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C] transition flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                Tambah Item
+              </button>
+            </div>
+          </form>
+
+          {/* Tabel Template Per Kategori */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {DESTINATION_CATEGORIES.map((cat) => {
+              const items = packingTemplates.filter((p) => p.category_name === cat);
+              return (
+                <div
+                  key={cat}
+                  className="bg-white rounded-3xl p-5 border border-[#234B24]/10 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10">
+                      <h4 className="text-sm font-extrabold text-[#234B24]">{cat}</h4>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#234B24]/10 text-[#234B24]">
+                        {items.length} Item
+                      </span>
+                    </div>
+
+                    <div className="mt-3.5 space-y-2">
+                      {items.length === 0 ? (
+                        <p className="text-xs text-[#767676] italic py-2">
+                          Belum ada rekomendasi barang bawaan untuk kategori ini.
+                        </p>
+                      ) : (
+                        items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="p-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]/70 flex items-start justify-between gap-2"
+                          >
+                            <div className="text-xs">
+                              <div className="flex items-center gap-1.5 font-bold text-[#1B1F1A]">
+                                {item.is_mandatory && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                )}
+                                <span>{item.item_name}</span>
+                              </div>
+                              {item.notes && (
+                                <p className="text-[10px] text-[#767676] mt-0.5">
+                                  {item.notes}
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePackingItem(item.id)}
+                              className="text-red-600 hover:text-red-800 p-1"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LIHAT DETAIL TRIP PLANNER */}
+      {selectedPlannerTrip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl border border-[#CFD8BE] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[#234B24]/10 bg-[#F6F3EC] flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-extrabold uppercase text-[#234B24]">
-                  Detail Pengawasan Open Trip
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#234B24] px-2 py-0.5 rounded bg-white border border-[#234B24]/15">
+                  Trip Planner Detail
                 </span>
-                <h4 className="text-lg font-extrabold text-[#1B1F1A]">
-                  {selectedTrip.title}
-                </h4>
+                <h3 className="text-base font-extrabold text-[#1B1F1A] mt-1">
+                  {selectedPlannerTrip.title}
+                </h3>
+                <p className="text-xs text-[#4A5248]">
+                  Destinasi: <strong>{selectedPlannerTrip.destination_name || selectedPlannerTrip.destination_route}</strong> • {selectedPlannerTrip.travel_category}
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedTrip(null)}
-                className="w-8 h-8 rounded-full bg-white/50 hover:bg-[#F26B4B] hover:text-white flex items-center justify-center transition"
+                onClick={() => setSelectedPlannerTrip(null)}
+                className="w-8 h-8 rounded-full bg-white text-[#767676] hover:text-[#1B1F1A] hover:bg-gray-100 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-white border border-[#CFD8BE] space-y-1">
-                <span className="font-bold text-[#4A5248]">Rute Destinasi:</span>
-                <p className="font-extrabold text-[#234B24]">
-                  {(selectedTrip.destination_routes || (selectedTrip.destination_route ? selectedTrip.destination_route.split('|').map((s) => s.trim()) : [])).join(' → ')}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-white border border-[#CFD8BE]">
-                  <span className="text-[#4A5248] font-bold">Ketua Rombongan:</span>
-                  <p className="font-extrabold text-[#1B1F1A] mt-0.5">
-                    {selectedTrip.leader_name || selectedTrip.contact_wa}
-                  </p>
-                  <p className="text-[11px] text-[#234B24] mt-0.5">
-                    {selectedTrip.leader_phone || selectedTrip.contact_wa}
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-white border border-[#CFD8BE]">
-                  <span className="text-[#4A5248] font-bold">Mitra Pokdarwis:</span>
-                  <p className="font-extrabold text-[#1B1F1A] mt-0.5">
-                    {selectedTrip.pokdarwis_partner || 'Pokdarwis Nagari'}
-                  </p>
-                  <p className="text-[11px] text-[#767676] mt-0.5">
-                    {selectedTrip.city_regency || 'Sumatera Barat'}
-                  </p>
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              {/* 1. Checklist Perjalanan */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#234B24] flex items-center gap-1.5">
+                  <ListChecks className="w-4 h-4 text-[#F26B4B]" />
+                  Checklist Tahapan Perjalanan
+                </h4>
+                <div className="space-y-1.5">
+                  {(selectedPlannerTrip.trip_planner?.checklist || [
+                    'Konfirmasi kehadiran H-1 via grup WhatsApp',
+                    'Briefing keselamatan di titik kumpul',
+                    'Pemeriksaan perlengkapan bawaan peserta',
+                  ]).map((chk, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2.5 rounded-xl bg-[#F6F3EC]">
+                      <CheckCircle2 className="w-4 h-4 text-[#1E9E5A] shrink-0" />
+                      <span className="font-semibold text-[#1B1F1A]">{chk}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-white border border-[#CFD8BE] flex items-center justify-between">
-                <div>
-                  <span className="text-[#4A5248] font-bold">Estimasi Split-Bill:</span>
-                  <p className="font-mono font-extrabold text-base text-[#234B24]">
-                    Rp {(selectedTrip.split_bill_idr ?? selectedTrip.cost_per_person ?? 350000).toLocaleString('id-ID')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-[#4A5248] font-bold">Kuota Terisi:</span>
-                  <p className="font-bold text-[#1B1F1A]">
-                    {selectedTrip.quota_filled ?? 6} / {selectedTrip.quota_max ?? selectedTrip.total_quota ?? 10} Orang
-                  </p>
+              {/* 2. Pembagian Jobdesk Peserta / Panitia */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#234B24] flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4 text-[#3B82F6]" />
+                  Pembagian Tugas &amp; Jobdesk
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(selectedPlannerTrip.trip_planner?.jobdesk_assignments || [
+                    { role: 'Pemandu Lapangan', person_name: selectedPlannerTrip.trip_leader_name || 'Ketua Trip' },
+                    { role: 'First Aid P3K', person_name: 'Dodi Irawan' },
+                  ]).map((job, i) => (
+                    <div key={i} className="p-3 rounded-xl bg-blue-50/60 border border-blue-200">
+                      <span className="text-[10px] font-bold text-blue-800 uppercase block">{job.role}</span>
+                      <strong className="text-xs text-[#1B1F1A] block mt-0.5">{job.person_name}</strong>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {selectedTrip.notes && (
-                <div className="p-3 rounded-xl bg-[#E4E9DA] border border-[#CFD8BE] text-[11px] text-[#1B1F1A]">
-                  <strong>Catatan Operasional:</strong> {selectedTrip.notes}
+              {/* 3. Checklist Barang Bawaan */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#234B24] flex items-center gap-1.5">
+                  <Luggage className="w-4 h-4 text-amber-600" />
+                  Checklist Barang Bawaan Peserta
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {(selectedPlannerTrip.trip_planner?.packing_checklist || [
+                    'Sepatu trekking anti-selip',
+                    'Jas hujan ponco parasut',
+                    'Obat-obatan pribadi',
+                    'Pakaian ganti kering',
+                  ]).map((item, i) => (
+                    <div key={i} className="p-2 rounded-lg bg-amber-50/70 border border-amber-200 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
+                      <span className="font-medium text-[#1B1F1A]">{item}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              {/* 4. Itinerary Perjalanan */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#234B24] flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-[#1E9E5A]" />
+                  Rundown &amp; Itinerary
+                </h4>
+                <div className="space-y-2">
+                  {(selectedPlannerTrip.trip_planner?.itinerary || [
+                    { day: 1, time: '07.00 - 08.00', activity: 'Kumpul & briefing keselamatan di Meeting Point' },
+                    { day: 1, time: '08.00 - 12.00', activity: 'Perjalanan & aktivitas di destinasi' },
+                    { day: 1, time: '12.00 - 14.00', activity: 'Makan siang kuliner nagari & istirahat' },
+                  ]).map((iti, i) => (
+                    <div key={i} className="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-gray-200 font-mono text-[10px] font-bold text-[#234B24] shrink-0">
+                        {iti.time}
+                      </span>
+                      <p className="text-xs font-semibold text-[#1B1F1A]">{iti.activity}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#CFD8BE]">
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[#234B24]/10 bg-[#F6F3EC] flex items-center justify-end">
               <button
                 type="button"
-                onClick={() => setSelectedTrip(null)}
-                className="px-4 py-2 rounded-xl bg-white border border-[#CFD8BE] text-xs font-bold"
+                onClick={() => setSelectedPlannerTrip(null)}
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C]"
               >
-                Tutup
+                Tutup Pratinjau
               </button>
             </div>
           </div>

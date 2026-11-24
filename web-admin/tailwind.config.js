@@ -8,10 +8,10 @@ export default {
     extend: {
       colors: {
         cream: {
-          DEFAULT: '#FAF3E6',
-          subtle: '#F3EBDC',
+          DEFAULT: '#F6F3EC',
+          subtle: '#EDE8DD',
           100: '#F6F3EC',
-          200: '#ECE6D8',
+          200: '#E5DFCF',
         },
         forest: {
           DEFAULT: '#193D22',
@@ -64,6 +64,11 @@ export default {
       borderRadius: {
         pill: '26px',
         sheet: '28px',
+      },
+      boxShadow: {
+        soft: '0 4px 24px rgba(35, 75, 36, 0.04)',
+        elevated: '0 8px 32px rgba(35, 75, 36, 0.08)',
+        subtle: '0 2px 12px rgba(35, 75, 36, 0.03)',
       },
     },
   },

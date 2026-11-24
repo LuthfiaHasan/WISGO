@@ -257,7 +257,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Halaman */}
-      <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
+      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
         <div className="flex flex-col gap-5">
           {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
           <div className="flex items-start gap-3.5">
@@ -269,7 +269,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
                   Direktori &amp; Verifikasi 5 Kategori Mitra UMKM Nagari
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#234B24]/8 text-[#234B24]">
                   Ekonomi Nagari &amp; Transaksi Langsung P2P
                 </span>
               </div>
@@ -280,7 +280,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </div>
 
           {/* Baris 2: Informasi Otoritas & Tombol Aksi */}
-          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs text-[#4A5248]">
               <span>Kemitraan Resmi:</span>
               <strong className="text-[#234B24]">Verifikasi Pokdarwis &amp; Pemprov Sumbar</strong>
@@ -290,7 +290,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
               <button
                 type="button"
                 onClick={handleOpenCreate}
-                className="min-h-[44px] px-5 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
+                className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition duration-200 shrink-0"
               >
                 <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
                 <span>Tambah Mitra Nagari Baru</span>
@@ -298,24 +298,24 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             )}
           </div>
 
-          {/* Baris 3: 3 Sub-Tabs Navigasi Header */}
-          <div className="pt-4 border-t border-[#234B24]/10 flex flex-wrap gap-2">
+          {/* Baris 3: 3 Sub-Tabs Navigasi Header Modern Clean */}
+          <div className="pt-4 border-t border-[#234B24]/8 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setActiveSubTab('partners_directory')}
-              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
                 activeSubTab === 'partners_directory'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                  ? 'bg-[#234B24] text-white shadow-sm'
+                  : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
               }`}
             >
               <Store className="w-4 h-4" aria-hidden="true" />
               <span>Direktori 5 Mitra UMKM &amp; 360°</span>
               <span
-                className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
+                className={`ml-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${
                   activeSubTab === 'partners_directory'
                     ? 'bg-white/20 text-white'
-                    : 'bg-[#234B24]/10 text-[#234B24]'
+                    : 'bg-[#234B24]/8 text-[#234B24]'
                 }`}
               >
                 {partners.length}
@@ -325,10 +325,10 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             <button
               type="button"
               onClick={() => setActiveSubTab('open_trips')}
-              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
                 activeSubTab === 'open_trips'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                  ? 'bg-[#234B24] text-white shadow-sm'
+                  : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
               }`}
             >
               <Users className="w-4 h-4" aria-hidden="true" />
@@ -338,14 +338,14 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             <button
               type="button"
               onClick={() => setActiveSubTab('community_curation')}
-              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              className={`min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold transition duration-200 flex items-center gap-2 ${
                 activeSubTab === 'community_curation'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]'
+                  ? 'bg-[#234B24] text-white shadow-sm'
+                  : 'bg-[#F6F3EC]/70 hover:bg-[#234B24]/8 text-[#4A5248] hover:text-[#234B24] border border-[#234B24]/8'
               }`}
             >
               <Compass className="w-4 h-4" aria-hidden="true" />
-              <span>Verifikasi Input Tempat Wisata (Komunitas)</span>
+              <span>Verifikasi Usulan Komunitas</span>
             </button>
           </div>
         </div>
@@ -353,9 +353,23 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
 
       {activeSubTab === 'partners_directory' && (
         <>
+          {/* Banner Aturan Tegas Transaksi: UMKM P2P WA */}
+          <div className="p-4 rounded-2xl bg-[#234B24]/10 border border-[#234B24]/20 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#234B24] text-white flex items-center justify-center shrink-0 mt-0.5">
+              <Phone className="w-5 h-5 text-[#F26B4B]" />
+            </div>
+            <div className="text-xs">
+              <h4 className="font-extrabold text-[#234B24]">
+                Model Transaksi Mitra UMKM Nagari: 100% Direct P2P WhatsApp
+              </h4>
+              <p className="text-[#4A5248] mt-0.5 leading-relaxed">
+                Mitra UMKM biasa (Kuliner, Homestay, Sewa Baju Adat, Pemandu) <strong>tidak dikenakan potongan transaksi aplikasi</strong>. Wisatawan langsung terhubung melalui chat WhatsApp resmi mitra. Sistem transaksi pembayaran dalam aplikasi <strong>hanya berlaku khusus untuk Open Trip</strong> demi perlindungan kuota dan split-bill peserta.
+              </p>
+            </div>
+          </div>
           {/* 4 Kartu KPI Statistik Mitra & Interaksi P2P */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#4A5248]">Mitra Terverifikasi</span>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
             {totalVerified}
@@ -365,7 +379,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#234B24]">Total Klik / Interaksi WA</span>
           <div className="mt-2 text-2xl lg:text-3xl font-extrabold text-[#234B24]">
             {totalWaClicks.toLocaleString('id-ID')}
@@ -375,7 +389,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#1D4ED8]">Terhubung Tur 360°</span>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1D4ED8]">
             {totalWith360} Mitra
@@ -385,7 +399,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
           <span className="text-xs font-bold text-[#F26B4B]">Kategori Layanan Aktif</span>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
             5 Kategori
@@ -397,7 +411,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
       </div>
 
       {/* Filter Bar & Search */}
-      <div className="bg-white rounded-[24px] p-5 shadow-sm border border-[#E4E9DA] flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="relative flex-1">
           <label htmlFor={searchInputId} className="sr-only">
             Cari mitra UMKM
@@ -453,11 +467,11 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
       </div>
 
       {/* Tabel Data Mitra Nagari */}
-      <div className="bg-white rounded-[24px] shadow-sm border border-[#E4E9DA] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#E4E9DA] bg-[#F6F3EC]/70 text-[11px] font-bold text-[#4A5248] uppercase tracking-wider">
+              <tr className="border-b border-[#234B24]/10 bg-[#F6F3EC]/70 text-[11px] font-bold text-[#4A5248] uppercase tracking-wider">
                 <th scope="col" className="py-3.5 px-4">
                   Mitra &amp; Foto Usaha
                 </th>
@@ -642,10 +656,10 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 lg:p-7 shadow-2xl border border-[#E4E9DA] max-h-[92vh] overflow-y-auto flex flex-col justify-between">
+          <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto flex flex-col justify-between">
             <div>
               {/* Header Modal */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#E4E9DA]">
+              <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#234B24] text-white flex items-center justify-center shadow-xs">
                     <Store className="w-5 h-5" />
@@ -952,7 +966,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             </div>
 
             {/* Tombol Footer Modal */}
-            <div className="pt-4 border-t border-[#E4E9DA] flex items-center justify-end gap-2.5 mt-5">
+            <div className="pt-4 border-t border-[#234B24]/10 flex items-center justify-end gap-2.5 mt-5">
               <button
                 type="button"
                 onClick={() => setSelectedPartner(null)}
@@ -986,8 +1000,8 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-xl p-6 lg:p-7 shadow-2xl border border-[#E4E9DA] max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E4E9DA]">
+          <div className="bg-white rounded-[28px] w-full max-w-xl p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-[#234B24] text-white flex items-center justify-center shadow-xs">
                   <Store className="w-5 h-5" />
@@ -1218,7 +1232,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#E4E9DA]">
+              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}

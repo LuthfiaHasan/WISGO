@@ -71,11 +71,11 @@ export const SUMBAR_REGENCIES = [
 ] as const;
 
 export const DESTINATION_CATEGORIES = [
-  'Wisata Alam & Geopark',
-  'Warisan Budaya & Adat',
-  'Pusat Kuliner Tradisional',
-  'Bahari & Kepulauan',
-  'Situs Bersejarah & Tambang',
+  'Wisata Alam & Pegunungan',
+  'Wisata Bahari & Pesisir',
+  'Sejarah & Warisan Minangkabau',
+  'Nagari Adat & Edukasi Budaya',
+  'Kuliner Otentik & Agrowisata',
 ] as const;
 
 export const TARIFF_CATEGORIES = [

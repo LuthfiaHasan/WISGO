@@ -379,7 +379,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#142618] flex flex-col lg:flex-row font-sans">
+    <div className="min-h-screen bg-[#F6F3EC] text-[#1B1F1A] flex flex-col lg:flex-row font-sans">
       <Sidebar
         activeMenu={activeMenu}
         onSelectMenu={(menu) => {
@@ -417,7 +417,7 @@ export const App: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className="no-print fixed bottom-6 right-6 z-50 max-w-md bg-[#193D22] text-[#FAF3E6] px-5 py-3.5 rounded-2xl shadow-xl border border-[#1E9E5A] flex items-center gap-3"
+            className="no-print fixed bottom-6 right-6 z-50 max-w-md bg-[#234B24] text-[#F6F3EC] px-5 py-3.5 rounded-2xl shadow-xl border border-[#1E9E5A] flex items-center gap-3"
           >
             <CheckCircle2
               className="w-5 h-5 text-[#1E9E5A] shrink-0"

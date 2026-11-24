@@ -231,7 +231,7 @@ export const TariffsAndQRPage: React.FC<TariffsAndQRPageProps> = ({
       {/* Pemilih Destinasi & Ringkasan Identitas QR */}
       <section
         aria-label="Pemilih Destinasi Pengelolaan Tarif"
-        className="no-print bg-white p-6 rounded-3xl border border-[#E4E9DA] shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-6 items-center"
+        className="no-print bg-white p-6 lg:p-7 rounded-2xl border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] grid grid-cols-1 lg:grid-cols-12 gap-6 items-center"
       >
         <div className="lg:col-span-6 flex flex-col gap-1.5">
           <label
@@ -291,30 +291,29 @@ export const TariffsAndQRPage: React.FC<TariffsAndQRPageProps> = ({
       {/* Tabel CRUD Tarif Resmi Perda / Fair-Price Barometer */}
       <section
         aria-labelledby="tariff-table-heading"
-        className="no-print bg-white rounded-3xl border border-[#E4E9DA] shadow-sm overflow-hidden"
+        className="no-print bg-white rounded-2xl border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] overflow-hidden"
       >
-        <div className="px-6 py-4 bg-[#234B24] text-[#F6F3EC] flex flex-wrap items-center justify-between gap-3">
+        <div className="px-6 py-4 bg-[#F6F3EC]/80 border-b border-[#234B24]/10 text-[#234B24] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Receipt className="w-5 h-5 text-[#F26B4B]" aria-hidden="true" />
             <div>
               <h2
                 id="tariff-table-heading"
-                className="text-sm font-extrabold uppercase tracking-wider"
+                className="text-sm font-extrabold uppercase tracking-wider text-[#234B24]"
               >
                 Daftar Komponen Tarif Resmi &amp; Fair-Price Barometer —{' '}
                 {activeDestination.name}
               </h2>
             </div>
           </div>
-          <span className="text-xs text-[#E4E9DA]">
-            Data otomatis ditampilkan pada Plang Smart QR &amp; aplikasi
-            wisatawan
+          <span className="text-xs text-[#4A5248]">
+            Data otomatis ditampilkan pada Plang Smart QR &amp; aplikasi wisatawan
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-[#E4E9DA]/60 text-[#1B1F1A] text-xs uppercase border-b border-[#CFD8BE]">
+            <thead className="bg-[#F6F3EC]/50 text-[#4A5248] text-xs uppercase border-b border-[#234B24]/8">
               <tr>
                 <th scope="col" className="py-3.5 px-5 font-bold">
                   Nama Komponen Layanan

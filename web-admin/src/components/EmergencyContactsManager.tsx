@@ -215,7 +215,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
     <div className="space-y-6">
       {/* 4 Kartu KPI Statistik Nomor Darurat */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
           <span className="text-xs font-bold text-[#4A5248]">Total Nomor Siaga Resmi</span>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
             {contacts.length} Hotline
@@ -225,7 +225,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
           <span className="text-xs font-bold text-[#166534]">Layanan Siaga 24 Jam</span>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#16A34A]">
             {contacts.filter((c) => c.is_24_hours && c.is_active).length} Unit
@@ -235,7 +235,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
           <span className="text-xs font-bold text-[#D95637]">SAR &amp; Medis Kritis</span>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F26B4B]">
             {
@@ -250,7 +250,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#E4E9DA] flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
           <span className="text-xs font-bold text-[#1D4ED8]">Status Siaran ke Aplikasi</span>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1D4ED8]">
             {contacts.filter((c) => c.is_active).length} Aktif
@@ -262,7 +262,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
       </div>
 
       {/* Header Kontrol & Tombol Input Nomor Baru */}
-      <div className="bg-white rounded-[24px] p-5 shadow-sm border border-[#E4E9DA] space-y-4">
+      <div className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
@@ -338,7 +338,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
       {/* Grid Kartu Nomor Darurat */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredContacts.length === 0 ? (
-          <div className="col-span-full bg-white rounded-2xl p-8 text-center text-xs text-[#767676] border border-[#E4E9DA]">
+          <div className="col-span-full bg-white rounded-2xl p-8 text-center text-xs text-[#767676] border border-[#234B24]/10">
             Tidak ada nomor darurat yang sesuai dengan kriteria pencarian.
           </div>
         ) : (
@@ -433,7 +433,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
                 </div>
 
                 {/* Footer Action Buttons */}
-                <div className="pt-3 border-t border-[#E4E9DA] flex items-center justify-end gap-2">
+                <div className="pt-3 border-t border-[#234B24]/10 flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(contact)}
@@ -465,8 +465,8 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl border border-[#E4E9DA] max-h-[92vh] overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E4E9DA]">
+          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-[#234B24] text-white flex items-center justify-center">
                   <Phone className="w-5 h-5 text-[#F26B4B]" />
@@ -605,7 +605,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
                 </label>
               </div>
 
-              <div className="pt-3 border-t border-[#E4E9DA] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#234B24]/10 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}

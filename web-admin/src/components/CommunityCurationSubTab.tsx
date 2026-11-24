@@ -157,7 +157,7 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
         aria-label="Ringkasan Statistik Meja Kurasi Destinasi Komunitas"
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Total Usulan Komunitas
           </div>
@@ -174,7 +174,7 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Menunggu Verifikasi
           </div>
@@ -189,7 +189,7 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
             Disetujui &amp; Terbit
           </div>
@@ -225,7 +225,7 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
       </section>
 
       {/* Filter & Baris Pencarian Usulan */}
-      <div className="bg-white p-5 lg:p-6 rounded-3xl border border-[#E4E9DA] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-5 lg:p-6 rounded-3xl border border-[#234B24]/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]" />
           <input
@@ -252,8 +252,8 @@ export const CommunityCurationSubTab: React.FC<CommunityCurationSubTabProps> = (
       </div>
 
       {/* Daftar Usulan Tempat Wisata Komunitas */}
-      <div className="bg-white rounded-3xl border border-[#E4E9DA] shadow-sm overflow-hidden">
-        <div className="p-5 lg:p-6 border-b border-[#E4E9DA] flex items-center justify-between">
+      <div className="bg-white rounded-3xl border border-[#234B24]/10 shadow-sm overflow-hidden">
+        <div className="p-5 lg:p-6 border-b border-[#234B24]/10 flex items-center justify-between">
           <div>
             <h3 className="text-base font-extrabold text-[#1B1F1A]">
               Meja Kurasi &amp; Verifikasi Usulan Destinasi Komunitas

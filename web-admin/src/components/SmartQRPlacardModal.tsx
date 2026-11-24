@@ -247,7 +247,7 @@ export const SmartQRPlacardView: React.FC<SmartQRPlacardProps> = ({
             <div className="p-4 overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E4E9DA] text-[#4A5248] uppercase">
+                  <tr className="border-b border-[#234B24]/10 text-[#4A5248] uppercase">
                     <th className="py-2.5 px-3 font-bold">Komponen Layanan</th>
                     <th className="py-2.5 px-3 font-bold">Kategori</th>
                     <th className="py-2.5 px-3 font-bold">Tarif Resmi</th>

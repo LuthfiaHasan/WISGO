@@ -98,7 +98,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {/* KPI 1: Go Gin Server Engine */}
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
               Server Go Gin Engine
@@ -117,7 +117,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
         </div>
 
         {/* KPI 2: Query Spasial PostGIS (<100ms) */}
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
               Query Spasial PostGIS
@@ -144,7 +144,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
         </div>
 
         {/* KPI 3: Kecepatan Bundel 360° */}
-        <div className="bg-white p-5 rounded-3xl border border-[#E4E9DA] shadow-sm">
+        <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
               Bundel Offline 360°
@@ -189,7 +189,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
       {/* Control Panel Uji Benchmark Endpoint */}
       <section
         aria-label="Panel Uji Benchmark Endpoint Terpadu"
-        className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#E4E9DA] space-y-5"
+        className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-5"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -273,8 +273,8 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
       </section>
 
       {/* Riwayat Hasil Uji Benchmark */}
-      <div className="bg-white rounded-3xl border border-[#E4E9DA] shadow-sm overflow-hidden">
-        <div className="p-5 lg:p-6 border-b border-[#E4E9DA] flex items-center justify-between">
+      <div className="bg-white rounded-3xl border border-[#234B24]/10 shadow-sm overflow-hidden">
+        <div className="p-5 lg:p-6 border-b border-[#234B24]/10 flex items-center justify-between">
           <div>
             <h4 className="text-base font-extrabold text-[#1B1F1A]">
               Riwayat Pengujian Benchmark Endpoint &amp; Telemetri Latensi

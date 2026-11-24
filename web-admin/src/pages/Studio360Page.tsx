@@ -668,8 +668,9 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
       case 'fasilitas_umum':
         return {
           label: 'Fasilitas Umum (Toilet/Parkir/Musala)',
-          color: '#0D9488',
-          bg: '#CCFBF1',
+          color: '#166534',
+          bg: '#DCFCE7',
+          pinSvg: '/assets/synced/pin_fasilitas_umum.svg',
           icon: <MapPin className="w-4 h-4" />,
         };
       case 'mitra_umkm':
@@ -677,30 +678,34 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
           label: 'Mitra UMKM / Jasa (Chat WA)',
           color: '#C2410C',
           bg: '#FFEDD5',
+          pinSvg: '/assets/synced/pin_mitra_umkm.svg',
           icon: <ShoppingBag className="w-4 h-4" />,
         };
       case 'loket_info':
       case 'info_adat':
         return {
           label: 'Loket & Info Resmi (Posko)',
-          color: '#CA8A04',
-          bg: '#FEF08A',
+          color: '#1D4ED8',
+          bg: '#DBEAFE',
+          pinSvg: '/assets/synced/pin_loket_info.svg',
           icon: <BookOpen className="w-4 h-4" />,
         };
       case 'navigasi_arah':
       case 'navigasi':
         return {
           label: 'Navigasi Arah (Pindah Scene)',
-          color: '#1D4ED8',
-          bg: '#BFDBFE',
+          color: '#234B24',
+          bg: '#E4E9DA',
+          pinSvg: '/assets/synced/pin_navigasi_arah.svg',
           icon: <Compass className="w-4 h-4" />,
         };
       case 'audio_budaya':
       default:
         return {
           label: 'Audio Narasi Budaya',
-          color: '#4F46E5',
-          bg: '#C7D2FE',
+          color: '#234B24',
+          bg: '#E4E9DA',
+          pinSvg: '/assets/synced/pin_navigasi_arah.svg',
           icon: <Volume2 className="w-4 h-4" />,
         };
     }
@@ -725,7 +730,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
       )}
 
       {/* Header Halaman */}
-      <header className="bg-white rounded-[24px] p-6 lg:p-7 shadow-sm border border-[#E4E9DA]">
+      <header className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
         <div className="flex flex-col gap-5">
           {/* Baris 1: Judul Halaman & Penjelasan Eksekutif */}
           <div className="flex items-start gap-3.5">
@@ -735,14 +740,14 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-                  Studio Virtual 360° &amp; Visual 4-Pin Editor
+                  Studio Panorama View &amp; Kondisi Nyata Lokasi
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                  60 FPS Panorama Viewer
+                  Wide / Equirectangular Viewer
                 </span>
               </div>
               <p className="text-xs text-[#4A5248] mt-1 max-w-3xl leading-relaxed">
-                Jelajahi panorama 360° dengan wrap-around mulus, tilt vertikal, zoom, dan tempelkan 4 pin interaktif (Info Adat, Navigasi Aerial-to-Ground, Audio Budaya, dan Pin Mitra UMKM Nagari).
+                Foto panorama 360° lebar untuk menampilkan kondisi nyata di lokasi destinasi wisata serta penandaan 4 fasilitas esensial (Fasilitas Umum, Mitra UMKM dengan link WA, Loket Info Resmi, dan Navigasi Arah).
               </p>
             </div>
           </div>
@@ -797,7 +802,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
         </div>
 
         {/* Tab Manajemen Scene */}
-        <div className="mt-6 pt-5 border-t border-[#E4E9DA] flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-6 pt-5 border-t border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-[#4A5248] mr-1 flex items-center gap-1.5">
               <Layers className="w-4 h-4 text-[#234B24]" />
@@ -877,7 +882,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
           {/* Kolom Kiri: Kanvas 360° Interaktif (8 Kolom) */}
           <section
             ref={canvasContainerRef}
-            className={`lg:col-span-8 bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-[#E4E9DA] space-y-4 ${
+            className={`lg:col-span-8 bg-white rounded-2xl p-5 lg:p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4 ${
               isFullscreen ? 'fixed inset-0 z-50 rounded-none p-6 overflow-hidden' : ''
             }`}
           >
@@ -1033,14 +1038,12 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
             {selectedPin && (
               <div className="p-4 rounded-2xl bg-[#E4E9DA]/80 border border-[#CFD8BE] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-start gap-3 min-w-0">
-                  <div
-                    style={{
-                      backgroundColor: getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').bg,
-                      color: getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').color,
-                    }}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-current shadow-xs"
-                  >
-                    {getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').icon}
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-[#234B24]/10 shadow-xs">
+                    <img
+                      src={getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').pinSvg}
+                      alt=""
+                      className="w-7 h-8 object-contain"
+                    />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -1187,7 +1190,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
           </section>
 
           {/* Kolom Kanan: Daftar Pin & Manajemen (4 Kolom) */}
-          <aside className="lg:col-span-4 bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-[#E4E9DA] space-y-4">
+          <aside className="lg:col-span-4 bg-white rounded-2xl p-5 lg:p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-extrabold text-[#1B1F1A] flex items-center gap-2">
@@ -1267,15 +1270,11 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span
-                            style={{
-                              backgroundColor: meta.bg,
-                              color: meta.color,
-                            }}
-                            className="p-1 rounded-md"
-                          >
-                            {meta.icon}
-                          </span>
+                          <img
+                            src={meta.pinSvg}
+                            alt=""
+                            className="w-5 h-6 object-contain shrink-0"
+                          />
                           <span className="text-[11px] font-bold text-[#234B24]">
                             {meta.label}
                           </span>
@@ -1338,7 +1337,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
           </aside>
         </div>
       ) : (
-        <div className="bg-white rounded-[24px] p-12 text-center shadow-sm border border-[#E4E9DA]">
+        <div className="bg-white rounded-2xl p-12 text-center border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
           <Camera className="w-12 h-12 text-[#234B24] mx-auto mb-3" />
           <h2 className="text-lg font-extrabold text-[#1B1F1A]">
             Belum Ada Scene Panorama 360° untuk {selectedDestination?.name}
@@ -1373,8 +1372,8 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#E4E9DA] max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E4E9DA]">
+          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-xs">
                   <Camera className="w-5 h-5" />
@@ -1499,7 +1498,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#E4E9DA]">
+              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
                 <button
                   type="button"
                   onClick={() => setIsSceneModalOpen(false)}
@@ -1529,8 +1528,8 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#E4E9DA] max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E4E9DA]">
+          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
                   <Sparkles className="w-5 h-5" />
@@ -1794,7 +1793,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#E4E9DA]">
+              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
                 <button
                   type="button"
                   onClick={() => setIsPinModalOpen(false)}
