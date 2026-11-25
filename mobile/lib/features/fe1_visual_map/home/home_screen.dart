@@ -71,19 +71,19 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cream100,
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: const Text('Rancak.in · Sumatera Barat'),
         actions: [
           IconButton(
             tooltip: 'Segarkan Data Destinasi',
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.green800),
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.forest),
             onPressed: _loadDestinations,
           ),
         ],
       ),
       body: RefreshIndicator(
-        color: AppColors.green800,
+        color: AppColors.forest,
         backgroundColor: Colors.white,
         onRefresh: _loadDestinations,
         child: ListView(
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.ink900,
+                    color: AppColors.ink,
                   ),
                 ),
                 Text(
@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black54,
+                    color: AppColors.muted,
                   ),
                 ),
               ],
@@ -132,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
-                  child: CircularProgressIndicator(color: AppColors.green800),
+                  child: CircularProgressIndicator(color: AppColors.forest),
                 ),
               )
             else if (_destinations.isEmpty)
@@ -152,14 +152,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBF4E8),
+        color: AppColors.cream,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE89F3C).withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.goldMinang.withValues(alpha: 0.3)),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.shield_outlined, color: AppColors.green800, size: 24),
+          Icon(Icons.shield_outlined, color: AppColors.forest, size: 24),
           SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   'Pantauan Jalur Sumbar: Sitinjau Lauik & Kelok 9 Normal',
                   style: TextStyle(
-                    color: AppColors.ink900,
+                    color: AppColors.ink,
                     fontWeight: FontWeight.bold,
                     fontSize: 12.5,
                   ),
@@ -176,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(height: 2),
                 Text(
                   'Cek 5 Indikator Medan & sinyal Blank Spot di detail destinasi sebelum bepergian.',
-                  style: TextStyle(color: Colors.black87, fontSize: 11.5),
+                  style: TextStyle(color: AppColors.ink, fontSize: 11.5),
                 ),
               ],
             ),
@@ -195,8 +195,8 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       decoration: InputDecoration(
         hintText: 'Cari Lembah Harau, Bukittinggi, Lubuk Nyarai...',
-        hintStyle: const TextStyle(fontSize: 13, color: Colors.black45),
-        prefixIcon: const Icon(Icons.search, color: AppColors.green800),
+        hintStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
+        prefixIcon: const Icon(Icons.search, color: AppColors.forest),
         suffixIcon: _searchQuery.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear, size: 18),
@@ -212,11 +212,11 @@ class _HomeScreenState extends State<HomeScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26),
-          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          borderSide: BorderSide(color: AppColors.ink.withValues(alpha: 0.08)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26),
-          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          borderSide: BorderSide(color: AppColors.ink.withValues(alpha: 0.08)),
         ),
       ),
     );
@@ -234,10 +234,10 @@ class _HomeScreenState extends State<HomeScreen> {
               label: Text(cat),
               selected: isSelected,
               showCheckmark: false,
-              selectedColor: AppColors.green800,
+              selectedColor: AppColors.forest,
               backgroundColor: Colors.white,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppColors.ink900,
+                color: isSelected ? Colors.white : AppColors.ink,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12.5,
               ),
@@ -260,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+        side: BorderSide(color: AppColors.ink.withValues(alpha: 0.06)),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -280,20 +280,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         height: 165,
-                        color: AppColors.sage100,
+                        color: AppColors.sage,
                         child: const Center(
-                          child: Icon(Icons.landscape, size: 48, color: AppColors.green800),
+                          child: Icon(Icons.landscape, size: 48, color: AppColors.forest),
                         ),
                       ),
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
                         return Container(
                           height: 165,
-                          color: AppColors.sage100,
+                          color: AppColors.sage,
                           child: const Center(
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.green800,
+                              color: AppColors.forest,
                             ),
                           ),
                         );
@@ -307,9 +307,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withValues(alpha: 0.4),
+                            AppColors.ink.withValues(alpha: 0.4),
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.45),
+                            AppColors.ink.withValues(alpha: 0.45),
                           ],
                         ),
                       ),
@@ -326,18 +326,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: dest.category.toLowerCase().contains('budaya')
-                                ? AppColors.indigo500
+                                ? AppColors.goldMinang
                                 : (dest.category.toLowerCase().contains('gem')
-                                    ? const Color(0xFF0F766E)
+                                    ? AppColors.brush
                                     : (dest.category.toLowerCase().contains('religi')
-                                        ? const Color(0xFF047857)
+                                        ? AppColors.success
                                         : (dest.category.toLowerCase().contains('kuliner')
-                                            ? AppColors.coral500
-                                            : AppColors.green800))),
+                                            ? AppColors.terracotta
+                                            : AppColors.forest))),
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.25),
+                                color: AppColors.ink.withValues(alpha: 0.25),
                                 blurRadius: 4,
                               ),
                             ],
@@ -361,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.65),
+                        color: AppColors.ink.withValues(alpha: 0.65),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
@@ -373,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             '360° Ready',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -394,17 +394,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.ink900,
+                      color: AppColors.ink,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.place_outlined, size: 14, color: Colors.black54),
+                      const Icon(Icons.place_outlined, size: 14, color: AppColors.muted),
                       const SizedBox(width: 4),
                       Text(
                         dest.cityRegency,
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        style: const TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ],
                   ),
@@ -415,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: Colors.black87,
+                      color: AppColors.ink,
                       height: 1.4,
                     ),
                   ),
@@ -454,7 +454,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.zero,
-                            side: const BorderSide(color: AppColors.green800),
+                            side: const BorderSide(color: AppColors.forest),
                             shape: const CircleBorder(),
                           ),
                           onPressed: () {
@@ -465,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             );
                           },
-                          child: const Icon(Icons.view_in_ar_rounded, color: AppColors.green800),
+                          child: const Icon(Icons.view_in_ar_rounded, color: AppColors.forest),
                         ),
                       ),
                     ],
@@ -482,14 +482,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMiniStat(String label, String value) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.black54)),
+        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
         const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: AppColors.ink900,
+            color: AppColors.ink,
           ),
         ),
       ],
@@ -502,21 +502,21 @@ class _HomeScreenState extends State<HomeScreen> {
       alignment: Alignment.center,
       child: Column(
         children: [
-          const Icon(Icons.travel_explore, size: 54, color: Colors.black26),
+          const Icon(Icons.travel_explore, size: 54, color: AppColors.warmBorder),
           const SizedBox(height: 12),
           const Text(
             'Tidak ada destinasi yang cocok',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.ink900,
+              color: AppColors.ink,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
             'Coba ubah kata kunci pencarian atau ganti filter kategori.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.5, color: Colors.black54),
+            style: TextStyle(fontSize: 12.5, color: AppColors.muted),
           ),
           const SizedBox(height: 16),
           OutlinedButton(
