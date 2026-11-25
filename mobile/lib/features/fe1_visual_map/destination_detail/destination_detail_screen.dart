@@ -40,7 +40,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         );
 
     return Scaffold(
-      backgroundColor: AppColors.cream100,
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: Text(dest.name),
         actions: [
@@ -50,7 +50,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               setState(() => _isSavedOffline = !_isSavedOffline);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  backgroundColor: AppColors.green800,
+                  backgroundColor: AppColors.forest,
                   content: Text(
                     _isSavedOffline
                         ? '${dest.name} berhasil disimpan ke Kantong Offline.'
@@ -63,7 +63,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               _isSavedOffline
                   ? Icons.download_done_rounded
                   : Icons.download_for_offline_outlined,
-              color: _isSavedOffline ? AppColors.green500 : AppColors.green800,
+              color: _isSavedOffline ? AppColors.success : AppColors.forest,
             ),
           ),
         ],
@@ -102,7 +102,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.ink900,
+                color: AppColors.ink,
               ),
             ),
             const SizedBox(height: 12),
@@ -115,7 +115,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.ink900,
+                color: AppColors.ink,
               ),
             ),
             const SizedBox(height: 12),
@@ -132,7 +132,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.ink900,
+                color: AppColors.ink,
               ),
             ),
             const SizedBox(height: 12),
@@ -164,11 +164,11 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A3A1B),
+        color: AppColors.forest,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: AppColors.ink.withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -195,10 +195,10 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFF1A3A1B).withValues(
+                    AppColors.forest.withValues(
                       alpha: dest.coverImage.isNotEmpty ? 0.72 : 1.0,
                     ),
-                    AppColors.green800.withValues(
+                    AppColors.forest.withValues(
                       alpha: dest.coverImage.isNotEmpty ? 0.90 : 1.0,
                     ),
                   ],
@@ -218,11 +218,11 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: isCategoryCulture ? AppColors.indigo500 : AppColors.green500,
+                        color: isCategoryCulture ? AppColors.goldMinang : AppColors.success,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: AppColors.ink.withValues(alpha: 0.2),
                             blurRadius: 4,
                           ),
                         ],
@@ -333,7 +333,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.ink900,
+              color: AppColors.ink,
             ),
           ),
         ),
@@ -345,7 +345,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.ink900,
+              color: AppColors.ink,
             ),
           ),
         ),
@@ -362,7 +362,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: AppColors.green800,
+              color: AppColors.forest,
             ),
           ),
         ),
@@ -380,7 +380,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        border: Border.all(color: AppColors.ink.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,12 +388,12 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: Colors.black54),
+              Icon(icon, size: 14, color: AppColors.muted),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -401,7 +401,12 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          child,
+          DefaultTextStyle.merge(
+            style: const TextStyle(
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+            child: child,
+          ),
         ],
       ),
     );
@@ -413,7 +418,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        border: Border.all(color: AppColors.ink.withValues(alpha: 0.06)),
       ),
       child: Column(
         children: [
@@ -421,7 +426,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             icon: Icons.directions_car_filled_outlined,
             title: 'Akses Kendaraan',
             value: medan.vehicleAccess,
-            color: AppColors.green800,
+            color: AppColors.forest,
           ),
           const Divider(height: 18),
           _buildMedanRow(
@@ -429,8 +434,8 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             title: 'Tingkat Trekking',
             value: medan.trekkingLevel,
             color: medan.trekkingLevel.contains('Ekstrem')
-                ? AppColors.coral500
-                : AppColors.green800,
+                ? AppColors.terracotta
+                : AppColors.forest,
           ),
           const Divider(height: 18),
           _buildMedanRow(
@@ -438,15 +443,15 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             title: 'Sinyal Seluler',
             value: medan.cellularSignal,
             color: medan.cellularSignal.contains('Blank')
-                ? AppColors.coral500
-                : AppColors.green500,
+                ? AppColors.terracotta
+                : AppColors.success,
           ),
           const Divider(height: 18),
           _buildMedanRow(
             icon: Icons.wc_outlined,
             title: 'Fasilitas Umum',
             value: medan.facilities,
-            color: AppColors.green800,
+            color: AppColors.forest,
           ),
           const Divider(height: 18),
           _buildMedanRow(
@@ -454,8 +459,8 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             title: 'Kebutuhan Pemandu',
             value: medan.guideNeed,
             color: medan.guideNeed.contains('Wajib')
-                ? AppColors.orange500
-                : AppColors.green800,
+                ? AppColors.warning
+                : AppColors.forest,
           ),
         ],
       ),
@@ -484,7 +489,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.ink900,
+              color: AppColors.ink,
             ),
           ),
         ),
@@ -513,23 +518,23 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.sage100, // #E4E9DA Sesuai Desain Token
+        color: AppColors.sage, // #E4E9DA Sesuai Desain Token
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.green800.withValues(alpha: 0.15)),
+        border: Border.all(color: AppColors.forest.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.eco_rounded, color: AppColors.green800, size: 20),
+              Icon(Icons.eco_rounded, color: AppColors.forest, size: 20),
               SizedBox(width: 8),
               Text(
                 'Tips Menjaga Tempat Ini (Wajib)',
                 style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.green800,
+                  color: AppColors.forest,
                 ),
               ),
             ],
@@ -538,7 +543,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
           if (tips.isEmpty)
             const Text(
               'Bawa kembali sampah Anda dan hormati adat istiadat Nagari setempat.',
-              style: TextStyle(fontSize: 13, color: AppColors.ink900, height: 1.4),
+              style: TextStyle(fontSize: 13, color: AppColors.ink, height: 1.4),
             )
           else
             ...tips.map((t) => Padding(
@@ -552,7 +557,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                           t.content,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.ink900,
+                            color: AppColors.ink,
                             fontWeight: t.isImportant ? FontWeight.w600 : FontWeight.normal,
                             height: 1.4,
                           ),

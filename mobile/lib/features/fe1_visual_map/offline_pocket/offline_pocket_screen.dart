@@ -64,7 +64,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
       // Unduh bundle
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: AppColors.green800,
+          backgroundColor: AppColors.forest,
           duration: const Duration(seconds: 2),
           content: Text('Mengunduh paket data offline ${bundle['name']}...'),
         ),
@@ -89,7 +89,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
     setState(() => _isDownloadingAll = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        backgroundColor: AppColors.green800,
+        backgroundColor: AppColors.forest,
         content: Text('Seluruh paket data destinasi Blank Spot berhasil disimpan di HP!'),
       ),
     );
@@ -109,7 +109,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cream100,
+      backgroundColor: AppColors.cream,
       appBar: AppBar(
         title: const Text('Kantong Offline (Mode Zero-Signal)'),
       ),
@@ -120,12 +120,12 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: _isAirplaneModeSimulated ? const Color(0xFFFDEEE9) : AppColors.sage100,
+              color: _isAirplaneModeSimulated ? AppColors.coralTint : AppColors.sage,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: _isAirplaneModeSimulated
-                    ? AppColors.coral500.withValues(alpha: 0.3)
-                    : AppColors.green800.withValues(alpha: 0.15),
+                    ? AppColors.terracotta.withValues(alpha: 0.3)
+                    : AppColors.forest.withValues(alpha: 0.15),
               ),
             ),
             child: Column(
@@ -137,7 +137,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                       _isAirplaneModeSimulated
                           ? Icons.airplanemode_active_rounded
                           : Icons.signal_cellular_nodata_rounded,
-                      color: _isAirplaneModeSimulated ? AppColors.coral500 : AppColors.green800,
+                      color: _isAirplaneModeSimulated ? AppColors.terracotta : AppColors.forest,
                       size: 28,
                     ),
                     const SizedBox(width: 10),
@@ -149,7 +149,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                         style: TextStyle(
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
-                          color: _isAirplaneModeSimulated ? AppColors.coral500 : AppColors.ink900,
+                          color: _isAirplaneModeSimulated ? AppColors.terracotta : AppColors.ink,
                         ),
                       ),
                     ),
@@ -160,7 +160,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                   _isAirplaneModeSimulated
                       ? 'Koneksi internet dinonaktifkan. Aplikasi membaca data offline dari cache perangkat secara mulus.'
                       : 'Tetap berfungsi 100% tanpa internet di kawasan Blank Spot (Lembah Harau, Lubuk Nyarai, & Silokek).',
-                  style: const TextStyle(fontSize: 12.5, color: AppColors.ink900, height: 1.4),
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.ink, height: 1.4),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -170,18 +170,18 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: _isAirplaneModeSimulated ? AppColors.coral500 : AppColors.green800,
+                        color: _isAirplaneModeSimulated ? AppColors.terracotta : AppColors.forest,
                       ),
                     ),
                     const Spacer(),
                     Switch(
                       value: _isAirplaneModeSimulated,
-                      activeColor: AppColors.coral500,
+                      activeColor: AppColors.terracotta,
                       onChanged: (val) {
                         setState(() => _isAirplaneModeSimulated = val);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            backgroundColor: val ? AppColors.coral500 : AppColors.green800,
+                            backgroundColor: val ? AppColors.terracotta : AppColors.forest,
                             content: Text(
                               val
                                 ? 'Mode Pesawat Aktif: Menguji keterbacaan data luring...'
@@ -204,14 +204,14 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+              border: Border.all(color: AppColors.ink.withValues(alpha: 0.06)),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.green800.withValues(alpha: 0.12),
-                  child: const Icon(Icons.sd_storage_rounded, color: AppColors.green800, size: 20),
+                  backgroundColor: AppColors.forest.withValues(alpha: 0.12),
+                  child: const Icon(Icons.sd_storage_rounded, color: AppColors.forest, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -220,11 +220,11 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                     children: [
                       const Text(
                         'Penyimpanan Offline Terpakai',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                        style: TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                       Text(
                         '${_totalDownloadedMb.toStringAsFixed(1)} MB / 25.0 MB dialokasikan',
-                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppColors.ink900),
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppColors.ink),
                       ),
                     ],
                   ),
@@ -240,7 +240,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.ink900,
+              color: AppColors.ink,
             ),
           ),
           const SizedBox(height: 12),
@@ -257,12 +257,12 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: isDownloaded ? AppColors.green800.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.06),
+                  color: isDownloaded ? AppColors.forest.withValues(alpha: 0.3) : AppColors.ink.withValues(alpha: 0.06),
                   width: isDownloaded ? 1.5 : 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
+                    color: AppColors.ink.withValues(alpha: 0.02),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -275,7 +275,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                     children: [
                       Icon(
                         isDownloaded ? Icons.check_circle : Icons.cloud_download_outlined,
-                        color: isDownloaded ? AppColors.green500 : Colors.black45,
+                        color: isDownloaded ? AppColors.success : AppColors.muted,
                         size: 24,
                       ),
                       const SizedBox(width: 10),
@@ -285,19 +285,19 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.ink900,
+                            color: AppColors.ink,
                           ),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppColors.sage100,
+                          color: AppColors.sage,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${b['sizeMb']} MB',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.green800),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
                         ),
                       ),
                     ],
@@ -305,12 +305,12 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                   const SizedBox(height: 6),
                   Text(
                     b['items'] as String,
-                    style: const TextStyle(fontSize: 12, color: Colors.black87, height: 1.35),
+                    style: const TextStyle(fontSize: 12, color: AppColors.ink, height: 1.35),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Sinkronisasi: ${b['syncedAt']}',
-                    style: const TextStyle(fontSize: 11, color: Colors.black45),
+                    style: const TextStyle(fontSize: 11, color: AppColors.muted),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -325,8 +325,8 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                           icon: const Icon(Icons.open_in_new, size: 14),
                           label: const Text('Buka Offline', style: TextStyle(fontSize: 11.5)),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.green800,
-                            side: const BorderSide(color: AppColors.green800),
+                            foregroundColor: AppColors.forest,
+                            side: const BorderSide(color: AppColors.forest),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           ),
@@ -336,13 +336,13 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                         icon: Icon(
                           isDownloaded ? Icons.delete_outline : Icons.download_rounded,
                           size: 15,
-                          color: isDownloaded ? Colors.red.shade600 : AppColors.green800,
+                          color: isDownloaded ? Colors.red.shade600 : AppColors.forest,
                         ),
                         label: Text(
                           isDownloaded ? 'Hapus Cache' : 'Unduh Paket',
                           style: TextStyle(
                             fontSize: 11.5,
-                            color: isDownloaded ? Colors.red.shade600 : AppColors.green800,
+                            color: isDownloaded ? Colors.red.shade600 : AppColors.forest,
                           ),
                         ),
                       ),

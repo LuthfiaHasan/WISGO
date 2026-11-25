@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../saved/presentation/screens/saved_places_screen.dart';
 import '../../services/auth_session.dart';
+import 'complete_profile_screen.dart';
 
 /// Layar 4: Verifikasi Kode OTP 4 Digit via WhatsApp
 /// - Desain Modern Frosted Glassmorphic Card (Selaras dengan Gambar 3 & Splashscreen)
@@ -164,12 +164,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       if (!mounted) return;
       setState(() => _isVerifying = false);
       AuthSession.instance.setAuthenticatedUser(
-        name: 'Ahmad Fauzi',
+        name: widget.userName ?? 'Wisatawan WISGO',
         phone: widget.phoneNumber,
+        isProfileComplete: false,
       );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => const SavedPlacesScreen(isGuest: false),
+          builder: (_) => CompleteProfileScreen(
+            phoneNumber: widget.phoneNumber,
+          ),
         ),
         (route) => false,
       );
@@ -191,13 +194,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.cream,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Background Lanskap Alam HD
+          // 1. Background Lanskap Rumah Gadang & Gunung Marapi Full-Screen (sudah direstorasi mulus)
           Positioned.fill(
             child: Image.asset(
               'assets/images/splash_bg_1.jpg',
@@ -206,7 +211,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             ),
           ),
 
-          // 2. Gradiasi Ivory Ambient Transparan
+          // 2. Gradiasi Ivory Ambient Halus agar kartu OTP tetap tajam & nyaman dibaca
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -214,11 +219,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.cream.withValues(alpha: 0.35),
-                    AppColors.cream.withValues(alpha: 0.65),
-                    AppColors.cream.withValues(alpha: 0.88),
+                    AppColors.cream.withValues(alpha: 0.22),
+                    AppColors.cream.withValues(alpha: 0.42),
+                    AppColors.cream.withValues(alpha: 0.62),
                   ],
-                  stops: const [0.0, 0.40, 1.0],
+                  stops: const [0.0, 0.50, 1.0],
                 ),
               ),
             ),
@@ -282,7 +287,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             child: Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 64, 20, 24),
+                padding: EdgeInsets.fromLTRB(20, 64, 20, 24 + bottomInset),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: BackdropFilter(

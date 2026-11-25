@@ -20,17 +20,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Mode autentikasi: false = Sign In (Masuk), true = Sign Up (Daftar)
-  bool _isSignUp = false;
-
   final TextEditingController _phoneController =
       TextEditingController(text: '812-7578-953');
-  final TextEditingController _nameController = TextEditingController();
   final FocusNode _phoneFocus = FocusNode();
-  final FocusNode _nameFocus = FocusNode();
 
   bool _rememberMe = true;
-  bool _agreeTerms = true;
   bool _showError = false;
   String _errorMessage = '';
   bool _isButtonPressed = false;
@@ -43,17 +37,12 @@ class _LoginScreenState extends State<LoginScreen> {
     _phoneFocus.addListener(() {
       if (mounted) setState(() {});
     });
-    _nameFocus.addListener(() {
-      if (mounted) setState(() {});
-    });
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _nameController.dispose();
     _phoneFocus.dispose();
-    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -85,9 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _fillDemoPhone() {
     _phoneController.text = '812-7578-953';
-    if (_isSignUp && _nameController.text.isEmpty) {
-      _nameController.text = 'Sutan Rangkayo';
-    }
     setState(() => _showError = false);
   }
 
@@ -99,26 +85,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submitAuthAndSendOtp() {
     final rawPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    if (_isSignUp && _nameController.text.trim().isEmpty) {
-      setState(() {
-        _showError = true;
-        _errorMessage = 'Silakan masukkan nama lengkap Anda.';
-      });
-      return;
-    }
 
     if (rawPhone.length < 8) {
       setState(() {
         _showError = true;
         _errorMessage = 'Masukkan minimal 9 digit nomor WhatsApp yang aktif.';
-      });
-      return;
-    }
-
-    if (_isSignUp && !_agreeTerms) {
-      setState(() {
-        _showError = true;
-        _errorMessage = 'Harap setujui syarat & ketentuan layanan WISGO.';
       });
       return;
     }
@@ -129,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
         transitionDuration: const Duration(milliseconds: 380),
         pageBuilder: (_, __, ___) => OtpVerificationScreen(
           phoneNumber: formattedPhone,
-          userName: _isSignUp ? _nameController.text.trim() : null,
         ),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
@@ -184,15 +154,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       fit: BoxFit.contain,
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
+                    const Expanded(
                       child: Text(
-                        _isSignUp
-                            ? 'Daftar ke WISGO dengan Google'
-                            : 'Pilih akun untuk melanjutkan ke WISGO',
-                        style: const TextStyle(
+                        'Pilih akun untuk melanjutkan ke WISGO',
+                        style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1F2937),
+                          color: AppColors.ink,
                           letterSpacing: -0.2,
                         ),
                       ),
@@ -421,9 +389,15 @@ class _LoginScreenState extends State<LoginScreen> {
     Future.delayed(const Duration(milliseconds: 750), () {
       if (!mounted) return;
       setState(() => _isGoogleLoading = false);
+      AuthSession.instance.setAuthenticatedUser(
+        name: userName,
+        phone: '+62 812-7578-953',
+        email: userEmail,
+        isProfileComplete: true,
+      );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => const SavedPlacesScreen(),
+          builder: (_) => const SavedPlacesScreen(isGuest: false),
         ),
         (route) => false,
       );
@@ -432,12 +406,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.cream,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Photographic Scenic Background (Minangkabau Landscape HD)
+          // 1. Background Lanskap Rumah Gadang & Gunung Marapi Full-Screen (sudah direstorasi mulus)
           Positioned.fill(
             child: Image.asset(
               'assets/images/splash_bg_1.jpg',
@@ -446,7 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // 2. Gradiasi Ivory Ambient Transparan
+          // 2. Gradiasi Ivory Ambient Halus
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -454,11 +431,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.cream.withValues(alpha: 0.35),
-                    AppColors.cream.withValues(alpha: 0.65),
-                    AppColors.cream.withValues(alpha: 0.88),
+                    AppColors.cream.withValues(alpha: 0.22),
+                    AppColors.cream.withValues(alpha: 0.42),
+                    AppColors.cream.withValues(alpha: 0.62),
                   ],
-                  stops: const [0.0, 0.40, 1.0],
+                  stops: const [0.0, 0.50, 1.0],
                 ),
               ),
             ),
@@ -580,7 +557,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(22, 60, 22, 24),
+                padding: EdgeInsets.fromLTRB(22, 60, 22, 24 + bottomInset),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: BackdropFilter(
@@ -619,96 +596,38 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 18),
 
-                          // Judul & Subjudul (FONT SAMA PERSIS DENGAN SPLASHSCREEN)
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 280),
-                            child: Column(
-                              key: ValueKey<bool>(_isSignUp),
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _isSignUp ? 'Daftar Akun Baru' : 'Masuk ke Akun WISGO',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.forest,
-                                    letterSpacing: -0.4,
-                                    height: 1.20,
-                                  ),
+                          // Judul & Subjudul (Hanya Login — tanpa Register)
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Masuk ke Akun WISGO',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.forest,
+                                  letterSpacing: -0.4,
+                                  height: 1.20,
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _isSignUp
-                                      ? 'Lengkapi data untuk mulai eksplorasi wisata Ranah Minang.'
-                                      : 'Selamat datang kembali, nikmati perjalanan nyaman di Sumatera Barat.',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w400,
-                                    color: AppColors.muted,
-                                    height: 1.45,
-                                  ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Masuk dengan nomor WhatsApp untuk mulai eksplorasi Sumatera Barat.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.muted,
+                                  height: 1.45,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
 
                           const SizedBox(height: 22),
 
-                          // Input Nama Lengkap (Khusus Mode Sign Up)
-                          if (_isSignUp) ...[
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.92),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: _nameFocus.hasFocus
-                                      ? AppColors.forest
-                                      : AppColors.sageBorder,
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.03),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: TextFormField(
-                                controller: _nameController,
-                                focusNode: _nameFocus,
-                                textCapitalization: TextCapitalization.words,
-                                style: const TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.forest,
-                                ),
-                                decoration: const InputDecoration(
-                                  prefixIcon: Icon(
-                                    Icons.person_outline_rounded,
-                                    color: AppColors.forest,
-                                    size: 21,
-                                  ),
-                                  hintText: 'Nama Lengkap Anda',
-                                  hintStyle: TextStyle(
-                                    color: AppColors.textMuted,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-
-                          // Input Nomor WhatsApp Aktif (Sign In & Sign Up)
+                          // Input Nomor WhatsApp Aktif
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.92),
@@ -809,55 +728,56 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                          // Baris Opsi Tambahan (Isi Contoh & Remember Me / Checkbox)
+                          // Baris Opsi Tambahan (Isi Contoh & Ingat Saya)
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              GestureDetector(
+                              InkWell(
+                                borderRadius: BorderRadius.circular(8),
                                 onTap: () {
-                                  setState(() {
-                                    if (_isSignUp) {
-                                      _agreeTerms = !_agreeTerms;
-                                    } else {
-                                      _rememberMe = !_rememberMe;
-                                    }
-                                  });
+                                  setState(() => _rememberMe = !_rememberMe);
                                 },
-                                behavior: HitTestBehavior.opaque,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      (_isSignUp ? _agreeTerms : _rememberMe)
-                                          ? Icons.check_circle_rounded
-                                          : Icons.circle_outlined,
-                                      size: 18,
-                                      color: (_isSignUp ? _agreeTerms : _rememberMe)
-                                          ? AppColors.forest
-                                          : AppColors.muted,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      _isSignUp ? 'Setujui syarat & ketentuan' : 'Ingat saya',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.forest,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _rememberMe
+                                            ? Icons.check_circle_rounded
+                                            : Icons.circle_outlined,
+                                        size: 18,
+                                        color: _rememberMe
+                                            ? AppColors.forest
+                                            : AppColors.muted,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'Ingat saya',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.forest,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              GestureDetector(
+                              InkWell(
+                                borderRadius: BorderRadius.circular(8),
                                 onTap: _fillDemoPhone,
-                                child: const Text(
-                                  'Isi Nomor Contoh',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.brush,
-                                    decoration: TextDecoration.underline,
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 4),
+                                  child: Text(
+                                    'Isi Nomor Contoh',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.brush,
+                                      decoration: TextDecoration.underline,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -918,11 +838,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ),
                                   ),
-                                  child: Text(
-                                    _isSignUp
-                                        ? 'Daftar & Kirim Kode OTP'
-                                        : 'Kirim Kode OTP 4 Digit',
-                                    style: const TextStyle(
+                                  child: const Text(
+                                    'Kirim Kode OTP 4 Digit',
+                                    style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
@@ -1019,11 +937,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                               fit: BoxFit.contain,
                                             ),
                                             const SizedBox(width: 12),
-                                            Text(
-                                              _isSignUp
-                                                  ? 'Daftar dengan Google'
-                                                  : 'Lanjutkan dengan Google',
-                                              style: const TextStyle(
+                                            const Text(
+                                              'Lanjutkan dengan Google',
+                                              style: TextStyle(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.forest,
@@ -1037,53 +953,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 12),
 
-                          // 6. Pengalih Sign In <-> Sign Up (Sesuai Referensi Gambar 3)
-                          Center(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isSignUp = !_isSignUp;
-                                  _showError = false;
-                                });
-                              },
-                              behavior: HitTestBehavior.opaque,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4),
-                                child: RichText(
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.muted,
-                                      fontFamily: 'Inter',
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: _isSignUp
-                                            ? 'Sudah punya akun? '
-                                            : 'Belum punya akun? ',
-                                      ),
-                                      TextSpan(
-                                        text: _isSignUp
-                                            ? 'Masuk Sekarang'
-                                            : 'Daftar Baru',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.forest,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // 7. Opsi Jelajah sebagai Tamu
+                          // 6. Opsi Jelajah sebagai Tamu
                           Center(
                             child: TextButton(
                               onPressed: () {

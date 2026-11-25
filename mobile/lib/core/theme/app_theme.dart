@@ -6,11 +6,16 @@ import 'app_colors.dart';
 /// Menggunakan palet Warm Organic Minangkabau dan font Plus Jakarta Sans.
 class AppTheme {
   static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme();
+    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme().apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
 
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.cream,
+      primaryColor: AppColors.forest,
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.forest,
         primary: AppColors.forest,
@@ -24,18 +29,19 @@ class AppTheme {
         bodyMedium: baseTextTheme.bodyMedium?.copyWith(color: AppColors.ink),
         titleLarge: baseTextTheme.titleLarge?.copyWith(
           color: AppColors.ink,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.cream,
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: AppColors.ink),
-        titleTextStyle: TextStyle(
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: AppColors.forest),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           color: AppColors.ink,
           fontSize: 18,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
         ),
       ),
       // Universal Button Hover Effects, Transitions & Cursor Feedback (desain.md 06)
@@ -53,7 +59,7 @@ class AppTheme {
               return Colors.white.withValues(alpha: 0.12);
             }
             if (states.contains(WidgetState.pressed)) {
-              return Colors.black.withValues(alpha: 0.15);
+              return AppColors.ink.withValues(alpha: 0.15);
             }
             return null;
           }),
