@@ -257,26 +257,33 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                               ),
                             ),
                             const Spacer(),
-                            const Icon(Icons.access_time_rounded, size: 13, color: Colors.black38),
+                            const Icon(Icons.cloud_outlined, size: 13, color: Colors.black38),
                             const SizedBox(width: 4),
                             Text(
-                              c.lastUpdated,
+                              c.weatherStatus,
                               style: const TextStyle(fontSize: 11, color: Colors.black45),
                             ),
                           ],
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          c.corridorName,
+                          c.location,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: AppColors.ink900,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        if (c.roadSegment.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            '${c.roadSegment} • ${c.cityRegency}',
+                            style: const TextStyle(fontSize: 11.5, color: Colors.black45, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                        const SizedBox(height: 6),
                         Text(
-                          c.conditionDescription,
+                          c.message,
                           style: const TextStyle(fontSize: 12.5, color: Colors.black54, height: 1.35),
                         ),
                         const SizedBox(height: 10),
@@ -286,7 +293,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'Jalur Alternatif: ${c.alternativeRoute}',
+                                'Jalur Alternatif: ${c.detourRoute}',
                                 style: const TextStyle(
                                   fontSize: 11.5,
                                   color: AppColors.green800,

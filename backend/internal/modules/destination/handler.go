@@ -170,12 +170,14 @@ func (h *Handler) GetOfflineBundle(c *gin.Context) {
 
 // CreateHiddenGemTourist menangani POST /api/v1/destinations/hidden-gem oleh Wisatawan (Role: tourist / publik)
 func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
-	// Validasi token jika Authorization header disertakan
+	// Validasi token jika Authorization header disertakan (mendukung preset token & token dinamis OTP/Google BE-2)
 	authHeader := c.GetHeader("Authorization")
 	hasValidToken := false
+	tokenUserID := ""
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-		if token != middleware.TokenTourist && token != middleware.TokenAdminDispar && token != middleware.TokenPokdarwis && token != middleware.TokenVendor {
+		_, uid, valid := middleware.ResolveTokenRole(token)
+		if !valid {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"status":  "error",
 				"code":    "UNAUTHORIZED_INVALID_TOKEN",
@@ -184,6 +186,7 @@ func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
 			return
 		}
 		hasValidToken = true
+		tokenUserID = uid
 	}
 
 	var input CreateHiddenGemInput
@@ -200,6 +203,9 @@ func (h *Handler) CreateHiddenGemTourist(c *gin.Context) {
 	resolvedUserID := strings.TrimSpace(input.UserID)
 	if resolvedUserID == "" {
 		resolvedUserID = strings.TrimSpace(c.Query("user_id"))
+	}
+	if resolvedUserID == "" && tokenUserID != "" {
+		resolvedUserID = tokenUserID
 	}
 	if !hasValidToken && resolvedUserID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{

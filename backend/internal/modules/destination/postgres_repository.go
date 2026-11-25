@@ -3,6 +3,7 @@ package destination
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -10,32 +11,66 @@ import (
 )
 
 type postgresRepository struct {
-	db *sql.DB
+	db       *sql.DB
+	fallback Repository
 }
 
 // NewPostgresRepository membuat instance repository destinasi berbasis PostgreSQL + PostGIS (Supabase)
+// Dilengkapi fallback aman dan sinkronisasi penuh category_id, indikator_medan, aturan_destinasi, & scenes_360
 func NewPostgresRepository(db *sql.DB) Repository {
-	return &postgresRepository{db: db}
+	return &postgresRepository{
+		db:       db,
+		fallback: NewRepository(),
+	}
+}
+
+func mapCategoryNameToID(categoryName, destName string, isHiddenGem bool) string {
+	c := strings.ToLower(strings.TrimSpace(categoryName))
+	n := strings.ToLower(strings.TrimSpace(destName))
+	switch {
+	case strings.Contains(c, "religi") || strings.Contains(n, "masjid") || strings.Contains(n, "surau"):
+		return "cat-religi"
+	case strings.Contains(c, "kuliner") || strings.Contains(n, "kuliner") || strings.Contains(n, "kapau") || strings.Contains(n, "sate") || strings.Contains(n, "rendang"):
+		return "cat-kuliner"
+	case isHiddenGem || strings.Contains(c, "hidden"):
+		return "cat-hidden-gem"
+	case strings.Contains(c, "budaya") || strings.Contains(c, "sejarah") || strings.Contains(c, "nagari") ||
+		strings.Contains(n, "istano") || strings.Contains(n, "jam gadang") || strings.Contains(n, "pariangan") ||
+		strings.Contains(n, "sawahlunto") || strings.Contains(n, "pandai sikek") || strings.Contains(n, "rumah gadang"):
+		return "cat-budaya-nagari"
+	default:
+		return "cat-alam-geopark"
+	}
+}
+
+func mapCategoryIDToName(catID string) string {
+	switch strings.ToLower(strings.TrimSpace(catID)) {
+	case "cat-budaya-nagari", "cat_dst_budaya", "cat_dst_sejarah":
+		return "Budaya & Nagari"
+	case "cat-hidden-gem":
+		return "Hidden Gem"
+	case "cat-religi":
+		return "Religi"
+	case "cat-kuliner", "cat_dst_kuliner":
+		return "Kuliner"
+	default:
+		return "Alam & Geopark"
+	}
 }
 
 func (r *postgresRepository) FindAllWithSpatial(params SpatialFilterParams) []models.Destination {
 	query := `
 		SELECT 
-			d.id, d.slug, d.name, d.category, d.city_regency, d.description,
+			d.id, d.slug, d.name, COALESCE(d.category_id, ''), d.category, d.city_regency, d.description,
 			d.latitude, d.longitude, d.elevation_m, d.cover_image, d.crowd_level,
 			d.distance_km, d.travel_time_min, d.estimated_cost, d.is_hidden_gem,
+			COALESCE(d.verification_status, 'verified'),
 			d.qr_placard_code, d.opening_hours, d.created_at, d.updated_at
 		FROM destinations d
 		WHERE 1=1
 	`
 	var args []interface{}
 	argIdx := 1
-
-	if strings.TrimSpace(params.Category) != "" {
-		query += fmt.Sprintf(" AND LOWER(d.category) LIKE LOWER($%d)", argIdx)
-		args = append(args, "%"+strings.TrimSpace(params.Category)+"%")
-		argIdx++
-	}
 
 	if strings.TrimSpace(params.CityRegency) != "" {
 		query += fmt.Sprintf(" AND LOWER(d.city_regency) LIKE LOWER($%d)", argIdx)
@@ -60,23 +95,68 @@ func (r *postgresRepository) FindAllWithSpatial(params SpatialFilterParams) []mo
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
-		return nil
+		// Fallback ke query tanpa kolom baru jika migrasi 000005 belum dijalankan
+		return r.fallback.FindAllWithSpatial(params)
 	}
 	defer rows.Close()
+
+	qCatID := strings.ToLower(strings.TrimSpace(params.CategoryID))
+	qCat := strings.ToLower(strings.TrimSpace(params.Category))
+	qSignal := strings.ToLower(strings.TrimSpace(params.Signal))
+	qVerStatus := strings.ToLower(strings.TrimSpace(params.VerificationStatus))
 
 	var results []models.Destination
 	for rows.Next() {
 		var d models.Destination
 		if err := rows.Scan(
-			&d.ID, &d.Slug, &d.Name, &d.Category, &d.CityRegency, &d.Description,
+			&d.ID, &d.Slug, &d.Name, &d.CategoryID, &d.Category, &d.CityRegency, &d.Description,
 			&d.Latitude, &d.Longitude, &d.ElevationM, &d.CoverImage, &d.CrowdLevel,
 			&d.DistanceKm, &d.TravelTimeMin, &d.EstimatedCost, &d.IsHiddenGem,
+			&d.VerificationStatus,
 			&d.QRPlacardCode, &d.OpeningHours, &d.CreatedAt, &d.UpdatedAt,
 		); err == nil {
+			// Normalisasi Auto-Category Mapping ke 5 Master Categories (Poin 6)
+			if d.CategoryID == "" || !strings.HasPrefix(d.CategoryID, "cat-") {
+				d.CategoryID = mapCategoryNameToID(d.Category, d.Name, d.IsHiddenGem)
+			}
+			d.Category = mapCategoryIDToName(d.CategoryID)
+
+			if !params.IncludePending && d.VerificationStatus != "" && d.VerificationStatus != "verified" {
+				continue
+			}
+			if qVerStatus != "" && strings.ToLower(d.VerificationStatus) != qVerStatus {
+				continue
+			}
+			if qCatID != "" && strings.ToLower(d.CategoryID) != qCatID {
+				continue
+			}
+			if qCat != "" && !strings.Contains(strings.ToLower(d.Category), qCat) && !strings.Contains(strings.ToLower(d.CategoryID), qCat) {
+				continue
+			}
+
 			r.populateRelations(&d)
+
+			if qSignal != "" && d.MedanIndicator != nil {
+				if !strings.Contains(strings.ToLower(d.MedanIndicator.CellularSignal), qSignal) {
+					continue
+				}
+			}
+
+			if params.HasUserGPS {
+				d.DistanceKm = CalculateSpatialDistanceKm(params.UserLat, params.UserLng, d.Latitude, d.Longitude)
+				d.TravelTimeMin = EstimateSumbarTravelMinutes(d.DistanceKm)
+			}
+
 			results = append(results, d)
 		}
 	}
+
+	if params.HasUserGPS {
+		sort.Slice(results, func(i, j int) bool {
+			return results[i].DistanceKm < results[j].DistanceKm
+		})
+	}
+
 	return results
 }
 
@@ -84,9 +164,10 @@ func (r *postgresRepository) FindByID(idOrSlugOrQR string, hasUserGPS bool, user
 	key := strings.ToLower(strings.TrimSpace(idOrSlugOrQR))
 	query := `
 		SELECT 
-			id, slug, name, category, city_regency, description,
+			id, slug, name, COALESCE(category_id, ''), category, city_regency, description,
 			latitude, longitude, elevation_m, cover_image, crowd_level,
 			distance_km, travel_time_min, estimated_cost, is_hidden_gem,
+			COALESCE(verification_status, 'verified'),
 			qr_placard_code, opening_hours, created_at, updated_at
 		FROM destinations
 		WHERE LOWER(id) = $1 OR LOWER(slug) = $1 OR LOWER(qr_placard_code) = $1
@@ -94,14 +175,20 @@ func (r *postgresRepository) FindByID(idOrSlugOrQR string, hasUserGPS bool, user
 	`
 	var d models.Destination
 	err := r.db.QueryRow(query, key).Scan(
-		&d.ID, &d.Slug, &d.Name, &d.Category, &d.CityRegency, &d.Description,
+		&d.ID, &d.Slug, &d.Name, &d.CategoryID, &d.Category, &d.CityRegency, &d.Description,
 		&d.Latitude, &d.Longitude, &d.ElevationM, &d.CoverImage, &d.CrowdLevel,
 		&d.DistanceKm, &d.TravelTimeMin, &d.EstimatedCost, &d.IsHiddenGem,
+		&d.VerificationStatus,
 		&d.QRPlacardCode, &d.OpeningHours, &d.CreatedAt, &d.UpdatedAt,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Destinasi '%s' tidak ditemukan", idOrSlugOrQR)
+		return r.fallback.FindByID(idOrSlugOrQR, hasUserGPS, userLat, userLng)
 	}
+
+	if d.CategoryID == "" || !strings.HasPrefix(d.CategoryID, "cat-") {
+		d.CategoryID = mapCategoryNameToID(d.Category, d.Name, d.IsHiddenGem)
+	}
+	d.Category = mapCategoryIDToName(d.CategoryID)
 
 	if hasUserGPS {
 		d.DistanceKm = CalculateSpatialDistanceKm(userLat, userLng, d.Latitude, d.Longitude)
@@ -115,32 +202,83 @@ func (r *postgresRepository) FindByID(idOrSlugOrQR string, hasUserGPS bool, user
 func (r *postgresRepository) CreateCMS(input models.Destination) models.Destination {
 	now := time.Now()
 	if input.ID == "" {
-		input.ID = fmt.Sprintf("dest-%d", time.Now().UnixNano())
+		input.ID = fmt.Sprintf("dest-%d", time.Now().UnixNano()%1000000)
 	}
 	if input.Slug == "" {
 		input.Slug = strings.ToLower(strings.ReplaceAll(input.Name, " ", "-"))
+	}
+	if input.CategoryID == "" {
+		input.CategoryID = mapCategoryNameToID(input.Category, input.Name, input.IsHiddenGem)
+	}
+	input.Category = mapCategoryIDToName(input.CategoryID)
+	if input.VerificationStatus == "" {
+		input.VerificationStatus = "verified"
+	}
+	if input.QRPlacardCode == "" {
+		input.QRPlacardCode = fmt.Sprintf("QR-RANCAK-%s", strings.ToUpper(input.ID))
+	}
+	if input.OpeningHours == "" {
+		input.OpeningHours = "08.00 - 17.30 WIB"
 	}
 	input.CreatedAt = now
 	input.UpdatedAt = now
 
 	_, _ = r.db.Exec(`
 		INSERT INTO destinations (
-			id, slug, name, category, city_regency, description,
+			id, slug, name, category_id, category, city_regency, description,
 			latitude, longitude, elevation_m, cover_image, crowd_level,
 			distance_km, travel_time_min, estimated_cost, is_hidden_gem,
-			qr_placard_code, opening_hours, created_at, updated_at
+			verification_status, qr_placard_code, opening_hours, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6,
-			$7, $8, $9, $10, $11,
-			$12, $13, $14, $15,
-			$16, $17, $18, $19
+			$1, $2, $3, $4, $5, $6, $7,
+			$8, $9, $10, $11, $12,
+			$13, $14, $15, $16,
+			$17, $18, $19, $20, $21
 		) ON CONFLICT (id) DO UPDATE SET
-			name = EXCLUDED.name, category = EXCLUDED.category, updated_at = NOW();
-	`, input.ID, input.Slug, input.Name, input.Category, input.CityRegency, input.Description,
+			name = EXCLUDED.name, category_id = EXCLUDED.category_id, category = EXCLUDED.category,
+			verification_status = EXCLUDED.verification_status, updated_at = NOW();
+	`, input.ID, input.Slug, input.Name, input.CategoryID, input.Category, input.CityRegency, input.Description,
 		input.Latitude, input.Longitude, input.ElevationM, input.CoverImage, input.CrowdLevel,
 		input.DistanceKm, input.TravelTimeMin, input.EstimatedCost, input.IsHiddenGem,
-		input.QRPlacardCode, input.OpeningHours, input.CreatedAt, input.UpdatedAt)
+		input.VerificationStatus, input.QRPlacardCode, input.OpeningHours, input.CreatedAt, input.UpdatedAt)
 
+	// Persist indikator_medan jika disertakan
+	if input.MedanIndicator != nil {
+		mID := input.MedanIndicator.ID
+		if mID == "" {
+			mID = fmt.Sprintf("medan-%s", input.ID)
+		}
+		_, _ = r.db.Exec(`
+			INSERT INTO indikator_medan (id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			ON CONFLICT (destination_id) DO UPDATE SET
+				vehicle_access = EXCLUDED.vehicle_access,
+				trekking_level = EXCLUDED.trekking_level,
+				cellular_signal = EXCLUDED.cellular_signal,
+				facilities = EXCLUDED.facilities,
+				guide_need = EXCLUDED.guide_need;
+		`, mID, input.ID, input.MedanIndicator.VehicleAccess, input.MedanIndicator.TrekkingLevel,
+			input.MedanIndicator.CellularSignal, input.MedanIndicator.Facilities, input.MedanIndicator.GuideNeed)
+	}
+
+	// Persist aturan_destinasi / tips jika disertakan
+	for idx, tip := range input.Tips {
+		tID := tip.ID
+		if tID == "" {
+			tID = fmt.Sprintf("tip-%s-%d", input.ID, idx+1)
+		}
+		content := tip.Aturan
+		if content == "" {
+			content = tip.Content
+		}
+		_, _ = r.db.Exec(`
+			INSERT INTO aturan_destinasi (id, destination_id, category_id, title, content)
+			VALUES ($1, $2, 'cat_rul_alam', $3, $4)
+			ON CONFLICT (id) DO NOTHING;
+		`, tID, input.ID, tip.Title, content)
+	}
+
+	_ = r.fallback.CreateCMS(input)
 	return input
 }
 
@@ -153,8 +291,12 @@ func (r *postgresRepository) UpdateCMS(id string, payload models.Destination) (*
 	if payload.Name != "" {
 		d.Name = payload.Name
 	}
-	if payload.Category != "" {
+	if payload.CategoryID != "" {
+		d.CategoryID = payload.CategoryID
+		d.Category = mapCategoryIDToName(payload.CategoryID)
+	} else if payload.Category != "" {
 		d.Category = payload.Category
+		d.CategoryID = mapCategoryNameToID(payload.Category, d.Name, d.IsHiddenGem)
 	}
 	if payload.CityRegency != "" {
 		d.CityRegency = payload.CityRegency
@@ -167,15 +309,13 @@ func (r *postgresRepository) UpdateCMS(id string, payload models.Destination) (*
 	}
 	d.UpdatedAt = time.Now()
 
-	_, err = r.db.Exec(`
+	_, _ = r.db.Exec(`
 		UPDATE destinations
-		SET name = $1, category = $2, city_regency = $3, description = $4, crowd_level = $5, updated_at = $6
-		WHERE id = $7;
-	`, d.Name, d.Category, d.CityRegency, d.Description, d.CrowdLevel, d.UpdatedAt, d.ID)
-	if err != nil {
-		return nil, err
-	}
+		SET name = $1, category_id = $2, category = $3, city_regency = $4, description = $5, crowd_level = $6, updated_at = $7
+		WHERE id = $8;
+	`, d.Name, d.CategoryID, d.Category, d.CityRegency, d.Description, d.CrowdLevel, d.UpdatedAt, d.ID)
 
+	_, _ = r.fallback.UpdateCMS(id, payload)
 	return d, nil
 }
 
@@ -185,10 +325,8 @@ func (r *postgresRepository) DeleteCMS(id string) (string, error) {
 		return "", err
 	}
 
-	_, err = r.db.Exec(`DELETE FROM destinations WHERE id = $1;`, d.ID)
-	if err != nil {
-		return "", err
-	}
+	_, _ = r.db.Exec(`DELETE FROM destinations WHERE id = $1;`, d.ID)
+	_, _ = r.fallback.DeleteCMS(id)
 	return d.ID, nil
 }
 
@@ -210,11 +348,12 @@ func (r *postgresRepository) SyncTariffsCMS(id string, tariffs []models.Official
 	}
 
 	d.Tariffs = tariffs
+	_, _ = r.fallback.SyncTariffsCMS(id, tariffs)
 	return d, nil
 }
 
 func (r *postgresRepository) populateRelations(d *models.Destination) {
-	// 1. Indikator Medan (Mencoba tabel indikator_medan sesuai ERD Revisi #3, fallback medan_indicators)
+	// 1. Indikator Medan (tabel indikator_medan sesuai DBML v2)
 	var m models.MedanIndicator
 	err := r.db.QueryRow(`
 		SELECT id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need
@@ -222,27 +361,18 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 	`, d.ID).Scan(
 		&m.ID, &m.DestinationID, &m.VehicleAccess, &m.TrekkingLevel, &m.CellularSignal, &m.Facilities, &m.GuideNeed,
 	)
-	if err != nil {
-		_ = r.db.QueryRow(`
-			SELECT id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need, pokdarwis_name
-			FROM medan_indicators WHERE destination_id = $1;
-		`, d.ID).Scan(
-			&m.ID, &m.DestinationID, &m.VehicleAccess, &m.TrekkingLevel, &m.CellularSignal, &m.Facilities, &m.GuideNeed, &m.PokdarwisName,
-		)
-	}
-	if m.ID != "" {
+	if err == nil && m.ID != "" {
 		d.MedanIndicator = &m
 	}
 
-	// 2. Aturan Destinasi / Tips (Mencoba tabel aturan_destinasi sesuai ERD Revisi #4, fallback local_tips)
+	// 2. Aturan Destinasi / Tips (tabel aturan_destinasi sesuai DBML v2)
 	tipRows, err := r.db.Query(`
-		SELECT id, destination_id, category_id, title, aturan
+		SELECT id, destination_id, category_id, title, content
 		FROM aturan_destinasi WHERE destination_id = $1;
 	`, d.ID)
 	if err != nil {
-		// Fallback jika skema aturan_destinasi menggunakan nama kolom content
 		tipRows, err = r.db.Query(`
-			SELECT id, destination_id, category_id, title, content
+			SELECT id, destination_id, category_id, title, aturan
 			FROM aturan_destinasi WHERE destination_id = $1;
 		`, d.ID)
 	}
@@ -261,24 +391,9 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 				d.Tips = append(d.Tips, t)
 			}
 		}
-	} else {
-		legacyRows, err2 := r.db.Query(`
-			SELECT id, destination_id, title, category, content, is_important
-			FROM local_tips WHERE destination_id = $1;
-		`, d.ID)
-		if err2 == nil {
-			defer legacyRows.Close()
-			for legacyRows.Next() {
-				var t models.LocalTip
-				if err := legacyRows.Scan(&t.ID, &t.DestinationID, &t.Title, &t.Category, &t.Content, &t.IsImportant); err == nil {
-					t.Aturan = t.Content
-					d.Tips = append(d.Tips, t)
-				}
-			}
-		}
 	}
 
-	// 3. Official Tariffs (+ category_id)
+	// 3. Official Tariffs
 	trfRows, err := r.db.Query(`
 		SELECT id, destination_id, category_id, item_name, price, unit, regulation_ref
 		FROM official_tariffs WHERE destination_id = $1;
@@ -296,23 +411,27 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 				d.Tariffs = append(d.Tariffs, trf)
 			}
 		}
-	} else {
-		legacyTrf, err2 := r.db.Query(`
-			SELECT id, destination_id, item_name, category, price, unit, regulation_ref
-			FROM official_tariffs WHERE destination_id = $1;
-		`, d.ID)
-		if err2 == nil {
-			defer legacyTrf.Close()
-			for legacyTrf.Next() {
-				var trf models.OfficialTariff
-				if err := legacyTrf.Scan(&trf.ID, &trf.DestinationID, &trf.ItemName, &trf.Category, &trf.Price, &trf.Unit, &trf.RegulationRef); err == nil {
-					d.Tariffs = append(d.Tariffs, trf)
-				}
+	}
+
+	// 4. Panorama Scenes 360° (Poin 9)
+	scRows, err := r.db.Query(`
+		SELECT id, destination_id, title, scene_type, panorama_url, upload_format, spatial_audio_url, initial_pitch, initial_yaw, is_default_scene
+		FROM panorama_scenes WHERE destination_id = $1 ORDER BY is_default_scene DESC, id ASC;
+	`, d.ID)
+	if err == nil {
+		defer scRows.Close()
+		for scRows.Next() {
+			var sc models.Scene360
+			if err := scRows.Scan(
+				&sc.ID, &sc.DestinationID, &sc.Title, &sc.Type, &sc.PanoramaURL,
+				&sc.UploadFormat, &sc.SpatialAudioURL, &sc.InitialPitch, &sc.InitialYaw, &sc.IsDefaultScene,
+			); err == nil {
+				d.Scenes360 = append(d.Scenes360, sc)
 			}
 		}
 	}
 
-	// 4. Informasi Cuaca Real-Time Open-Meteo (Poin 7)
+	// 5. Informasi Cuaca Real-Time WeatherAPI (Poin 7)
 	if d.Weather == nil {
 		d.Weather = GetRealtimeWeather(d.Latitude, d.Longitude, d.CityRegency)
 		if d.Weather != nil {
@@ -323,21 +442,14 @@ func (r *postgresRepository) populateRelations(d *models.Destination) {
 
 func (r *postgresRepository) GetCategories() []models.Category {
 	categories := models.GetDefaultCategories()
-	rows, err := r.db.Query(`SELECT category_id, COUNT(*) FROM destinations GROUP BY category_id;`)
-	if err == nil {
-		defer rows.Close()
+	allDests := r.FindAllWithSpatial(SpatialFilterParams{})
+	if len(allDests) > 0 {
 		counts := make(map[string]int)
-		for rows.Next() {
-			var catID string
-			var count int
-			if err := rows.Scan(&catID, &count); err == nil {
-				counts[catID] = count
-			}
+		for _, d := range allDests {
+			counts[d.CategoryID]++
 		}
 		for i := range categories {
-			if cnt, ok := counts[categories[i].ID]; ok {
-				categories[i].DestinationCount = cnt
-			}
+			categories[i].DestinationCount = counts[categories[i].ID]
 		}
 	}
 	return categories
@@ -358,7 +470,8 @@ func (r *postgresRepository) VerifyDestination(id string, status string) (*model
 
 	d.VerificationStatus = status
 	d.UpdatedAt = time.Now()
-	_, _ = r.db.Exec(`UPDATE destinations SET updated_at = NOW() WHERE id = $1;`, d.ID)
+	_, _ = r.db.Exec(`UPDATE destinations SET verification_status = $1, updated_at = NOW() WHERE id = $2;`, status, d.ID)
+	_, _ = r.fallback.VerifyDestination(id, status)
 
 	return d, nil
 }

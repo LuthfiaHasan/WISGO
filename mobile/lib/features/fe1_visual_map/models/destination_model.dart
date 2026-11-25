@@ -384,6 +384,11 @@ class HazardAlertModel {
   final String nearestRescuePost;
   final String emergencyContact;
 
+  String get corridorName => location;
+  String get conditionDescription => message;
+  String get alternativeRoute => detourRoute;
+  String get lastUpdated => weatherStatus;
+
   const HazardAlertModel({
     required this.id,
     required this.corridorCode,
