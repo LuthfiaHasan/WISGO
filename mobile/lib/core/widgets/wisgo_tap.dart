@@ -1,67 +1,59 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
 
-/// WisgoTap - Pengganti GestureDetector Baku (desain.md Section 05.5)
-/// Standar: MouseRegion Click Cursor, Touch Target Minimum >= 44x44, Semantics Aksesibilitas
+/// WisgoTap - Pembungkus Interaksi Sentuh & Kursor Baku (desain.md 05.5)
+/// Memastikan kursor desktop/web berbentuk pointer (click) dan area sentuh minimal 44x44 px.
 class WisgoTap extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
-  final String? semanticLabel;
+  final String? tooltip;
   final double minTouchTarget;
   final BorderRadius? borderRadius;
-  final Color? splashColor;
-  final Color? highlightColor;
 
   const WisgoTap({
     super.key,
     required this.child,
     required this.onTap,
-    this.semanticLabel,
+    this.tooltip,
     this.minTouchTarget = 44.0,
     this.borderRadius,
-    this.splashColor,
-    this.highlightColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final effectiveRadius = borderRadius ?? AppRadius.rSm;
-    final bool isEnabled = onTap != null;
-
-    Widget tapBody = Material(
+    Widget content = Material(
       color: Colors.transparent,
-      borderRadius: effectiveRadius,
+      borderRadius: borderRadius,
       child: InkWell(
         onTap: onTap,
-        borderRadius: effectiveRadius,
-        splashColor: splashColor ?? AppColors.sage.withValues(alpha: 0.3),
-        highlightColor: highlightColor ?? AppColors.creamSubtle.withValues(alpha: 0.2),
-        child: child,
+        mouseCursor: SystemMouseCursors.click,
+        borderRadius: borderRadius,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: minTouchTarget,
+            minHeight: minTouchTarget,
+          ),
+          child: Center(
+            widthFactor: 1.0,
+            heightFactor: 1.0,
+            child: child,
+          ),
+        ),
       ),
     );
 
-    if (minTouchTarget > 0) {
-      tapBody = ConstrainedBox(
-        constraints: BoxConstraints(
-          minWidth: minTouchTarget,
-          minHeight: minTouchTarget,
-        ),
-        child: Center(
-          widthFactor: 1.0,
-          heightFactor: 1.0,
-          child: tapBody,
-        ),
+    if (tooltip != null && tooltip!.isNotEmpty) {
+      content = Tooltip(
+        message: tooltip!,
+        child: content,
       );
     }
 
-    return MouseRegion(
-      cursor: isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: Semantics(
-        button: true,
-        enabled: isEnabled,
-        label: semanticLabel,
-        child: tapBody,
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: MouseRegion(
+        cursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        child: content,
       ),
     );
   }

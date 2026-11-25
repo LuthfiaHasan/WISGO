@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --cream-100: #F6F3EC;
+    --green-800: #234B24;
+    --green-500: #1E9E5A;
+    --ink-900: #1B1F1A;
+    --coral-500: #F26B4B;
+    --orange-500: #E85D1A;
+    --indigo-500: #5B6AE8;
+    --sage-100: #E4E9DA;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #F6F3EC;
+    color: #1B1F1A;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+

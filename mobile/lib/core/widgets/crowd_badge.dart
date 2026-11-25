@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
 
-/// CrowdBadge - Penanda Keramaian Sesuai Token Semantik (desain.md Section 07.2)
+/// CrowdBadge - Penanda Keramaian (Sepi, Sedang, Ramai) (desain.md 07.2)
 enum CrowdLevel { sepi, sedang, ramai }
 
 class CrowdBadge extends StatelessWidget {
@@ -24,7 +23,7 @@ class CrowdBadge extends StatelessWidget {
         break;
       case CrowdLevel.sedang:
         bg = AppColors.warningBg;
-        fg = AppColors.warningDark;
+        fg = AppColors.warning;
         text = 'Sedang';
         break;
       case CrowdLevel.ramai:
@@ -35,13 +34,11 @@ class CrowdBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: AppRadius.rXs,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: fg.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -54,11 +51,12 @@ class CrowdBadge extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: AppSpacing.xs + 2),
+          const SizedBox(width: 6),
           Text(
             text,
-            style: AppTypography.caption.copyWith(
+            style: TextStyle(
               color: fg,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),

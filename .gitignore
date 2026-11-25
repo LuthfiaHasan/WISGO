@@ -4,6 +4,8 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+tools/
+*.exe
 
 # IDE & Editors
 .vscode/
@@ -52,4 +54,11 @@ web-admin/out/
 web-admin/build/
 web-admin/dist/
 web-admin/.cache/
+
+# AI Agent & Internal Configurations
+.agents/
+.stitch/
+memory/
+GEMINI.md
+
 

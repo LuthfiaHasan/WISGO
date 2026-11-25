@@ -2,134 +2,115 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
 
-/// WisgoBottomSheetShell - Pembungkus Modal Bottom Sheet Baku (desain.md Section 05.2)
-/// Radius Atas Baku: 28 px (AppRadius.sheet)
-/// Latar: AppColors.cream, Drag Handle 40x4 px, Header Anti-Overflow, Hit Target 44x44
+/// WisgoBottomSheetShell - Shell Pembungkus Baku Modal Bottom Sheet (desain.md 05.2)
+/// Radius atas seragam 28 px, drag handle 40x4 px warmBorder, anti-overflow header, dan SafeArea.
 class WisgoBottomSheetShell extends StatelessWidget {
   final String title;
-  final Widget child;
+  final String? subtitle;
   final Widget? trailing;
-  final VoidCallback? onClose;
+  final Widget child;
   final double? maxHeightFactor;
-  final bool isDismissible;
   final EdgeInsetsGeometry padding;
 
   const WisgoBottomSheetShell({
     super.key,
     required this.title,
-    required this.child,
+    this.subtitle,
     this.trailing,
-    this.onClose,
+    required this.child,
     this.maxHeightFactor = 0.92,
-    this.isDismissible = true,
-    this.padding = const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+    this.padding = const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.sm, AppSpacing.xl, AppSpacing.xl),
   });
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final bottomInset = mediaQuery.viewInsets.bottom;
-    final screenHeight = mediaQuery.size.height;
-    final effectiveMaxHeight =
-        maxHeightFactor != null ? screenHeight * maxHeightFactor! : screenHeight * 0.92;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: effectiveMaxHeight,
-      ),
-      decoration: BoxDecoration(
+    Widget content = Container(
+      decoration: const BoxDecoration(
         color: AppColors.cream,
-        borderRadius: AppRadius.rSheet,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Drag Handle Bar (40 x 4 px)
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: AppColors.warmBorder,
-                    borderRadius: AppRadius.rPill,
-                  ),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. Drag Handle Baku 40x4 px
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.warmBorder,
+                borderRadius: BorderRadius.circular(2),
               ),
+            ),
+          ),
 
-              // Header Bar Seragam (Anti Overflow)
-              Container(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.xs,
-                  AppSpacing.sm,
-                  AppSpacing.sm,
-                ),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: AppColors.warmBorder, width: 1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
+          // 2. Header Seragam (Judul anti-overflow + Tombol Tutup 44x44 px)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xs, AppSpacing.md, AppSpacing.sm),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
                         title,
-                        style: AppTypography.h2,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style: AppTypography.h2,
                       ),
-                    ),
-                    if (trailing != null) ...[
-                      trailing!,
-                      const SizedBox(width: AppSpacing.xs),
-                    ],
-                    MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: Semantics(
-                        button: true,
-                        label: 'Tutup Modal',
-                        child: SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              size: 20,
-                              color: AppColors.ink,
-                            ),
-                            splashRadius: 22,
-                            onPressed: () {
-                              if (onClose != null) {
-                                onClose!();
-                              } else {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                          ),
+                      if (subtitle != null && subtitle!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodySmall,
                         ),
-                      ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...[
+                  trailing!,
+                  const SizedBox(width: AppSpacing.xs),
+                ],
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: IconButton(
+                      icon: const Icon(Icons.close_rounded, color: AppColors.ink, size: 22),
+                      tooltip: 'Tutup',
+                      onPressed: () => Navigator.pop(context),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-
-              // Konten Modal Fleksibel
-              Flexible(
-                child: Padding(
-                  padding: padding,
-                  child: child,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+
+          // 3. Body Konten
+          Flexible(
+            child: Padding(
+              padding: padding,
+              child: child,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: content,
       ),
     );
   }

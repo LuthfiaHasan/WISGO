@@ -1,0 +1,6 @@
+{
+  "name": "Rancak.in — BE-1 Core & Spasial Workbench",
+  "description": "Engineering Workbench, Repositori Kode Go (Gin) + PostgreSQL/PostGIS, Live API Simulator, dan Automated Test Suite untuk Backend 1 (BE-1) Rancak.in — Fokus Sprint 1 (Fondasi & 20 Destinasi Prioritas Sumatera Barat).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

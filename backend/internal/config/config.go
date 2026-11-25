@@ -13,38 +13,38 @@ type Config struct {
 	Environment string
 }
 
-// loadEnvFile membaca berkas .env sederhana tanpa dependency pihak ketiga
-func loadEnvFile(paths ...string) {
-	for _, path := range paths {
-		file, err := os.Open(path)
-		if err != nil {
+// loadDotEnv memuat file .env jika ada di direktori kerja atau induk
+func loadDotEnv(filepath string) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-			if line == "" || strings.HasPrefix(line, "#") {
-				continue
-			}
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) == 2 {
-				key := strings.TrimSpace(parts[0])
-				val := strings.TrimSpace(parts[1])
-				// Jangan timpa environment variable yang sudah diset di OS
-				if os.Getenv(key) == "" {
-					os.Setenv(key, val)
-				}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			val := strings.TrimSpace(parts[1])
+			val = strings.Trim(val, `"'`)
+			// Di lingkungan cloud (misal Render), hormati environment variables dari cloud dashboard
+			if os.Getenv("RENDER") == "" || os.Getenv(key) == "" {
+				os.Setenv(key, val)
 			}
 		}
-		return
 	}
 }
 
 func LoadConfig() *Config {
-	// Muat .env jika ada di folder kerja, backend/, atau parent folder
-	loadEnvFile(".env", "backend/.env", "../.env")
+	// Coba baca .env dari root backend atau root proyek
+	loadDotEnv(".env")
+	loadDotEnv("backend/.env")
+	loadDotEnv("../.env")
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -53,8 +53,7 @@ func LoadConfig() *Config {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		// Default Supabase PostgreSQL connection
-		dbURL = "postgresql://postgres.ojwqqdleqmgbiputpuac:ztHFtLNxiNn73L2Y@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require"
+		dbURL = "postgres://postgres:postgres@localhost:5432/wisgo_db?sslmode=disable"
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -74,3 +73,4 @@ func LoadConfig() *Config {
 		Environment: env,
 	}
 }
+

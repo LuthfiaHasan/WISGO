@@ -1,100 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
-import 'app_tokens.dart';
 
-/// Tema Kanonik Global WISGO (desain.md)
-/// Mendukung Keterbacaan Luar Ruang, Tipografi Plus Jakarta Sans, dan Interaksi Mouse/Touch
+/// Tema Global Resmi WISGO (desain.md 06.1)
+/// Menggunakan palet Warm Organic Minangkabau dan font Plus Jakarta Sans.
 class AppTheme {
-  AppTheme._();
-
   static ThemeData get lightTheme {
+    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme();
+
     return ThemeData(
       useMaterial3: true,
-      fontFamily: AppTypography.fontFamily,
       scaffoldBackgroundColor: AppColors.cream,
-      colorScheme: const ColorScheme(
-        brightness: Brightness.light,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.forest,
         primary: AppColors.forest,
+        secondary: AppColors.terracotta,
+        surface: AppColors.cream,
         onPrimary: AppColors.cream,
-        secondary: AppColors.brush,
-        onSecondary: AppColors.cream,
-        tertiary: AppColors.terracotta,
-        onTertiary: Colors.white,
-        error: AppColors.danger,
-        onError: Colors.white,
-        surface: AppColors.bgCard,
         onSurface: AppColors.ink,
       ),
-      textTheme: const TextTheme(
-        displayLarge: AppTypography.display,
-        headlineLarge: AppTypography.h1,
-        headlineMedium: AppTypography.h2,
-        titleLarge: AppTypography.h2,
-        titleMedium: AppTypography.title,
-        titleSmall: AppTypography.title,
-        bodyLarge: AppTypography.body,
-        bodyMedium: AppTypography.bodySmall,
-        bodySmall: AppTypography.caption,
-        labelLarge: AppTypography.title,
-        labelMedium: AppTypography.bodySmall,
-        labelSmall: AppTypography.caption,
+      textTheme: baseTextTheme.copyWith(
+        bodyLarge: baseTextTheme.bodyLarge?.copyWith(color: AppColors.ink),
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(color: AppColors.ink),
+        titleLarge: baseTextTheme.titleLarge?.copyWith(
+          color: AppColors.ink,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.cream,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: false,
         iconTheme: IconThemeData(color: AppColors.ink),
-        titleTextStyle: AppTypography.h1,
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.bgCard,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.rLg,
-          side: const BorderSide(color: AppColors.warmBorder),
+        titleTextStyle: TextStyle(
+          color: AppColors.ink,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
         ),
       ),
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: AppColors.cream,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.rSheet,
-        ),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.warmBorder,
-        thickness: 1,
-        space: 1,
-      ),
+      // Universal Button Hover Effects, Transitions & Cursor Feedback (desain.md 06)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
-          elevation: const WidgetStatePropertyAll(0),
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: AppRadius.rPill),
-          ),
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          elevation: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) return 1.0;
+            if (states.contains(WidgetState.hovered)) return 4.0;
+            return 2.0;
+          }),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return Colors.white.withValues(alpha: 0.12);
+            }
+            if (states.contains(WidgetState.pressed)) {
+              return Colors.black.withValues(alpha: 0.15);
+            }
+            return null;
+          }),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
-          side: const WidgetStatePropertyAll(
-            BorderSide(color: AppColors.sageBorder),
-          ),
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: AppRadius.rSm),
-          ),
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return AppColors.forest.withValues(alpha: 0.08);
+            }
+            return null;
+          }),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: const ButtonStyle(
-          mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
+        style: ButtonStyle(
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return AppColors.forest.withValues(alpha: 0.08);
+            }
+            return null;
+          }),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
-        style: const ButtonStyle(
-          mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
+        style: ButtonStyle(
+          animationDuration: const Duration(milliseconds: 200),
+          mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) {
+              return AppColors.forest.withValues(alpha: 0.10);
+            }
+            return null;
+          }),
         ),
       ),
     );
