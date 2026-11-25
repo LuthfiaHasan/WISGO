@@ -236,18 +236,18 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: AppColors.infoBg,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                        border: Border.all(color: AppColors.infoBorder),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.info_outline_rounded, color: Color(0xFF1D4ED8), size: 15),
+                          Icon(Icons.info_outline_rounded, color: AppColors.info, size: 15),
                           SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Sistem menyediakan pilihan jam. Silakan pilih jam lalu isi kegiatan manual di bawah.',
-                              style: TextStyle(fontSize: 10, color: Color(0xFF1E40AF)),
+                              style: TextStyle(fontSize: 11, color: AppColors.info),
                             ),
                           ),
                         ],
@@ -258,7 +258,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     // 1. JAM / WAKTU (DISEDIAKAN SISTEM)
                     const Text(
                       'PILIHAN JAM / WAKTU (DARI SISTEM):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     Container(
@@ -297,7 +297,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     // Opsi Custom Jam Manual
                     Row(
                       children: [
-                        const Text('Atau pilih jam custom: ', style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        const Text('Atau pilih jam custom: ', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                         TextButton(
                           onPressed: () async {
                             final pickStart = await showTimePicker(context: dialogCtx, initialTime: startTime);
@@ -312,7 +312,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                               }
                             }
                           },
-                          child: const Text('Pilih Jam Mulai & Selesai', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800)),
+                          child: const Text('Pilih Jam Mulai & Selesai', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                         ),
                       ],
                     ),
@@ -321,7 +321,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     // 2. NAMA KEGIATAN (DIISI MANUAL OLEH PEMBUAT TRIP)
                     const Text(
                       'NAMA KEGIATAN / AKTIVITAS (MANUAL):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
@@ -340,7 +340,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     // 3. LOKASI KEGIATAN (MANUAL)
                     const Text(
                       'LOKASI / TEMPAT (MANUAL):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
@@ -359,7 +359,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     // 4. CATATAN / SOP (MANUAL)
                     const Text(
                       'CATATAN / INSTRUKSI KHUSUS (MANUAL):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
@@ -507,7 +507,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.wb_cloudy_rounded, size: 18, color: Color(0xFF0284C7)),
+                          icon: const Icon(Icons.wb_cloudy_rounded, size: 18, color: AppColors.info),
                           tooltip: 'Informasi Cuaca Destinasi',
                           onPressed: () {
                             showModalBottomSheet(
@@ -523,7 +523,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.visibility_rounded, size: 18, color: Color(0xFF16A34A)),
+                          icon: const Icon(Icons.visibility_rounded, size: 18, color: AppColors.success),
                           tooltip: 'Kondisi Nyata Lokasi',
                           onPressed: () {
                             showModalBottomSheet(
@@ -539,7 +539,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.location_on_rounded, size: 18, color: Color(0xFFEA4335)),
+                          icon: const Icon(Icons.location_on_rounded, size: 18, color: AppColors.danger),
                           tooltip: 'Titik Kumpul Google Maps',
                           onPressed: () {
                             showModalBottomSheet(
@@ -592,18 +592,18 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                       ),
                       child: Text(
                         'Destinasi Tunggal: ${widget.trip.singleDestination}',
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F1F8),
+                        color: AppColors.infoBg,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         widget.trip.category,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF1E5B82)),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.info),
                       ),
                     ),
                   ],
@@ -666,7 +666,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                 children: [
                   const Text(
                     'RUNDOWN PERJALANAN (MANUAL)',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
                   ),
                   Text(
                     '${widget.trip.departureDate} (${widget.trip.duration})',
@@ -722,18 +722,18 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
           margin: const EdgeInsets.symmetric(vertical: 10),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
+            color: AppColors.infoBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFBFDBFE)),
+            border: Border.all(color: AppColors.infoBorder),
           ),
           child: const Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: Color(0xFF1D4ED8), size: 15),
+              Icon(Icons.info_outline_rounded, color: AppColors.info, size: 15),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Rundown diisi manual oleh pembuat trip dengan slot jam acuan dari sistem. Penyelenggara bebas menambah, mengubah urutan, dan mengupdate status.',
-                  style: TextStyle(fontSize: 10, color: Color(0xFF1E40AF), height: 1.3),
+                  style: TextStyle(fontSize: 11, color: AppColors.info, height: 1.3),
                 ),
               ),
             ],
@@ -778,8 +778,8 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           height: 32,
                           decoration: BoxDecoration(
                             color: step.status == 'Selesai'
-                                ? const Color(0xFF10B981)
-                                : (step.status == 'Sedang Berlangsung' ? const Color(0xFFD97706) : AppColors.forest),
+                                ? AppColors.success
+                                : (step.status == 'Sedang Berlangsung' ? AppColors.warning : AppColors.forest),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -826,28 +826,28 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                                   ),
                                   child: Text(
                                     step.time,
-                                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                                   ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: step.status == 'Selesai'
-                                        ? const Color(0xFFDCFCE7)
+                                        ? AppColors.successBorder
                                         : (step.status == 'Sedang Berlangsung'
-                                            ? const Color(0xFFFEF3C7)
-                                            : const Color(0xFFF3F4F6)),
+                                            ? AppColors.warningBg
+                                            : AppColors.creamSubtle),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     step.status,
                                     style: TextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: step.status == 'Selesai'
-                                          ? const Color(0xFF15803D)
+                                          ? AppColors.success
                                           : (step.status == 'Sedang Berlangsung'
-                                              ? const Color(0xFFB45309)
+                                              ? AppColors.warningDark
                                               : AppColors.muted),
                                     ),
                                   ),
@@ -867,7 +867,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                                 Expanded(
                                   child: Text(
                                     step.location,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E5B82)),
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.info),
                                   ),
                                 ),
                               ],
@@ -876,11 +876,11 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                               const SizedBox(height: 6),
                               Text(
                                 step.notes,
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF5A6B5D), height: 1.35),
+                                style: const TextStyle(fontSize: 11, color: AppColors.muted, height: 1.35),
                               ),
                             ],
                             const SizedBox(height: 8),
-                            const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                            const Divider(height: 1, color: AppColors.creamSubtle),
                             const SizedBox(height: 6),
 
                             // Aksi Item Rundown: Toggle Status, Ubah & Hapus
@@ -903,9 +903,9 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF9FAFB),
+                                      color: AppColors.creamSubtle,
                                       borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                                      border: Border.all(color: AppColors.divider),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -914,7 +914,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                                         const SizedBox(width: 4),
                                         Text(
                                           'Ubah: ${step.status}',
-                                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.forest),
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.forest),
                                         ),
                                       ],
                                     ),
@@ -1021,7 +1021,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
           children: [
             const Text(
               'DAFTAR KEBUTUHAN PERJALANAN',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
             ),
             TextButton.icon(
               onPressed: _showAddChecklistDialog,
@@ -1041,7 +1041,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: item.isDone ? const Color(0xFF22C55E).withValues(alpha: 0.4) : AppColors.sageBorder,
+                color: item.isDone ? AppColors.success.withValues(alpha: 0.4) : AppColors.sageBorder,
               ),
             ),
             child: CheckboxListTile(
@@ -1061,7 +1061,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               ),
               subtitle: Text(
                 '${item.category} • ${item.description}',
-                style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+                style: const TextStyle(fontSize: 11, color: AppColors.muted),
               ),
             ),
           );
@@ -1080,18 +1080,18 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
+            color: AppColors.infoBg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
           ),
           child: const Row(
             children: [
-              Icon(Icons.assignment_ind_rounded, color: Color(0xFF1D4ED8), size: 20),
+              Icon(Icons.assignment_ind_rounded, color: AppColors.info, size: 20),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Penyelenggara membagi tanggung jawab agar perjalanan tertib, aman, dan partisipatif.',
-                  style: TextStyle(fontSize: 11.5, color: Color(0xFF1E40AF), fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 11.5, color: AppColors.info, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -1101,7 +1101,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
 
         const Text(
           'PEMBAGIAN PERAN & TUGAS (JOBDESK)',
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
         ),
         const SizedBox(height: 8),
 
@@ -1140,7 +1140,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                             ),
                             Text(
                               'PIC: ${job.picName} (${job.picRole})',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E5B82)),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.info),
                             ),
                           ],
                         ),
@@ -1150,35 +1150,35 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: job.status == 'Selesai'
-                            ? const Color(0xFFF0FDF4)
-                            : const Color(0xFFFEF3C7),
+                            ? AppColors.successBg
+                            : AppColors.warningBg,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: job.status == 'Selesai'
-                              ? const Color(0xFF22C55E).withValues(alpha: 0.3)
-                              : const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                              ? AppColors.success.withValues(alpha: 0.3)
+                              : AppColors.warning.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
                         job.status,
                         style: TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: job.status == 'Selesai'
-                              ? const Color(0xFF15803D)
-                              : const Color(0xFFB45309),
+                              ? AppColors.success
+                              : AppColors.warningDark,
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                const Divider(height: 1, color: AppColors.creamSubtle),
                 const SizedBox(height: 8),
 
                 const Text(
                   'Rincian Tugas:',
-                  style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.muted),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
                 ),
                 const SizedBox(height: 4),
                 ...job.tasks.map((t) => Padding(
@@ -1190,7 +1190,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           Expanded(
                             child: Text(
                               t,
-                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF4B5563)),
+                              style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
                             ),
                           ),
                         ],
@@ -1257,7 +1257,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
 
         const Text(
           'CHECKLIST BARANG BAWAAN PESERTA',
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
         ),
         const SizedBox(height: 8),
 
@@ -1268,7 +1268,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: pack.isPacked ? const Color(0xFF22C55E).withValues(alpha: 0.4) : AppColors.sageBorder,
+                color: pack.isPacked ? AppColors.success.withValues(alpha: 0.4) : AppColors.sageBorder,
               ),
             ),
             child: CheckboxListTile(
@@ -1288,7 +1288,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               ),
               subtitle: Text(
                 '${pack.category}${pack.notes.isNotEmpty ? ' • ${pack.notes}' : ''}',
-                style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+                style: const TextStyle(fontSize: 11, color: AppColors.muted),
               ),
             ),
           );
@@ -1307,7 +1307,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: const BoxDecoration(
-            color: Color(0xFF25D366),
+            color: AppColors.success,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1327,7 +1327,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Membuka grup WhatsApp: ${widget.trip.whatsappGroupLink}'),
-                      backgroundColor: const Color(0xFF15803D),
+                      backgroundColor: AppColors.success,
                     ),
                   );
                 },
@@ -1339,7 +1339,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                   ),
                   child: const Text(
                     'Buka WA',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.success),
                   ),
                 ),
               ),
@@ -1362,9 +1362,9 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
+                    color: AppColors.warningBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFF59E0B)),
+                    border: Border.all(color: AppColors.warning),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1374,21 +1374,21 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.push_pin_rounded, size: 15, color: Color(0xFFB45309)),
+                              const Icon(Icons.push_pin_rounded, size: 15, color: AppColors.warningDark),
                               const SizedBox(width: 6),
                               Text(
                                 msg.senderName,
-                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.warningDark),
                               ),
                             ],
                           ),
-                          Text(msg.timestamp, style: const TextStyle(fontSize: 10, color: Color(0xFF92400E))),
+                          Text(msg.timestamp, style: const TextStyle(fontSize: 11, color: AppColors.warningDark)),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Text(
                         msg.message,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF78350F), height: 1.4, fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontSize: 12, color: AppColors.warningDark, height: 1.4, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -1408,7 +1408,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     color: isMe
                         ? AppColors.forest
                         : isHost
-                            ? const Color(0xFFE8F1F8)
+                            ? AppColors.infoBg
                             : Colors.white,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(14),
@@ -1416,7 +1416,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                       bottomLeft: isMe ? const Radius.circular(14) : Radius.zero,
                       bottomRight: isMe ? Radius.zero : const Radius.circular(14),
                     ),
-                    border: isHost ? Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.2)) : null,
+                    border: isHost ? Border.all(color: AppColors.info.withValues(alpha: 0.2)) : null,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.04),
@@ -1434,12 +1434,12 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           Text(
                             msg.senderName,
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: isMe
                                   ? AppColors.cream
                                   : isHost
-                                      ? const Color(0xFF1E5B82)
+                                      ? AppColors.info
                                       : AppColors.ink,
                             ),
                           ),
@@ -1448,12 +1448,12 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1E5B82),
+                                color: AppColors.info,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
                                 'HOST',
-                                style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
                               ),
                             ),
                           ],
@@ -1472,7 +1472,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                       Text(
                         msg.timestamp,
                         style: TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 11,
                           color: isMe ? AppColors.cream.withValues(alpha: 0.7) : AppColors.muted,
                         ),
                       ),

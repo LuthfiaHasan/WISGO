@@ -111,12 +111,12 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                     Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0369A1).withValues(alpha: 0.12),
+                        color: AppColors.info.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.cloudy_snowing,
-                        color: Color(0xFF0369A1),
+                        color: AppColors.info,
                         size: 20,
                       ),
                     ),
@@ -164,14 +164,14 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF1E3A8A), Color(0xFF0369A1)],
+                        colors: [Color(0xFF1E3A8A), AppColors.info],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0369A1).withValues(alpha: 0.25),
+                          color: AppColors.info.withValues(alpha: 0.25),
                           blurRadius: 14,
                           offset: const Offset(0, 6),
                         ),
@@ -208,7 +208,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                                     'Live WeatherAPI • ${_lastUpdatedTime.hour.toString().padLeft(2, '0')}:${_lastUpdatedTime.minute.toString().padLeft(2, '0')} WIB',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -252,7 +252,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                                       'Perbarui',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -414,7 +414,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                               Icon(
                                 hour.icon,
                                 size: 24,
-                                color: const Color(0xFF0369A1),
+                                color: AppColors.info,
                               ),
                               const SizedBox(height: 6),
                               Text(
@@ -429,9 +429,9 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                               Text(
                                 '${hour.rainChancePercent}%',
                                 style: const TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0284C7),
+                                  color: AppColors.info,
                                 ),
                               ),
                             ],
@@ -449,13 +449,13 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isAlertWarning
-                          ? const Color(0xFFFEF2F2)
-                          : const Color(0xFFF0FDF4),
+                          ? AppColors.dangerBg
+                          : AppColors.successBg,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: isAlertWarning
-                            ? const Color(0xFFFECACA)
-                            : const Color(0xFFBBF7D0),
+                            ? AppColors.dangerBg
+                            : AppColors.successBorder,
                       ),
                     ),
                     child: Column(
@@ -466,8 +466,8 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                             Icon(
                               alert.icon,
                               color: isAlertWarning
-                                  ? const Color(0xFFDC2626)
-                                  : const Color(0xFF16A34A),
+                                  ? AppColors.danger
+                                  : AppColors.success,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -479,7 +479,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                                   fontWeight: FontWeight.w900,
                                   color: isAlertWarning
                                       ? const Color(0xFF991B1B)
-                                      : const Color(0xFF166534),
+                                      : AppColors.forest,
                                 ),
                               ),
                             ),
@@ -490,15 +490,15 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                               ),
                               decoration: BoxDecoration(
                                 color: isAlertWarning
-                                    ? const Color(0xFFDC2626)
-                                    : const Color(0xFF16A34A),
+                                    ? AppColors.danger
+                                    : AppColors.success,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 alert.severity,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 9,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -585,7 +585,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
           label,
           style: const TextStyle(
             color: Colors.white60,
-            fontSize: 8,
+            fontSize: 11,
           ),
         ),
       ],

@@ -73,20 +73,20 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD1FAE5),
+                              color: AppColors.successBg,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF059669)),
+                                Icon(Icons.check_circle_rounded, size: 12, color: AppColors.success),
                                 SizedBox(width: 4),
                                 Text(
                                   'TERVERIFIKASI RESMI WISGO',
                                   style: TextStyle(
-                                    fontSize: 9.5,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF059669),
+                                    color: AppColors.success,
                                   ),
                                 ),
                               ],
@@ -122,9 +122,9 @@ class VerifiedOrganizerSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: AppColors.creamSubtle,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: Column(
                 children: [
@@ -135,7 +135,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                     value: '${organizer.name} (${organizer.organizationName})',
                     isHighlight: true,
                   ),
-                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 16, color: AppColors.divider),
 
                   // 2. Upload KTP
                   _buildCredentialRow(
@@ -144,7 +144,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                     value: '${organizer.ktpUploadStatus} • ${organizer.ktpStatus}',
                     isHighlight: true,
                   ),
-                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 16, color: AppColors.divider),
 
                   // 3. Nomor HP Terverifikasi
                   _buildCredentialRow(
@@ -152,7 +152,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                     label: '3. Nomor Handphone Terverifikasi',
                     value: '${organizer.phone} (OTP Terhubung Akun WISGO)',
                   ),
-                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 16, color: AppColors.divider),
 
                   // 4. Akun / Media Sosial
                   _buildCredentialRow(
@@ -160,7 +160,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                     label: '4. Akun / Media Sosial Terhubung',
                     value: organizer.socialMedia,
                   ),
-                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 16, color: AppColors.divider),
 
                   // 5. Verifikasi Wajah / Liveness Biometrik
                   _buildCredentialRow(
@@ -169,7 +169,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                     value: organizer.faceVerificationStatus,
                     isHighlight: true,
                   ),
-                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 16, color: AppColors.divider),
 
                   // 6. Pengalaman Sebagai Penyelenggara
                   _buildCredentialRow(
@@ -177,7 +177,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                     label: '6. Pengalaman Penyelenggara',
                     value: '${organizer.experienceYears} (${organizer.completedTrips} Trip Berhasil • ★ ${organizer.rating})',
                   ),
-                  const Divider(height: 16, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 16, color: AppColors.divider),
 
                   // 7. Lisensi & Sertifikasi Kompetensi Khusus
                   _buildCredentialRow(
@@ -195,14 +195,14 @@ class VerifiedOrganizerSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: AppColors.infoBg,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.shield_rounded, color: Color(0xFF1D4ED8), size: 20),
+                  const Icon(Icons.shield_rounded, color: AppColors.info, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -213,7 +213,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E40AF),
+                            color: AppColors.info,
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -261,7 +261,7 @@ class VerifiedOrganizerSheet extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: isHighlight ? const Color(0xFF059669) : AppColors.forest),
+        Icon(icon, size: 18, color: isHighlight ? AppColors.success : AppColors.forest),
         const SizedBox(width: 10),
         Expanded(
           child: Column(

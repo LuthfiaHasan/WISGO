@@ -265,7 +265,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cream,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.35),
@@ -318,7 +318,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                         Text(
                           'Katalog 5 Kategori Pokdarwis • Tanya Vendor Langsung',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.muted,
                           ),
@@ -439,7 +439,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                             Text(
                               'Rp ${_formatNumber(item.price)} / ${item.unit}',
                               style: const TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.terracotta,
                               ),
@@ -500,17 +500,17 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
           // Banner Kebijakan Transaksi: Hanya Open Trip yang Menggunakan Transaksi Aplikasi
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            color: const Color(0xFFF0FDF4),
+            color: AppColors.successBg,
             child: const Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 13, color: Color(0xFF15803D)),
+                Icon(Icons.info_outline_rounded, size: 13, color: AppColors.success),
                 SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Bebas biaya transaksi aplikasi. Fitur transaksi WISGO hanya digunakan pada Open Trip.',
                     style: TextStyle(
-                      fontSize: 9.5,
-                      color: Color(0xFF166534),
+                      fontSize: 11,
+                      color: AppColors.forest,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -534,7 +534,7 @@ class _QuickBookingPanelState extends State<QuickBookingPanel> {
                     Text(
                       '$_totalItemsCount Layanan Dipilih',
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppColors.muted,
                       ),

@@ -136,12 +136,12 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                     Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF15803D).withValues(alpha: 0.12),
+                        color: AppColors.success.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.visibility_rounded,
-                        color: Color(0xFF15803D),
+                        color: AppColors.success,
                         size: 20,
                       ),
                     ),
@@ -188,16 +188,16 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFF86EFAC)),
+                      border: Border.all(color: AppColors.successBorder),
                     ),
                     child: const Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.verified_user_rounded,
-                          color: Color(0xFF15803D),
+                          color: AppColors.success,
                           size: 19,
                         ),
                         SizedBox(width: 10),
@@ -210,14 +210,14 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF166534),
+                                  color: AppColors.forest,
                                 ),
                               ),
                               SizedBox(height: 3),
                               Text(
                                 'Review yang ditampilkan di bawah ini murni merupakan gambaran kondisi nyata berdasarkan pengalaman wisatawan yang sudah pernah mengunjungi tempat wisata ini langsung, bukan dari peserta Trip Go yang belum pernah ke lokasi.',
                                 style: TextStyle(
-                                  fontSize: 10.5,
+                                  fontSize: 11,
                                   color: Color(0xFF14532D),
                                   height: 1.35,
                                 ),
@@ -233,15 +233,15 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: AppColors.infoBg,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                      border: Border.all(color: AppColors.infoBorder),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.info_outline_rounded,
-                          color: Color(0xFF1D4ED8),
+                          color: AppColors.info,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -250,7 +250,7 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                             'Ceritakan kondisi riil yang Anda temui secara bebas tanpa template. Cukup penuhi minimal $kMinGroundReportChars karakter agar informatif bagi sesama wisatawan.',
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF1E40AF),
+                              color: AppColors.info,
                               height: 1.3,
                             ),
                           ),
@@ -369,8 +369,8 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isLengthValid
-                                      ? const Color(0xFFDCFCE7)
-                                      : const Color(0xFFFEF3C7),
+                                      ? AppColors.successBorder
+                                      : AppColors.warningBg,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
@@ -382,8 +382,8 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                                           : Icons.warning_amber_rounded,
                                       size: 12,
                                       color: isLengthValid
-                                          ? const Color(0xFF15803D)
-                                          : const Color(0xFFD97706),
+                                          ? AppColors.success
+                                          : AppColors.warning,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -391,11 +391,11 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                                           ? 'Karakter memenuhi syarat ($currentLength/$kMinGroundReportChars)'
                                           : 'Minimal $kMinGroundReportChars karakter (kurang ${kMinGroundReportChars - currentLength} lagi)',
                                       style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         color: isLengthValid
-                                          ? const Color(0xFF15803D)
-                                          : const Color(0xFFB45309),
+                                          ? AppColors.success
+                                          : AppColors.warningDark,
                                       ),
                                     ),
                                   ],
@@ -451,7 +451,7 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                                   child: Text(
                                     tag,
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                       color: isSelected
                                           ? Colors.white
@@ -566,7 +566,7 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                                     Text(
                                       '${report.authorBadge} • ${report.timeAgo}',
                                       style: TextStyle(
-                                        fontSize: 9.5,
+                                        fontSize: 11,
                                         color: AppColors.ink.withValues(
                                           alpha: 0.55,
                                         ),
@@ -577,7 +577,7 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                               ),
                               const Icon(
                                 Icons.verified_rounded,
-                                color: Color(0xFF15803D),
+                                color: AppColors.success,
                                 size: 16,
                               ),
                             ],
@@ -612,7 +612,7 @@ class _GroundConditionSheetState extends State<GroundConditionSheet> {
                                   child: Text(
                                     t,
                                     style: const TextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.ink,
                                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Model Ringkasan Jejak WISGO Akun Wisatawan (BE-2 Summary)
 class JejakWisgoSummary {
@@ -77,7 +78,7 @@ class TripAchievementBadge {
     required this.title,
     required this.description,
     required this.icon,
-    this.ribbonColor = const Color(0xFFD97706),
+    this.ribbonColor = AppColors.warning,
   });
 }
 
@@ -286,14 +287,14 @@ final List<TravelExperience> kSampleTravelExperiences = [
         title: 'Penakluk Tebing Harau',
         description: 'Tuntas menjelajahi dinding batuan granit Harau Geopark',
         icon: Icons.landscape_rounded,
-        ribbonColor: Color(0xFFD97706),
+        ribbonColor: AppColors.warning,
       ),
       TripAchievementBadge(
         id: 'ach-2',
         title: 'Sahabat Alam Nagari',
         description: 'Zero waste & patuh etika kearifan lokal Minangkabau',
         icon: Icons.eco_rounded,
-        ribbonColor: Color(0xFF0369A1),
+        ribbonColor: AppColors.info,
       ),
     ],
   ),
@@ -338,7 +339,7 @@ final List<TravelExperience> kSampleTravelExperiences = [
         title: 'Penjelajah Bahari Mandeh',
         description: 'Mengunjungi gugusan teluk pulau pesisir selatan',
         icon: Icons.scuba_diving_rounded,
-        ribbonColor: Color(0xFF0284C7),
+        ribbonColor: AppColors.info,
       ),
     ],
   ),
@@ -375,7 +376,7 @@ final List<TravelExperience> kSampleTravelExperiences = [
         title: 'Ksatria Adat Minangkabau',
         description: 'Menuntaskan pemahaman falsafah Adat Basandi Syarak',
         icon: Icons.military_tech_rounded,
-        ribbonColor: Color(0xFF7C2D12),
+        ribbonColor: AppColors.terracotta,
       ),
     ],
   ),

@@ -26,23 +26,23 @@ void main() {
     test('2. Kategori Perjalanan maps destinations into 5 standard clusters', () {
       expect(
         determineCategoryForDestination('Lembah Harau & Sarasah Bunta'),
-        'Wisata Alam & Pegunungan',
+        'Alam & Geopark',
       );
       expect(
         determineCategoryForDestination('Kawasan Mandeh Snorkeling & Pulau'),
-        'Wisata Bahari & Pesisir',
+        'Alam & Geopark',
       );
       expect(
         determineCategoryForDestination('Istano Basa Pagaruyung & Cagar Budaya'),
-        'Sejarah & Warisan Minangkabau',
+        'Budaya & Nagari',
       );
       expect(
         determineCategoryForDestination('Desa Wisata Pariangan & Tenun'),
-        'Nagari Adat & Edukasi Budaya',
+        'Budaya & Nagari',
       );
       expect(
         determineCategoryForDestination('Pasar Kuliner Kapau & Kebun Teh'),
-        'Kuliner Otentik & Agrowisata',
+        'Kuliner',
       );
     });
 

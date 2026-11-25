@@ -407,6 +407,12 @@ class HazardAlertModel {
     this.emergencyContact = '112 / 115',
   });
 
+  /// Alias getters untuk kompatibilitas tampilan UI
+  String get corridorName => location;
+  String get conditionDescription => message;
+  String get alternativeRoute => detourRoute;
+  String get lastUpdated => 'Baru saja';
+
   factory HazardAlertModel.fromJson(Map<String, dynamic> json) {
     return HazardAlertModel(
       id: json['id'] as String? ?? '',

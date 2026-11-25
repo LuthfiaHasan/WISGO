@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/constants/colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/localization/app_locale.dart';
 import '../data/destination_repository.dart';
 import '../models/destination_model.dart';

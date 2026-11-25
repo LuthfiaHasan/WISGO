@@ -433,7 +433,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             const Text(
               'WISGO',
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.8,
                 color: AppColors.sage,
@@ -574,7 +574,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 26),
           decoration: const BoxDecoration(
             color: AppColors.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -692,7 +692,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Text(
                       subtitle,
                       style: const TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         color: AppColors.muted,
                       ),
                     ),
@@ -860,7 +860,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           Text(
                             '${hero.region}, Sumbar',
                             style: const TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -899,7 +899,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           Text(
                             tempText,
                             style: const TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -934,7 +934,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       child: Text(
                         badgeText,
                         style: const TextStyle(
-                          fontSize: 8.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.6,
                           color: Colors.white,
@@ -945,7 +945,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Text(
                       '${hero.distanceKm.toStringAsFixed(hero.distanceKm.truncateToDouble() == hero.distanceKm ? 0 : 1)} ${AppLocale.tr('km dari sini', 'km away')}',
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.86),
                       ),
@@ -1464,7 +1464,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 const SizedBox(width: 5),
                 const CircleAvatar(
                   radius: 3.5,
-                  backgroundColor: Color(0xFF16A34A),
+                  backgroundColor: AppColors.success,
                 ),
               ],
             ),
@@ -1536,7 +1536,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       Text(
                                         '${place.rating}',
                                         style: const TextStyle(
-                                          fontSize: 9.5,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w800,
                                           color: Colors.white,
                                         ),
@@ -1563,7 +1563,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           : Icons.bookmark_border_rounded,
                                       size: 14,
                                       color: isBookmarked
-                                          ? const Color(0xFFD97706)
+                                          ? AppColors.warning
                                           : AppColors.ink,
                                     ),
                                   ),
@@ -1586,7 +1586,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   child: Text(
                                     place.natureType,
                                     style: const TextStyle(
-                                      fontSize: 8.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                     ),
@@ -1617,7 +1617,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   color: AppColors.muted,
                                 ),
                               ),
@@ -1626,27 +1626,32 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2.5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.sage,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      AppLocale.tr(
-                                        'Ikonik Sumbar',
-                                        'Iconic Sumbar',
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2.5,
                                       ),
-                                      style: const TextStyle(
-                                        fontSize: 8.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.forest,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.sage,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        AppLocale.tr(
+                                          'Ikonik Sumbar',
+                                          'Iconic Sumbar',
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.forest,
+                                        ),
                                       ),
                                     ),
                                   ),
+                                  const SizedBox(width: 4),
                                   const Icon(
                                     Icons.arrow_forward_rounded,
                                     size: 14,
@@ -1714,7 +1719,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.9,
                               color: Color(0xFFA7D3B4),
@@ -1754,7 +1759,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   Text(
                     AppLocale.tr('Cerah Berawan', 'Partly Cloudy'),
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFFD1E7D7),
                     ),
@@ -1815,7 +1820,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: Color(0xFFB5D4BE),
             ),
@@ -2039,7 +2044,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 decoration: BoxDecoration(
                                   color: _isOfflineMode
                                       ? AppColors.terracotta
-                                      : const Color(0xFF16A34A),
+                                      : AppColors.success,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -2058,7 +2063,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: _isOfflineMode
                                         ? AppColors.terracotta
@@ -2099,7 +2104,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               Text(
                                 'Check-in',
                                 style: TextStyle(
-                                  fontSize: 10.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.cream,
                                 ),
@@ -2116,7 +2121,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   Tooltip(
                     message: 'Darurat SOS & Jalur Rawan',
                     child: Material(
-                      color: const Color(0xFFFEE2E2),
+                      color: AppColors.dangerBg,
                       borderRadius: BorderRadius.circular(20),
                       child: InkWell(
                         onTap: () => Navigator.push(
@@ -2134,14 +2139,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: const Color(0xFFB91C1C)
+                              color: AppColors.danger
                                   .withValues(alpha: 0.28),
                             ),
                           ),
                           child: const Icon(
                             Icons.sos_rounded,
                             size: 15,
-                            color: Color(0xFFB91C1C),
+                            color: AppColors.danger,
                           ),
                         ),
                       ),
@@ -2184,7 +2189,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       vertical: 1,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFDC2626),
+                                      color: AppColors.danger,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: Colors.white,
@@ -2200,7 +2205,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 8.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
@@ -2576,7 +2581,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                     Text(
                                       typeLabel,
                                       style: TextStyle(
-                                        fontSize: 10.5,
+                                        fontSize: 11,
                                         fontWeight: isSelected
                                             ? FontWeight.w800
                                             : FontWeight.w600,
@@ -2787,10 +2792,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         'COLLABORATION & TRAVEL BUDDIES',
                       ),
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.3,
-                        color: Color(0xFF1E5B82),
+                        color: AppColors.info,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -2812,21 +2817,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F1F8),
+                  color: AppColors.infoBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.groups_rounded, size: 14, color: Color(0xFF1E5B82)),
+                    const Icon(Icons.groups_rounded, size: 14, color: AppColors.info),
                     const SizedBox(width: 4),
                     Text(
                       '${_activeOpenTrips.length} Trip Aktif',
                       style: const TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E5B82),
+                        color: AppColors.info,
                       ),
                     ),
                   ],
@@ -2847,7 +2852,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF064E3B), Color(0xFF0F766E)],
+                    colors: [Color(0xFF064E3B), AppColors.success],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -2888,12 +2893,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF34D399),
+                            color: AppColors.success,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
                             'Panduan Resmi',
-                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: Color(0xFF064E3B)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF064E3B)),
                           ),
                         ),
                       ],
@@ -2904,8 +2909,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       '• MEKANISME: Pembayaran disetor ke Rekening Penampung (Escrow) terpusat melalui Payment Gateway, komunikasi peserta wajib melalui Smart Trip Planner in-app (non-WhatsApp).\n'
                       '• CARA KERJA: 1. Pilih jadwal trip & cek detail Include/Exclude -> 2. Tinjau verifikasi 7-poin penyelenggara -> 3. Setujui ketentuan platform & bayar aman -> 4. Koordinasi tim di Smart Trip Planner & kumpul di titik GPS.',
                       style: TextStyle(
-                        fontSize: 10.8,
-                        color: Color(0xFFECFDF5),
+                        fontSize: 11,
+                        color: AppColors.successBg,
                         height: 1.45,
                       ),
                     ),
@@ -2960,13 +2965,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
+                            color: AppColors.successBg,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
+                            border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                           ),
                           child: const Text(
                             'Escrow Terjamin',
-                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.success),
                           ),
                         ),
                       ],
@@ -2980,8 +2985,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       '• Titik kumpul presisi terintegrasi langsung dengan navigasi Google Maps.\n'
                       '• Transaksi aman terlindungi Rekening Penampung (Escrow) WISGO.',
                       style: TextStyle(
-                        fontSize: 10.5,
-                        color: Color(0xFF4B5563),
+                        fontSize: 11,
+                        color: AppColors.muted,
                         height: 1.45,
                       ),
                     ),
@@ -2994,20 +2999,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.infoBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                  border: Border.all(color: AppColors.infoBorder),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.shield_outlined, color: Color(0xFF1D4ED8), size: 18),
+                    Icon(Icons.shield_outlined, color: AppColors.info, size: 18),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Kebijakan Transaksi WISGO: Sistem pembayaran & penjaminan Escrow HANYA digunakan pada layanan Trip Go resmi. Fitur perjalanan lainnya bebas biaya & non-transaksi.',
                         style: TextStyle(
-                          fontSize: 10.5,
-                          color: Color(0xFF1E40AF),
+                          fontSize: 11,
+                          color: AppColors.info,
                           fontWeight: FontWeight.w600,
                           height: 1.35,
                         ),
@@ -3154,14 +3159,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF193D22), Color(0xFF2F663E)],
+                    colors: [AppColors.forest, AppColors.brush],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF193D22).withValues(alpha: 0.25),
+                      color: AppColors.forest.withValues(alpha: 0.25),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -3187,7 +3192,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               Text(
                                 'Smart Trip Planner',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.cream,
                                 ),
@@ -3265,7 +3270,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               height: MediaQuery.of(context).size.height * 0.85,
               decoration: const BoxDecoration(
                 color: AppColors.cream,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 children: [
@@ -3289,7 +3294,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             const Text(
                               'MEMORI PERANGKAT (LURING)',
                               style: TextStyle(
-                                fontSize: 9.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1.1,
                                 color: AppColors.brush,
@@ -3515,7 +3520,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               height: MediaQuery.of(context).size.height * 0.88,
               decoration: const BoxDecoration(
                 color: AppColors.cream,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 children: [
@@ -3539,7 +3544,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             Text(
                               'WARISAN & PERAYAAN NAGARI',
                               style: TextStyle(
-                                fontSize: 9.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1.1,
                                 color: Color(0xFF5A3E85),
@@ -3615,7 +3620,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           child: Text(
                                             ev['badge'] as String,
                                             style: TextStyle(
-                                              fontSize: 9.5,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w800,
                                               color: badgeColor,
                                             ),
@@ -3628,19 +3633,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                 margin: const EdgeInsets.only(right: 6),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFFDCFCE7),
+                                                  color: AppColors.successBorder,
                                                   borderRadius: BorderRadius.circular(6),
                                                 ),
                                                 child: const Row(
                                                   children: [
-                                                    Icon(Icons.notifications_active_rounded, size: 10, color: Color(0xFF15803D)),
+                                                    Icon(Icons.notifications_active_rounded, size: 10, color: AppColors.success),
                                                     SizedBox(width: 3),
                                                     Text(
                                                       'Pengingat Aktif',
                                                       style: TextStyle(
-                                                        fontSize: 8.5,
+                                                        fontSize: 11,
                                                         fontWeight: FontWeight.w800,
-                                                        color: Color(0xFF15803D),
+                                                        color: AppColors.success,
                                                       ),
                                                     ),
                                                   ],
@@ -3652,7 +3657,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                             Text(
                                               ev['date'] as String,
                                               style: const TextStyle(
-                                                fontSize: 10.5,
+                                                fontSize: 11,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.forest,
                                               ),
@@ -3711,7 +3716,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           Text(
                                             'GPS: ${ev['gpsCoordinate']}',
                                             style: const TextStyle(
-                                              fontSize: 10,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.forest,
                                             ),
@@ -3720,7 +3725,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           const Text(
                                             'Lihat Detail & Rute',
                                             style: TextStyle(
-                                              fontSize: 10,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w800,
                                               color: AppColors.ink,
                                             ),
@@ -3767,7 +3772,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               height: MediaQuery.of(context).size.height * 0.92,
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 children: [
@@ -3798,7 +3803,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               child: Text(
                                 ev['badge'] as String,
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: badgeColor,
                                 ),
@@ -4068,14 +4073,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7).withValues(alpha: 0.6),
+                              color: AppColors.warningBg.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.35)),
+                              border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFD97706)),
+                                const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.warning),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -4086,16 +4091,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFF92400E),
+                                          color: AppColors.warningDark,
                                         ),
                                       ),
                                       const SizedBox(height: 3),
                                       Text(
                                         ev['tips'] as String,
                                         style: const TextStyle(
-                                          fontSize: 10.5,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF78350F),
+                                          color: AppColors.warningDark,
                                           height: 1.35,
                                         ),
                                       ),
@@ -4124,7 +4129,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   Icon(
                                     isReminded ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
                                     size: 18,
-                                    color: isReminded ? const Color(0xFF15803D) : AppColors.ink,
+                                    color: isReminded ? AppColors.success : AppColors.ink,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -4136,7 +4141,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           style: TextStyle(
                                             fontSize: 12.5,
                                             fontWeight: FontWeight.w800,
-                                            color: isReminded ? const Color(0xFF15803D) : AppColors.ink,
+                                            color: isReminded ? AppColors.success : AppColors.ink,
                                           ),
                                         ),
                                         Text(
@@ -4144,7 +4149,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                               ? 'Anda akan menerima notifikasi otomatis di hari acara.'
                                               : 'Dapatkan pemberitahuan otomatis saat mendekati jadwal festival.',
                                           style: const TextStyle(
-                                            fontSize: 10,
+                                            fontSize: 11,
                                             color: AppColors.muted,
                                           ),
                                         ),
@@ -4165,19 +4170,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   icon: Icon(
                                     isReminded ? Icons.check_circle_rounded : Icons.add_alert_rounded,
                                     size: 16,
-                                    color: isReminded ? const Color(0xFF15803D) : AppColors.forest,
+                                    color: isReminded ? AppColors.success : AppColors.forest,
                                   ),
                                   label: Text(
                                     isReminded ? 'Pengingat Aktif (Ketuk untuk Batalkan)' : 'Aktifkan Pengingat Acara',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w800,
-                                      color: isReminded ? const Color(0xFF15803D) : AppColors.forest,
+                                      color: isReminded ? AppColors.success : AppColors.forest,
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                      color: isReminded ? const Color(0xFF15803D) : AppColors.forest,
+                                      color: isReminded ? AppColors.success : AppColors.forest,
                                       width: 1.2,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -4211,7 +4216,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -4395,7 +4400,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               height: MediaQuery.of(context).size.height * 0.85,
               decoration: const BoxDecoration(
                 color: AppColors.cream,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 children: [
@@ -4428,13 +4433,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFDC2626),
+                                  color: AppColors.danger,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   '$_unreadNotificationCount Baru',
                                   style: const TextStyle(
-                                    fontSize: 9.5,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
                                   ),
@@ -4517,17 +4522,17 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 case 'opentrip':
                                   notifIcon = Icons.groups_rounded;
                                   iconColor = AppColors.forest;
-                                  iconBg = const Color(0xFFDCFCE7);
+                                  iconBg = AppColors.successBorder;
                                   break;
                                 case 'passport':
                                   notifIcon = Icons.verified_rounded;
-                                  iconColor = const Color(0xFF1E5B82);
-                                  iconBg = const Color(0xFFE8F1F8);
+                                  iconColor = AppColors.info;
+                                  iconBg = AppColors.infoBg;
                                   break;
                                 case 'weather':
                                   notifIcon = Icons.wb_sunny_rounded;
-                                  iconColor = const Color(0xFFD97706);
-                                  iconBg = const Color(0xFFFEF3C7);
+                                  iconColor = AppColors.warning;
+                                  iconBg = AppColors.warningBg;
                                   break;
                                 default:
                                   notifIcon = Icons.notifications_rounded;
@@ -4610,7 +4615,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                                         height: 7,
                                                         margin: const EdgeInsets.only(left: 6),
                                                         decoration: const BoxDecoration(
-                                                          color: Color(0xFFDC2626),
+                                                          color: AppColors.danger,
                                                           shape: BoxShape.circle,
                                                         ),
                                                       ),
@@ -4632,7 +4637,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                                     Text(
                                                       notif['time'] as String,
                                                       style: TextStyle(
-                                                        fontSize: 9.5,
+                                                        fontSize: 11,
                                                         fontWeight: FontWeight.w600,
                                                         color: AppColors.muted.withValues(alpha: 0.8),
                                                       ),
@@ -4643,7 +4648,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                                           Text(
                                                             'Lihat Rute GPS',
                                                             style: TextStyle(
-                                                              fontSize: 10,
+                                                              fontSize: 11,
                                                               fontWeight: FontWeight.w800,
                                                               color: AppColors.forest,
                                                             ),
@@ -4706,7 +4711,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.3,
                         color: AppColors.brush,
@@ -4746,7 +4751,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Text(
                       AppLocale.tr('GPS Aktif', 'GPS Active'),
                       style: const TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: AppColors.forest,
                       ),
@@ -4991,7 +4996,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               child: Text(
                 AppLocale.tr('1-Klik GMaps', '1-Click GMaps'),
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: AppColors.forest,
                 ),
@@ -5016,8 +5021,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.restaurant_rounded,
-                iconColor: const Color(0xFFDC2626),
-                bgColor: const Color(0xFFFEF2F2),
+                iconColor: AppColors.danger,
+                bgColor: AppColors.dangerBg,
                 title: AppLocale.tr('RM Padang', 'Padang Food'),
                 subtitle: AppLocale.tr('Otentik', 'Authentic'),
                 onTap: () => _launchGoogleMapsQuery('Rumah Makan Padang terdekat'),
@@ -5027,8 +5032,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.local_gas_station_rounded,
-                iconColor: const Color(0xFF2563EB),
-                bgColor: const Color(0xFFEFF6FF),
+                iconColor: AppColors.info,
+                bgColor: AppColors.infoBg,
                 title: AppLocale.tr('SPBU / BBM', 'Gas Station'),
                 subtitle: AppLocale.tr('Pertashop', 'Fuel Stops'),
                 onTap: () => _launchGoogleMapsQuery('SPBU terdekat'),
@@ -5038,8 +5043,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.mosque_rounded,
-                iconColor: const Color(0xFF16A34A),
-                bgColor: const Color(0xFFF0FDF4),
+                iconColor: AppColors.success,
+                bgColor: AppColors.successBg,
                 title: AppLocale.tr('Masjid', 'Mosque'),
                 subtitle: AppLocale.tr('Tempat Sholat', 'Prayer Area'),
                 onTap: () => _launchGoogleMapsQuery('Masjid terdekat'),
@@ -5049,8 +5054,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.atm_rounded,
-                iconColor: const Color(0xFFD97706),
-                bgColor: const Color(0xFFFFFBEB),
+                iconColor: AppColors.warning,
+                bgColor: AppColors.warningBg,
                 title: AppLocale.tr('ATM & Kasir', 'ATM & Bank'),
                 subtitle: AppLocale.tr('Minimarket', 'Convenience'),
                 onTap: () => _launchGoogleMapsQuery('ATM terdekat'),
@@ -5120,7 +5125,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.muted,
                 ),
@@ -5173,7 +5178,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   Text(
                     'GPS Padang',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: AppColors.forest,
                     ),
@@ -5238,7 +5243,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             child: Text(
                               '${dest.distanceLabel} • ${dest.durationLabel}',
                               style: TextStyle(
-                                fontSize: 9.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: dest.color,
                               ),
@@ -5284,7 +5289,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           label: Text(
                             AppLocale.tr('Rute GMaps', 'GMaps Route'),
                             style: const TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -5343,7 +5348,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
+                  color: AppColors.dangerBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
@@ -5352,15 +5357,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Icon(
                       Icons.sos_rounded,
                       size: 12,
-                      color: Color(0xFFB91C1C),
+                      color: AppColors.danger,
                     ),
                     SizedBox(width: 4),
                     Text(
                       'Radar SOS →',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFFB91C1C),
+                        color: AppColors.danger,
                       ),
                     ),
                   ],
@@ -5390,8 +5395,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 statusLabel: 'Lancar',
                 note: 'Tanjakan licin',
                 slope: '24°',
-                dotColor: const Color(0xFF16A34A),
-                badgeBg: const Color(0xFFDCFCE7),
+                dotColor: AppColors.success,
+                badgeBg: AppColors.successBorder,
               ),
             ),
             const SizedBox(width: 10),
@@ -5402,8 +5407,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 statusLabel: 'Lancar',
                 note: 'Ramai wisatawan',
                 slope: '12°',
-                dotColor: const Color(0xFF16A34A),
-                badgeBg: const Color(0xFFDCFCE7),
+                dotColor: AppColors.success,
+                badgeBg: AppColors.successBorder,
               ),
             ),
           ],
@@ -5418,8 +5423,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 statusLabel: 'Hati-hati',
                 note: '44 tikungan curam',
                 slope: '22°',
-                dotColor: const Color(0xFFD97706),
-                badgeBg: const Color(0xFFFEF3C7),
+                dotColor: AppColors.warning,
+                badgeBg: AppColors.warningBg,
               ),
             ),
             const SizedBox(width: 10),
@@ -5430,8 +5435,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 statusLabel: 'Lancar',
                 note: 'Debit air normal',
                 slope: '18°',
-                dotColor: const Color(0xFF16A34A),
-                badgeBg: const Color(0xFFDCFCE7),
+                dotColor: AppColors.success,
+                badgeBg: AppColors.successBorder,
               ),
             ),
           ],
@@ -5445,7 +5450,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               child: _buildPetaQuickToolCard(
                 icon: Icons.radar_rounded,
                 iconBg: const Color(0xFFE6F0FA),
-                iconColor: const Color(0xFF1E5B82),
+                iconColor: AppColors.info,
                 title: AppLocale.tr('Radar Grup', 'Group Radar'),
                 subtitle: AppLocale.tr(
                   'Pantau rombongan',
@@ -5458,8 +5463,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Expanded(
               child: _buildPetaQuickToolCard(
                 icon: Icons.shield_outlined,
-                iconBg: const Color(0xFFFEF3D6),
-                iconColor: const Color(0xFFB45309),
+                iconBg: AppColors.warningBg,
+                iconColor: AppColors.warningDark,
                 title: AppLocale.tr('Aduan Jalur', 'Route Report'),
                 subtitle: AppLocale.tr(
                   'Pungli & jalan rusak',
@@ -5533,7 +5538,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: AppColors.muted,
                       ),
                     ),
@@ -5608,7 +5613,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Text(
                           statusLabel,
                           style: TextStyle(
-                            fontSize: 9.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: dotColor,
                           ),
@@ -5619,7 +5624,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   Text(
                     slope,
                     style: const TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: AppColors.muted,
                     ),
@@ -5643,7 +5648,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   color: AppColors.muted,
                 ),
               ),
@@ -5728,7 +5733,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.forest,
                               ),
@@ -5906,7 +5911,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: AppColors.muted,
                         ),
@@ -6123,16 +6128,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3D6),
+                color: AppColors.warningBg,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.hourglass_top_rounded, color: Color(0xFFB45309), size: 22),
+              child: const Icon(Icons.hourglass_top_rounded, color: AppColors.warningDark, size: 22),
             ),
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
                 'Usulan Terdaftar ke Dispar',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink),
               ),
             ),
           ],
@@ -6144,17 +6149,17 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3D6),
+                color: AppColors.warningBg,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFD97706)),
+                border: Border.all(color: AppColors.warning),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.pending_actions_rounded, size: 16, color: Color(0xFFB45309)),
+                  Icon(Icons.pending_actions_rounded, size: 16, color: AppColors.warningDark),
                   SizedBox(width: 6),
                   Text(
                     'Status: Menunggu Verifikasi Admin',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.warningDark),
                   ),
                 ],
               ),
@@ -6162,23 +6167,23 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             const SizedBox(height: 12),
             Text(
               'Destinasi: "$name"',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF142618)),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
             ),
             const SizedBox(height: 6),
             const Text(
               'Usulan destinasi hidden gem Anda berhasil diajukan ke Dinas Pariwisata Sumbar.',
-              style: TextStyle(fontSize: 11, color: Color(0xFF5A6B5D), height: 1.4),
+              style: TextStyle(fontSize: 11, color: AppColors.muted, height: 1.4),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3D6),
+                color: AppColors.warningBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
                 '📢 Catatan Validasi: Destinasi baru ini hanya akan resmi tampil di aplikasi wisata setelah diverifikasi dan divalidasi oleh Admin Dispar Sumbar.',
-                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF78350F), height: 1.35),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.warningDark, height: 1.35),
               ),
             ),
           ],
@@ -6187,7 +6192,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF193D22),
+              backgroundColor: AppColors.forest,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -6231,10 +6236,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                    color: AppColors.success.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.chat_rounded, color: Color(0xFF25D366), size: 24),
+                  child: const Icon(Icons.chat_rounded, color: AppColors.success, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -6243,7 +6248,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     children: [
                       const Text(
                         'Pesan via WhatsApp Vendor',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF142618)),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.ink),
                       ),
                       Text(
                         'Pengelola / Pokdarwis: +62 812-7578-953',
@@ -6260,24 +6265,24 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFF5FAF6),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Destinasi: ${place.title}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF193D22)),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.forest),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Perda Acuan: ${place.perdaRef}',
-                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF5A6B5D)),
+                    style: const TextStyle(fontSize: 11, color: AppColors.muted),
                   ),
                   const SizedBox(height: 6),
                   const Text(
                     'Format Pesan Siap Kirim:',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF142618)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.ink),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -6298,7 +6303,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 icon: const Icon(Icons.send_rounded, size: 18),
                 label: const Text('Kirim Pesan WhatsApp Vendor (+62 812-7578-953)'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366),
+                  backgroundColor: AppColors.success,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -6411,7 +6416,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         return Container(
           decoration: const BoxDecoration(
             color: AppColors.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
@@ -6449,7 +6454,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           const Text(
                             'INFORMASI FASILITAS LINGKUNGAN',
                             style: TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,
                               color: AppColors.forest,
@@ -6488,14 +6493,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Kawasan Wisata:', style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        const Text('Kawasan Wisata:', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.sage,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text('Terverifikasi Perda', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.forest)),
+                          child: const Text('Terverifikasi Perda', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest)),
                         ),
                       ],
                     ),
@@ -6505,7 +6510,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
                     ),
                     const Divider(height: 16, color: AppColors.warmBorder),
-                    const Text('Keterangan & Standar Layanan:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest)),
+                    const Text('Keterangan & Standar Layanan:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest)),
                     const SizedBox(height: 4),
                     Text(
                       detailText,
@@ -6528,7 +6533,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Expanded(
                       child: Text(
                         'Seluruh fasilitas resmi diawasi Dispar & Satgas Nagari untuk menjamin kenyamanan bebas pungli.',
-                        style: TextStyle(fontSize: 9.5, color: AppColors.forest, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 11, color: AppColors.forest, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -6596,7 +6601,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 decoration: const BoxDecoration(
                   color: AppColors.cream,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -6897,7 +6902,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               ? 'AKUN WISATAWAN • TERVERIFIKASI WHATSAPP'
                               : 'MODE PENJELAJAH • TAMU (GUEST)',
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.3,
                             color: AppColors.brush,
@@ -6940,7 +6945,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Text(
                           isLoggedIn ? AppLocale.tr('Terverifikasi', 'Verified') : 'Tamu',
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: isLoggedIn ? AppColors.forest : AppColors.muted,
                           ),
@@ -7116,8 +7121,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 height: 22,
                                 decoration: BoxDecoration(
                                   color: _isCurrentGuest
-                                      ? const Color(0xFFD97706)
-                                      : const Color(0xFF16A34A),
+                                      ? AppColors.warning
+                                      : AppColors.success,
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: Colors.white,
@@ -7247,7 +7252,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                     child: Text(
                                       _safeProfileRole,
                                       style: const TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.forest,
                                       ),
@@ -7266,7 +7271,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       child: const Text(
                                         'OTP WhatsApp Terverifikasi',
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.forest,
                                         ),
@@ -7295,7 +7300,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                               Text(
                                                 grade.title,
                                                 style: TextStyle(
-                                                  fontSize: 10,
+                                                  fontSize: 11,
                                                   fontWeight: FontWeight.w800,
                                                   color: grade.primaryColor,
                                                 ),
@@ -7319,7 +7324,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       child: const Text(
                                         'OTP WhatsApp',
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.muted,
                                         ),
@@ -7398,7 +7403,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         ? 'Butuh ${gameService.targetXpForNextLevel - gameService.currentXp} XP lagi menuju ${next.name}'
                                         : 'Tingkat Tertinggi: Wanderer Agung Minang',
                                     style: const TextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.muted,
                                     ),
@@ -7406,7 +7411,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   Text(
                                     'Grade ${grade.level}/5',
                                     style: TextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       color: grade.primaryColor,
                                     ),
@@ -7442,7 +7447,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             Expanded(
                               child: _buildProfileMetricTile(
                                 icon: Icons.pin_drop_rounded,
-                                iconColor: const Color(0xFF2563EB),
+                                iconColor: AppColors.info,
                                 value: '${gameService.totalCheckpoints}',
                                 label: AppLocale.tr('Check Point', 'Check Points'),
                                 onTap: _openQrScannerModal,
@@ -7452,7 +7457,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             Expanded(
                               child: _buildProfileMetricTile(
                                 icon: Icons.task_alt_rounded,
-                                iconColor: const Color(0xFF16A34A),
+                                iconColor: AppColors.success,
                                 value: '${challenge.currentCheckpoints}/${challenge.targetCheckpoints}',
                                 label: AppLocale.tr('Tantangan', 'Challenges'),
                                 onTap: _openGeodeRankingModal,
@@ -7462,7 +7467,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             Expanded(
                               child: _buildProfileMetricTile(
                                 icon: Icons.stars_rounded,
-                                iconColor: const Color(0xFFD97706),
+                                iconColor: AppColors.warning,
                                 value: '${gameService.currentXp}',
                                 label: 'Total XP',
                                 onTap: _openDigitalPassportModal,
@@ -7520,10 +7525,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC89242).withValues(alpha: 0.22),
+                                color: AppColors.goldMinang.withValues(alpha: 0.22),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFE5C07B).withValues(alpha: 0.5),
+                                  color: AppColors.goldSoft.withValues(alpha: 0.5),
                                 ),
                               ),
                               child: Text(
@@ -7532,10 +7537,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   'MINANG DIGITAL PASSPORT',
                                 ),
                                 style: const TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.0,
-                                  color: Color(0xFFE5C07B),
+                                  color: AppColors.goldSoft,
                                 ),
                               ),
                             ),
@@ -7548,7 +7553,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               ),
                               child: const Icon(
                                 Icons.workspace_premium_rounded,
-                                color: Color(0xFFE5C07B),
+                                color: AppColors.goldSoft,
                                 size: 20,
                               ),
                             ),
@@ -7589,7 +7594,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFFE5C07B),
+                                color: AppColors.goldSoft,
                               ),
                             ),
                             Text(
@@ -7609,7 +7614,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             value: challenge.progressRatio,
                             backgroundColor: Colors.white24,
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFFE5C07B),
+                              AppColors.goldSoft,
                             ),
                             minHeight: 6,
                           ),
@@ -7625,13 +7630,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFFE5C07B),
+                                color: AppColors.goldSoft,
                               ),
                             ),
                             Text(
                               '${gameService.unlockedBadgeCount} Terbuka • ${gameService.lockedBadgeCount} Terkunci',
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 color: Color(0xFFD9C9BC),
                               ),
                             ),
@@ -7677,7 +7682,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFFF3DCAA),
                                   side: BorderSide(
-                                    color: const Color(0xFFE5C07B)
+                                    color: AppColors.goldSoft
                                         .withValues(alpha: 0.65),
                                   ),
                                   backgroundColor:
@@ -7943,13 +7948,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             width: 38,
                             height: 38,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8F1F8),
+                              color: AppColors.infoBg,
                               borderRadius: BorderRadius.circular(11),
                             ),
                             child: const Icon(
                               Icons.language_rounded,
                               size: 20,
-                              color: Color(0xFF1E5B82),
+                              color: AppColors.info,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -7974,7 +7979,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                     'Indonesian / English',
                                   ),
                                   style: const TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 11,
                                     color: AppColors.muted,
                                   ),
                                 ),
@@ -8003,7 +8008,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             height: 38,
                             decoration: BoxDecoration(
                               color: _isOfflineMode
-                                  ? const Color(0xFFFEF3D6)
+                                  ? AppColors.warningBg
                                   : AppColors.sage,
                               borderRadius: BorderRadius.circular(11),
                             ),
@@ -8013,7 +8018,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   : Icons.offline_pin_rounded,
                               size: 20,
                               color: _isOfflineMode
-                                  ? const Color(0xFFB45309)
+                                  ? AppColors.warningDark
                                   : AppColors.forest,
                             ),
                           ),
@@ -8044,7 +8049,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           'Ready for no-signal mountain routes',
                                         ),
                                   style: const TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 11,
                                     color: AppColors.muted,
                                   ),
                                 ),
@@ -8067,8 +8072,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     _buildProfileMenuTile(
                       icon: Icons.record_voice_over_rounded,
-                      iconBg: const Color(0xFFFEF3D6),
-                      iconColor: const Color(0xFFB45309),
+                      iconBg: AppColors.warningBg,
+                      iconColor: AppColors.warningDark,
                       title: AppLocale.tr(
                         'Kamus Minang & Kalender Budaya',
                         'Minang Dictionary & Culture Calendar',
@@ -8086,8 +8091,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     ),
                     _buildProfileMenuTile(
                       icon: Icons.sos_rounded,
-                      iconBg: const Color(0xFFFEE2E2),
-                      iconColor: const Color(0xFFB91C1C),
+                      iconBg: AppColors.dangerBg,
+                      iconColor: AppColors.danger,
                       title: AppLocale.tr(
                         'Radar Jalur Rawan & Darurat SOS',
                         'Hazard Radar & Emergency SOS',
@@ -8172,14 +8177,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   color: const Color(0xFFFBF4F4),
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFF8B2B38).withValues(alpha: 0.16),
+                                    color: AppColors.danger.withValues(alpha: 0.16),
                                     width: 1.2,
                                   ),
                                 ),
                                 alignment: Alignment.center,
                                 child: const Icon(
                                   Icons.logout_rounded,
-                                  color: Color(0xFF8B2B38),
+                                  color: AppColors.danger,
                                   size: 24,
                                 ),
                               ),
@@ -8255,7 +8260,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor:
-                                              const Color(0xFF8B2B38),
+                                              AppColors.danger,
                                           foregroundColor: Colors.white,
                                           elevation: 0,
                                           shape: RoundedRectangleBorder(
@@ -8293,12 +8298,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFFAF2F3),
-                    foregroundColor: const Color(0xFF8B2B38),
+                    foregroundColor: AppColors.danger,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: const Color(0xFF8B2B38).withValues(alpha: 0.18),
+                        color: AppColors.danger.withValues(alpha: 0.18),
                       ),
                     ),
                   ),
@@ -8309,7 +8314,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 child: Text(
                   'WISGO • Rancak.in Sumatera Barat v1.0',
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: AppColors.muted,
                   ),
@@ -8368,7 +8373,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ),
                 child: const Icon(
                   Icons.waving_hand_rounded,
-                  color: Color(0xFFE5C07B),
+                  color: AppColors.goldSoft,
                   size: 20,
                 ),
               ),
@@ -8429,7 +8434,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               children: [
                 _buildGuestFeatureRow(
                   Icons.military_tech_rounded,
-                  const Color(0xFFD97706),
+                  AppColors.warning,
                   AppLocale.tr('5 Tingkat Grade & Lencana Petualang', '5 Adventurer Grades & Badges'),
                   AppLocale.tr('Kumpulkan XP dari check point & selesaikan challenge', 'Earn XP from check points & complete challenges'),
                 ),
@@ -8443,7 +8448,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 const Divider(height: 16, color: AppColors.warmBorder),
                 _buildGuestFeatureRow(
                   Icons.history_rounded,
-                  const Color(0xFF2563EB),
+                  AppColors.info,
                   AppLocale.tr('Riwayat Perjalanan & Aktivitas', 'Journey Logs & Timeline'),
                   AppLocale.tr('Simpan jejak rute wisata & sinkronisasi antar-perangkat', 'Save exploration routes & sync across devices'),
                 ),
@@ -8519,7 +8524,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Text(
                 subtitle,
                 style: const TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 11,
                   color: AppColors.muted,
                   height: 1.3,
                 ),
@@ -8542,7 +8547,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Text(
                 AppLocale.tr('Terkunci', 'Locked'),
                 style: TextStyle(
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: Colors.grey.shade700,
                 ),
@@ -8593,7 +8598,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Text(
                       'Pamerkan momen wisatamu ke IG Story, TikTok, atau WA Status',
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         color: AppColors.ink.withValues(alpha: 0.65),
                       ),
                     ),
@@ -8603,16 +8608,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: AppColors.successBg,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF86EFAC)),
+                  border: Border.all(color: AppColors.successBorder),
                 ),
                 child: const Text(
                   'Viral Share',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF15803D),
+                    color: AppColors.success,
                   ),
                 ),
               ),
@@ -8650,7 +8655,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 '',
                 'Stempel',
                 Icons.verified_rounded,
-                const Color(0xFF15803D),
+                AppColors.success,
               ),
               _buildAggregatedDivider(),
               _buildAggregatedStatItem(
@@ -8658,7 +8663,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 '',
                 'Gelar',
                 Icons.military_tech_rounded,
-                const Color(0xFFD97706),
+                AppColors.warning,
               ),
               _buildAggregatedDivider(),
               _buildAggregatedStatItem(
@@ -8666,7 +8671,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 'XP',
                 'Poin Wisata',
                 Icons.stars_rounded,
-                const Color(0xFF0369A1),
+                AppColors.info,
               ),
             ],
           ),
@@ -8776,7 +8781,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           child: Text(
                             exp.category,
                             style: const TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: AppColors.forest,
                             ),
@@ -8785,7 +8790,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         Text(
                           exp.tripDate,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: AppColors.muted,
                             fontWeight: FontWeight.w600,
                           ),
@@ -8873,7 +8878,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 Text(
                                   ach.title,
                                   style: TextStyle(
-                                    fontSize: 9.5,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: ach.ribbonColor,
                                   ),
@@ -8900,7 +8905,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               icon: const Icon(Icons.info_outline_rounded, size: 14),
                               label: const Text(
                                 'Detail Jejak',
-                                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                               ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.forest,
@@ -8922,7 +8927,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               icon: const Icon(Icons.share_rounded, size: 14),
                               label: const Text(
                                 'Stiker & Kartu',
-                                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.forest,
@@ -8975,7 +8980,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 Text(
                   unit,
                   style: TextStyle(
-                    fontSize: 8.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: color,
                   ),
@@ -8989,7 +8994,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 8.5,
+              fontSize: 11,
               color: AppColors.muted,
               fontWeight: FontWeight.w600,
             ),
@@ -9028,7 +9033,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 8.5,
+              fontSize: 11,
               color: AppColors.muted,
             ),
           ),
@@ -9084,7 +9089,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.muted,
                 ),
@@ -9141,7 +9146,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 11,
                       color: AppColors.muted,
                     ),
                   ),
@@ -9166,7 +9171,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     IconData? icon,
     Color? color,
   }) {
-    final activeColor = color ?? const Color(0xFFE5C07B);
+    final activeColor = color ?? AppColors.goldSoft;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
@@ -9208,14 +9213,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: isUnlocked ? const Color(0xFFE5C07B) : Colors.white54,
+                  color: isUnlocked ? AppColors.goldSoft : Colors.white54,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: isUnlocked ? const Color(0xFFD9C9BC) : Colors.white38,
                 ),
@@ -9266,7 +9271,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 11,
                   color: AppColors.muted,
                 ),
               ),
@@ -9277,16 +9282,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0FDF4),
+            color: AppColors.successBg,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFBBF7D0)),
+            border: Border.all(color: AppColors.successBorder),
           ),
           child: Text(
             xp,
             style: const TextStyle(
-              fontSize: 10.5,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF15803D),
+              color: AppColors.success,
             ),
           ),
         ),
@@ -9417,7 +9422,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                                 : (item['label'] as String),
                                             maxLines: 1,
                                             style: TextStyle(
-                                              fontSize: 10.5,
+                                              fontSize: 11,
                                               fontWeight: isSelected
                                                   ? FontWeight.w800
                                                   : FontWeight.w600,
@@ -9688,7 +9693,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                       const Text(
                         'EKSPLORASI LINGKUNGAN & DENAH KAWASAN',
                         style: TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
                           color: AppColors.brush,
@@ -9850,7 +9855,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                       Text(
                         'Geser 360° Aktif',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: AppColors.cream,
                         ),
@@ -9893,7 +9898,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                         Text(
                           'Sensor Gyro 360° Penuh',
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: AppColors.cream,
                           ),
@@ -9962,7 +9967,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                                 Text(
                                   _isPlayingVoiceOver ? 'MEMUTAR NARASI BUDAYA' : 'AUDIO NARASI BUDAYA',
                                   style: TextStyle(
-                                    fontSize: 9.5,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.6,
                                     color: _isPlayingVoiceOver ? Colors.amber : AppColors.sage,
@@ -10002,7 +10007,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                               Text(
                                 _isNarrationExpanded ? 'Tutup' : 'Teks',
                                 style: const TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -10041,7 +10046,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                       child: Text(
                         _getHistoricalNarration(widget.place),
                         style: const TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           color: AppColors.cream,
                           height: 1.4,
                         ),
@@ -10334,7 +10339,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                       child: Text(
                         'TITIK ${selectedPoint.category}',
                         style: const TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: AppColors.forest,
                         ),
@@ -10343,7 +10348,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
                     const Text(
                       'Terverifikasi Petugas',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: AppColors.brush,
                       ),
@@ -10509,7 +10514,7 @@ class _Explore360AndDenahSheetState extends State<_Explore360AndDenahSheet> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: isSelected ? AppColors.cream : AppColors.ink,
                 ),
@@ -10601,7 +10606,7 @@ class _MapNavigationSheet extends StatelessWidget {
                       const Text(
                         'PETA NAVIGASI & RUTE LOKASI',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.5,
                           color: AppColors.brush,
@@ -10657,7 +10662,7 @@ class _MapNavigationSheet extends StatelessWidget {
                               child: Text(
                                 'Menuju: $facilityName',
                                 style: const TextStyle(
-                                  fontSize: 10.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.forest,
                                 ),
@@ -10688,7 +10693,7 @@ class _MapNavigationSheet extends StatelessWidget {
                           Text(
                             '± ${place.distanceKm * 2} mnt',
                             style: const TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: AppColors.muted,
                             ),
@@ -10919,7 +10924,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         Text(
                           _bookmarked ? 'Tersimpan' : '+ Simpan',
                           style: const TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: AppColors.forest,
                           ),
@@ -10984,7 +10989,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1,
                                     style: const TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       color: AppColors.forest,
                                     ),
@@ -11001,7 +11006,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                 child: Text(
                                   '${widget.place.distanceKm.toStringAsFixed(widget.place.distanceKm.truncateToDouble() == widget.place.distanceKm ? 0 : 1)} km',
                                   style: const TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.cream,
                                   ),
@@ -11090,7 +11095,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                             const Text(
                               'Tarif Resmi Transparan',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.brush,
                               ),
@@ -11201,7 +11206,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       color: Colors.white70,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -11255,9 +11260,9 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFBF4E4),
+                    color: AppColors.creamSubtle,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFC89242)),
+                    border: Border.all(color: AppColors.goldMinang),
                   ),
                   child: Row(
                     children: [
@@ -11265,7 +11270,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFC89242),
+                          color: AppColors.goldMinang,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.leaderboard_rounded, color: Colors.white, size: 18),
@@ -11277,11 +11282,11 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           children: [
                             Text(
                               'Papan Peringkat Penjelajah',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF8C5C1E)),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.warningDark),
                             ),
                             Text(
                               'Pantau peringkat & capaian penjelajah',
-                              style: TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
+                              style: TextStyle(fontSize: 11, color: AppColors.muted),
                             ),
                           ],
                         ),
@@ -11296,7 +11301,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF193D22),
+                          backgroundColor: AppColors.forest,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -11323,7 +11328,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                       const Text(
                         'LINGKUP FASILITAS KAWASAN WISATA',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.6,
                           color: AppColors.forest,
@@ -11466,7 +11471,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.6,
                                     color: AppColors.forest,
@@ -11476,7 +11481,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                 Text(
                                   'Bukti Foto Asli & Koordinat GPS',
                                   style: TextStyle(
-                                    fontSize: 9.5,
+                                    fontSize: 11,
                                     color: AppColors.muted,
                                   ),
                                 ),
@@ -11489,7 +11494,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                             label: const Text(
                               '+ Tulis Ulasan',
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -11566,7 +11571,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 1,
                                                 style: const TextStyle(
-                                                  fontSize: 9.5,
+                                                  fontSize: 11,
                                                   fontWeight: FontWeight.w600,
                                                   color: AppColors.brush,
                                                 ),
@@ -11581,7 +11586,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFEF3D6),
+                                      color: AppColors.warningBg,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -11589,7 +11594,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w900,
-                                        color: Color(0xFFB45309),
+                                        color: AppColors.warningDark,
                                       ),
                                     ),
                                   ),
@@ -11600,7 +11605,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFDFECE2),
+                                    color: AppColors.sage,
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(color: AppColors.sageBorder),
                                   ),
@@ -11613,7 +11618,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                         child: Text(
                                           rev.realLocation!,
                                           style: const TextStyle(
-                                            fontSize: 9.5,
+                                            fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.forest,
                                           ),
@@ -11675,12 +11680,12 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                           width: double.infinity,
                                           child: const Row(
                                             children: [
-                                              Icon(Icons.photo_camera_rounded, size: 11, color: Color(0xFFE5C07B)),
+                                              Icon(Icons.photo_camera_rounded, size: 11, color: AppColors.goldSoft),
                                               SizedBox(width: 4),
                                               Text(
                                                 'Bukti Foto Asli di Lokasi • Ketuk Perbesar',
                                                 style: TextStyle(
-                                                  fontSize: 9,
+                                                  fontSize: 11,
                                                   fontWeight: FontWeight.w700,
                                                   color: Colors.white,
                                                 ),
@@ -11721,7 +11726,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.6,
                                 color: AppColors.forest,
@@ -11743,7 +11748,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                   child: const Text(
                                     'Barometer →',
                                     style: TextStyle(
-                                      fontSize: 9,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.forest,
                                     ),
@@ -11760,7 +11765,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                 child: const Text(
                                   'Resmi',
                                   style: TextStyle(
-                                    fontSize: 9,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.forest,
                                   ),
@@ -11774,7 +11779,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                       Text(
                         widget.place.perdaRef,
                         style: const TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: AppColors.muted,
                         ),
@@ -11810,7 +11815,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                     Text(
                                       fee.sub,
                                       style: const TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         color: AppColors.muted,
                                       ),
                                     ),
@@ -11859,7 +11864,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     const Text(
                       'Tiket Masuk Resmi',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppColors.muted,
                       ),
@@ -11958,7 +11963,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.verified_rounded, size: 14, color: Color(0xFFE5C07B)),
+                        const Icon(Icons.verified_rounded, size: 14, color: AppColors.goldSoft),
                         const SizedBox(width: 6),
                         Text(
                           'Bukti Foto Asli • $author',
@@ -11969,7 +11974,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                     const SizedBox(height: 4),
                     Text(
                       location,
-                      style: TextStyle(fontSize: 10.5, color: AppColors.sage.withValues(alpha: 0.9)),
+                      style: TextStyle(fontSize: 11, color: AppColors.sage.withValues(alpha: 0.9)),
                     ),
                   ],
                 ),
@@ -11999,7 +12004,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               content: const Row(
                 children: [
-                  Icon(Icons.verified_rounded, color: Color(0xFFE5C07B), size: 20),
+                  Icon(Icons.verified_rounded, color: AppColors.goldSoft, size: 20),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -12144,7 +12149,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
                       Text(
                         'TULIS ULASAN WISATAWAN',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
                           color: AppColors.brush,
@@ -12184,7 +12189,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFDFECE2),
+                color: AppColors.sage,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.sageBorder),
               ),
@@ -12216,7 +12221,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
                         Text(
                           '${widget.destination.title} (${widget.destination.subRegion}) • Radius < 150m',
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: AppColors.muted,
                           ),
                         ),
@@ -12232,7 +12237,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
                     child: const Text(
                       'Terverifikasi',
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: AppColors.cream,
                       ),
@@ -12246,7 +12251,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
             // 2. Rating Bintang
             const Text(
               'PENILAIAN RATING:',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
             ),
             const SizedBox(height: 6),
             Container(
@@ -12288,7 +12293,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
             // 3. Bukti Foto Asli di Lokasi
             const Text(
               'BUKTI FOTO KUNJUNGAN DI LOKASI:',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
             ),
             const SizedBox(height: 6),
             Container(
@@ -12330,11 +12335,11 @@ class _AddReviewModalState extends State<_AddReviewModal> {
                           width: double.infinity,
                           child: const Row(
                             children: [
-                              Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFFE5C07B)),
+                              Icon(Icons.check_circle_rounded, size: 12, color: AppColors.goldSoft),
                               SizedBox(width: 4),
                               Text(
                                 'Bukti Foto Terlampir & Siap Diverifikasi',
-                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
                               ),
                             ],
                           ),
@@ -12345,7 +12350,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
                   const SizedBox(height: 10),
                   const Text(
                     'Pilih contoh bukti foto nyata di lokasi:',
-                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.muted),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted),
                   ),
                   const SizedBox(height: 6),
                   Wrap(
@@ -12360,7 +12365,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
                         },
                         selectedColor: AppColors.forest,
                         labelStyle: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isSelected ? AppColors.cream : AppColors.ink,
                         ),
@@ -12380,7 +12385,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
             // 4. Input Ulasan & Catatan Pengalaman
             const Text(
               'PENGALAMAN & KONDISI NYATA DI LOKASI:',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
             ),
             const SizedBox(height: 6),
             TextField(
@@ -12432,7 +12437,7 @@ class _AddReviewModalState extends State<_AddReviewModal> {
                     ),
                     child: Text(
                       '+ $chipText',
-                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.forest),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.forest),
                     ),
                   ),
                 );
@@ -12553,7 +12558,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('📍 Koordinat Geospasial Terverifikasi (<500m)! Skor Geode bertambah +250 GP.'),
-        backgroundColor: Color(0xFF193D22),
+        backgroundColor: AppColors.forest,
         duration: Duration(seconds: 2),
       ),
     );
@@ -12569,7 +12574,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✓ Rekalkulasi Geode Ranking Berhasil! Seluruh data titik spasial GPS telah disinkronkan oleh Admin Dispar.'),
-            backgroundColor: Color(0xFF193D22),
+            backgroundColor: AppColors.forest,
           ),
         );
       }
@@ -12608,7 +12613,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                 height: 44,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFC89242), Color(0xFF8C5C1E)],
+                    colors: [AppColors.goldMinang, AppColors.warningDark],
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -12621,11 +12626,11 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                   children: [
                     Text(
                       'Geode Ranking Penjelajah',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF142618)),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.ink),
                     ),
                     Text(
                       'Papan Peringkat Spasial • Direkalkulasi oleh Admin Dispar',
-                      style: TextStyle(fontSize: 10.5, color: Color(0xFF5A6B5D)),
+                      style: TextStyle(fontSize: 11, color: AppColors.muted),
                     ),
                   ],
                 ),
@@ -12643,14 +12648,14 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF193D22), Color(0xFF142618)],
+                colors: [AppColors.forest, AppColors.ink],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF193D22).withValues(alpha: 0.25),
+                  color: AppColors.forest.withValues(alpha: 0.25),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -12664,17 +12669,17 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('POSISI RANKING ANDA', style: TextStyle(fontSize: 9.5, color: AppColors.sage, fontWeight: FontWeight.w800)),
+                        Text('POSISI RANKING ANDA', style: TextStyle(fontSize: 11, color: AppColors.sage, fontWeight: FontWeight.w800)),
                         Text('Peringkat #3 Se-Sumbar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                       ],
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFC89242),
+                        color: AppColors.goldMinang,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Colors.white)),
+                      child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
                     ),
                   ],
                 ),
@@ -12684,22 +12689,22 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                   children: [
                     Column(
                       children: [
-                        Text('$_userGeodeScore GP', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFFE2B755))),
-                        const Text('Skor Geode', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                        Text('$_userGeodeScore GP', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.goldSoft)),
+                        const Text('Skor Geode', style: TextStyle(fontSize: 11, color: AppColors.sage)),
                       ],
                     ),
                     Container(width: 1, height: 24, color: Colors.white24),
                     Column(
                       children: [
                         Text('${_userGeodeDistanceKm.toStringAsFixed(1)} km', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
-                        const Text('Jarak Geodesik', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                        const Text('Jarak Geodesik', style: TextStyle(fontSize: 11, color: AppColors.sage)),
                       ],
                     ),
                     Container(width: 1, height: 24, color: Colors.white24),
                     Column(
                       children: [
                         Text(_isGpsCheckedIn ? '10/10' : '9/10', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
-                        const Text('Tertaklukkan', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                        const Text('Tertaklukkan', style: TextStyle(fontSize: 11, color: AppColors.sage)),
                       ],
                     ),
                   ],
@@ -12716,13 +12721,13 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
               onPressed: _isRecalculating ? null : _recalculateGeodeRanking,
               icon: _isRecalculating
                   ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.sync_rounded, size: 16, color: Color(0xFF193D22)),
+                  : const Icon(Icons.sync_rounded, size: 16, color: AppColors.forest),
               label: Text(
                 _isRecalculating ? 'Merekalkulasi Peringkat Geospasial...' : 'Rekalkulasi Geode Ranking Saya',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF193D22)),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
               ),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF193D22)),
+                side: const BorderSide(color: AppColors.forest),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -12735,17 +12740,17 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _isGpsCheckedIn ? const Color(0xFFF0FDF4) : const Color(0xFFFEF3D6),
+                color: _isGpsCheckedIn ? AppColors.successBg : AppColors.warningBg,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _isGpsCheckedIn ? const Color(0xFF22C55E) : const Color(0xFFD97706),
+                  color: _isGpsCheckedIn ? AppColors.success : AppColors.warning,
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     _isGpsCheckedIn ? Icons.check_circle_rounded : Icons.my_location_rounded,
-                    color: _isGpsCheckedIn ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                    color: _isGpsCheckedIn ? AppColors.success : AppColors.warningDark,
                     size: 22,
                   ),
                   const SizedBox(width: 10),
@@ -12758,14 +12763,14 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
-                            color: _isGpsCheckedIn ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                            color: _isGpsCheckedIn ? AppColors.success : AppColors.warningDark,
                           ),
                         ),
                         Text(
                           _isGpsCheckedIn
                               ? 'Stempel check-in di $destName (+250 GP)'
                               : 'Berada di $destName (< 500m geofence)',
-                          style: const TextStyle(fontSize: 10, color: Color(0xFF5A6B5D)),
+                          style: const TextStyle(fontSize: 11, color: AppColors.muted),
                         ),
                       ],
                     ),
@@ -12774,7 +12779,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                     ElevatedButton(
                       onPressed: _verifyGpsCheckin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF193D22),
+                        backgroundColor: AppColors.forest,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -12789,7 +12794,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
 
           const Text(
             'PAPAN PERINGKAT SPASIAL (TOP 5):',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
           ),
           const SizedBox(height: 8),
 
@@ -12815,10 +12820,10 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isMe ? const Color(0xFFFBF4E4) : Colors.white,
+        color: isMe ? AppColors.creamSubtle : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isMe ? const Color(0xFFC89242) : AppColors.sageBorder,
+          color: isMe ? AppColors.goldMinang : AppColors.sageBorder,
           width: isMe ? 2 : 1,
         ),
       ),
@@ -12830,7 +12835,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: rank == 1
-                  ? const Color(0xFFE2B755)
+                  ? AppColors.goldSoft
                   : rank == 2
                       ? const Color(0xFFB0B7BD)
                       : rank == 3
@@ -12841,7 +12846,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
             child: Text(
               '#$rank',
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w900,
                 color: rank <= 3 ? Colors.white : AppColors.ink,
               ),
@@ -12860,7 +12865,7 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
-                          color: isMe ? const Color(0xFF8C5C1E) : AppColors.ink,
+                          color: isMe ? AppColors.warningDark : AppColors.ink,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -12870,23 +12875,23 @@ class _GeodeRankingModalState extends State<_GeodeRankingModal> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFC89242),
+                          color: AppColors.goldMinang,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text('Saya', style: TextStyle(fontSize: 8.5, color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text('Saya', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ],
                 ),
-                Text('$dest • $dist', style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+                Text('$dest • $dist', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(score, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF193D22))),
-              Text('Tier $tier', style: const TextStyle(fontSize: 8.5, color: AppColors.muted)),
+              Text(score, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppColors.forest)),
+              Text('Tier $tier', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
             ],
           ),
         ],

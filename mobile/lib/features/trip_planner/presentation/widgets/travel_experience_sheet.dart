@@ -153,7 +153,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                         child: Text(
                           experience.category,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: AppColors.forest,
                           ),
@@ -195,12 +195,12 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(Icons.verified_rounded,
-                                      size: 11, color: Color(0xFF34D399)),
+                                      size: 11, color: AppColors.success),
                                   const SizedBox(width: 4),
                                   Text(
                                     experience.badgeTitle,
                                     style: const TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                     ),
@@ -238,7 +238,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                           '#${experience.stampNumber}',
                           '',
                           Icons.verified_rounded,
-                          const Color(0xFF15803D),
+                          AppColors.success,
                         ),
                         _buildStatTile(
                           'Progres Destinasi',
@@ -252,7 +252,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                           experience.levelTitle,
                           '',
                           Icons.military_tech_rounded,
-                          const Color(0xFFD97706),
+                          AppColors.warning,
                         ),
                       ],
                     ),
@@ -264,16 +264,16 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                      border: Border.all(color: AppColors.successBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(
                           Icons.format_quote_rounded,
-                          color: Color(0xFF15803D),
+                          color: AppColors.success,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -282,7 +282,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                             experience.storyNotes,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF166534),
+                              color: AppColors.forest,
                               height: 1.4,
                               fontStyle: FontStyle.italic,
                             ),
@@ -319,7 +319,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                           child: Text(
                             '${experience.completedCheckpointsCount}/${experience.checkpoints.length} Tercatat',
                             style: const TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: AppColors.forest,
                             ),
@@ -400,7 +400,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
                                           Text(
                                             cp.time,
                                             style: const TextStyle(
-                                              fontSize: 10,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.forest,
                                             ),
@@ -562,7 +562,7 @@ class TravelExperienceDetailSheet extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 9.5,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.ink.withValues(alpha: 0.65),
             ),

@@ -51,7 +51,7 @@ class OfflineBanner extends StatelessWidget {
                       child: Text(
                         'MODE TANPA KONEKSI INTERNET',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
                           color: AppColors.ink,
@@ -93,7 +93,7 @@ class OfflineBanner extends StatelessWidget {
                 child: const Text(
                   'Aktifkan',
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.terracotta,
                   ),

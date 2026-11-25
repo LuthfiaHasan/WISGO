@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Model Penyelenggara Terverifikasi (Item 2 Spesifikasi Trip Go)
 class VerifiedOrganizer {
@@ -174,8 +175,8 @@ const List<TravelCategoryGroup> kStandardTravelCategories = [
     name: 'Alam & Geopark',
     description: 'Eksplorasi puncak gunung api, tebing granit purba, air terjun alami, ngarai, dan geopark Sumatera Barat.',
     icon: Icons.terrain_rounded,
-    primaryColor: Color(0xFF193D22),
-    badgeBgColor: Color(0xFFE8F2EC),
+    primaryColor: AppColors.forest,
+    badgeBgColor: AppColors.sage,
     popularKeywords: [
       'harau', 'sarasah', 'tebing', 'gunung', 'marapi', 'singgalang',
       'talang', 'tandikat', 'ngarai', 'sianok', 'anai', 'lawang', 'maninjau',
@@ -187,8 +188,8 @@ const List<TravelCategoryGroup> kStandardTravelCategories = [
     name: 'Budaya & Nagari',
     description: 'Warisan sejarah Minangkabau, istano basa, rumah gadang, desa adat tertua, dan seni tradisi.',
     icon: Icons.account_balance_rounded,
-    primaryColor: Color(0xFF7C2D12),
-    badgeBgColor: Color(0xFFFEE2E2),
+    primaryColor: AppColors.terracotta,
+    badgeBgColor: AppColors.dangerBg,
     popularKeywords: [
       'pagaruyung', 'istano', 'rumah gadang', 'jam gadang', 'pariangan',
       'pandai sikek', 'desa adat', 'nagari', 'tenun', 'ukiran', 'cagar budaya'
@@ -199,8 +200,8 @@ const List<TravelCategoryGroup> kStandardTravelCategories = [
     name: 'Hidden Gem',
     description: 'Destinasi alami tersembunyi yang asri, minim keramaian, dan membutuhkan edukasi kelestarian tinggi.',
     icon: Icons.diamond_outlined,
-    primaryColor: Color(0xFF0F766E),
-    badgeBgColor: Color(0xFFCCFBF1),
+    primaryColor: AppColors.success,
+    badgeBgColor: AppColors.successBg,
     popularKeywords: [
       'nyarai', 'lubuk gamaran', 'batu kapal', 'jembatan akar', 'bayang',
       'silokek', 'ngalau basurek', 'madobag', 'mentawai', 'hidden gem'
@@ -211,8 +212,8 @@ const List<TravelCategoryGroup> kStandardTravelCategories = [
     name: 'Religi',
     description: 'Wisata masjid bersejarah berarsitektur Minang, surau tarekat, dan jejak peradaban Islam Minangkabau.',
     icon: Icons.mosque_rounded,
-    primaryColor: Color(0xFF047857),
-    badgeBgColor: Color(0xFFD1FAE5),
+    primaryColor: AppColors.success,
+    badgeBgColor: AppColors.successBg,
     popularKeywords: [
       'masjid raya', 'masjid', 'surau', 'religi', 'islam', 'tarusan'
     ],
@@ -222,8 +223,8 @@ const List<TravelCategoryGroup> kStandardTravelCategories = [
     name: 'Kuliner',
     description: 'Sentra kuliner Minangkabau otentik, los lambuang pasar tradisional, rumah makan legendaris, dan sentra rendang.',
     icon: Icons.restaurant_rounded,
-    primaryColor: Color(0xFFC2410C),
-    badgeBgColor: Color(0xFFFFEDD5),
+    primaryColor: AppColors.terracotta,
+    badgeBgColor: AppColors.coralTint,
     popularKeywords: [
       'kapau', 'rendang', 'payakumbuh', 'los lambuang', 'sate', 'ikan bilih',
       'singkarak', 'kopi kawa', 'kuliner', 'pasar ateh'

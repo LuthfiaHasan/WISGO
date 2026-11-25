@@ -181,7 +181,7 @@ class _DestinationPanoramaSheetState extends State<DestinationPanoramaSheet> {
                           'Geser untuk putar 360° • Cubit untuk zoom',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

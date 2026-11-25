@@ -171,18 +171,18 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: AppColors.infoBg,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                        border: Border.all(color: AppColors.infoBorder),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.info_outline_rounded, color: Color(0xFF1D4ED8), size: 15),
+                          Icon(Icons.info_outline_rounded, color: AppColors.info, size: 15),
                           SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Sistem menyediakan pilihan jam. Silakan pilih jam lalu isi kegiatan manual di bawah.',
-                              style: TextStyle(fontSize: 10, color: Color(0xFF1E40AF)),
+                              style: TextStyle(fontSize: 11, color: AppColors.info),
                             ),
                           ),
                         ],
@@ -193,7 +193,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     // 1. JAM / WAKTU (DISEDIAKAN SISTEM)
                     const Text(
                       'PILIHAN JAM / WAKTU (DARI SISTEM):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     Container(
@@ -232,7 +232,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     // Opsi Custom Jam Manual
                     Row(
                       children: [
-                        const Text('Atau pilih jam custom: ', style: TextStyle(fontSize: 10.5, color: AppColors.muted)),
+                        const Text('Atau pilih jam custom: ', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                         TextButton(
                           onPressed: () async {
                             final pickStart = await showTimePicker(context: dialogCtx, initialTime: startTime);
@@ -247,7 +247,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                               }
                             }
                           },
-                          child: const Text('Pilih Jam Mulai & Selesai', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800)),
+                          child: const Text('Pilih Jam Mulai & Selesai', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                         ),
                       ],
                     ),
@@ -256,7 +256,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     // 2. NAMA KEGIATAN (DIISI MANUAL OLEH PEMBUAT TRIP)
                     const Text(
                       'NAMA KEGIATAN / AKTIVITAS (MANUAL):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
@@ -275,7 +275,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     // 3. LOKASI KEGIATAN (MANUAL)
                     const Text(
                       'LOKASI / TEMPAT (MANUAL):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
@@ -294,7 +294,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     // 4. CATATAN / SOP (MANUAL)
                     const Text(
                       'CATATAN / INSTRUKSI KHUSUS (MANUAL):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
@@ -608,13 +608,13 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: AppColors.successBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_awesome_rounded, color: Color(0xFF15803D), size: 20),
+                    const Icon(Icons.auto_awesome_rounded, color: AppColors.success, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -622,7 +622,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                         children: [
                           const Text(
                             'Kategori Otomatis Terdeteksi:',
-                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF166534)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.forest),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -630,7 +630,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                             style: const TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF15803D),
+                              color: AppColors.success,
                             ),
                           ),
                         ],
@@ -795,7 +795,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                               ),
                               Text(
                                 'Sistem menyediakan jam/waktu, Anda mengisi kegiatan & lokasi.',
-                                style: TextStyle(fontSize: 10, color: AppColors.muted),
+                                style: TextStyle(fontSize: 11, color: AppColors.muted),
                               ),
                             ],
                           ),
@@ -822,13 +822,13 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE8F1F8),
+                                color: AppColors.infoBg,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.3)),
+                                border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
                               ),
                               child: Text(
                                 step.time,
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF1E5B82)),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.info),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -849,7 +849,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                                         Expanded(
                                           child: Text(
                                             step.location,
-                                            style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                                            style: const TextStyle(fontSize: 11, color: AppColors.muted),
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
@@ -860,7 +860,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                                     const SizedBox(height: 2),
                                     Text(
                                       step.notes,
-                                      style: TextStyle(fontSize: 9.5, color: AppColors.ink.withValues(alpha: 0.65)),
+                                      style: TextStyle(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.65)),
                                     ),
                                   ],
                                 ],
@@ -962,7 +962,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.5,
           color: AppColors.forest,
