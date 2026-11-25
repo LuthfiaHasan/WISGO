@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:panorama_viewer/panorama_viewer.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_config.dart';
 import '../../../../core/models/user_profile.dart';
 import '../../../../core/localization/app_locale.dart';
@@ -149,6 +148,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   // View 2: Real Interactive Sumbar Map State & Google Maps Hub
   String? _selectedPetaDestinationId;
+  SumbarMapCategory _selectedPetaCategory = SumbarMapCategory.semua;
+  final ScrollController _petaScrollController = ScrollController();
 
   // Navigation Items (5 Tabs: Beranda, Open Trip, Peta, Kamus Minang, Profil)
   static const List<Map<String, dynamic>> _navItems = [
@@ -374,6 +375,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     _heroSliderTimer?.cancel();
     _heroPageController?.dispose();
     _exploreScrollController?.dispose();
+    _petaScrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -4686,10 +4688,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   Widget _buildPetaView() {
     return Column(
       children: [
-        // Top Sticky Header Peta
+        // Top Sticky Header Peta (Clean & Minimalist)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
           decoration: const BoxDecoration(
             color: AppColors.cream,
             border: Border(
@@ -4705,31 +4707,28 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   children: [
                     Text(
                       AppLocale.tr(
-                        'SISTEM INFORMASI GEOGRAFIS & SPASIAL',
-                        'GEOGRAPHIC & SPATIAL INFORMATION',
+                        'JELAJAH SUMATERA BARAT',
+                        'EXPLORE WEST SUMATRA',
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.3,
-                        color: AppColors.brush,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: AppColors.muted,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      AppLocale.tr(
-                        'Peta Wisata Interaktif Sumbar',
-                        'Interactive West Sumatra Map',
-                      ),
+                      AppLocale.tr('Peta Wisata', 'Travel Map'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 19,
+                        fontSize: 21,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
-                        letterSpacing: -0.4,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ],
@@ -4737,23 +4736,30 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.sage,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.sageBorder),
+                  border: Border.all(color: AppColors.warmBorder),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.gps_fixed_rounded, size: 13, color: AppColors.forest),
-                    const SizedBox(width: 4),
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF16A34A),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     Text(
-                      AppLocale.tr('GPS Aktif', 'GPS Active'),
+                      AppLocale.tr('Padang', 'Padang'),
                       style: const TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.forest,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
                       ),
                     ),
                   ],
@@ -4763,140 +4769,219 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ),
         ),
 
-        // Scrollable Peta Body
+        // Scrollable Peta Body (Clean Spacing & Breathing Room)
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 116),
-            children: [
-              // 1. REAL INTERACTIVE SUMBAR MAP (Peta Sendiri)
-              SumbarRealMapWidget(
-                height: 315,
-                selectedDestinationId: _selectedPetaDestinationId,
-                onDestinationSelected: (dest) {
-                  setState(() => _selectedPetaDestinationId = dest.id);
-                },
-                onLaunchGoogleMapsRoute: (dest) {
-                  _launchGoogleMapsNavigation(
-                    dest.position.latitude,
-                    dest.position.longitude,
-                    dest.name,
-                  );
-                },
-                onOpenGoogleMapsHub: () => _launchGoogleMapsQuery('Wisata Sumatera Barat'),
-                onOpenFullShunlu: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const MapExploreShunluScreen(),
+          child: Builder(
+            builder: (context) {
+              final filteredMapDestinations =
+                  filterSumbarMapDestinations(_selectedPetaCategory);
+              return ListView(
+                controller: _petaScrollController,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
+                children: [
+                  // 0. FILTER KATEGORI HORIZONTAL (Di luar kanvas peta agar peta tetap lega)
+                  SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.none,
+                      itemCount: SumbarMapCategory.values.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, idx) {
+                        final cat = SumbarMapCategory.values[idx];
+                        final active = _selectedPetaCategory == cat;
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () {
+                              final nextList = filterSumbarMapDestinations(cat);
+                              setState(() {
+                                _selectedPetaCategory = cat;
+                                if (_selectedPetaDestinationId != null &&
+                                    !nextList.any(
+                                      (d) => d.id == _selectedPetaDestinationId,
+                                    )) {
+                                  _selectedPetaDestinationId = null;
+                                }
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: active ? AppColors.forest : AppColors.bgCard,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: active
+                                      ? AppColors.forest
+                                      : AppColors.warmBorder,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    cat.icon,
+                                    size: 14,
+                                    color: active ? Colors.white : AppColors.forest,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    cat.label,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: active ? Colors.white : AppColors.ink,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
-              // 2. HERO STRIP: Buka Peta Wisata di Google Maps
-              _buildBukaPetaWisataGmapsStrip(),
+                  // 1. REAL INTERACTIVE SUMBAR MAP (Clean & Ringan)
+                  SumbarRealMapWidget(
+                    height: 330,
+                    destinations: filteredMapDestinations,
+                    selectedDestinationId: _selectedPetaDestinationId,
+                    onDestinationSelected: (dest) {
+                      setState(() => _selectedPetaDestinationId = dest.id);
+                    },
+                    onOpenDestinationDetail: _openMapDestinationDetail,
+                    onLaunchGoogleMapsRoute: (dest) {
+                      _launchGoogleMapsNavigation(
+                        dest.position.latitude,
+                        dest.position.longitude,
+                        dest.name,
+                      );
+                    },
+                    onOpenGoogleMapsHub: () =>
+                        _launchGoogleMapsQuery('Wisata Sumatera Barat'),
+                    onOpenFullShunlu: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MapExploreShunluScreen(),
+                      ),
+                    ),
+                  ),
 
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-              // 3. PINTASAN FASILITAS SEARAH RUTE (1-Klik GMaps)
-              _buildPintasanSearahRuteSection(),
+                  // 2. SLIM ACTION STRIP: Buka Peta Wisata di Google Maps
+                  _buildBukaPetaWisataGmapsStrip(),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 22),
 
-              // 4. TERDEKAT DARI LOKASIMU (List Destinasi dengan Tombol Rute GMaps)
-              _buildTerdekatDariLokasimuSection(),
+                  // 3. PINTASAN FASILITAS SEARAH RUTE (Clean 4 Icons)
+                  _buildPintasanSearahRuteSection(),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-              // 5. PANTAUAN JALUR UTAMA & KEAMANAN
-              _buildPantauanJalurSumbarSection(),
-            ],
+                  // 4. TERDEKAT DARI LOKASIMU (Tersinkron dengan filter kategori peta)
+                  _buildTerdekatDariLokasimuSection(filteredMapDestinations),
+
+                  const SizedBox(height: 24),
+
+                  // 5. PANTAUAN JALUR UTAMA & KEAMANAN
+                  _buildPantauanJalurSumbarSection(),
+                ],
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  /// Launch Google Maps navigation (driving turn-by-turn mode) to destination GPS
-  Future<void> _launchGoogleMapsNavigation(double lat, double lng, String destinationName) async {
-    final nativeUri = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
-    final webUri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
-    try {
-      if (await canLaunchUrl(nativeUri)) {
-        await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(webUri)) {
-        await launchUrl(webUri, mode: LaunchMode.externalApplication);
-      } else {
-        _showAppToast('Membuka Google Maps untuk $destinationName...');
+  /// Membuka modal detail destinasi dari pin peta terpilih
+  void _openMapDestinationDetail(SumbarMapDestination mapDest) {
+    final lowerName = mapDest.name.toLowerCase();
+    final firstWord = lowerName.split(RegExp(r'[\s&]+')).firstWhere(
+          (w) => w.length >= 4,
+          orElse: () => lowerName,
+        );
+    SavedDestinationModel? matched;
+    for (final item in kAllSumbarDestinations) {
+      if (item.id == mapDest.id ||
+          item.title.toLowerCase().contains(firstWord) ||
+          lowerName.contains(item.title.toLowerCase().split(' ').first)) {
+        matched = item;
+        break;
       }
-    } catch (_) {
-      try {
-        await launchUrl(webUri, mode: LaunchMode.externalApplication);
-      } catch (_) {
-        _showAppToast('Gagal membuka Google Maps');
-      }
+    }
+    _openDestinationDetailModal(matched ?? kAllSumbarDestinations.first);
+  }
+
+  /// Launch Google Maps directions (ringan & stabil di Android/iOS/Emulator)
+  Future<void> _launchGoogleMapsNavigation(
+    double lat,
+    double lng,
+    String destinationName,
+  ) async {
+    final opened = await launchWisgoGoogleMapsRoute(
+      lat: lat,
+      lng: lng,
+      destinationName: destinationName,
+    );
+    if (!opened && mounted) {
+      _showAppToast('Tidak dapat membuka Google Maps untuk $destinationName');
     }
   }
 
   /// Launch Google Maps query search near user location (e.g., SPBU, RM Padang, Masjid, ATM)
   Future<void> _launchGoogleMapsQuery(String query) async {
-    final searchUri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}',
-    );
-    try {
-      if (await canLaunchUrl(searchUri)) {
-        await launchUrl(searchUri, mode: LaunchMode.externalApplication);
-      } else {
-        _showAppToast('Membuka pencarian Google Maps...');
-      }
-    } catch (_) {
-      _showAppToast('Gagal membuka Google Maps');
+    final opened = await launchWisgoGoogleMapsSearch(query);
+    if (!opened && mounted) {
+      _showAppToast('Tidak dapat membuka pencarian Google Maps');
     }
   }
 
-  /// 2. Hero Strip: Buka Peta Wisata di Google Maps
+  /// 2. Slim Action Strip: Buka Peta Wisata di Google Maps
   Widget _buildBukaPetaWisataGmapsStrip() {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _launchGoogleMapsQuery('Wisata Sumatera Barat'),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.forest, Color(0xFF153017)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
+            color: AppColors.forest,
+            borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: AppColors.forest.withValues(alpha: 0.22),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
+                color: AppColors.forest.withValues(alpha: 0.16),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
-                  ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.map_rounded,
                   color: Colors.white,
-                  size: 23,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 13),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -4904,41 +4989,39 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Text(
                       AppLocale.tr(
                         'Buka Peta Wisata di Google Maps',
-                        'Open Tourist Map in Google Maps',
+                        'Open Travel Map in Google Maps',
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                         letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       AppLocale.tr(
-                        'Navigasi belokan demi belokan & info lalu lintas real-time',
-                        'Turn-by-turn navigation & live traffic updates',
+                        'Navigasi langsung & info lalu lintas real-time',
+                        'Direct navigation & live traffic updates',
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Color(0xFFD8E6D9),
-                        height: 1.3,
+                        color: Color(0xFFD0E2D2),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD49D4A),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -4946,16 +5029,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     Text(
                       AppLocale.tr('Buka', 'Open'),
                       style: const TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1B140B),
+                        color: AppColors.forest,
                       ),
                     ),
                     const SizedBox(width: 3),
                     const Icon(
                       Icons.arrow_forward_rounded,
                       size: 13,
-                      color: Color(0xFF1B140B),
+                      color: AppColors.forest,
                     ),
                   ],
                 ),
@@ -4967,52 +5050,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  /// 2. Pintasan Fasilitas Searah Rute (1-Klik GMaps)
+  /// 3. Pintasan Fasilitas Searah Rute (Clean 4 Tiles)
   Widget _buildPintasanSearahRuteSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              AppLocale.tr(
-                'Pintasan Fasilitas Searah Rute',
-                'En-Route Facility Shortcuts',
-              ),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: AppColors.ink,
-                letterSpacing: -0.3,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.sage,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                AppLocale.tr('1-Klik GMaps', '1-Click GMaps'),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.forest,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
         Text(
           AppLocale.tr(
-            'Temukan kebutuhan perjalanan terdekat di sekitar lokasi Anda.',
-            'Quickly find essential pit stops along your route.',
+            'Cari Cepat di Sekitar',
+            'Quick Nearby Search',
           ),
           style: const TextStyle(
-            fontSize: 11,
-            color: AppColors.muted,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: AppColors.ink,
+            letterSpacing: -0.3,
           ),
         ),
         const SizedBox(height: 10),
@@ -5021,43 +5073,39 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.restaurant_rounded,
-                iconColor: AppColors.danger,
-                bgColor: AppColors.dangerBg,
-                title: AppLocale.tr('RM Padang', 'Padang Food'),
-                subtitle: AppLocale.tr('Otentik', 'Authentic'),
+                iconColor: const Color(0xFFDC2626),
+                bgColor: const Color(0xFFFEF2F2),
+                title: AppLocale.tr('RM Padang', 'Dining'),
                 onTap: () => _launchGoogleMapsQuery('Rumah Makan Padang terdekat'),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.local_gas_station_rounded,
-                iconColor: AppColors.info,
-                bgColor: AppColors.infoBg,
-                title: AppLocale.tr('SPBU / BBM', 'Gas Station'),
-                subtitle: AppLocale.tr('Pertashop', 'Fuel Stops'),
+                iconColor: const Color(0xFF2563EB),
+                bgColor: const Color(0xFFEFF6FF),
+                title: AppLocale.tr('SPBU', 'Fuel'),
                 onTap: () => _launchGoogleMapsQuery('SPBU terdekat'),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.mosque_rounded,
                 iconColor: AppColors.success,
                 bgColor: AppColors.successBg,
                 title: AppLocale.tr('Masjid', 'Mosque'),
-                subtitle: AppLocale.tr('Tempat Sholat', 'Prayer Area'),
                 onTap: () => _launchGoogleMapsQuery('Masjid terdekat'),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: _buildPintasanQuickTile(
                 icon: Icons.atm_rounded,
-                iconColor: AppColors.warning,
-                bgColor: AppColors.warningBg,
-                title: AppLocale.tr('ATM & Kasir', 'ATM & Bank'),
-                subtitle: AppLocale.tr('Minimarket', 'Convenience'),
+                iconColor: const Color(0xFFD97706),
+                bgColor: const Color(0xFFFFFBEB),
+                title: AppLocale.tr('ATM', 'ATM'),
                 onTap: () => _launchGoogleMapsQuery('ATM terdekat'),
               ),
             ),
@@ -5072,7 +5120,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     required Color iconColor,
     required Color bgColor,
     required String title,
-    required String subtitle,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -5082,31 +5129,24 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 13),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.warmBorder),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.ink.withValues(alpha: 0.02),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: bgColor,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: iconColor, size: 19),
               ),
-              const SizedBox(height: 7),
+              const SizedBox(height: 8),
               Text(
                 title,
                 maxLines: 1,
@@ -5114,20 +5154,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.ink,
-                ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.muted,
                 ),
               ),
             ],
@@ -5137,26 +5165,35 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  /// 4. Terdekat dari Lokasimu (List Destinasi dengan Tombol Rute GMaps)
-  Widget _buildTerdekatDariLokasimuSection() {
+  /// 4. Terdekat dari Lokasimu (Tersinkron dengan Filter Kategori Peta + Fokus Peta & Rute GMaps)
+  Widget _buildTerdekatDariLokasimuSection(
+    List<SumbarMapDestination> destinations,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              AppLocale.tr(
-                'Terdekat dari Lokasimu',
-                'Nearest to Your Location',
-              ),
-              style: const TextStyle(
-                fontSize: 15.5,
-                fontWeight: FontWeight.w800,
-                color: AppColors.ink,
-                letterSpacing: -0.3,
+            Expanded(
+              child: Text(
+                _selectedPetaCategory == SumbarMapCategory.semua
+                    ? AppLocale.tr(
+                        'Terdekat dari Lokasimu',
+                        'Nearest to Your Location',
+                      )
+                    : '${_selectedPetaCategory.label} (${destinations.length})',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.ink,
+                  letterSpacing: -0.3,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 9,
@@ -5190,121 +5227,181 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 165,
+          height: 176,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
-            itemCount: kSumbarMapDestinations.length,
+            itemCount: destinations.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              final dest = kSumbarMapDestinations[index];
+              final dest = destinations[index];
               final isSelected = _selectedPetaDestinationId == dest.id;
-              return GestureDetector(
-                onTap: () {
-                  setState(() => _selectedPetaDestinationId = dest.id);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 215,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFF1F7F2) : Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: isSelected ? AppColors.forest : AppColors.warmBorder,
-                      width: isSelected ? 1.8 : 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.ink.withValues(
-                          alpha: isSelected ? 0.08 : 0.04,
-                        ),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () {
+                    setState(() => _selectedPetaDestinationId = dest.id);
+                    if (_petaScrollController.hasClients) {
+                      _petaScrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeOutCubic,
+                      );
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 224,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.successBg : AppColors.bgCard,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isSelected ? AppColors.forest : AppColors.warmBorder,
+                        width: isSelected ? 1.8 : 1,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: dest.color.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${dest.distanceLabel} • ${dest.durationLabel}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: dest.color,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.ink.withValues(
+                            alpha: isSelected ? 0.08 : 0.04,
+                          ),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: dest.color.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${dest.distanceLabel} • ${dest.durationLabel}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: dest.color,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: dest.color,
-                              shape: BoxShape.circle,
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: dest.color,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                dest.icon,
+                                color: Colors.white,
+                                size: 14,
+                              ),
                             ),
-                            child: Icon(
-                              dest.icon,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        dest.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink,
-                          letterSpacing: -0.2,
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _launchGoogleMapsNavigation(
-                            dest.position.latitude,
-                            dest.position.longitude,
-                            dest.name,
-                          ),
-                          icon: const Icon(Icons.navigation_rounded, size: 12),
-                          label: Text(
-                            AppLocale.tr('Rute GMaps', 'GMaps Route'),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A73E8),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 7),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(9),
-                            ),
+                        const SizedBox(height: 6),
+                        Text(
+                          dest.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setState(
+                                    () => _selectedPetaDestinationId = dest.id,
+                                  );
+                                  if (_petaScrollController.hasClients) {
+                                    _petaScrollController.animateTo(
+                                      0,
+                                      duration: const Duration(milliseconds: 280),
+                                      curve: Curves.easeOutCubic,
+                                    );
+                                  }
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.forest,
+                                  side: const BorderSide(
+                                    color: AppColors.sageBorder,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: Text(
+                                  AppLocale.tr('Fokus Peta', 'Focus Map'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _launchGoogleMapsNavigation(
+                                  dest.position.latitude,
+                                  dest.position.longitude,
+                                  dest.name,
+                                ),
+                                icon: const Icon(Icons.near_me_rounded, size: 12),
+                                label: Text(
+                                  AppLocale.tr('Rute', 'Route'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.forest,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -6560,12 +6657,30 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  // MODAL: EDIT PROFIL WISATAWAN
+  // MODAL: EDIT PROFIL WISATAWAN (Opsi 2: Nama, WA, Kota Asal, Email, Kontak Darurat, Kategori)
   void _openEditProfileModal() {
-    final nameCtrl = TextEditingController(text: _safeProfileName);
-    final phoneCtrl = TextEditingController(text: _safeProfilePhone);
-    final originCtrl = TextEditingController(text: _safeProfileOrigin);
-    String selectedRole = _safeProfileRole;
+    final session = AuthSession.instance;
+    final nameCtrl = TextEditingController(
+      text: ApiConfig.currentUser?.fullName.isNotEmpty == true
+          ? ApiConfig.currentUser!.fullName
+          : _safeProfileName,
+    );
+    final phoneCtrl = TextEditingController(
+      text: ApiConfig.currentUser?.phoneNumber.isNotEmpty == true
+          ? ApiConfig.currentUser!.phoneNumber
+          : _safeProfilePhone,
+    );
+    final originCtrl = TextEditingController(text: session.userOrigin);
+    final emailCtrl = TextEditingController(text: session.userEmail);
+    final emergencyNameCtrl = TextEditingController(
+      text: session.emergencyContactName,
+    );
+    final emergencyPhoneCtrl = TextEditingController(
+      text: session.emergencyContactPhone,
+    );
+    String selectedRole = session.userRole.contains('Mode Tamu')
+        ? _safeProfileRole
+        : session.userRole;
 
     const roles = [
       'Wisatawan Nusantara',
@@ -6598,12 +6713,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 bottom: MediaQuery.viewInsetsOf(modalCtx).bottom,
               ),
               child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                 decoration: const BoxDecoration(
                   color: AppColors.cream,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                 ),
-                child: SingleChildScrollView(
+                child: SafeArea(
+                  top: false,
+                  child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -6776,6 +6893,110 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
+                        AppLocale.tr('Email (Opsional)', 'Email (Optional)'),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: 'nama@email.com',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppLocale.tr(
+                          'Kontak Darurat SOS (Opsional)',
+                          'Emergency SOS Contact (Optional)',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: emergencyNameCtrl,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: AppLocale.tr(
+                            'Nama keluarga / kerabat',
+                            'Family / relative name',
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: emergencyPhoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: AppLocale.tr(
+                            'Nomor HP kontak darurat',
+                            'Emergency contact phone',
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.warmBorder,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
                         AppLocale.tr('Kategori Wisatawan', 'Traveler Type'),
                         style: const TextStyle(
                           fontSize: 11.5,
@@ -6817,18 +7038,31 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
+                            final nextName = nameCtrl.text.trim().isEmpty
+                                ? _safeProfileName
+                                : nameCtrl.text.trim();
+                            final nextPhone = phoneCtrl.text.trim().isEmpty
+                                ? _safeProfilePhone
+                                : phoneCtrl.text.trim();
+                            final nextOrigin = originCtrl.text.trim().isEmpty
+                                ? _safeProfileOrigin
+                                : originCtrl.text.trim();
                             setState(() {
-                              _profileName = nameCtrl.text.trim().isEmpty
-                                  ? _safeProfileName
-                                  : nameCtrl.text.trim();
-                              _profilePhone = phoneCtrl.text.trim().isEmpty
-                                  ? _safeProfilePhone
-                                  : phoneCtrl.text.trim();
-                              _profileOrigin = originCtrl.text.trim().isEmpty
-                                  ? _safeProfileOrigin
-                                  : originCtrl.text.trim();
+                              _profileName = nextName;
+                              _profilePhone = nextPhone;
+                              _profileOrigin = nextOrigin;
                               _profileRole = selectedRole;
                             });
+                            AuthSession.instance.updateProfile(
+                              name: nextName,
+                              phone: nextPhone,
+                              origin: nextOrigin,
+                              email: emailCtrl.text.trim(),
+                              emergencyContactName: emergencyNameCtrl.text.trim(),
+                              emergencyContactPhone: emergencyPhoneCtrl.text.trim(),
+                              role: selectedRole,
+                              isProfileComplete: true,
+                            );
                             Navigator.pop(ctx);
                             _showAppToast(
                               AppLocale.tr(
@@ -6857,6 +7091,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
             );
@@ -7061,7 +7296,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ],
                       ),
                     ),
-              // 1. Hero Identity Card (Clean & Modern + Tombol Edit Profil)
+              // 1. Hero Identity Card (Hanya tampil jika SUDAH LOGIN — kejujuran data desain.md)
+              if (isLoggedIn)
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(

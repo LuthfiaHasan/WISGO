@@ -232,16 +232,16 @@ class _VirtualTour360GalleryScreenState
         final items = _filteredDestinations;
 
         return Scaffold(
-          backgroundColor: AppColors.cream100,
+          backgroundColor: AppColors.cream,
           appBar: AppBar(
-            backgroundColor: AppColors.cream100,
+            backgroundColor: AppColors.cream,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: 18,
-                color: AppColors.ink900,
+                color: AppColors.ink,
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -253,7 +253,7 @@ class _VirtualTour360GalleryScreenState
                   style: const TextStyle(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.ink900,
+                    color: AppColors.ink,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -265,8 +265,8 @@ class _VirtualTour360GalleryScreenState
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _backendConnected
-                            ? const Color(0xFF1E9E5A)
-                            : const Color(0xFFD97706),
+                            ? AppColors.success
+                            : AppColors.warning,
                       ),
                     ),
                     const SizedBox(width: 5),
@@ -286,7 +286,7 @@ class _VirtualTour360GalleryScreenState
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.ink900.withValues(alpha: 0.62),
+                          color: AppColors.ink.withValues(alpha: 0.62),
                         ),
                       ),
                     ),
@@ -306,7 +306,7 @@ class _VirtualTour360GalleryScreenState
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppColors.ink900.withValues(alpha: 0.09),
+                      color: AppColors.ink.withValues(alpha: 0.09),
                     ),
                   ),
                   child: TextField(
@@ -314,7 +314,7 @@ class _VirtualTour360GalleryScreenState
                     onChanged: (v) => setState(() => _query = v),
                     style: const TextStyle(
                       fontSize: 13.5,
-                      color: AppColors.ink900,
+                      color: AppColors.ink,
                     ),
                     decoration: InputDecoration(
                       hintText: AppLocale.tr(
@@ -323,12 +323,12 @@ class _VirtualTour360GalleryScreenState
                       ),
                       hintStyle: TextStyle(
                         fontSize: 12.5,
-                        color: AppColors.ink900.withValues(alpha: 0.42),
+                        color: AppColors.ink.withValues(alpha: 0.42),
                       ),
                       prefixIcon: Icon(
                         Icons.search_rounded,
                         size: 20,
-                        color: AppColors.ink900.withValues(alpha: 0.48),
+                        color: AppColors.ink.withValues(alpha: 0.48),
                       ),
                       suffixIcon: _query.isNotEmpty
                           ? IconButton(
@@ -356,30 +356,34 @@ class _VirtualTour360GalleryScreenState
                   itemBuilder: (context, idx) {
                     final f = _filters[idx];
                     final active = _selectedFilter == f['key'];
-                    return GestureDetector(
-                      onTap: () =>
-                          setState(() => _selectedFilter = f['key'] ?? 'ALL'),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: active ? AppColors.green800 : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: active
-                                ? AppColors.green800
-                                : AppColors.ink900.withValues(alpha: 0.12),
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () =>
+                            setState(() => _selectedFilter = f['key'] ?? 'ALL'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
                           ),
-                        ),
-                        child: Text(
-                          f['label']!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: active ? Colors.white : AppColors.ink900,
+                          decoration: BoxDecoration(
+                            color: active ? AppColors.forest : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: active
+                                  ? AppColors.forest
+                                  : AppColors.ink.withValues(alpha: 0.12),
+                            ),
+                          ),
+                          child: Text(
+                            f['label']!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: active ? Colors.white : AppColors.ink,
+                            ),
                           ),
                         ),
                       ),
@@ -392,34 +396,101 @@ class _VirtualTour360GalleryScreenState
               // Destination 360° Cards
               Expanded(
                 child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.green800,
+                    ? ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 28),
+                        itemCount: 3,
+                        separatorBuilder: (_, __) => const SizedBox(height: 14),
+                        itemBuilder: (_, __) => Container(
+                          height: 205,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.shimmerBase,
+                                AppColors.shimmerHighlight,
+                                AppColors.shimmerBase,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            border: Border.all(color: AppColors.warmBorder),
+                          ),
                         ),
                       )
                     : items.isEmpty
                         ? Center(
-                            child: Padding(
+                            child: Container(
+                              margin: const EdgeInsets.all(24),
                               padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: AppColors.bgCard,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppColors.warmBorder),
+                              ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.threesixty_rounded,
-                                    size: 46,
-                                    color:
-                                        AppColors.ink900.withValues(alpha: 0.3),
+                                  Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.sage,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.threesixty_rounded,
+                                      size: 28,
+                                      color: AppColors.forest,
+                                    ),
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 12),
                                   Text(
                                     AppLocale.tr(
                                       'Destinasi 360° tidak ditemukan',
                                       'No matching 360° destination found',
                                     ),
+                                    textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.ink900,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.ink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    AppLocale.tr(
+                                      'Coba ubah kata kunci atau reset filter kategori.',
+                                      'Try a different keyword or reset the category filter.',
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.muted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() {
+                                        _query = '';
+                                        _selectedFilter = 'ALL';
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.forest,
+                                      foregroundColor: AppColors.cream,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      AppLocale.tr('Reset Filter', 'Reset Filter'),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -452,22 +523,25 @@ class _VirtualTour360GalleryScreenState
       (sum, s) => sum + s.hotspots.length,
     );
 
-    return GestureDetector(
-      onTap: () => _openVirtualTour(dest),
-      child: Container(
-        height: 205,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () => _openVirtualTour(dest),
+        child: Container(
+          height: 205,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.ink.withValues(alpha: 0.12),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -495,9 +569,9 @@ class _VirtualTour360GalleryScreenState
                     end: Alignment.bottomCenter,
                     stops: const [0.0, 0.42, 1.0],
                     colors: [
-                      Colors.black.withValues(alpha: 0.25),
+                      AppColors.ink.withValues(alpha: 0.25),
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.80),
+                      AppColors.ink.withValues(alpha: 0.80),
                     ],
                   ),
                 ),
@@ -639,6 +713,7 @@ class _VirtualTour360GalleryScreenState
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -656,7 +731,7 @@ class _VirtualTour360GalleryScreenState
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.32),
+            color: AppColors.ink.withValues(alpha: 0.32),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.28),

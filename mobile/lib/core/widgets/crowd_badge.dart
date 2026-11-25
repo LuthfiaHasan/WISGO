@@ -11,9 +11,9 @@ class CrowdBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bg;
-    Color fg;
-    String text;
+    final Color bg;
+    final Color fg;
+    final String text;
 
     switch (level) {
       case CrowdLevel.sepi:
@@ -23,7 +23,7 @@ class CrowdBadge extends StatelessWidget {
         break;
       case CrowdLevel.sedang:
         bg = AppColors.warningBg;
-        fg = AppColors.warning;
+        fg = AppColors.warningDark;
         text = 'Sedang';
         break;
       case CrowdLevel.ramai:
@@ -34,10 +34,10 @@ class CrowdBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: fg.withValues(alpha: 0.25)),
       ),
       child: Row(
@@ -51,7 +51,7 @@ class CrowdBadge extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(
