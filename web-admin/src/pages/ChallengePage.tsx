@@ -1,588 +1,137 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Trophy,
   Award,
-  CheckCircle2,
-  Clock,
-  Gift,
-  Search,
-  Plus,
-  Trash2,
-  Edit3,
-  Filter,
-  Sparkles,
-  MapPin,
-  Users,
-  Send,
-  Check,
-  Calendar,
-  X,
-  Share2,
-  QrCode,
-  FileCheck,
-  Shield,
   CheckCheck,
+  CheckCircle2,
+  Edit3,
+  FileCheck,
+  MapPin,
+  Plus,
+  Search,
+  Share2,
+  Shield,
   Sliders,
-  ExternalLink,
-  Smartphone,
-  Navigation,
-  Compass,
-  Flame,
-  Mountain,
+  Sparkles,
+  Stamp,
+  Trash2,
+  Trophy,
+  Users,
+  X,
 } from 'lucide-react';
 import {
-  ChecklistChallenge,
-  ChecklistClaimStatus,
-  TouristChecklistClaim,
-  Destination,
   AdventurerLevelConfig,
-  UserProfileExperience,
+  Challenge,
+  Destination,
+  JejakWisgoSource,
   PostingShareTemplate,
+  UserChallengeReward,
+  UserProfileExperience,
 } from '../types/contract';
 import {
   AdventurerLevelsRepo,
-  UserProfilesRepo,
+  ChallengesRepo,
+  PassportSpotsRepo,
   PostingTemplatesRepo,
+  StempVisitsRepo,
+  UserChallengeRewardsRepo,
+  UserProfilesRepo,
 } from '../services/dbRepository';
-import { SEED_POSTING_TEMPLATES } from '../data/mockDatabaseV2';
+import {
+  MASTER_DESTINATION_CATEGORIES,
+  calculateAdventurerLevel,
+} from '../data/mockDestinations';
 
 interface ChallengePageProps {
   destinations: Destination[];
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
 }
 
-const STORAGE_KEY_CHALLENGES = 'wisgo_checklist_challenges';
-const STORAGE_KEY_CLAIMS = 'wisgo_checklist_claims';
-
-// Seed Initial Challenges
-const INITIAL_CHALLENGES: ChecklistChallenge[] = [
-  {
-    id: 'ch-01',
-    title: 'Jelajah 10 Ikon Geopark & Lembah Harau',
-    description:
-      'Kunjungi 10 titik destinasi geologi dan panorama tebing granit di kawasan Limapuluh Kota & Agam. Cukup scan QR GPS di setiap lokasi.',
-    category: 'Eksplorasi Alam & Geopark',
-    checkin_tagline: 'Check-In di Lokasi, Kumpulkan Lencana Ranah Minang!',
-    target_count: 10,
-    reward_type: 'Uang Tunai',
-    reward_description: 'Uang Tunai Rp 1.500.000 + Sertifikat Penjelajah Geopark Sumbar',
-    duration_days: 30,
-    target_destinations: [
-      'Lembah Harau',
-      'Kelok 9 Skywalk',
-      'Ngalau Indah',
-      'Danau Maninjau',
-      'Puncak Lawang',
-      'Ngarai Sianok',
-      'Jam Gadang Bukittinggi',
-      'Taruko Cafe & Valley',
-      'Lembah Anai',
-      'Batang Tabik Waterpark',
-    ],
-    target_checkpoints: ['Sarasah Bunta Point', 'Tebing Granit Harau', 'Skywalk Kelok 9'],
-    participant_count: 428,
-    completed_count: 36,
-    is_active: true,
-    created_at: '2026-10-01T08:00:00Z',
-    updated_at: '2026-11-15T10:00:00Z',
-  },
-  {
-    id: 'ch-02',
-    title: 'Ekspedisi 5 Nagari Pusaka & Warisan Adat',
-    description:
-      'Lengkapi kunjungan ke 5 perkampungan adat dan istana peninggalan Minangkabau untuk menguji kecintaan budaya lokal.',
-    category: 'Pusaka & Warisan Adat',
-    checkin_tagline: 'Jelajahi Nagari Pusaka, Kumpulkan Paspor Adat!',
-    target_count: 5,
-    reward_type: 'Voucher',
-    reward_description: 'Paket Voucher Belanja UMKM Songket Rp 750.000 + Piagam Adat',
-    duration_days: 21,
-    target_destinations: [
-      'Istano Basa Pagaruyung',
-      'Nagari Pariangan (Desa Terindah)',
-      'Desa Wisata Kubu Gadang',
-      'Kawasan Saribu Rumah Gadang',
-      'Benteng Fort de Kock',
-    ],
-    target_checkpoints: ['Singgasana Balairung Sari', 'Rumah Gadang Tuo', 'Batu Tagak Pariangan'],
-    participant_count: 312,
-    completed_count: 58,
-    is_active: true,
-    created_at: '2026-10-10T09:00:00Z',
-    updated_at: '2026-11-12T14:30:00Z',
-  },
-  {
-    id: 'ch-03',
-    title: 'Pesona 7 Surga Bahari Mandeh & Pesisir',
-    description:
-      'Jelajahi 7 pulau dan pesisir eksotis di Kawasan Mandeh dan Kota Padang dengan check-in terverifikasi.',
-    category: 'Bahari & Kepulauan',
-    checkin_tagline: 'Buktikan Jelajah Bahari Mandeh, Raih Reward Eksklusif!',
-    target_count: 7,
-    reward_type: 'Voucher',
-    reward_description: 'Voucher Menginap 2M1N Eco-Resort Mandeh + Free Island Hopping Boat',
-    duration_days: 45,
-    target_destinations: [
-      'Kawasan Wisata Bahari Mandeh',
-      'Pulau Cubadak',
-      'Pulau Pamutusan',
-      'Pulau Pasumpahan',
-      'Pantai Air Manis Padang',
-      'Pantai Gandoriah Pariaman',
-      'Pantai Padang Taplau',
-    ],
-    target_checkpoints: ['Dermaga Tarusan Mandeh', 'Pulau Sironjong Cliff', 'Batu Malin Kundang'],
-    participant_count: 245,
-    completed_count: 19,
-    is_active: true,
-    created_at: '2026-10-15T11:00:00Z',
-    updated_at: '2026-11-10T16:00:00Z',
-  },
-  {
-    id: 'ch-04',
-    title: 'Tantangan 3 Puncak & Danau Kembar Solok',
-    description:
-      'Jelajahi keindahan Danau Diatas, Danau Dibawah, dan Kebun Teh Alahan Panjang dalam 1 rute dingin nan sejuk.',
-    category: 'Danau & Agrowisata',
-    checkin_tagline: 'Dingin Ranah Solok, Ceklis 3 Ikon Utama!',
-    target_count: 3,
-    reward_type: 'Badge Khusus',
-    reward_description: 'Merchandise Eksklusif Kopi Solok Radjo + Goodie Bag Dispar',
-    duration_days: 14,
-    target_destinations: [
-      'Danau Diatas & Danau Dibawah',
-      'Kebun Teh Alahan Panjang',
-      'Danau Singkarak',
-    ],
-    target_checkpoints: ['Dermaga Danau Diatas', 'Bukit Cambai Viewpoint'],
-    participant_count: 189,
-    completed_count: 74,
-    is_active: true,
-    created_at: '2026-10-20T10:00:00Z',
-    updated_at: '2026-11-05T09:00:00Z',
-  },
-];
-
-// Seed Initial Claims
-const INITIAL_CLAIMS: TouristChecklistClaim[] = [
-  {
-    id: 'clm-001',
-    challenge_id: 'ch-01',
-    challenge_title: 'Jelajah 10 Ikon Geopark & Lembah Harau',
-    tourist_name: 'Fauzan Pratama',
-    tourist_phone: '081267891011',
-    target_count: 10,
-    completed_count: 10,
-    completed_destinations: [
-      'Lembah Harau',
-      'Kelok 9 Skywalk',
-      'Ngalau Indah',
-      'Danau Maninjau',
-      'Puncak Lawang',
-      'Ngarai Sianok',
-      'Jam Gadang Bukittinggi',
-      'Taruko Cafe & Valley',
-      'Lembah Anai',
-      'Batang Tabik Waterpark',
-    ],
-    reward_description: 'Uang Tunai Rp 1.500.000 + Sertifikat Penjelajah Geopark Sumbar',
-    status: 'SIAP_KLAIM',
-    completed_at: '2026-11-16T14:20:00Z',
-  },
-  {
-    id: 'clm-002',
-    challenge_id: 'ch-02',
-    challenge_title: 'Ekspedisi 5 Nagari Pusaka & Warisan Adat',
-    tourist_name: 'Siti Rahmawati',
-    tourist_phone: '081398765432',
-    target_count: 5,
-    completed_count: 5,
-    completed_destinations: [
-      'Istano Basa Pagaruyung',
-      'Nagari Pariangan (Desa Terindah)',
-      'Desa Wisata Kubu Gadang',
-      'Kawasan Saribu Rumah Gadang',
-      'Benteng Fort de Kock',
-    ],
-    reward_description: 'Paket Voucher Belanja UMKM Songket Rp 750.000 + Piagam Adat',
-    status: 'HADIAH_TERKIRIM',
-    completed_at: '2026-11-14T11:15:00Z',
-    reward_sent_at: '2026-11-15T09:30:00Z',
-    reward_notes: 'Voucher digital terkirim via WhatsApp dan Piagam Fisik dikirim via Pos Kilat.',
-  },
-  {
-    id: 'clm-003',
-    challenge_id: 'ch-01',
-    challenge_title: 'Jelajah 10 Ikon Geopark & Lembah Harau',
-    tourist_name: 'Budi Santoso',
-    tourist_phone: '082155443322',
-    target_count: 10,
-    completed_count: 8,
-    completed_destinations: [
-      'Lembah Harau',
-      'Kelok 9 Skywalk',
-      'Ngalau Indah',
-      'Danau Maninjau',
-      'Puncak Lawang',
-      'Ngarai Sianok',
-      'Jam Gadang Bukittinggi',
-      'Taruko Cafe & Valley',
-    ],
-    reward_description: 'Uang Tunai Rp 1.500.000 + Sertifikat Penjelajah Geopark Sumbar',
-    status: 'DALAM_PROGRES',
-  },
-];
+const SOURCE_LABELS: Record<JejakWisgoSource, { label: string; color: string }> = {
+  GPS_CHECKIN: { label: 'Check-in GPS', color: 'bg-emerald-100 text-emerald-800' },
+  TRIP_GO: { label: 'Trip Go', color: 'bg-blue-100 text-blue-800' },
+  TICKET_SCAN: { label: 'Scan Tiket QR', color: 'bg-amber-100 text-amber-800' },
+};
 
 export const ChallengePage: React.FC<ChallengePageProps> = ({
   destinations,
   showToast,
 }) => {
-  // Main Tab Navigation: 4 Modul Gamifikasi
-  const [activeTab, setActiveTab] = useState<
-    'checkin' | 'levels' | 'profiles' | 'templates'
-  >('checkin');
-
-  // Sub-view Tab 1: Master Tantangan vs Klaim Hadiah
+  const [activeTab, setActiveTab] = useState<'checkin' | 'levels' | 'profiles' | 'templates'>(
+    'checkin'
+  );
   const [checkinSubView, setCheckinSubView] = useState<'challenges' | 'claims'>('challenges');
 
-  // Challenges State
-  const [challenges, setChallenges] = useState<ChecklistChallenge[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CHALLENGES);
-      return saved ? JSON.parse(saved) : INITIAL_CHALLENGES;
-    } catch {
-      return INITIAL_CHALLENGES;
-    }
-  });
+  // Tab 1: Challenges & Claims (Unified V3 Repos)
+  const [challenges, setChallenges] = useState<Challenge[]>(() => ChallengesRepo.getAll());
+  const [claims, setClaims] = useState<UserChallengeReward[]>(() =>
+    UserChallengeRewardsRepo.getAll()
+  );
 
-  // Claims State
-  const [claims, setClaims] = useState<TouristChecklistClaim[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CLAIMS);
-      return saved ? JSON.parse(saved) : INITIAL_CLAIMS;
-    } catch {
-      return INITIAL_CLAIMS;
-    }
-  });
-
-  // Tab 2: Adventurer Levels State
+  // Tab 2: 5 Levels & 10-Spot Digital Passport
   const [adventurerLevels, setAdventurerLevels] = useState<AdventurerLevelConfig[]>(() =>
     AdventurerLevelsRepo.getAll()
   );
+  const passportSpots = useMemo(() => PassportSpotsRepo.getAll(), []);
+  const stempVisits = useMemo(() => StempVisitsRepo.getAll(), []);
   const [editingLevel, setEditingLevel] = useState<AdventurerLevelConfig | null>(null);
+  const [levelFormTitle, setLevelFormTitle] = useState('');
   const [levelFormTrips, setLevelFormTrips] = useState(0);
   const [levelFormCheckpoints, setLevelFormCheckpoints] = useState(0);
   const [levelFormXp, setLevelFormXp] = useState(0);
+  const [levelFormMaxXp, setLevelFormMaxXp] = useState(300);
   const [levelFormPerks, setLevelFormPerks] = useState('');
-  const [levelFormTitle, setLevelFormTitle] = useState('');
-  const [levelFormBadgeIcon, setLevelFormBadgeIcon] = useState('Compass');
 
-  // Tab 3: User Profiles State
+  // Tab 3: Jejak WISGO Profiles
   const [userProfiles, setUserProfiles] = useState<UserProfileExperience[]>(() =>
     UserProfilesRepo.getAll()
   );
+  const [selectedPassportUserId, setSelectedPassportUserId] = useState<string>(
+    () => UserProfilesRepo.getAll()[0]?.user_id || 'usr-tourist-01'
+  );
   const [profileSearchTerm, setProfileSearchTerm] = useState('');
-  const [selectedUserForDetail, setSelectedUserForDetail] = useState<UserProfileExperience | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<'ALL' | JejakWisgoSource>('ALL');
+  const [selectedUserForDetail, setSelectedUserForDetail] =
+    useState<UserProfileExperience | null>(null);
 
-  // Tab 4: Posting Templates State
+  // Tab 4: Jejak WISGO Share Templates
   const [postingTemplates, setPostingTemplates] = useState<PostingShareTemplate[]>(() =>
     PostingTemplatesRepo.getAll()
   );
-  const [selectedTemplate, setSelectedTemplate] = useState<PostingShareTemplate>(() =>
-    postingTemplates[0] || SEED_POSTING_TEMPLATES[0]
+  const [selectedTemplate, setSelectedTemplate] = useState<PostingShareTemplate>(
+    () => PostingTemplatesRepo.getAll()[0]
   );
-  const [templateWatermark, setTemplateWatermark] = useState(selectedTemplate.watermark_text);
-  const [templateQrUrl, setTemplateQrUrl] = useState(selectedTemplate.qr_download_url);
+  const [templateWatermark, setTemplateWatermark] = useState(
+    () => PostingTemplatesRepo.getAll()[0]?.watermark_text || ''
+  );
+  const [templateQrUrl, setTemplateQrUrl] = useState(
+    () => PostingTemplatesRepo.getAll()[0]?.qr_download_url || ''
+  );
+  const [previewUserId, setPreviewUserId] = useState<string>(
+    () => UserProfilesRepo.getAll()[0]?.id || 'uprof-001'
+  );
 
-  // Persist Challenges & Claims to LocalStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CHALLENGES, JSON.stringify(challenges));
-    } catch (e) {
-      console.warn('Gagal menyimpan challenges ke localStorage:', e);
-    }
-  }, [challenges]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CLAIMS, JSON.stringify(claims));
-    } catch (e) {
-      console.warn('Gagal menyimpan claims ke localStorage:', e);
-    }
-  }, [claims]);
-
-  // Modal Challenge Form State
+  // Challenge Modal Form
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingChallenge, setEditingChallenge] = useState<ChecklistChallenge | null>(null);
+  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
   const [formTitle, setFormTitle] = useState('');
-  const [formTagline, setFormTagline] = useState('Check-In di Lokasi, Kumpulkan Lencana Ranah Minang!');
+  const [formTagline, setFormTagline] = useState('Kumpulkan Stempel Paspor Digital Minang!');
   const [formDescription, setFormDescription] = useState('');
-  const [formCategory, setFormCategory] = useState('Eksplorasi Alam & Geopark');
-  const [formRewardType, setFormRewardType] = useState<string>('Uang Tunai');
+  const [formCategory, setFormCategory] = useState<string>('Alam & Geopark');
+  const [formRewardType, setFormRewardType] = useState<string>('Sertifikat & XP');
   const [formReward, setFormReward] = useState('');
+  const [formRewardPoints, setFormRewardPoints] = useState<number>(300);
   const [formTargetCount, setFormTargetCount] = useState<number>(5);
-  const [formDuration, setFormDuration] = useState<number>(30);
+  const [formDuration, setFormDuration] = useState<number>(60);
   const [formSelectedDests, setFormSelectedDests] = useState<string[]>([]);
-  const [formSelectedCheckpoints, setFormSelectedCheckpoints] = useState<string[]>([]);
 
-  // Search & Filter State (Tab 1)
+  // Claim Filters & Reward Modal
   const [searchTerm, setSearchTerm] = useState('');
-  const [claimStatusFilter, setClaimStatusFilter] = useState<'ALL' | ChecklistClaimStatus>('ALL');
-
-  // Modal Detail Claim / Kirim Hadiah
-  const [selectedClaimForReward, setSelectedClaimForReward] = useState<TouristChecklistClaim | null>(null);
+  const [claimStatusFilter, setClaimStatusFilter] = useState<
+    'ALL' | 'DALAM_PROGRES' | 'SIAP_KLAIM' | 'HADIAH_TERKIRIM'
+  >('ALL');
+  const [selectedClaimForReward, setSelectedClaimForReward] =
+    useState<UserChallengeReward | null>(null);
   const [rewardNotesInput, setRewardNotesInput] = useState('');
-
-  // Extract all available checkpoints across destinations
-  const allAvailableCheckpoints = destinations.flatMap((d) =>
-    (d.checkpoints || []).map((cp) => ({
-      name: cp.name,
-      destName: d.name,
-      city: d.city_regency,
-    }))
-  );
-
-  // Open Create Challenge Modal
-  const handleOpenCreateModal = () => {
-    setEditingChallenge(null);
-    setFormTitle('');
-    setFormTagline('Check-In di Lokasi, Kumpulkan Lencana Ranah Minang!');
-    setFormDescription('');
-    setFormCategory('Eksplorasi Alam & Geopark');
-    setFormRewardType('Uang Tunai');
-    setFormReward('');
-    setFormTargetCount(5);
-    setFormDuration(30);
-    setFormSelectedDests([]);
-    setFormSelectedCheckpoints([]);
-    setIsModalOpen(true);
-  };
-
-  // Open Edit Challenge Modal
-  const handleOpenEditModal = (ch: ChecklistChallenge) => {
-    setEditingChallenge(ch);
-    setFormTitle(ch.title);
-    setFormTagline(ch.checkin_tagline || 'Check-In di Lokasi, Kumpulkan Lencana Ranah Minang!');
-    setFormDescription(ch.description);
-    setFormCategory(ch.category || 'Eksplorasi Alam & Geopark');
-    setFormRewardType(ch.reward_type || 'Uang Tunai');
-    setFormReward(ch.reward_description || ch.reward_title || '');
-    setFormTargetCount(ch.target_count ?? ch.target_destination_count ?? 3);
-    setFormDuration(ch.duration_days ?? 30);
-    setFormSelectedDests(ch.target_destinations || []);
-    setFormSelectedCheckpoints(ch.target_checkpoints || []);
-    setIsModalOpen(true);
-  };
-
-  // Save Challenge (Create / Update)
-  const handleSaveChallenge = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formTitle.trim() || !formReward.trim()) {
-      showToast('Judul tantangan dan deskripsi reward wajib diisi.', 'warning');
-      return;
-    }
-
-    if (formTargetCount <= 0) {
-      showToast('Target jumlah tempat harus lebih dari 0.', 'warning');
-      return;
-    }
-
-    if (editingChallenge) {
-      const updated: ChecklistChallenge[] = challenges.map((ch) =>
-        ch.id === editingChallenge.id
-          ? {
-              ...ch,
-              title: formTitle.trim(),
-              checkin_tagline: formTagline.trim(),
-              description: formDescription.trim(),
-              category: formCategory,
-              reward_type: formRewardType,
-              target_count: Number(formTargetCount),
-              reward_description: formReward.trim(),
-              duration_days: Number(formDuration),
-              target_destinations: formSelectedDests,
-              target_checkpoints: formSelectedCheckpoints,
-              updated_at: new Date().toISOString(),
-            }
-          : ch
-      );
-      setChallenges(updated);
-      showToast('Tantangan berhasil diperbarui!', 'success');
-    } else {
-      const newCh: ChecklistChallenge = {
-        id: `ch-${Date.now().toString(36)}`,
-        title: formTitle.trim(),
-        checkin_tagline: formTagline.trim(),
-        description: formDescription.trim(),
-        category: formCategory,
-        reward_type: formRewardType,
-        target_count: Number(formTargetCount),
-        reward_description: formReward.trim(),
-        duration_days: Number(formDuration),
-        target_destinations: formSelectedDests,
-        target_checkpoints: formSelectedCheckpoints,
-        participant_count: 0,
-        completed_count: 0,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setChallenges([newCh, ...challenges]);
-      showToast('Tantangan baru berhasil dibuat!', 'success');
-    }
-
-    setIsModalOpen(false);
-  };
-
-  // Toggle Challenge Active Status
-  const handleToggleActive = (id: string) => {
-    const updated = challenges.map((ch) =>
-      ch.id === id ? { ...ch, is_active: !ch.is_active } : ch
-    );
-    setChallenges(updated);
-    showToast('Status keaktifan tantangan diperbarui.', 'info');
-  };
-
-  // Delete Challenge
-  const handleDeleteChallenge = (id: string) => {
-    if (!window.confirm('Hapus tantangan ini? Riwayat klaim terkait akan tetap tersimpan.')) {
-      return;
-    }
-    setChallenges(challenges.filter((ch) => ch.id !== id));
-    showToast('Tantangan berhasil dihapus.', 'info');
-  };
-
-  // Process Reward Sending
-  const handleConfirmSendReward = () => {
-    if (!selectedClaimForReward) return;
-
-    const updated = claims.map((clm) =>
-      clm.id === selectedClaimForReward.id
-        ? {
-            ...clm,
-            status: 'HADIAH_TERKIRIM' as ChecklistClaimStatus,
-            reward_sent_at: new Date().toISOString(),
-            reward_notes:
-              rewardNotesInput.trim() ||
-              'Hadiah resmi telah diverifikasi & diserahkan oleh Pengelola Dispar Sumbar.',
-          }
-        : clm
-    );
-
-    setClaims(updated);
-    showToast(
-      `Hadiah berhasil dikirimkan ke wisatawan: ${selectedClaimForReward.tourist_name}! Notifikasi WhatsApp diterbitkan.`,
-      'success'
-    );
-    setSelectedClaimForReward(null);
-    setRewardNotesInput('');
-  };
-
-  // Level Modal Edit Handlers
-  const handleOpenEditLevel = (lvl: AdventurerLevelConfig) => {
-    setEditingLevel(lvl);
-    setLevelFormTitle(lvl.title);
-    setLevelFormTrips(lvl.min_trips);
-    setLevelFormCheckpoints(lvl.min_checkpoints);
-    setLevelFormXp(lvl.min_xp);
-    setLevelFormPerks(lvl.perk_description);
-    setLevelFormBadgeIcon(lvl.badge_icon);
-  };
-
-  const handleSaveLevel = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingLevel) return;
-
-    const updatedConfig: AdventurerLevelConfig = {
-      ...editingLevel,
-      title: levelFormTitle.trim() || editingLevel.title,
-      min_trips: Number(levelFormTrips),
-      min_checkpoints: Number(levelFormCheckpoints),
-      min_xp: Number(levelFormXp),
-      perk_description: levelFormPerks.trim() || editingLevel.perk_description,
-      badge_icon: levelFormBadgeIcon,
-    };
-
-    const updatedList = AdventurerLevelsRepo.updateLevel(updatedConfig);
-    setAdventurerLevels(updatedList);
-    setEditingLevel(null);
-    showToast(`Kriteria Level ${updatedConfig.level} (${updatedConfig.name}) berhasil diperbarui!`, 'success');
-  };
-
-  // Verify Experience Item for User Profile
-  const handleVerifyExperience = (userId: string, expIdx: number) => {
-    const user = userProfiles.find((u) => u.id === userId || u.user_id === userId);
-    if (!user) return;
-
-    const updatedHistory = [...user.experience_history];
-    const targetItem = updatedHistory[expIdx];
-    if (!targetItem) return;
-
-    targetItem.status = 'verified';
-    const updatedUser: UserProfileExperience = {
-      ...user,
-      total_xp: user.total_xp + (targetItem.xp_earned || 50),
-      experience_history: updatedHistory,
-    };
-
-    const updatedList = UserProfilesRepo.save(updatedUser);
-    setUserProfiles(updatedList);
-    if (selectedUserForDetail?.id === user.id) {
-      setSelectedUserForDetail(updatedUser);
-    }
-    showToast(`Pengalaman check-in "${targetItem.checkpoint_name || targetItem.destination_name}" terverifikasi!`, 'success');
-  };
-
-  // Save Posting Template
-  const handleSavePostingTemplate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updatedTemplate: PostingShareTemplate = {
-      ...selectedTemplate,
-      watermark_text: templateWatermark.trim(),
-      qr_download_url: templateQrUrl.trim(),
-      qr_image_url: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
-        templateQrUrl.trim()
-      )}`,
-    };
-
-    const updatedList = PostingTemplatesRepo.save(updatedTemplate);
-    setPostingTemplates(updatedList);
-    setSelectedTemplate(updatedTemplate);
-    showToast('Template posting media sosial & QR unduh berhasil disimpan!', 'success');
-  };
-
-  // Macro Metrics
-  const totalActiveChallenges = challenges.filter((c) => c.is_active).length;
-  const totalParticipants = challenges.reduce((sum, c) => sum + (c.participant_count || 0), 0);
-  const totalReadyToClaim = claims.filter((c) => c.status === 'SIAP_KLAIM').length;
-  const totalRewardSent = claims.filter((c) => c.status === 'HADIAH_TERKIRIM').length;
-
-  // Filtered Claims
-  const filteredClaims = claims.filter((clm) => {
-    const tName = clm.tourist_name || '';
-    const tPhone = clm.tourist_phone || '';
-    const cTitle = clm.challenge_title || clm.reward || '';
-    const matchesSearch =
-      tName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tPhone.includes(searchTerm) ||
-      cTitle.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      claimStatusFilter === 'ALL' || clm.status === claimStatusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // Filtered Profiles
-  const filteredProfiles = userProfiles.filter((u) => {
-    const q = profileSearchTerm.toLowerCase();
-    return (
-      u.full_name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.level_name.toLowerCase().includes(q)
-    );
-  });
 
   const getLevelBadgeSvg = (level: number) => {
     switch (level) {
@@ -600,32 +149,237 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
     }
   };
 
-  const renderBadgeIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'Flame':
-        return <Flame className="w-5 h-5 text-[#8B5CF6]" />;
-      case 'Mountain':
-        return <Mountain className="w-5 h-5 text-[#F26B4B]" />;
-      case 'Award':
-        return <Award className="w-5 h-5 text-[#F59E0B]" />;
-      case 'MapPin':
-        return <MapPin className="w-5 h-5 text-[#1E9E5A]" />;
-      case 'Compass':
-      default:
-        return <Compass className="w-5 h-5 text-[#3B82F6]" />;
-    }
+  const handleOpenCreateModal = () => {
+    setEditingChallenge(null);
+    setFormTitle('');
+    setFormTagline('Kumpulkan Stempel Paspor Digital Minang!');
+    setFormDescription('');
+    setFormCategory('Alam & Geopark');
+    setFormRewardType('Sertifikat & XP');
+    setFormReward('');
+    setFormRewardPoints(350);
+    setFormTargetCount(5);
+    setFormDuration(60);
+    setFormSelectedDests([]);
+    setIsModalOpen(true);
   };
+
+  const handleOpenEditModal = (ch: Challenge) => {
+    setEditingChallenge(ch);
+    setFormTitle(ch.title);
+    setFormTagline(ch.checkin_tagline || '');
+    setFormDescription(ch.description);
+    setFormCategory(ch.category || 'Alam & Geopark');
+    setFormRewardType(ch.reward_type || 'Sertifikat & XP');
+    setFormReward(ch.reward_title);
+    setFormRewardPoints(ch.reward_points || 300);
+    setFormTargetCount(ch.target_destination_count);
+    setFormDuration(ch.duration_days || 60);
+    setFormSelectedDests(ch.target_destinations || []);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveChallenge = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formTitle.trim() || !formReward.trim()) {
+      showToast('Judul tantangan dan deskripsi reward wajib diisi.', 'warning');
+      return;
+    }
+
+    const nextChallenge: Challenge = {
+      id: editingChallenge ? editingChallenge.id : `chl-${Date.now().toString(36)}`,
+      created_by_admin_id: 'usr-admin-01',
+      title: formTitle.trim(),
+      checkin_tagline: formTagline.trim(),
+      category: formCategory,
+      description: formDescription.trim(),
+      target_destination_count: Number(formTargetCount),
+      reward_title: formReward.trim(),
+      reward_type: formRewardType,
+      reward_points: Number(formRewardPoints),
+      duration_days: Number(formDuration),
+      target_destinations: formSelectedDests,
+      target_checkpoints: editingChallenge?.target_checkpoints || [],
+      participant_count: editingChallenge?.participant_count ?? 0,
+      completed_count: editingChallenge?.completed_count ?? 0,
+      is_active: editingChallenge ? editingChallenge.is_active : true,
+      created_at: editingChallenge?.created_at || new Date().toISOString(),
+    };
+
+    const updated = ChallengesRepo.save(nextChallenge);
+    setChallenges(updated);
+    setIsModalOpen(false);
+    showToast(
+      editingChallenge ? 'Tantangan berhasil diperbarui.' : 'Tantangan baru berhasil ditambahkan.',
+      'success'
+    );
+  };
+
+  const handleToggleActive = (ch: Challenge) => {
+    const updated = ChallengesRepo.save({ ...ch, is_active: !ch.is_active });
+    setChallenges(updated);
+    showToast(`Status tantangan "${ch.title}" diperbarui.`, 'info');
+  };
+
+  const handleDeleteChallenge = (id: string) => {
+    if (!window.confirm('Hapus tantangan ini?')) return;
+    setChallenges(ChallengesRepo.delete(id));
+    showToast('Tantangan berhasil dihapus.', 'info');
+  };
+
+  const handleConfirmSendReward = () => {
+    if (!selectedClaimForReward) return;
+    const updated = UserChallengeRewardsRepo.validateAndSendReward(
+      selectedClaimForReward.id,
+      rewardNotesInput.trim() ||
+      'E-Sertifikat Gubernur & hadiah diterbitkan resmi oleh Dinas Pariwisata Sumbar.'
+    );
+    setClaims(updated);
+    showToast(
+      `E-Sertifikat & Hadiah untuk ${selectedClaimForReward.tourist_name} berhasil diterbitkan!`,
+      'success'
+    );
+    setSelectedClaimForReward(null);
+    setRewardNotesInput('');
+  };
+
+  const handleIssuePassportCertificate = (user: UserProfileExperience) => {
+    const certCode = `WG-CERT-2026-${Date.now().toString().slice(-5)}`;
+    const newReward: UserChallengeReward = {
+      id: `ucr-${Date.now().toString(36)}`,
+      challenge_id: 'chl-10-destinasi',
+      challenge_title: 'Tantangan 10 Destinasi Nagari (Paspor Digital)',
+      user_id: user.user_id,
+      tourist_name: user.full_name,
+      tourist_phone: user.phone_number,
+      progress_count: stempVisits.filter((v) => v.user_id === user.user_id && v.is_gps_valid).length,
+      target_destination_count: 10,
+      status: 'HADIAH_TERKIRIM',
+      jenis_reward: 'E-Sertifikat Gubernur',
+      reward: 'E-Sertifikat Resmi Gubernur Sumatera Barat + 500 XP',
+      certificate_code: certCode,
+      certificate_url: `https://wisgo.sumbarprov.go.id/certs/${certCode}.pdf`,
+      completed_at: new Date().toISOString(),
+      reward_notes: 'Diterbitkan langsung melalui Panel Paspor Digital Minang.',
+    };
+    setClaims(UserChallengeRewardsRepo.save(newReward));
+    showToast(`E-Sertifikat Gubernur (${certCode}) diterbitkan untuk ${user.full_name}!`, 'success');
+  };
+
+  const handleSaveLevel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLevel) return;
+    const updated = AdventurerLevelsRepo.updateLevel({
+      ...editingLevel,
+      title: levelFormTitle.trim() || editingLevel.title,
+      min_trips: Number(levelFormTrips),
+      min_checkpoints: Number(levelFormCheckpoints),
+      min_xp: Number(levelFormXp),
+      max_xp: Number(levelFormMaxXp),
+      perk_description: levelFormPerks.trim() || editingLevel.perk_description,
+    });
+    setAdventurerLevels(updated);
+    setEditingLevel(null);
+    showToast(`Kriteria Level ${editingLevel.level} (${editingLevel.name}) diperbarui.`, 'success');
+  };
+
+  const handleVerifyJejakItem = (profileId: string, itemIdx: number) => {
+    const user = userProfiles.find((u) => u.id === profileId);
+    if (!user) return;
+    const history = user.experience_history.map((item, idx) =>
+      idx === itemIdx ? { ...item, status: 'verified' as const } : item
+    );
+    const target = user.experience_history[itemIdx];
+    const nextXp = user.total_xp + (target?.xp_earned || 100);
+    const nextLevel = calculateAdventurerLevel(nextXp);
+    const nextVisited = user.visited_count + 1;
+
+    const updatedUser: UserProfileExperience = {
+      ...user,
+      total_xp: nextXp,
+      visited_count: nextVisited,
+      current_level: nextLevel.level,
+      level_name: nextLevel.name,
+      experience_history: history,
+    };
+
+    const all = UserProfilesRepo.save(updatedUser);
+    setUserProfiles(all);
+    setSelectedUserForDetail(all.find((u) => u.id === profileId) || updatedUser);
+    showToast(
+      `Jejak "${target?.destination_name}" terverifikasi (+${target?.xp_earned || 100} XP · Level ${nextLevel.level} ${nextLevel.name}).`,
+      'success'
+    );
+  };
+
+  const handleSavePostingTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTemplate) return;
+    const updatedTemplate: PostingShareTemplate = {
+      ...selectedTemplate,
+      watermark_text: templateWatermark.trim(),
+      qr_download_url: templateQrUrl.trim(),
+      qr_image_url: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
+        templateQrUrl.trim()
+      )}`,
+    };
+    const updatedList = PostingTemplatesRepo.save(updatedTemplate);
+    setPostingTemplates(updatedList);
+    setSelectedTemplate(updatedTemplate);
+    showToast('Template Share Jejak WISGO & QR unduh berhasil disimpan.', 'success');
+  };
+
+  const totalActiveChallenges = challenges.filter((c) => c.is_active).length;
+  const totalParticipants = challenges.reduce((sum, c) => sum + (c.participant_count || 0), 0);
+  const totalReadyToClaim = claims.filter((c) => c.status === 'SIAP_KLAIM').length;
+
+  const filteredClaims = claims.filter((clm) => {
+    const q = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      clm.tourist_name.toLowerCase().includes(q) ||
+      clm.tourist_phone.includes(q) ||
+      (clm.challenge_title || clm.reward).toLowerCase().includes(q);
+    const matchesStatus = claimStatusFilter === 'ALL' || clm.status === claimStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredProfiles = userProfiles.filter((u) => {
+    const q = profileSearchTerm.trim().toLowerCase();
+    const matchesQuery =
+      !q ||
+      u.full_name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.level_name.toLowerCase().includes(q);
+    const matchesSource =
+      sourceFilter === 'ALL' || u.experience_history.some((h) => h.source === sourceFilter);
+    return matchesQuery && matchesSource;
+  });
+
+  const previewUser =
+    userProfiles.find((u) => u.id === previewUserId) || userProfiles[0];
+
+  const inspectedPassportUser =
+    userProfiles.find((u) => u.user_id === selectedPassportUserId) || userProfiles[0];
+  const inspectedUserStamps = useMemo(
+    () =>
+      new Set(
+        stempVisits
+          .filter((v) => v.user_id === selectedPassportUserId && v.is_gps_valid)
+          .map((v) => v.passport_code || v.destination_id)
+      ),
+    [stempVisits, selectedPassportUserId]
+  );
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      {/* Header Halaman */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-            Gamifikasi &amp; Check-In Challenge
+            Gamifikasi, Paspor Digital &amp; Jejak WISGO
           </h1>
           <p className="text-xs text-[#4A5248] mt-0.5">
-            Tantangan wisata, 5 level petualang, profil experience ala Strava, dan template posting.
+            Tantangan check-in GPS, 5 Level Petualang, Paspor Digital 10 Spot Minang, Jejak WISGO, dan stiker share resmi.
           </p>
         </div>
 
@@ -633,7 +387,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
           <button
             type="button"
             onClick={handleOpenCreateModal}
-            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-xs transition duration-200 shrink-0"
+            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-xs shrink-0"
           >
             <Plus className="w-4 h-4 text-[#F26B4B]" />
             <span>Buat Tantangan</span>
@@ -641,151 +395,105 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
         )}
       </header>
 
-      {/* 4 Kartu Metrik Makro */}
-      <section
-        aria-label="Metrik Gamifikasi"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+      {/* 4 KPI */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold">Tantangan Aktif</span>
             <Trophy className="w-4 h-4 text-[#234B24]/70" />
           </div>
-          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
-            {totalActiveChallenges}
-          </div>
-          <p className="text-xs text-slate-500">
-            Dari {challenges.length} program terdaftar
-          </p>
+          <div className="my-2 text-2xl font-bold text-[#234B24]">{totalActiveChallenges}</div>
+          <p className="text-xs text-slate-500">Dari {challenges.length} misi gamifikasi</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold">Wisatawan Ikut Serta</span>
             <Users className="w-4 h-4 text-[#1E9E5A]" />
           </div>
-          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
+          <div className="my-2 text-2xl font-bold text-[#234B24]">
             {totalParticipants.toLocaleString('id-ID')}
           </div>
-          <p className="text-xs text-slate-500">
-            Aplikasi mobile WISGO
-          </p>
+          <p className="text-xs text-slate-500">{stempVisits.length} stempel GPS terverifikasi</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500 font-semibold">Siap Klaim Hadiah</span>
+            <span className="text-xs text-slate-500 font-semibold">Siap Klaim E-Sertifikat</span>
             <Sparkles className="w-4 h-4 text-[#F26B4B]" />
           </div>
-          <div className="my-2 text-2xl font-bold tracking-tight text-[#F26B4B]">
+          <div className="my-2 text-2xl font-bold text-[#F26B4B]">
             {totalReadyToClaim} Wisatawan
           </div>
-          <p className="text-xs text-slate-500">
-            Menunggu verifikasi Dispar
-          </p>
+          <p className="text-xs text-slate-500">Menunggu penerbitan Dispar Sumbar</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500 font-semibold">Profil Petualang</span>
-            <Award className="w-4 h-4 text-[#234B24]/70" />
+            <span className="text-xs text-slate-500 font-semibold">Paspor Digital Minang</span>
+            <Stamp className="w-4 h-4 text-[#234B24]/70" />
           </div>
-          <div className="my-2 text-2xl font-bold tracking-tight text-[#234B24]">
-            {userProfiles.length}
+          <div className="my-2 text-2xl font-bold text-[#234B24]">
+            {passportSpots.length} Spot Resmi
           </div>
-          <p className="text-xs text-slate-500">
-            5 Tingkatan level aktif
-          </p>
+          <p className="text-xs text-slate-500">CHL-BKT-01 s.d. CHL-LBH-10</p>
         </div>
       </section>
 
-      {/* 4 SUB-TAB NAVIGATION BAR */}
+      {/* 4 Sub-Tab Bar */}
       <nav
         aria-label="Tab Gamifikasi"
         className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
       >
-        <button
-          type="button"
-          onClick={() => setActiveTab('checkin')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'checkin'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
-        >
-          <Trophy className="w-3.5 h-3.5" />
-          <span>Check-In &amp; Tantangan</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('levels')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'levels'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
-        >
-          <Award className="w-3.5 h-3.5 text-[#F59E0B]" />
-          <span>5 Level &amp; Lencana</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('profiles')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'profiles'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
-        >
-          <Users className="w-3.5 h-3.5 text-[#3B82F6]" />
-          <span>Profil Experience</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('templates')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'templates'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
-        >
-          <Share2 className="w-3.5 h-3.5 text-[#F26B4B]" />
-          <span>Template Share &amp; QR</span>
-        </button>
+        {(
+          [
+            { key: 'checkin', label: 'Check-In & Tantangan', icon: <Trophy className="w-3.5 h-3.5" /> },
+            { key: 'levels', label: '5 Level & Paspor Digital', icon: <Award className="w-3.5 h-3.5 text-[#F59E0B]" /> },
+            { key: 'profiles', label: 'Jejak WISGO & Riwayat', icon: <Users className="w-3.5 h-3.5 text-[#3B82F6]" /> },
+            { key: 'templates', label: 'Template Share Jejak WISGO', icon: <Share2 className="w-3.5 h-3.5 text-[#F26B4B]" /> },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === tab.key
+                ? 'bg-[#234B24] text-white shadow-xs'
+                : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
+              }`}
+          >
+            {tab.icon}
+            <span>{tab.label}</span>
+          </button>
+        ))}
       </nav>
 
       {/* ==================================================================== */}
-      {/* TAB 1: CHECK-IN & TANTANGAN WISATA                                   */}
+      {/* TAB 1: CHECK-IN & TANTANGAN                                          */}
       {/* ==================================================================== */}
       {activeTab === 'checkin' && (
-        <section className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-6">
-          {/* Sub-Switch: Master Tantangan vs Klaim Hadiah */}
+        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setCheckinSubView('challenges')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition ${
-                  checkinSubView === 'challenges'
+                className={`px-4 py-1.5 rounded-lg text-xs font-extrabold ${checkinSubView === 'challenges'
                     ? 'bg-[#234B24] text-white'
-                    : 'bg-[#F6F3EC] text-[#4A5248] hover:text-[#1B1F1A]'
-                }`}
+                    : 'bg-[#F6F3EC] text-[#4A5248]'
+                  }`}
               >
-                Daftar Program Tantangan ({challenges.length})
+                Program Tantangan ({challenges.length})
               </button>
               <button
                 type="button"
                 onClick={() => setCheckinSubView('claims')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 ${
-                  checkinSubView === 'claims'
+                className={`px-4 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 ${checkinSubView === 'claims'
                     ? 'bg-[#234B24] text-white'
-                    : 'bg-[#F6F3EC] text-[#4A5248] hover:text-[#1B1F1A]'
-                }`}
+                    : 'bg-[#F6F3EC] text-[#4A5248]'
+                  }`}
               >
-                <span>Verifikasi Klaim Hadiah</span>
+                <span>Verifikasi Klaim &amp; E-Sertifikat</span>
                 {totalReadyToClaim > 0 && (
                   <span className="w-4 h-4 rounded-full bg-[#F26B4B] text-white text-[9px] flex items-center justify-center font-black">
                     {totalReadyToClaim}
@@ -793,68 +501,41 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                 )}
               </button>
             </div>
-            <p className="text-xs text-[#767676]">
-              Setiap tantangan memiliki tagline check-in, target check point, dan pilihan reward fleksibel.
-            </p>
           </div>
 
-          {/* Sub-View: Master Program Tantangan */}
           {checkinSubView === 'challenges' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {challenges.map((ch) => (
                 <div
                   key={ch.id}
-                  className="p-5 rounded-2xl bg-[#F6F3EC]/70 border border-[#CFD8BE] hover:border-[#234B24] transition flex flex-col justify-between space-y-4"
+                  className="p-5 rounded-2xl bg-[#F6F3EC]/70 border border-[#CFD8BE] flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <span className="px-2.5 py-1 rounded-md bg-[#234B24]/10 text-[#234B24] font-extrabold text-[10px] uppercase">
-                        {ch.category || 'Eksplorasi Alam'}
+                        {ch.category || 'Alam & Geopark'}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#3B82F6]/10 text-[#2563EB] font-bold text-[10px]">
-                        Reward: {ch.reward_type || 'Bebas'}
+                      <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px]">
+                        +{ch.reward_points} XP · {ch.reward_type}
                       </span>
                     </div>
 
-                    {/* Tagline Khusus Check-In */}
-                    <div className="p-2.5 rounded-xl bg-white border border-[#CFD8BE]/80 text-[11px] font-bold text-[#234B24] flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-[#F26B4B] shrink-0" />
-                      <span>{ch.checkin_tagline || 'Check-In di Lokasi, Kumpulkan Lencana Ranah Minang!'}</span>
-                    </div>
-
-                    <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                      {ch.title}
-                    </h3>
-
-                    <p className="text-xs text-[#4A5248] line-clamp-2">
-                      {ch.description}
-                    </p>
-
-                    {/* Target Checkpoints Chips */}
-                    {ch.target_checkpoints && ch.target_checkpoints.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-[#767676] uppercase">
-                          Target Check Point Lokasi ({ch.target_checkpoints.length}):
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                          {ch.target_checkpoints.map((cp, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-0.5 rounded-md bg-[#E4E9DA] text-[#234B24] font-bold text-[10px]"
-                            >
-                              📍 {cp}
-                            </span>
-                          ))}
-                        </div>
+                    {ch.checkin_tagline && (
+                      <div className="p-2.5 rounded-xl bg-white border border-[#CFD8BE]/80 text-[11px] font-bold text-[#234B24] flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-[#F26B4B] shrink-0" />
+                        <span>{ch.checkin_tagline}</span>
                       </div>
                     )}
 
+                    <h3 className="text-base font-extrabold text-[#1B1F1A]">{ch.title}</h3>
+                    <p className="text-xs text-[#4A5248]">{ch.description}</p>
+
                     <div className="p-3 rounded-xl bg-[#FFEDD5]/60 border border-[#FDBA74] text-xs">
                       <span className="font-extrabold text-[#9A3412] block">
-                        🎁 Hadiah: {ch.reward_description || ch.reward_title}
+                        Hadiah: {ch.reward_title}
                       </span>
                       <span className="text-[11px] text-[#C2410C] mt-0.5 block">
-                        Target: {ch.target_count ?? ch.target_destination_count} Tempat • Durasi: {ch.duration_days ?? 30} Hari
+                        Target: {ch.target_destination_count} Destinasi · Durasi: {ch.duration_days ?? 60} Hari
                       </span>
                     </div>
                   </div>
@@ -862,12 +543,9 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                   <div className="pt-3 border-t border-[#CFD8BE] flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={() => handleToggleActive(ch.id)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition ${
-                        ch.is_active
-                          ? 'bg-[#1E9E5A]/15 text-[#166534]'
-                          : 'bg-gray-200 text-[#767676]'
-                      }`}
+                      onClick={() => handleToggleActive(ch)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${ch.is_active ? 'bg-[#1E9E5A]/15 text-[#166534]' : 'bg-gray-200 text-[#767676]'
+                        }`}
                     >
                       {ch.is_active ? 'Tantangan Aktif' : 'Non-Aktif'}
                     </button>
@@ -876,16 +554,14 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenEditModal(ch)}
-                        className="p-2 rounded-xl text-[#234B24] hover:bg-[#234B24]/10 transition"
-                        title="Edit Tantangan"
+                        className="p-2 rounded-xl text-[#234B24] hover:bg-[#234B24]/10"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteChallenge(ch.id)}
-                        className="p-2 rounded-xl text-red-600 hover:bg-red-50 transition"
-                        title="Hapus Tantangan"
+                        className="p-2 rounded-xl text-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -896,7 +572,6 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
             </div>
           )}
 
-          {/* Sub-View: Verifikasi Klaim Hadiah */}
           {checkinSubView === 'claims' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -906,22 +581,24 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Cari nama atau telepon wisatawan..."
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium"
+                    placeholder="Cari nama atau nomor wisatawan..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={claimStatusFilter}
-                    onChange={(e) => setClaimStatusFilter(e.target.value as any)}
-                    className="px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-                  >
-                    <option value="ALL">Semua Status Klaim</option>
-                    <option value="SIAP_KLAIM">Siap Klaim (Menunggu)</option>
-                    <option value="HADIAH_TERKIRIM">Hadiah Terkirim</option>
-                    <option value="DALAM_PROGRES">Dalam Progres</option>
-                  </select>
-                </div>
+                <select
+                  value={claimStatusFilter}
+                  onChange={(e) =>
+                    setClaimStatusFilter(
+                      e.target.value as 'ALL' | 'DALAM_PROGRES' | 'SIAP_KLAIM' | 'HADIAH_TERKIRIM'
+                    )
+                  }
+                  className="px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+                >
+                  <option value="ALL">Semua Status Klaim</option>
+                  <option value="SIAP_KLAIM">Siap Klaim</option>
+                  <option value="HADIAH_TERKIRIM">Hadiah Terkirim</option>
+                  <option value="DALAM_PROGRES">Dalam Progres</option>
+                </select>
               </div>
 
               <div className="overflow-x-auto rounded-2xl border border-[#CFD8BE]">
@@ -930,71 +607,61 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                     <tr>
                       <th className="py-3 px-4">Wisatawan</th>
                       <th className="py-3 px-4">Tantangan</th>
-                      <th className="py-3 px-4">Progress Check-In</th>
-                      <th className="py-3 px-4">Reward</th>
+                      <th className="py-3 px-4">Progress</th>
+                      <th className="py-3 px-4">Reward &amp; E-Sertifikat</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4 text-right">Tindakan</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E9DA]">
-                    {filteredClaims.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="py-6 text-center text-[#767676]">
-                          Tidak ada data klaim hadiah sesuai filter.
+                    {filteredClaims.map((clm) => (
+                      <tr key={clm.id} className="hover:bg-[#F6F3EC]/50">
+                        <td className="py-3 px-4">
+                          <span className="font-extrabold block">{clm.tourist_name}</span>
+                          <span className="text-[10px] font-mono text-[#767676]">
+                            {clm.tourist_phone}
+                          </span>
                         </td>
-                      </tr>
-                    ) : (
-                      filteredClaims.map((clm) => (
-                        <tr key={clm.id} className="hover:bg-[#F6F3EC]/50">
-                          <td className="py-3 px-4">
-                            <span className="font-extrabold text-[#1B1F1A] block">
-                              {clm.tourist_name}
+                        <td className="py-3 px-4 font-semibold">{clm.challenge_title}</td>
+                        <td className="py-3 px-4 font-bold text-[#234B24]">
+                          {clm.progress_count} / {clm.target_destination_count} Destinasi
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-[#C2410C]">{clm.reward}</div>
+                          {clm.certificate_code && (
+                            <span className="text-[10px] font-mono text-[#234B24] font-bold">
+                              Sertifikat: {clm.certificate_code}
                             </span>
-                            <span className="text-[10px] text-[#767676] font-mono">
-                              {clm.tourist_phone}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 font-medium text-[#1B1F1A]">
-                            {clm.challenge_title}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className="font-bold text-[#234B24]">
-                              {clm.completed_count} / {clm.target_count} Titik
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-[#C2410C] font-extrabold">
-                            {clm.reward_description}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                                clm.status === 'SIAP_KLAIM'
-                                  ? 'bg-[#FFEDD5] text-[#C2410C] animate-pulse'
-                                  : clm.status === 'HADIAH_TERKIRIM'
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${clm.status === 'SIAP_KLAIM'
+                                ? 'bg-[#FFEDD5] text-[#C2410C]'
+                                : clm.status === 'HADIAH_TERKIRIM'
                                   ? 'bg-[#CCFBF1] text-[#0D9488]'
                                   : 'bg-gray-100 text-[#4A5248]'
                               }`}
+                          >
+                            {clm.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {clm.status === 'SIAP_KLAIM' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedClaimForReward(clm);
+                                setRewardNotesInput('');
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-[#F26B4B] hover:bg-[#D95637] text-white font-bold text-[11px]"
                             >
-                              {clm.status}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            {clm.status === 'SIAP_KLAIM' && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedClaimForReward(clm);
-                                  setRewardNotesInput('');
-                                }}
-                                className="px-3 py-1.5 rounded-xl bg-[#F26B4B] hover:bg-[#D95637] text-white font-extrabold text-[11px] shadow-xs"
-                              >
-                                Serahkan Hadiah
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                              Terbitkan Hadiah
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1004,121 +671,206 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* TAB 2: 5 LEVEL & LENCANA PETUALANG                                   */}
+      {/* TAB 2: 5 LEVEL PETUALANG & PASPOR DIGITAL MINANG (10 SPOT)           */}
       {/* ==================================================================== */}
       {activeTab === 'levels' && (
-        <section className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
+        <div className="space-y-6">
+          <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-5">
             <div>
               <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
                 <Award className="w-5 h-5 text-[#F59E0B]" />
-                <span>Konfigurasi 5 Tingkatan Level &amp; Lencana Petualang WISGO</span>
+                <span>5 Tingkatan Level Petualang (Sinkron AdventurerGrade Mobile)</span>
               </h2>
               <p className="text-xs text-[#4A5248] mt-0.5">
-                Standar resmi gamifikasi: Beginner, Explorer, Adventurer, Trailblazer, dan Wanderer. Kriteria dapat disesuaikan oleh admin.
+                Ambang XP resmi: Beginner (0–299), Explorer (300–699), Adventurer (700–1199), Trailblazer (1200–1999), Wanderer (2000+ XP).
               </p>
             </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-xl bg-[#234B24]/10 text-[#234B24]">
-              5 Level Terstandar
-            </span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {adventurerLevels.map((lvl) => (
-              <div
-                key={lvl.level}
-                className="p-5 rounded-3xl border-2 border-[#CFD8BE] hover:border-[#234B24] transition bg-[#F6F3EC]/50 flex flex-col justify-between space-y-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-black text-white shadow-xs"
-                      style={{ backgroundColor: lvl.badge_color || '#234B24' }}
-                    >
-                      LEVEL {lvl.level}
-                    </span>
-                    <div className="w-14 h-16 flex items-center justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {adventurerLevels.map((lvl) => (
+                <div
+                  key={lvl.level}
+                  className="p-5 rounded-3xl border-2 border-[#CFD8BE] bg-[#F6F3EC]/50 flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-black text-white"
+                        style={{ backgroundColor: lvl.badge_color }}
+                      >
+                        LEVEL {lvl.level}
+                      </span>
                       <img
                         src={getLevelBadgeSvg(lvl.level)}
                         alt={lvl.name}
-                        className="w-full h-full object-contain drop-shadow-sm hover:scale-105 transition"
+                        className="w-12 h-14 object-contain"
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-black text-[#1B1F1A]">
-                      {lvl.name}
-                    </h3>
-                    <div className="text-xs font-extrabold text-[#234B24] mt-0.5">
-                      Lencana: "{lvl.title}"
+                    <div>
+                      <h3 className="text-lg font-black text-[#1B1F1A]">{lvl.name}</h3>
+                      <div className="text-xs font-bold text-[#234B24]">{lvl.title}</div>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-white border border-[#234B24]/10 text-xs space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="text-[#767676]">Ambang XP:</span>
+                        <strong className="font-mono text-[#234B24]">
+                          {lvl.min_xp} – {lvl.level === 5 ? `${lvl.min_xp}+` : lvl.max_xp} XP
+                        </strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#767676]">Min. Trip / Check-in:</span>
+                        <strong className="font-mono">
+                          {lvl.min_trips} Trip · {lvl.min_checkpoints} Titik
+                        </strong>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#E4E9DA]/50 text-xs text-[#234B24]">
+                      <strong>Hak Istimewa:</strong> {lvl.perk_description}
                     </div>
                   </div>
-
-                  {/* Kriteria Ambang Batas */}
-                  <div className="p-3.5 rounded-2xl bg-white border border-[#234B24]/10 space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[#767676]">Rentang XP Resmi:</span>
-                      <strong className="text-[#234B24] font-mono">
-                        {lvl.min_xp} {lvl.max_xp ? `– ${lvl.max_xp} XP` : 'XP+'}
-                      </strong>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[#767676]">Min. Trip Selesai:</span>
-                      <strong className="text-[#1B1F1A] font-mono">{lvl.min_trips} Trip</strong>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[#767676]">Min. Check Point GPS:</span>
-                      <strong className="text-[#1B1F1A] font-mono">{lvl.min_checkpoints} Titik</strong>
-                    </div>
-                  </div>
-
-                  {/* Keistimewaan / Perks */}
-                  <div className="p-3 rounded-xl bg-[#E4E9DA]/50 text-xs text-[#234B24]">
-                    <strong>Hak Istimewa:</strong> {lvl.perk_description}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-[#CFD8BE]">
                   <button
                     type="button"
-                    onClick={() => handleOpenEditLevel(lvl)}
-                    className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition"
+                    onClick={() => {
+                      setEditingLevel(lvl);
+                      setLevelFormTitle(lvl.title);
+                      setLevelFormTrips(lvl.min_trips);
+                      setLevelFormCheckpoints(lvl.min_checkpoints);
+                      setLevelFormXp(lvl.min_xp);
+                      setLevelFormMaxXp(lvl.max_xp);
+                      setLevelFormPerks(lvl.perk_description);
+                    }}
+                    className="w-full min-h-[38px] px-3 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold flex items-center justify-center gap-1.5"
                   >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>Ubah Kriteria Level {lvl.level}</span>
+                    <Sliders className="w-3.5 h-3.5" /> Ubah Kriteria Level {lvl.level}
                   </button>
                 </div>
+              ))}
+            </div>
+          </section>
+
+          {/* PANEL PASPOR DIGITAL MINANG (10 SPOT RESMI) */}
+          <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
+              <div>
+                <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
+                  <Stamp className="w-5 h-5 text-[#234B24]" />
+                  <span>Paspor Digital Minang (10 Spot Stempel Resmi Gubernur)</span>
+                </h2>
+                <p className="text-xs text-[#4A5248] mt-0.5">
+                  Pantau capaian stempel GPS (&lt;500m) tiap wisatawan dan terbitkan E-Sertifikat Gubernur.
+                </p>
               </div>
-            ))}
-          </div>
-        </section>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={selectedPassportUserId}
+                  onChange={(e) => setSelectedPassportUserId(e.target.value)}
+                  className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+                >
+                  {userProfiles.map((u) => (
+                    <option key={u.user_id} value={u.user_id}>
+                      Inspeksi: {u.full_name} ({u.level_name})
+                    </option>
+                  ))}
+                </select>
+                {inspectedPassportUser && (
+                  <button
+                    type="button"
+                    onClick={() => handleIssuePassportCertificate(inspectedPassportUser)}
+                    className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold inline-flex items-center gap-1.5"
+                  >
+                    <Award className="w-3.5 h-3.5 text-[#F59E0B]" />
+                    <span>Terbitkan E-Sertifikat Gubernur</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {passportSpots.map((spot) => {
+                const totalSpotVisits = stempVisits.filter(
+                  (v) =>
+                    v.is_gps_valid &&
+                    (v.passport_code === spot.code || v.destination_id === spot.destination_id)
+                ).length;
+                const hasStamp =
+                  inspectedUserStamps.has(spot.code) ||
+                  inspectedUserStamps.has(spot.destination_id);
+
+                return (
+                  <div
+                    key={spot.code}
+                    className={`p-4 rounded-2xl border-2 transition ${hasStamp
+                        ? 'bg-[#DCFCE7]/50 border-[#1E9E5A]'
+                        : 'bg-[#F6F3EC]/60 border-[#CFD8BE]'
+                      }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-mono text-[10px] font-black px-2 py-0.5 rounded bg-[#234B24] text-white">
+                        {spot.code}
+                      </span>
+                      {hasStamp ? (
+                        <CheckCircle2 className="w-4 h-4 text-[#1E9E5A]" />
+                      ) : (
+                        <span className="text-[10px] text-[#767676] font-bold">Belum</span>
+                      )}
+                    </div>
+                    <h4 className="text-xs font-extrabold text-[#1B1F1A] mt-2 leading-snug">
+                      {spot.destination_title}
+                    </h4>
+                    <div className="text-[10px] text-[#4A5248] flex items-center gap-1 mt-1">
+                      <MapPin className="w-3 h-3 text-[#F26B4B]" /> {spot.region}
+                    </div>
+                    <p className="text-[10px] italic text-[#4A5248] mt-1.5 line-clamp-2">
+                      &ldquo;{spot.cultural_quote}&rdquo;
+                    </p>
+                    <div className="mt-2 pt-2 border-t border-black/5 text-[10px] font-bold text-[#234B24]">
+                      Total Check-in Valid: {totalSpotVisits} wisatawan
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </div>
       )}
 
       {/* ==================================================================== */}
-      {/* TAB 3: PROFIL & EXPERIENCE PENGGUNA (STRAVA-STYLE)                   */}
+      {/* TAB 3: JEJAK WISGO & RIWAYAT AKTIVITAS (NON-OLAHRAGA / ZERO KM)       */}
       {/* ==================================================================== */}
       {activeTab === 'profiles' && (
-        <section className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
+        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
             <div>
               <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
                 <Users className="w-5 h-5 text-[#3B82F6]" />
-                <span>Direktori Profil Petualang &amp; Experience Pengguna (Strava-Style)</span>
+                <span>Direktori Jejak WISGO &amp; Riwayat Aktivitas Wisatawan</span>
               </h2>
               <p className="text-xs text-[#4A5248] mt-0.5">
-                Pantau statistik perjalanan, verifikasi akun Google wisatawan, dan validasi klaim experience check-in.
+                Statistik eksplorasi destinasi murni (Check-in GPS, Trip Go, Scan Tiket QR) — tanpa metrik olahraga.
               </p>
             </div>
-            <div className="relative max-w-xs w-full">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#767676]" />
-              <input
-                type="text"
-                value={profileSearchTerm}
-                onChange={(e) => setProfileSearchTerm(e.target.value)}
-                placeholder="Cari nama atau email..."
-                className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium"
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#767676]" />
+                <input
+                  type="text"
+                  value={profileSearchTerm}
+                  onChange={(e) => setProfileSearchTerm(e.target.value)}
+                  placeholder="Cari nama atau email..."
+                  className="pl-9 pr-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
+                />
+              </div>
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value as 'ALL' | JejakWisgoSource)}
+                className="px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+              >
+                <option value="ALL">Semua Sumber Aktivitas</option>
+                <option value="GPS_CHECKIN">Check-in GPS</option>
+                <option value="TRIP_GO">Trip Go</option>
+                <option value="TICKET_SCAN">Scan Tiket QR</option>
+              </select>
             </div>
           </div>
 
@@ -1126,37 +878,27 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
             {filteredProfiles.map((user) => (
               <div
                 key={user.id}
-                className="p-5 rounded-3xl border border-[#CFD8BE] bg-[#F6F3EC]/50 hover:border-[#234B24] transition flex flex-col justify-between space-y-4 shadow-xs"
+                className="p-5 rounded-3xl border border-[#CFD8BE] bg-[#F6F3EC]/50 flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-3.5">
-                  {/* Avatar & Identitas */}
                   <div className="flex items-start gap-3">
                     <img
-                      src={user.google_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
+                      src={user.google_avatar}
                       alt={user.full_name}
                       className="w-12 h-12 rounded-2xl object-cover border-2 border-[#234B24]"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-sm font-black text-[#1B1F1A] truncate">
-                          {user.full_name}
-                        </h3>
+                        <h3 className="text-sm font-black truncate">{user.full_name}</h3>
                         {user.is_google_auth && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-700 flex items-center gap-0.5">
-                            <Shield className="w-2.5 h-2.5" />
-                            <span>Google Verified</span>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-700 inline-flex items-center gap-0.5">
+                            <Shield className="w-2.5 h-2.5" /> Google Verified
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-[#767676] block truncate">
-                        {user.email}
-                      </span>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <img
-                          src={getLevelBadgeSvg(user.current_level)}
-                          alt=""
-                          className="w-5 h-6 object-contain shrink-0"
-                        />
+                      <span className="text-[11px] text-[#767676] block truncate">{user.email}</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <img src={getLevelBadgeSvg(user.current_level)} alt="" className="w-5 h-6" />
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#234B24]/10 text-[#234B24]">
                           Level {user.current_level}: {user.level_name}
                         </span>
@@ -1164,38 +906,35 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                     </div>
                   </div>
 
-                  {/* Statistik ala Strava (4 Kolom Mini) */}
+                  {/* 4 Metrik Murni Wisata Jejak WISGO (Nol km) */}
                   <div className="grid grid-cols-2 gap-2 text-center">
                     <div className="p-2 rounded-xl bg-white border border-[#234B24]/10">
-                      <span className="text-[10px] text-[#767676] block">Total Trip</span>
-                      <strong className="text-sm font-black text-[#1B1F1A]">
-                        {user.total_trips}
+                      <span className="text-[10px] text-[#767676] block">Destinasi Dikunjungi</span>
+                      <strong className="text-sm font-black text-[#234B24]">
+                        {user.visited_count} / {destinations.length}
                       </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-white border border-[#234B24]/10">
-                      <span className="text-[10px] text-[#767676] block">Check Point</span>
+                      <span className="text-[10px] text-[#767676] block">Total Trip</span>
+                      <strong className="text-sm font-black text-[#1B1F1A]">{user.total_trips}</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-[#234B24]/10">
+                      <span className="text-[10px] text-[#767676] block">Check Point GPS</span>
                       <strong className="text-sm font-black text-[#1B1F1A]">
                         {user.total_checkpoints}
                       </strong>
                     </div>
                     <div className="p-2 rounded-xl bg-white border border-[#234B24]/10">
-                      <span className="text-[10px] text-[#767676] block">Jarak Tempuh</span>
-                      <strong className="text-sm font-black text-[#F26B4B]">
-                        {user.total_distance_km} km
-                      </strong>
-                    </div>
-                    <div className="p-2 rounded-xl bg-white border border-[#234B24]/10">
                       <span className="text-[10px] text-[#767676] block">Total XP</span>
-                      <strong className="text-sm font-black text-[#234B24]">
+                      <strong className="text-sm font-black text-[#F26B4B]">
                         {user.total_xp} XP
                       </strong>
                     </div>
                   </div>
 
-                  {/* Cuplikan Riwayat Terakhir */}
                   <div className="space-y-1.5">
                     <span className="text-[10px] font-black uppercase text-[#4A5248] block">
-                      Riwayat Experience Terakhir:
+                      Jejak Terakhir:
                     </span>
                     {user.experience_history.slice(0, 2).map((exp, idx) => (
                       <div
@@ -1203,12 +942,18 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                         className="p-2.5 rounded-xl bg-white border border-[#234B24]/10 text-xs flex items-center justify-between gap-2"
                       >
                         <div className="min-w-0">
-                          <strong className="text-[#1B1F1A] block truncate">
-                            {exp.destination_name}
-                          </strong>
-                          <span className="text-[10px] text-[#767676]">
-                            {exp.checkpoint_name || 'Check-in'} • {exp.date}
-                          </span>
+                          <strong className="block truncate">{exp.destination_name}</strong>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${SOURCE_LABELS[exp.source]?.color || 'bg-gray-100'
+                                }`}
+                            >
+                              {SOURCE_LABELS[exp.source]?.label || exp.source}
+                            </span>
+                            <span className="text-[10px] text-[#767676]">
+                              Stempel #{exp.stamp_number}
+                            </span>
+                          </div>
                         </div>
                         <span className="font-extrabold text-[11px] text-[#234B24] shrink-0">
                           +{exp.xp_earned} XP
@@ -1218,16 +963,14 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#CFD8BE]">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedUserForDetail(user)}
-                    className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition"
-                  >
-                    <FileCheck className="w-3.5 h-3.5" />
-                    <span>Lihat &amp; Validasi Experience ({user.experience_history.length})</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedUserForDetail(user)}
+                  className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold flex items-center justify-center gap-1.5"
+                >
+                  <FileCheck className="w-3.5 h-3.5" />
+                  <span>Lihat &amp; Validasi Jejak ({user.experience_history.length})</span>
+                </button>
               </div>
             ))}
           </div>
@@ -1235,37 +978,28 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* TAB 4: TEMPLATE POSTING & QR UNDUH                                   */}
+      {/* TAB 4: TEMPLATE SHARE JEJAK WISGO (Stiker Transparan PNG & Kartu)    */}
       {/* ==================================================================== */}
-      {activeTab === 'templates' && (
-        <section className="bg-white rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
-            <div>
-              <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-[#F26B4B]" />
-                <span>Template Posting Media Sosial &amp; QR Unduh Aplikasi</span>
-              </h2>
-              <p className="text-xs text-[#4A5248] mt-0.5">
-                Konfigurasi watermark branding resmi WISGO dan tautan QR code unduh aplikasi saat wisatawan membagikan pencapaian ke media sosial.
-              </p>
-            </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-xl bg-[#F26B4B]/10 text-[#F26B4B]">
-              Viralitas Organik
-            </span>
+      {activeTab === 'templates' && selectedTemplate && (
+        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-6">
+          <div>
+            <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-[#F26B4B]" />
+              <span>Template Share Jejak WISGO (Stiker Transparan PNG &amp; Kartu Penuh)</span>
+            </h2>
+            <p className="text-xs text-[#4A5248] mt-0.5">
+              Selaras dengan 2 mode berbagi Jejak WISGO pada aplikasi mobile: Stiker Overlay 3-Blok Transparan &amp; Kartu Foto Penuh.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Form Editor Pengaturan Template */}
             <div className="lg:col-span-6 space-y-4">
-              <form onSubmit={handleSavePostingTemplate} className="space-y-4 p-5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]">
-                <h3 className="text-sm font-extrabold text-[#1B1F1A]">
-                  Pengaturan Materi Promosi &amp; Unduh
-                </h3>
-
+              <form
+                onSubmit={handleSavePostingTemplate}
+                className="space-y-4 p-5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]"
+              >
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Pilih Template Posting
-                  </label>
+                  <label className="block text-xs font-bold mb-1">Mode Template Share</label>
                   <select
                     value={selectedTemplate.id}
                     onChange={(e) => {
@@ -1287,359 +1021,313 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Teks Watermark Resmi
+                  <label className="block text-xs font-bold mb-1">
+                    Pilih Profil Wisatawan untuk Pratinjau Dinamis
                   </label>
+                  <select
+                    value={previewUserId}
+                    onChange={(e) => setPreviewUserId(e.target.value)}
+                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white border border-[#CFD8BE] text-xs font-bold"
+                  >
+                    {userProfiles.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name} — Level {u.current_level} {u.level_name} ({u.total_xp} XP)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold mb-1">Teks Watermark Resmi</label>
                   <input
                     type="text"
                     value={templateWatermark}
                     onChange={(e) => setTemplateWatermark(e.target.value)}
-                    placeholder="Contoh: WISGO • Ekosistem Wisata Pintar Sumatera Barat"
                     className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white border border-[#CFD8BE] text-xs font-bold"
                   />
-                  <span className="text-[10px] text-[#767676] mt-1 block">
-                    Watermark tercetak otomatis di bagian bawah materi foto postingan wisatawan.
-                  </span>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    URL Target QR Code Unduh Aplikasi
-                  </label>
+                  <label className="block text-xs font-bold mb-1">URL Target QR Unduh Aplikasi</label>
                   <input
                     type="url"
                     value={templateQrUrl}
                     onChange={(e) => setTemplateQrUrl(e.target.value)}
-                    placeholder="https://wisgo.sumbarprov.go.id/download-app"
                     className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white border border-[#CFD8BE] text-xs font-mono"
                   />
-                  <span className="text-[10px] text-[#767676] mt-1 block">
-                    Pindai QR akan mengarahkan pengguna baru langsung ke Play Store / App Store.
-                  </span>
                 </div>
 
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition"
-                  >
-                    <CheckCheck className="w-4 h-4" />
-                    <span>Simpan Pengaturan Template</span>
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold flex items-center gap-2"
+                >
+                  <CheckCheck className="w-4 h-4" />
+                  <span>Simpan Pengaturan Template</span>
+                </button>
               </form>
             </div>
 
-            {/* Live Interactive Preview Card */}
+            {/* Dynamic Live Preview: Transparent Sticker PNG vs Full Card */}
             <div className="lg:col-span-6 flex justify-center">
-              <div className="w-full max-w-sm rounded-[32px] overflow-hidden border-4 border-[#234B24] shadow-2xl bg-[#1B3A1C] text-white p-6 space-y-5">
-                {/* Header Mock Card */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-[#F26B4B] flex items-center justify-center font-black text-sm">
-                      W
+              {selectedTemplate.preview_mode === 'transparent_sticker' ? (
+                <div
+                  className="w-full max-w-sm rounded-[32px] p-6 border-2 border-dashed border-[#234B24]/40 shadow-xl space-y-5"
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)',
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                    backgroundColor: '#f8fafc',
+                  }}
+                >
+                  <div className="bg-[#234B24]/95 text-white rounded-2xl p-5 space-y-3 shadow-lg">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#A7F3D0]">
+                      STIKER TRANSPARAN PNG · JEJAK WISGO
+                    </span>
+                    <div className="grid grid-cols-3 gap-2 text-center border-y border-white/15 py-3">
+                      <div>
+                        <div className="text-lg font-black text-[#F26B4B]">
+                          {previewUser?.visited_count ?? 6}/{destinations.length}
+                        </div>
+                        <div className="text-[9px] uppercase text-white/75">Destinasi</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-black text-white">
+                          Lv.{previewUser?.current_level ?? 3}
+                        </div>
+                        <div className="text-[9px] uppercase text-white/75">
+                          {previewUser?.level_name ?? 'Adventurer'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-black text-[#A7F3D0]">
+                          {previewUser?.total_xp ?? 1050}
+                        </div>
+                        <div className="text-[9px] uppercase text-white/75">Total XP</div>
+                      </div>
                     </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs font-extrabold">{previewUser?.full_name}</div>
+                      <img
+                        src={selectedTemplate.qr_image_url}
+                        alt="QR Unduh"
+                        className="w-12 h-12 rounded-lg bg-white p-0.5"
+                      />
+                    </div>
+                    <div className="text-[9px] font-mono text-white/75 text-center">
+                      {templateWatermark}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full max-w-sm rounded-[32px] overflow-hidden border-4 border-[#234B24] shadow-2xl bg-[#1B3A1C] text-white p-6 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-[#F26B4B] flex items-center justify-center font-black text-sm">
+                        W
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black tracking-wide">JEJAK WISGO SUMBAR</h4>
+                        <span className="text-[9px] text-[#CFD8BE]">Kartu Penuh Komunitas</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-white/20">
+                      TERVERIFIKASI
+                    </span>
+                  </div>
+
+                  <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-black/40 border border-white/10 flex flex-col justify-end p-4">
+                    <img
+                      src={selectedTemplate.background_banner_url}
+                      alt="Preview"
+                      className="absolute inset-0 w-full h-full object-cover opacity-65"
+                    />
+                    <div className="relative z-10 space-y-1">
+                      <span className="px-2 py-0.5 rounded text-[9px] font-black bg-[#F59E0B] text-black inline-block">
+                        LEVEL {previewUser?.current_level ?? 3} · {(previewUser?.level_name || 'Adventurer').toUpperCase()}
+                      </span>
+                      <h3 className="text-base font-black leading-tight text-white">
+                        {previewUser?.full_name} menjelajahi{' '}
+                        {previewUser?.experience_history[0]?.destination_name || 'Ranah Minang'}!
+                      </h3>
+                      <p className="text-[10px] text-white/90">
+                        {previewUser?.visited_count ?? 6} Destinasi · {previewUser?.total_checkpoints ?? 16} Check Point · {previewUser?.total_xp ?? 1050} XP
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-between gap-3">
                     <div>
-                      <h4 className="text-xs font-black tracking-wide">WISGO SUMBAR</h4>
-                      <span className="text-[9px] text-[#CFD8BE]">Pencapaian Petualang</span>
+                      <span className="text-[10px] font-extrabold text-[#F26B4B] block uppercase">
+                        Unduh WISGO Sekarang
+                      </span>
+                      <p className="text-[9px] text-[#CFD8BE]">
+                        Pindai QR untuk kumpulkan Paspor Digital Minang!
+                      </p>
                     </div>
+                    <img
+                      src={selectedTemplate.qr_image_url}
+                      alt="QR Code Unduh"
+                      className="w-16 h-16 rounded-xl bg-white p-1 shrink-0"
+                    />
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-white/20">
-                    STATUS RESMI
-                  </span>
-                </div>
 
-                {/* Body Banner Card */}
-                <div className="relative rounded-2xl overflow-hidden aspect-4/3 bg-black/40 border border-white/10 flex flex-col justify-end p-4">
-                  <img
-                    src={selectedTemplate.background_banner_url || 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1000&q=80'}
-                    alt="Preview Background"
-                    className="absolute inset-0 w-full h-full object-cover opacity-60"
-                  />
-                  <div className="relative z-10 space-y-1">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black bg-[#F59E0B] text-black inline-block">
-                      LEVEL 3 ADVENTURER
-                    </span>
-                    <h3 className="text-base font-black leading-tight text-white drop-shadow-md">
-                      Rian Pratama Baru Saja Menaklukkan Lembah Harau!
-                    </h3>
-                    <p className="text-[10px] text-white/90">
-                      8 Trip Selesai • 22 Check Point Terkunjungi • 1.150 XP
-                    </p>
-                  </div>
-                </div>
-
-                {/* QR Code & Watermark Box */}
-                <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-extrabold text-[#F26B4B] block uppercase tracking-wider">
-                      Unduh WISGO Sekarang
-                    </span>
-                    <p className="text-[9px] text-[#CFD8BE] leading-snug">
-                      Pindai QR ini untuk ikut menjelajah &amp; kumpulkan lencana Minangkabau!
-                    </p>
-                  </div>
-                  <img
-                    src={selectedTemplate.qr_image_url || 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wisgo.sumbarprov.go.id/app'}
-                    alt="QR Code Unduh"
-                    className="w-16 h-16 rounded-xl bg-white p-1 shrink-0"
-                  />
-                </div>
-
-                {/* Footer Watermark */}
-                <div className="text-center pt-2 border-t border-white/10">
-                  <span className="text-[10px] font-mono tracking-wider text-white/80">
+                  <div className="text-center pt-2 border-t border-white/10 text-[10px] font-mono text-white/80">
                     {templateWatermark}
-                  </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </section>
       )}
 
-      {/* ==================================================================== */}
-      {/* MODAL BUAT / EDIT TANTANGAN (TAB 1)                                   */}
-      {/* ==================================================================== */}
+      {/* MODAL BUAT/EDIT TANTANGAN */}
       {isModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-xl p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#234B24] text-white flex items-center justify-center shadow-xs">
-                  <Trophy className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                    {editingChallenge ? 'Edit Program Tantangan' : 'Buat Tantangan Wisata Baru'}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Konsep Check-In Lokasi &amp; Pilihan Reward Fleksibel
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-[28px] w-full max-w-xl p-6 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4E9DA]">
+              <h3 className="text-base font-extrabold">
+                {editingChallenge ? 'Edit Tantangan' : 'Buat Tantangan Wisata Baru'}
+              </h3>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="p-1.5">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSaveChallenge} className="mt-4 space-y-4 overflow-y-auto pr-1">
               <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                  Nama / Judul Tantangan <span className="text-[#F26B4B]">*</span>
-                </label>
+                <label className="block text-xs font-bold mb-1">Judul Tantangan *</label>
                 <input
                   type="text"
+                  required
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="Contoh: Jelajah 10 Ikon Geopark & Lembah Harau"
-                  required
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                  className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
                 />
               </div>
-
-              {/* Tagline Khusus Check-In */}
               <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                  Tagline Khusus Check-In (Aplikasi Mobile)
-                </label>
+                <label className="block text-xs font-bold mb-1">Tagline Check-In</label>
                 <input
                   type="text"
                   value={formTagline}
                   onChange={(e) => setFormTagline(e.target.value)}
-                  placeholder="Contoh: Check-In di Lokasi, Kumpulkan Lencana Ranah Minang!"
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-semibold text-[#234B24]"
+                  className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Kategori Tema
-                  </label>
+                  <label className="block text-xs font-bold mb-1">5 Master Kategori</label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                    className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
                   >
-                    <option value="Eksplorasi Alam & Geopark">Eksplorasi Alam &amp; Geopark</option>
-                    <option value="Pusaka & Warisan Adat">Pusaka &amp; Warisan Adat</option>
-                    <option value="Bahari & Kepulauan">Bahari &amp; Kepulauan</option>
-                    <option value="Danau & Agrowisata">Danau &amp; Agrowisata</option>
-                    <option value="Kuliner Tradisional Minang">Kuliner Tradisional Minang</option>
+                    {MASTER_DESTINATION_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Jenis Reward Fleksibel
-                  </label>
+                  <label className="block text-xs font-bold mb-1">Jenis Reward</label>
                   <select
                     value={formRewardType}
                     onChange={(e) => setFormRewardType(e.target.value)}
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                    className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
                   >
-                    <option value="XP">XP (Experience Points)</option>
-                    <option value="Poin">Poin</option>
-                    <option value="Badge Khusus">Badge Khusus</option>
-                    <option value="Sertifikat">Sertifikat Resmi</option>
-                    <option value="Voucher">Voucher Belanja UMKM</option>
-                    <option value="Uang Tunai">Uang Tunai</option>
+                    <option value="Sertifikat & XP">E-Sertifikat Gubernur &amp; XP</option>
+                    <option value="Badge Khusus">Lencana Khusus</option>
+                    <option value="Voucher">Voucher UMKM Nagari</option>
+                    <option value="XP">XP Murni</option>
                   </select>
                 </div>
               </div>
-
-              <div className="p-4 rounded-xl bg-[#FFEDD5]/50 border border-[#FDBA74] space-y-2">
-                <label className="block text-xs font-bold text-[#C2410C]">
-                  Detail / Deskripsi Hadiah <span className="text-[#F26B4B]">*</span>
-                </label>
+              <div>
+                <label className="block text-xs font-bold mb-1">Detail Hadiah *</label>
                 <input
                   type="text"
+                  required
                   value={formReward}
                   onChange={(e) => setFormReward(e.target.value)}
-                  placeholder="Contoh: Uang Tunai Rp 1.500.000 + Sertifikat Penjelajah Geopark"
-                  required
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white border border-[#FDBA74] text-xs font-bold text-[#1B1F1A]"
+                  className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Target Tempat (Jumlah Ceklis) <span className="text-[#F26B4B]">*</span>
-                  </label>
+                  <label className="block text-xs font-bold mb-1">Target Destinasi</label>
                   <input
                     type="number"
                     min={1}
-                    max={50}
                     value={formTargetCount}
                     onChange={(e) => setFormTargetCount(Number(e.target.value))}
-                    required
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono font-bold text-[#1B1F1A]"
+                    className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Durasi Masa Berlaku (Hari)
-                  </label>
+                  <label className="block text-xs font-bold mb-1">Reward XP</label>
                   <input
                     type="number"
-                    min={1}
-                    max={365}
+                    min={50}
+                    step={50}
+                    value={formRewardPoints}
+                    onChange={(e) => setFormRewardPoints(Number(e.target.value))}
+                    className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-1">Durasi (Hari)</label>
+                  <input
+                    type="number"
+                    min={7}
                     value={formDuration}
                     onChange={(e) => setFormDuration(Number(e.target.value))}
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono font-bold text-[#1B1F1A]"
+                    className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
                   />
                 </div>
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                  Deskripsi Tantangan
-                </label>
+                <label className="block text-xs font-bold mb-1">Deskripsi Misi</label>
                 <textarea
                   rows={2}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Jelaskan aturan main penaklukan rute destinasi..."
-                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
+                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
                 />
               </div>
-
-              {/* Target Check Points Selection */}
-              {allAvailableCheckpoints.length > 0 && (
-                <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1.5">
-                    Pilih Target Check Point Lokasi Spesifik:
-                  </label>
-                  <div className="max-h-36 overflow-y-auto p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] space-y-1.5">
-                    {allAvailableCheckpoints.map((cp, idx) => {
-                      const isChecked = formSelectedCheckpoints.includes(cp.name);
-                      return (
-                        <label
-                          key={idx}
-                          className="flex items-center gap-2 text-xs font-medium text-[#1B1F1A] cursor-pointer hover:bg-white/60 p-1.5 rounded-lg"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormSelectedCheckpoints([...formSelectedCheckpoints, cp.name]);
-                              } else {
-                                setFormSelectedCheckpoints(
-                                  formSelectedCheckpoints.filter((name) => name !== cp.name)
-                                );
-                              }
-                            }}
-                            className="rounded text-[#234B24] focus:ring-[#234B24]"
-                          />
-                          <span>📍 {cp.name}</span>
-                          <span className="text-[10px] text-[#767676]">({cp.destName})</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Pemilihan Destinasi Sasaran */}
               <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1.5">
-                  Pilih Destinasi Sasaran (Checklist):
-                </label>
-                <div className="max-h-36 overflow-y-auto p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] space-y-1.5">
-                  {destinations.map((d) => {
-                    const isChecked = formSelectedDests.includes(d.name);
-                    return (
-                      <label
-                        key={d.id}
-                        className="flex items-center gap-2 text-xs font-medium text-[#1B1F1A] cursor-pointer hover:bg-white/60 p-1.5 rounded-lg"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormSelectedDests([...formSelectedDests, d.name]);
-                            } else {
-                              setFormSelectedDests(
-                                formSelectedDests.filter((name) => name !== d.name)
-                              );
-                            }
-                          }}
-                          className="rounded text-[#234B24] focus:ring-[#234B24]"
-                        />
-                        <span>{d.name}</span>
-                        <span className="text-[10px] text-[#767676]">({d.city_regency})</span>
-                      </label>
-                    );
-                  })}
+                <label className="block text-xs font-bold mb-1">Destinasi Sasaran</label>
+                <div className="max-h-32 overflow-y-auto p-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] space-y-1">
+                  {destinations.map((d) => (
+                    <label key={d.id} className="flex items-center gap-2 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formSelectedDests.includes(d.name)}
+                        onChange={(e) =>
+                          setFormSelectedDests((prev) =>
+                            e.target.checked ? [...prev, d.name] : prev.filter((n) => n !== d.name)
+                          )
+                        }
+                      />
+                      <span>{d.name}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10 shrink-0">
+              <div className="pt-3 border-t flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248]"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm"
+                  className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
                 >
-                  <Trophy className="w-4 h-4" />
-                  <span>Simpan Program Tantangan</span>
+                  Simpan Tantangan
                 </button>
               </div>
             </form>
@@ -1647,308 +1335,186 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
         </div>
       )}
 
-      {/* ==================================================================== */}
-      {/* MODAL EDIT KRITERIA LEVEL PETUALANG (TAB 2)                          */}
-      {/* ==================================================================== */}
-      {editingLevel && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#234B24] text-white flex items-center justify-center">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                    Edit Kriteria Level {editingLevel.level}: {editingLevel.name}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Atur ambang batas kenaikan tingkat wisatawan
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingLevel(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveLevel} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                  Nama Gelar / Lencana
-                </label>
-                <input
-                  type="text"
-                  value={levelFormTitle}
-                  onChange={(e) => setLevelFormTitle(e.target.value)}
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Min. Trip
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={levelFormTrips}
-                    onChange={(e) => setLevelFormTrips(Number(e.target.value))}
-                    className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Min. Checkpoint
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={levelFormCheckpoints}
-                    onChange={(e) => setLevelFormCheckpoints(Number(e.target.value))}
-                    className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                    Min. XP
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={levelFormXp}
-                    onChange={(e) => setLevelFormXp(Number(e.target.value))}
-                    className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono font-bold"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                  Hak Istimewa / Perks Level
-                </label>
-                <textarea
-                  rows={3}
-                  value={levelFormPerks}
-                  onChange={(e) => setLevelFormPerks(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium"
-                />
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
-                <button
-                  type="button"
-                  onClick={() => setEditingLevel(null)}
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold"
-                >
-                  Simpan Kriteria Level
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* MODAL DETAIL & VALIDASI RIWAYAT EXPERIENCE (TAB 3)                   */}
-      {/* ==================================================================== */}
-      {selectedUserForDetail && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10 shrink-0">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedUserForDetail.google_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
-                  alt={selectedUserForDetail.full_name}
-                  className="w-10 h-10 rounded-xl object-cover border"
-                />
-                <div>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                    {selectedUserForDetail.full_name}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Level {selectedUserForDetail.current_level} ({selectedUserForDetail.level_name}) • Total XP: {selectedUserForDetail.total_xp}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedUserForDetail(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3 overflow-y-auto pr-1">
-              <span className="text-xs font-extrabold text-[#234B24] block">
-                Daftar Riwayat Check-In &amp; Status Validasi:
-              </span>
-
-              {selectedUserForDetail.experience_history.map((exp, idx) => (
-                <div
-                  key={idx}
-                  className="p-3.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="space-y-0.5">
-                    <strong className="text-sm font-extrabold text-[#1B1F1A] block">
-                      {exp.destination_name}
-                    </strong>
-                    <div className="text-[11px] text-[#4A5248]">
-                      Titik: 📍 {exp.checkpoint_name || 'Lokasi Destinasi'} • Tanggal: {exp.date}
-                    </div>
-                    {exp.notes && (
-                      <div className="text-[11px] text-[#767676] italic">
-                        "{exp.notes}"
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <span className="font-mono font-black text-[#234B24]">
-                      +{exp.xp_earned} XP
-                    </span>
-                    {exp.status === 'verified' ? (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                        <CheckCheck className="w-3 h-3 text-emerald-600" />
-                        <span>Valid</span>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleVerifyExperience(selectedUserForDetail.id, idx)}
-                        className="px-3 py-1 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-[11px] font-bold shadow-xs transition"
-                      >
-                        Verifikasi Klaim
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-3 border-t border-[#234B24]/10 flex justify-end shrink-0">
-              <button
-                type="button"
-                onClick={() => setSelectedUserForDetail(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[#1B1F1A]"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* MODAL SERAH TERIMA HADIAH (TAB 1)                                    */}
-      {/* ==================================================================== */}
+      {/* MODAL TERBITKAN HADIAH */}
       {selectedClaimForReward && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#CCFBF1] text-[#0D9488] flex items-center justify-center">
-                  <Gift className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                    Verifikasi &amp; Serah Hadiah Wisatawan
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Konfirmasi penyaluran reward resmi
-                  </p>
-                </div>
-              </div>
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-extrabold">Terbitkan Hadiah &amp; E-Sertifikat</h3>
+            <p className="text-xs text-[#4A5248]">
+              Penerima: <strong>{selectedClaimForReward.tourist_name}</strong> ·{' '}
+              {selectedClaimForReward.reward}
+            </p>
+            <textarea
+              rows={2}
+              value={rewardNotesInput}
+              onChange={(e) => setRewardNotesInput(e.target.value)}
+              placeholder="Catatan penyerahan hadiah / nomor E-Sertifikat..."
+              className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
+            />
+            <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setSelectedClaimForReward(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-[#767676]">Nama Wisatawan:</span>
-                <span className="font-extrabold text-[#1B1F1A]">
-                  {selectedClaimForReward.tourist_name}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-[#767676]">WhatsApp:</span>
-                <span className="font-mono font-bold text-[#234B24]">
-                  {selectedClaimForReward.tourist_phone}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-[#767676]">Tantangan:</span>
-                <span className="font-semibold text-[#1B1F1A]">
-                  {selectedClaimForReward.challenge_title}
-                </span>
-              </div>
-              <div className="pt-2 border-t border-[#CFD8BE] flex justify-between text-xs">
-                <span className="text-[#C2410C] font-bold">Reward Resmi:</span>
-                <span className="font-extrabold text-[#C2410C]">
-                  {selectedClaimForReward.reward_description}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                Catatan Penyerahan / Nomor Resi / Tanda Terima
-              </label>
-              <textarea
-                rows={2}
-                value={rewardNotesInput}
-                onChange={(e) => setRewardNotesInput(e.target.value)}
-                placeholder="Contoh: Voucher digital terkirim via WhatsApp dan Sertifikat cetak diserahkan di Kantor Dispar..."
-                className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
-              />
-            </div>
-
-            <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
-              <button
-                type="button"
-                onClick={() => setSelectedClaimForReward(null)}
-                className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248]"
               >
                 Batal
               </button>
               <button
                 type="button"
                 onClick={handleConfirmSendReward}
-                className="min-h-[44px] px-5 py-2 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-extrabold flex items-center gap-2 shadow-sm"
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
               >
-                <Send className="w-4 h-4" />
-                <span>Kirimkan Notifikasi &amp; Tuntaskan Hadiah</span>
+                Konfirmasi &amp; Terbitkan
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDIT LEVEL */}
+      {editingLevel && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <form onSubmit={handleSaveLevel} className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-extrabold">
+              Ubah Kriteria Level {editingLevel.level} ({editingLevel.name})
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold mb-1">Judul Level</label>
+                <input
+                  type="text"
+                  value={levelFormTitle}
+                  onChange={(e) => setLevelFormTitle(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold mb-1">Min XP</label>
+                  <input
+                    type="number"
+                    value={levelFormXp}
+                    onChange={(e) => setLevelFormXp(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Max XP</label>
+                  <input
+                    type="number"
+                    value={levelFormMaxXp}
+                    onChange={(e) => setLevelFormMaxXp(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold mb-1">Min Trip</label>
+                  <input
+                    type="number"
+                    value={levelFormTrips}
+                    onChange={(e) => setLevelFormTrips(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Min Check Point</label>
+                  <input
+                    type="number"
+                    value={levelFormCheckpoints}
+                    onChange={(e) => setLevelFormCheckpoints(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block font-bold mb-1">Hak Istimewa (Perks)</label>
+                <textarea
+                  rows={2}
+                  value={levelFormPerks}
+                  onChange={(e) => setLevelFormPerks(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingLevel(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248]"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
+              >
+                Simpan Level
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL VALIDASI JEJAK WISGO */}
+      {selectedUserForDetail && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <div>
+                <h3 className="text-base font-extrabold">{selectedUserForDetail.full_name}</h3>
+                <p className="text-xs text-[#4A5248]">
+                  Level {selectedUserForDetail.current_level} {selectedUserForDetail.level_name} ·{' '}
+                  {selectedUserForDetail.visited_count}/{destinations.length} Destinasi ·{' '}
+                  {selectedUserForDetail.total_xp} XP
+                </p>
+              </div>
+              <button type="button" onClick={() => setSelectedUserForDetail(null)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {selectedUserForDetail.experience_history.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="p-3.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-start justify-between gap-3"
+                >
+                  <div className="space-y-1 text-xs">
+                    <div className="font-extrabold text-[#1B1F1A]">{item.destination_name}</div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${SOURCE_LABELS[item.source]?.color || 'bg-gray-100'
+                          }`}
+                      >
+                        {SOURCE_LABELS[item.source]?.label || item.source}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-[#234B24]">
+                        Stempel #{item.stamp_number}
+                      </span>
+                      <span className="text-[10px] text-[#767676]">{item.date}</span>
+                    </div>
+                    {item.notes && <p className="text-[11px] text-[#4A5248]">{item.notes}</p>}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="text-xs font-black text-[#234B24]">+{item.xp_earned} XP</div>
+                    {item.status === 'verified' ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#166534] mt-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Terverifikasi
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyJejakItem(selectedUserForDetail.id, idx)}
+                        className="mt-1 px-2.5 py-1 rounded-lg bg-[#234B24] text-white text-[10px] font-bold"
+                      >
+                        Verifikasi &amp; Beri XP
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -1,32 +1,22 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useId, useState } from 'react';
 import {
-  Phone,
-  ShieldCheck,
-  Plus,
-  Edit3,
-  Trash2,
-  Search,
+  AlertTriangle,
   CheckCircle2,
   Clock,
-  Building2,
-  MapPin,
-  LifeBuoy,
+  Edit3,
   Flame,
-  Radio,
-  ExternalLink,
-  Save,
+  LifeBuoy,
+  MapPin,
+  Phone,
+  Plus,
+  Search,
+  ShieldCheck,
+  Trash2,
   X,
-  AlertTriangle,
-  Send,
-  Eye,
 } from 'lucide-react';
-import { EmergencyCategoryType, EmergencyContactNumber } from '../types/contract';
-import {
-  fetchEmergencyContacts,
-  saveEmergencyContact,
-  deleteEmergencyContact,
-} from '../services/api';
-import { SUMBAR_REGENCIES } from '../data/mockDestinations';
+import { EmergencyAgencyType, EmergencyContact } from '../types/contract';
+import { EMERGENCY_AGENCY_TYPES, SUMBAR_REGENCIES } from '../data/mockDestinations';
+import { EmergencyContactsRepo } from '../services/dbRepository';
 
 interface EmergencyContactsManagerProps {
   showToast?: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -35,594 +25,412 @@ interface EmergencyContactsManagerProps {
 export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> = ({
   showToast,
 }) => {
-  const [contacts, setContacts] = useState<EmergencyContactNumber[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // Filters
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [contacts, setContacts] = useState<EmergencyContact[]>(() =>
+    EmergencyContactsRepo.getAll()
+  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [agencyFilter, setAgencyFilter] = useState<string>('all');
   const [regencyFilter, setRegencyFilter] = useState<string>('all');
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [editingContact, setEditingContact] = useState<EmergencyContactNumber | null>(null);
-
-  // Form States
-  const [formAgencyName, setFormAgencyName] = useState<string>('');
-  const [formCallNumber, setFormCallNumber] = useState<string>('');
-  const [formCategory, setFormCategory] = useState<EmergencyCategoryType>('SAR & Basarnas');
-  const [formRegency, setFormRegency] = useState<string>('Provinsi Sumatera Barat');
-  const [formAddress, setFormAddress] = useState<string>('');
-  const [formIs24Hours, setFormIs24Hours] = useState<boolean>(true);
-  const [formIsActive, setFormIsActive] = useState<boolean>(true);
-  const [formDescription, setFormDescription] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
+  const [formAgencyName, setFormAgencyName] = useState('');
+  const [formAgencyType, setFormAgencyType] = useState<EmergencyAgencyType>('BPBD');
+  const [formPhone, setFormPhone] = useState('');
+  const [formWhatsapp, setFormWhatsapp] = useState('');
+  const [formRegency, setFormRegency] = useState('Provinsi Sumatera Barat');
+  const [formAddress, setFormAddress] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formIs24Hours, setFormIs24Hours] = useState(true);
+  const [formIsActive, setFormIsActive] = useState(true);
 
   const searchInputId = useId();
 
-  const loadContacts = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchEmergencyContacts();
-      setContacts(data);
-    } catch {
-      showToast?.('Gagal memuat direktori nomor darurat.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadContacts();
-  }, []);
-
-  // Filtered Contacts
   const filteredContacts = contacts.filter((c) => {
-    const phone = c.call_number || c.phone_number || '';
-    const cat = c.category || c.agency_type || '';
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      c.agency_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.city_regency.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesCategory = categoryFilter === 'all' || cat === categoryFilter;
-    const matchesRegency =
-      regencyFilter === 'all' ||
-      c.city_regency.toLowerCase().includes(regencyFilter.toLowerCase());
-
-    return matchesSearch && matchesCategory && matchesRegency;
+      !q ||
+      c.agency_name.toLowerCase().includes(q) ||
+      c.phone_number.toLowerCase().includes(q) ||
+      c.city_regency.toLowerCase().includes(q) ||
+      (c.description || '').toLowerCase().includes(q);
+    const matchesType = agencyFilter === 'all' || c.agency_type === agencyFilter;
+    const matchesReg =
+      regencyFilter === 'all' || c.city_regency.toLowerCase().includes(regencyFilter.toLowerCase());
+    return matchesSearch && matchesType && matchesReg;
   });
 
-  // Open Create Modal
   const handleOpenCreate = () => {
     setEditingContact(null);
     setFormAgencyName('');
-    setFormCallNumber('');
-    setFormCategory('SAR & Basarnas');
+    setFormAgencyType('BPBD');
+    setFormPhone('');
+    setFormWhatsapp('');
     setFormRegency('Provinsi Sumatera Barat');
     setFormAddress('');
+    setFormDescription('');
     setFormIs24Hours(true);
     setFormIsActive(true);
-    setFormDescription('');
     setIsModalOpen(true);
   };
 
-  // Open Edit Modal
-  const handleOpenEdit = (contact: EmergencyContactNumber) => {
+  const handleOpenEdit = (contact: EmergencyContact) => {
     setEditingContact(contact);
     setFormAgencyName(contact.agency_name);
-    setFormCallNumber(contact.call_number || contact.phone_number || '');
-    setFormCategory(contact.category || contact.agency_type || 'SAR & Basarnas');
+    setFormAgencyType(contact.agency_type);
+    setFormPhone(contact.phone_number);
+    setFormWhatsapp(contact.whatsapp_number || '');
     setFormRegency(contact.city_regency);
     setFormAddress(contact.address || '');
-    setFormIs24Hours(contact.is_24_hours ?? true);
-    setFormIsActive(contact.is_active ?? true);
     setFormDescription(contact.description || '');
+    setFormIs24Hours(contact.is_24_hours);
+    setFormIsActive(contact.is_active);
     setIsModalOpen(true);
   };
 
-  // Submit Save
-  const handleSaveContact = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formAgencyName.trim() || !formCallNumber.trim()) {
-      showToast?.('Nama instansi dan nomor panggilan darurat wajib diisi.', 'warning');
+    if (!formAgencyName.trim() || !formPhone.trim()) {
+      showToast?.('Nama instansi dan nomor darurat wajib diisi.', 'warning');
       return;
     }
 
-    const contactData: EmergencyContactNumber = {
+    const updated = EmergencyContactsRepo.save({
       id: editingContact ? editingContact.id : `emg-${Date.now().toString(36)}`,
       agency_name: formAgencyName.trim(),
-      agency_type: formCategory,
-      phone_number: formCallNumber.trim(),
-      whatsapp_number: editingContact?.whatsapp_number || null,
-      call_number: formCallNumber.trim(),
-      category: formCategory,
+      agency_type: formAgencyType,
+      phone_number: formPhone.trim(),
+      whatsapp_number: formWhatsapp.trim() || null,
       city_regency: formRegency,
       address: formAddress.trim() || undefined,
+      description: formDescription.trim() || undefined,
       is_24_hours: formIs24Hours,
       is_active: formIsActive,
-      geog: editingContact?.geog || 'SRID=4326;POINT(100.354270 -0.949240)',
-      created_by_admin_id: editingContact?.created_by_admin_id || 'usr-admin-01',
-      description: formDescription.trim() || undefined,
-      updated_at: new Date().toISOString(),
-    };
-
-    try {
-      const updated = await saveEmergencyContact(contactData);
-      setContacts(updated);
-      setIsModalOpen(false);
-      showToast?.(
-        editingContact
-          ? 'Nomor darurat berhasil diperbarui.'
-          : 'Nomor darurat baru berhasil didaftarkan.',
-        'success'
-      );
-    } catch {
-      showToast?.('Gagal menyimpan nomor darurat.', 'error');
-    }
+      latitude: editingContact?.latitude ?? -0.9471,
+      longitude: editingContact?.longitude ?? 100.3543,
+      created_by_admin_id: 'usr-admin-01',
+    });
+    setContacts(updated);
+    setIsModalOpen(false);
+    showToast?.(
+      editingContact ? 'Kontak darurat diperbarui.' : 'Kontak darurat baru ditambahkan.',
+      'success'
+    );
   };
 
-  // Delete Contact
-  const handleDeleteContact = async (contact: EmergencyContactNumber) => {
-    if (!window.confirm(`Hapus nomor darurat "${contact.agency_name}"?`)) return;
-    try {
-      const updated = await deleteEmergencyContact(contact.id);
-      setContacts(updated);
-      showToast?.(`Nomor darurat "${contact.agency_name}" telah dihapus.`, 'info');
-    } catch {
-      showToast?.('Gagal menghapus nomor darurat.', 'error');
-    }
+  const handleDelete = (contact: EmergencyContact) => {
+    if (!window.confirm(`Hapus kontak darurat "${contact.agency_name}"?`)) return;
+    setContacts(EmergencyContactsRepo.delete(contact.id));
+    showToast?.(`Kontak "${contact.agency_name}" dihapus.`, 'info');
   };
 
-  // Toggle Active
-  const handleToggleActive = async (contact: EmergencyContactNumber) => {
-    const updatedContact = { ...contact, is_active: !contact.is_active };
-    try {
-      const updated = await saveEmergencyContact(updatedContact);
-      setContacts(updated);
-      showToast?.(
-        `Siaran ${contact.agency_name} sekarang ${
-          updatedContact.is_active ? 'AKTIF disiarkan' : 'DINONAKTIFKAN'
-        }.`,
-        'info'
-      );
-    } catch {
-      showToast?.('Gagal mengubah status siaran.', 'error');
-    }
+  const handleToggleActive = (contact: EmergencyContact) => {
+    const updated = EmergencyContactsRepo.save({ ...contact, is_active: !contact.is_active });
+    setContacts(updated);
+    showToast?.(
+      `Siaran ${contact.agency_name} ${!contact.is_active ? 'diaktifkan' : 'dinonaktifkan'}.`,
+      'info'
+    );
   };
 
-  // Badge Category Helper
-  const getCategoryMeta = (cat: EmergencyCategoryType) => {
-    switch (cat) {
-      case 'SAR & Basarnas':
-        return { bg: 'bg-[#F26B4B]/15 text-[#D95637] border-[#F26B4B]/30', icon: LifeBuoy };
-      case 'BPBD & Kebencanaan':
-        return { bg: 'bg-[#FEF08A] text-[#854D0E] border-[#FDE047]', icon: AlertTriangle };
+  const getAgencyMeta = (type: EmergencyAgencyType) => {
+    switch (type) {
+      case 'BPBD':
+        return { bg: 'bg-amber-100 text-amber-900 border-amber-300', icon: AlertTriangle };
+      case 'PMI':
+      case 'Medis':
+        return { bg: 'bg-emerald-100 text-emerald-900 border-emerald-300', icon: CheckCircle2 };
+      case 'Damkar':
+        return { bg: 'bg-red-100 text-red-900 border-red-300', icon: Flame };
       case 'Kepolisian':
-        return { bg: 'bg-[#DBEAFE] text-[#1D4ED8] border-[#93C5FD]', icon: ShieldCheck };
-      case 'Medis & Ambulans':
-        return { bg: 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC]', icon: CheckCircle2 };
-      case 'Pemadam Kebakaran':
-        return { bg: 'bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]', icon: Flame };
-      case 'Posko Jalur Rawan':
-        return { bg: 'bg-[#234B24]/10 text-[#234B24] border-[#234B24]/20', icon: Radio };
+        return { bg: 'bg-blue-100 text-blue-900 border-blue-300', icon: ShieldCheck };
+      case 'Basarnas':
       default:
-        return { bg: 'bg-gray-100 text-gray-800 border-gray-200', icon: Phone };
+        return { bg: 'bg-[#F26B4B]/15 text-[#D95637] border-[#F26B4B]/40', icon: LifeBuoy };
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* 4 Kartu KPI Statistik Nomor Darurat */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
-          <span className="text-xs font-bold text-[#4A5248]">Total Nomor Siaga Resmi</span>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
-            {contacts.length} Hotline
-          </div>
-          <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
-            Terverifikasi Siaga Wisata Sumbar
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
-          <span className="text-xs font-bold text-[#166534]">Layanan Siaga 24 Jam</span>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#16A34A]">
-            {contacts.filter((c) => c.is_24_hours && c.is_active).length} Unit
-          </div>
-          <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
-            Respon Cepat Tanggap Darurat
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
-          <span className="text-xs font-bold text-[#D95637]">SAR &amp; Medis Kritis</span>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#F26B4B]">
-            {
-              contacts.filter(
-                (c) => c.category === 'SAR & Basarnas' || c.category === 'Medis & Ambulans'
-              ).length
-            }{' '}
-            Kontak
-          </div>
-          <p className="text-[11px] text-[#4A5248] mt-1">
-            Basarnas Padang &amp; RSUP M. Djamil
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-[#234B24]/10 flex flex-col justify-between">
-          <span className="text-xs font-bold text-[#1D4ED8]">Status Siaran ke Aplikasi</span>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1D4ED8]">
-            {contacts.filter((c) => c.is_active).length} Aktif
-          </div>
-          <p className="text-[11px] text-[#4A5248] mt-1">
-            Tampil di Plang QR &amp; HP Wisatawan
-          </p>
-        </div>
-      </div>
-
-      {/* Header Kontrol & Tombol Input Nomor Baru */}
-      <div className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
+    <div className="space-y-5">
+      <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
-              <Phone className="w-5 h-5 text-[#234B24]" aria-hidden="true" />
-              <span>Direktori Nomor Darurat &amp; Hotline Bencana (Use Case: Input)</span>
+              <Phone className="w-5 h-5 text-[#234B24]" />
+              <span>Direktori Kontak Darurat Resmi Sumbar ({contacts.length} Instansi Real)</span>
             </h3>
             <p className="text-xs text-[#4A5248] mt-0.5">
-              Kelola nomor panggilan darurat instansi berwenang (SAR, BPBD, Kepolisian, Medis, Pemadam, Posko Jalur Rawan) yang disiarkan langsung ke aplikasi dan plang Smart QR wisatawan.
+              Sinkron migrasi database 000004 — tampil pada halaman SOS aplikasi mobile dan Plang Smart QR.
             </p>
           </div>
 
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
+            className="min-h-[42px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 shrink-0"
           >
-            <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-            <span>Input Nomor Darurat Baru</span>
+            <Plus className="w-4 h-4 text-[#F26B4B]" />
+            <span>Tambah Kontak Darurat</span>
           </button>
         </div>
 
-        {/* Filter Bar */}
-        <div className="pt-3 border-t border-[#234B24]/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="pt-3 border-t border-[#234B24]/10 flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <label htmlFor={searchInputId} className="sr-only">
               Cari kontak darurat
             </label>
-            <Search
-              className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]"
-              aria-hidden="true"
-            />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]" />
             <input
               id={searchInputId}
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari instansi, nomor telepon, wilayah kab/kota..."
-              className="w-full min-h-[40px] pl-10 pr-4 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
+              placeholder="Cari BPBD, PMI, Damkar, nomor telepon, atau wilayah..."
+              className="w-full min-h-[40px] pl-10 pr-4 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
             />
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="min-h-[40px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-            >
-              <option value="all">Semua Kategori Instansi</option>
-              <option value="SAR & Basarnas">SAR &amp; Basarnas</option>
-              <option value="BPBD & Kebencanaan">BPBD &amp; Kebencanaan</option>
-              <option value="Kepolisian">Kepolisian</option>
-              <option value="Medis & Ambulans">Medis &amp; Ambulans</option>
-              <option value="Pemadam Kebakaran">Pemadam Kebakaran</option>
-              <option value="Posko Jalur Rawan">Posko Jalur Rawan</option>
-            </select>
-
-            <select
-              value={regencyFilter}
-              onChange={(e) => setRegencyFilter(e.target.value)}
-              className="min-h-[40px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-            >
-              <option value="all">Semua Wilayah</option>
-              {SUMBAR_REGENCIES.slice(1).map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={agencyFilter}
+            onChange={(e) => setAgencyFilter(e.target.value)}
+            className="min-h-[40px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+          >
+            <option value="all">Semua Instansi</option>
+            {EMERGENCY_AGENCY_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <select
+            value={regencyFilter}
+            onChange={(e) => setRegencyFilter(e.target.value)}
+            className="min-h-[40px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+          >
+            <option value="all">Semua Wilayah</option>
+            <option value="Provinsi Sumatera Barat">Provinsi Sumatera Barat</option>
+            {SUMBAR_REGENCIES.slice(1).map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Grid Kartu Nomor Darurat */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredContacts.length === 0 ? (
-          <div className="col-span-full bg-white rounded-2xl p-8 text-center text-xs text-[#767676] border border-[#234B24]/10">
-            Tidak ada nomor darurat yang sesuai dengan kriteria pencarian.
-          </div>
-        ) : (
-          filteredContacts.map((contact) => {
-            const cat = contact.category || contact.agency_type || 'SAR & Basarnas';
-            const meta = getCategoryMeta(cat);
-            const IconComponent = meta.icon;
-            const phone = contact.call_number || contact.phone_number || '';
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredContacts.map((contact) => {
+          const meta = getAgencyMeta(contact.agency_type);
+          const IconComp = meta.icon;
+          const cleanTel = contact.phone_number.replace(/[^\d+]/g, '');
 
-            return (
-              <div
-                key={contact.id}
-                className={`p-5 rounded-2xl bg-white border-2 transition shadow-sm flex flex-col justify-between space-y-4 ${
-                  contact.is_active ? 'border-[#CFD8BE] hover:border-[#234B24]' : 'border-gray-200 opacity-60'
+          return (
+            <div
+              key={contact.id}
+              className={`p-5 rounded-2xl bg-white border-2 transition flex flex-col justify-between space-y-3 ${contact.is_active ? 'border-[#CFD8BE] hover:border-[#234B24]' : 'border-gray-200 opacity-60'
                 }`}
-              >
-                <div>
-                  {/* Baris Atas: Badge Kategori & Status Siaran */}
-                  <div className="flex items-start justify-between gap-2">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border flex items-center gap-1.5 ${meta.bg}`}
-                    >
-                      <IconComponent className="w-3.5 h-3.5" />
-                      <span>{cat}</span>
-                    </span>
-
-                    <div className="flex items-center gap-1.5">
-                      {contact.is_24_hours && (
-                        <span className="px-2 py-0.5 rounded-md bg-[#DCFCE7] text-[#166534] text-[10px] font-bold border border-[#86EFAC] flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>24 Jam</span>
-                        </span>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActive(contact)}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
-                          contact.is_active
-                            ? 'bg-[#1E9E5A]/15 text-[#166534]'
-                            : 'bg-gray-100 text-gray-500'
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border inline-flex items-center gap-1 ${meta.bg}`}
+                  >
+                    <IconComp className="w-3 h-3" /> {contact.agency_type}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {contact.is_24_hours && (
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> 24 Jam
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(contact)}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${contact.is_active ? 'bg-[#1E9E5A]/15 text-[#166534]' : 'bg-gray-100 text-gray-500'
                         }`}
-                        title="Klik untuk ubah status siaran"
-                      >
-                        {contact.is_active ? 'Disiarkan' : 'Nonaktif'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Judul & Nomor Telepon Panggilan */}
-                  <div className="mt-3">
-                    <h4 className="text-sm font-extrabold text-[#1B1F1A] leading-snug">
-                      {contact.agency_name}
-                    </h4>
-
-                    <div className="mt-2 flex items-center justify-between p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-[#F26B4B]" />
-                        <span className="font-mono text-base font-extrabold text-[#234B24]">
-                          {phone}
-                        </span>
-                      </div>
-
-                      <a
-                        href={phone ? `tel:${phone.replace(/\D/g, '')}` : '#'}
-                        className="px-3 py-1 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white text-[11px] font-bold inline-flex items-center gap-1 shadow-xs transition"
-                        title="Uji Panggilan Cepat"
-                      >
-                        <Phone className="w-3 h-3" />
-                        <span>Panggil</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Alamat & Wilayah */}
-                  <div className="mt-2.5 space-y-1 text-xs text-[#4A5248]">
-                    <div className="flex items-center gap-1.5 font-bold text-[#1B1F1A]">
-                      <MapPin className="w-3.5 h-3.5 text-[#F26B4B] shrink-0" />
-                      <span>{contact.city_regency}</span>
-                    </div>
-                    {contact.address && (
-                      <p className="text-[11px] text-[#767676] pl-5 leading-relaxed">
-                        {contact.address}
-                      </p>
-                    )}
-                    {contact.description && (
-                      <p className="text-[11px] text-[#4A5248] italic pt-1 pl-5">
-                        "{contact.description}"
-                      </p>
-                    )}
+                    >
+                      {contact.is_active ? 'Aktif' : 'Nonaktif'}
+                    </button>
                   </div>
                 </div>
 
-                {/* Footer Action Buttons */}
-                <div className="pt-3 border-t border-[#234B24]/10 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEdit(contact)}
-                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-gray-100 text-[#234B24] border border-[#CFD8BE] text-xs font-bold inline-flex items-center gap-1 transition"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Ubah</span>
-                  </button>
+                <h4 className="text-sm font-extrabold text-[#1B1F1A] mt-2.5">
+                  {contact.agency_name}
+                </h4>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteContact(contact)}
-                    className="px-3 py-1.5 rounded-xl bg-[#F26B4B]/15 hover:bg-[#F26B4B]/25 text-[#D95637] text-xs font-bold inline-flex items-center gap-1 transition"
+                <div className="mt-2 flex items-center justify-between p-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                  <span className="font-mono text-sm font-extrabold text-[#234B24]">
+                    {contact.phone_number}
+                  </span>
+                  <a
+                    href={`tel:${cleanTel}`}
+                    className="px-2.5 py-1 rounded-lg bg-[#234B24] text-white text-[11px] font-bold inline-flex items-center gap-1"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Hapus</span>
-                  </button>
+                    <Phone className="w-3 h-3" /> Panggil
+                  </a>
+                </div>
+
+                <div className="mt-2 text-xs text-[#4A5248] space-y-1">
+                  <div className="flex items-center gap-1 font-bold text-[#1B1F1A]">
+                    <MapPin className="w-3.5 h-3.5 text-[#F26B4B] shrink-0" />
+                    <span>{contact.city_regency}</span>
+                  </div>
+                  {contact.address && <p className="text-[11px] text-[#767676]">{contact.address}</p>}
+                  {contact.description && (
+                    <p className="text-[11px] italic text-[#4A5248]">{contact.description}</p>
+                  )}
                 </div>
               </div>
-            );
-          })
-        )}
+
+              <div className="pt-2.5 border-t border-[#E4E9DA] flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenEdit(contact)}
+                  className="px-3 py-1.5 rounded-xl bg-white border border-[#CFD8BE] text-xs font-bold text-[#234B24] inline-flex items-center gap-1"
+                >
+                  <Edit3 className="w-3.5 h-3.5" /> Ubah
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(contact)}
+                  className="px-3 py-1.5 rounded-xl bg-[#F26B4B]/15 text-[#D95637] text-xs font-bold inline-flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Hapus
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Modal Input / Edit Nomor Darurat */}
       {isModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-[#234B24] text-white flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-[#F26B4B]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                    {editingContact ? 'Ubah Nomor Darurat' : 'Input Nomor Darurat Baru'}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Standar Dispar &amp; Satgas Siaga SAR Sumbar
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <form onSubmit={handleSave} className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <h3 className="text-base font-extrabold">
+                {editingContact ? 'Ubah Kontak Darurat' : 'Tambah Kontak Darurat Resmi'}
+              </h3>
+              <button type="button" onClick={() => setIsModalOpen(false)}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            <form onSubmit={handleSaveContact} className="space-y-3.5 text-xs">
+            <div className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#1B1F1A] mb-1">
-                  Nama Instansi / Posko Layanan *
-                </label>
+                <label className="block font-bold mb-1">Nama Instansi / Posko *</label>
                 <input
                   type="text"
                   required
                   value={formAgencyName}
                   onChange={(e) => setFormAgencyName(e.target.value)}
-                  placeholder="misal: Kantor SAR Kelas A Padang (Basarnas)"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-semibold text-[#1B1F1A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-semibold"
                 />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#1B1F1A] mb-1">
-                    Nomor Panggilan / Hotline *
-                  </label>
+                  <label className="block font-bold mb-1">Nomor Telepon *</label>
                   <input
                     type="text"
                     required
-                    value={formCallNumber}
-                    onChange={(e) => setFormCallNumber(e.target.value)}
-                    placeholder="misal: 115 atau (0751) 484555"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-mono font-bold text-xs text-[#234B24]"
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    placeholder="(0751) 890721"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-mono font-bold"
                   />
                 </div>
-
                 <div>
-                  <label className="block font-bold text-[#1B1F1A] mb-1">
-                    Kategori Instansi *
-                  </label>
+                  <label className="block font-bold mb-1">Jenis Instansi *</label>
                   <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as EmergencyCategoryType)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                    value={formAgencyType}
+                    onChange={(e) => setFormAgencyType(e.target.value as EmergencyAgencyType)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-bold"
                   >
-                    <option value="SAR & Basarnas">SAR &amp; Basarnas</option>
-                    <option value="BPBD & Kebencanaan">BPBD &amp; Kebencanaan</option>
-                    <option value="Kepolisian">Kepolisian</option>
-                    <option value="Medis & Ambulans">Medis &amp; Ambulans</option>
-                    <option value="Pemadam Kebakaran">Pemadam Kebakaran</option>
-                    <option value="Posko Jalur Rawan">Posko Jalur Rawan</option>
+                    {EMERGENCY_AGENCY_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
-
-              <div>
-                <label className="block font-bold text-[#1B1F1A] mb-1">
-                  Cakupan Wilayah Kab/Kota *
-                </label>
-                <select
-                  value={formRegency}
-                  onChange={(e) => setFormRegency(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-                >
-                  <option value="Provinsi Sumatera Barat">Provinsi Sumatera Barat (Seluruh Wilayah)</option>
-                  {SUMBAR_REGENCIES.slice(1).map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold mb-1">WhatsApp (Opsional)</label>
+                  <input
+                    type="text"
+                    value={formWhatsapp}
+                    onChange={(e) => setFormWhatsapp(e.target.value)}
+                    placeholder="628116606113"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Wilayah *</label>
+                  <select
+                    value={formRegency}
+                    onChange={(e) => setFormRegency(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-bold"
+                  >
+                    <option value="Provinsi Sumatera Barat">Provinsi Sumatera Barat</option>
+                    {SUMBAR_REGENCIES.slice(1).map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-
               <div>
-                <label className="block font-bold text-[#1B1F1A] mb-1">
-                  Alamat Kantor / Pos Pantau Fisik
-                </label>
+                <label className="block font-bold mb-1">Alamat Posko</label>
                 <input
                   type="text"
                   value={formAddress}
                   onChange={(e) => setFormAddress(e.target.value)}
-                  placeholder="misal: Jl. By Pass KM 25, Koto Tangah, Kota Padang"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs text-[#1B1F1A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
                 />
               </div>
-
               <div>
-                <label className="block font-bold text-[#1B1F1A] mb-1">
-                  Catatan Operasional &amp; Petunjuk
-                </label>
+                <label className="block font-bold mb-1">Deskripsi Layanan</label>
                 <textarea
                   rows={2}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="misal: Siaga derek darurat dan penanganan rem blong jalur Sitinjau Lauik."
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs text-[#1B1F1A]"
+                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
                 />
               </div>
-
-              <div className="flex items-center gap-6 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center gap-5">
+                <label className="flex items-center gap-2 font-bold cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formIs24Hours}
                     onChange={(e) => setFormIs24Hours(e.target.checked)}
-                    className="rounded text-[#234B24] focus:ring-[#234B24] w-4 h-4"
                   />
-                  <span className="font-bold text-[#1B1F1A]">Siaga 24 Jam Nonstop</span>
+                  <span>Siaga 24 Jam</span>
                 </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 font-bold cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formIsActive}
                     onChange={(e) => setFormIsActive(e.target.checked)}
-                    className="rounded text-[#234B24] focus:ring-[#234B24] w-4 h-4"
                   />
-                  <span className="font-bold text-[#1B1F1A]">Aktifkan Siaran ke Wisatawan</span>
+                  <span>Aktif Disiarkan</span>
                 </label>
               </div>
-
-              <div className="pt-3 border-t border-[#234B24]/10 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-1.5 shadow-sm"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Simpan Nomor Darurat</span>
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248]"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
+              >
+                Simpan Kontak
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

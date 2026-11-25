@@ -1,5 +1,5 @@
 // ============================================================================
-// SKEMA DATABASE RESMI WISGO — 26 TABEL POSTGRESQL 16 + POSTGIS 3.4
+// SKEMA DATABASE RESMI WISGO V3 — SINKRON 100% FRONTEND-1 (73a33bb) & FRONTEND-2 (6911eaf)
 // Dinas Pariwisata Provinsi Sumatera Barat • Ekosistem Wisata Pintar Sumbar
 // ============================================================================
 
@@ -7,11 +7,92 @@ import { parsePointGeog, formatPointGeog } from '../utils/geoUtils';
 export { parsePointGeog, formatPointGeog };
 
 // ============================================================================
+// 0. KANONIK ENUM & KONSTANTA DOMAIN
+// ============================================================================
+export type MasterDestinationCategory =
+  | 'Alam & Geopark'
+  | 'Budaya & Nagari'
+  | 'Hidden Gem'
+  | 'Religi'
+  | 'Kuliner';
+
+export type CanonicalPartnerCategory =
+  | 'Penginapan'
+  | 'Transportasi'
+  | 'Atraksi'
+  | 'Pakaian Adat'
+  | 'Kuliner';
+
+export type DenahPointCategory =
+  | 'PARKIR'
+  | 'UMKM'
+  | 'TOILET'
+  | 'MUSHOLLA'
+  | 'LOKET';
+
+export type TariffCategoryType =
+  | 'Tiket Masuk'
+  | 'Parkir Kendaraan'
+  | 'Sewa Perahu & Bendi'
+  | 'Jasa Pemandu Pokdarwis'
+  | string;
+
+export type PungliStatus =
+  | 'Masuk'
+  | 'Diverifikasi'
+  | 'Ditindaklanjuti'
+  | 'Selesai';
+
+export type HazardSeverity =
+  | 'Normal'
+  | 'Waspada'
+  | 'Siaga'
+  | 'Awas Tutup Total';
+
+export type EmergencyAgencyType =
+  | 'BPBD'
+  | 'PMI'
+  | 'Damkar'
+  | 'Basarnas'
+  | 'Kepolisian'
+  | 'Medis';
+
+export type SosStatus =
+  | 'Dipancarkan'
+  | 'Tim SAR Meluncur'
+  | 'Evakuasi Selesai'
+  | string;
+
+export type JejakWisgoSource = 'GPS_CHECKIN' | 'TRIP_GO' | 'TICKET_SCAN';
+
+export type MinangPolitenessLevel =
+  | 'Kato Mandaki'
+  | 'Kato Mandata'
+  | 'Kato Manurun'
+  | 'Kato Malereang';
+
+export type MinangPhraseCategory =
+  | 'Kuliner'
+  | 'Pasar & Belanja'
+  | 'Sapaan Nagari'
+  | 'Arah & Navigasi'
+  | string;
+
+export type CrowdLevel = 'Sepi' | 'Sedang' | 'Ramai';
+export type CultureEventCategory = string;
+export type CultureEventStatus = 'Akan Datang' | 'Sedang Berlangsung' | 'Selesai' | string;
+export type OpenTripStatus = 'Terverifikasi' | 'Menunggu' | 'Ditangguhkan' | string;
+export type ChallengeCategoryType = string;
+export type ChallengeRewardType = string;
+export type NewTourStatus = 'pending' | 'approved' | 'rejected';
+
+// ============================================================================
 // 1. MASTER KATEGORI (categories)
 // ============================================================================
 export interface Category {
-  id: string; // varchar pk
-  name: string; // varchar not null
+  id: string;
+  slug?: string;
+  name: string;
   module_type:
     | 'destination'
     | 'tariff'
@@ -19,60 +100,40 @@ export interface Category {
     | 'new_tour'
     | 'visit_point'
     | 'minang_phrase'
-    | string; // varchar not null
-  description?: string | null; // text null
-  created_at?: string | null; // timestamptz null
+    | string;
+  description?: string | null;
+  created_at?: string | null;
 }
 
-export type TariffCategoryType = string;
-export type CultureEventCategory = string;
-export type CultureEventStatus = string;
-export type EmergencyCategoryType = string;
-export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'pending' | 'approved' | 'rejected' | string;
-export type OpenTripStatus = 'Terverifikasi' | 'Menunggu' | 'Ditangguhkan' | string;
-export type SosEmergencyStatus = 'SIAGA_DARURAT' | 'TIM_DIKERAHKAN' | 'BERHASIL_DIEVAKUASI' | 'DIBATALKAN' | string;
-export type EscrowTransaction = any;
-export type PartnerCategoryType = string;
-export type MinangPhraseCategory = string;
-export type PungliCategoryType = string;
-export type ChallengeCategoryType = string;
-export type ChallengeRewardType = string;
-export type UGCSubmissionStatus = string;
-export type ChecklistClaimStatus = string;
+// ============================================================================
+// 2. KESIAPAN MEDAN 4 INDIKATOR (indikator_medan — Sinkron FE-1 & FE-2)
+// ============================================================================
+export type VehicleAccessLevel = 'Mobil OK' | 'Hanya Motor' | 'Jalan Kaki' | string;
+export type TrekkingLevel = 'Mudah (Datar)' | 'Sedang' | 'Ekstrem (Curam)' | string;
+export type FacilitiesLevel = 'Toilet, Musala & Parkir Lengkap' | 'Terbatas' | 'Belum Ada' | string;
+export type GuideNeedLevel = 'Mandiri' | 'Disarankan' | 'Wajib Pemandu Lokal' | string;
 
-// ============================================================================
-// 2. KESIAPAN MEDAN 5 INDIKATOR (indikator_medan)
-// ============================================================================
 export interface IndikatorMedan {
-  id: string; // varchar pk
-  destination_id: string; // varchar unique not null
-  vehicle_access: string; // varchar not null (e.g. 'Mobil OK', 'Hanya Motor', 'Jalan Kaki')
-  trekking_level: string; // varchar not null (e.g. 'Datar / Mudah', 'Sedang', 'Curam / Ekstrem')
-  cellular_signal: string; // varchar not null (e.g. '4G Lancar', 'Blank Spot', 'Sinyal Lemah')
-  facilities: string; // varchar not null (e.g. 'Toilet & Musala Lengkap', 'Terbatas')
-  guide_need: string; // varchar not null (e.g. 'Mandiri', 'Wajib Pemandu', 'Disarankan')
-
-  // UI convenience aliases:
+  id: string;
+  destination_id: string;
+  vehicle_access: VehicleAccessLevel;
+  trekking_level: TrekkingLevel;
+  facilities: FacilitiesLevel;
+  guide_need: GuideNeedLevel;
+  terrain_note?: string;
   readiness_notes?: string;
-  vehicle_score?: number;
-  trekking_score?: number;
-  signal_score?: number;
-  facilities_score?: number;
-  guide_score?: number;
 }
 export type MedanIndicator = IndikatorMedan;
 
 // ============================================================================
-// 3. ATURAN DESTINASI & ETIKA (aturan_destinasi)
+// 3. ATURAN DESTINASI & TIPS MENJAGA TEMPAT INI (aturan_destinasi)
 // ============================================================================
 export interface AturanDestinasi {
-  id: string; // varchar pk
-  destination_id: string; // varchar not null
-  category_id?: string; // varchar not null (Ref: categories.id)
-  title?: string; // varchar not null
-  content: string; // text not null
-
-  // UI alias:
+  id: string;
+  destination_id: string;
+  category_id?: string;
+  title?: string;
+  content: string;
   is_important?: boolean;
 }
 export type DestinationTip = AturanDestinasi;
@@ -82,100 +143,53 @@ export type LocalTip = AturanDestinasi;
 // 4. TARIF RESMI PERDA (official_tariffs)
 // ============================================================================
 export interface OfficialTariff {
-  id: string; // varchar pk
-  destination_id: string; // varchar not null
-  category_id?: string; // varchar not null (Ref: categories.id)
-  item_name: string; // varchar not null
-  price: number; // numeric not null
-  unit: string; // varchar not null (e.g. 'per orang', 'per mobil', 'per kapal')
-  regulation_ref: string; // varchar not null (e.g. 'Perda Prov Sumbar No 4/2024')
-
-  // UI convenience aliases:
-  category?: string;
+  id: string;
+  destination_id: string;
+  category_id?: string;
+  category?: TariffCategoryType;
+  item_name: string;
+  price: number;
   fair_price_min?: number;
   fair_price_max?: number;
+  unit: string;
+  regulation_ref: string;
 }
 
 // ============================================================================
-// 5. SCENE PANORAMA 360° (panorama_scenes)
+// 5. SCENE PANORAMA 360° BERSIH (panorama_scenes — Pure Panorama View)
 // ============================================================================
 export interface PanoramaScene {
-  id: string; // varchar pk
-  destination_id: string; // varchar not null
-  title: string; // varchar not null
-  scene_type?: 'aerial' | 'ground' | string; // varchar not null
-  panorama_url: string; // text not null
-  upload_format?: 'equirectangular' | 'cube' | string; // varchar not null
-  spatial_audio_url?: string; // text not null (fallback "" jika kosong)
-  initial_pitch: number; // float8 not null
-  initial_yaw: number; // float8 not null
-  is_default_scene?: boolean; // bool not null
-  created_at?: string; // timestamptz not null
-
-  // UI aliases:
-  type?: 'aerial' | 'ground';
-  ambient_audio_url?: string;
-  hotspots?: PanoramaHotspot[];
+  id: string;
+  destination_id: string;
+  title: string;
+  scene_type: 'aerial' | 'ground';
+  view_mode?: 'photo_panorama' | string;
+  image_resolution?: string;
+  panorama_url: string;
+  upload_format?: 'equirectangular' | string;
+  initial_pitch: number;
+  initial_yaw: number;
+  is_default_scene?: boolean;
+  created_at?: string;
 }
 export type Scene360 = PanoramaScene;
 
 // ============================================================================
-// 6. HOTSPOT PIN 360° (panorama_hotspots)
-// Kanvas Bersih: Narasi Sejarah, Musik Tradisional Minang & Navigasi Pindah Scene
+// 6. DENAH KAWASAN 2D (denah_points — Parkir, UMKM, Toilet, Musholla, Loket)
 // ============================================================================
-export type HotspotPinCategory =
-  | 'narasi_sejarah'
-  | 'musik_minang'
-  | 'navigasi_arah'
-  | 'narasi'
-  | 'musik'
-  | 'navigasi'
-  | string;
-
-export interface PanoramaHotspot {
-  id: string; // varchar pk
-  scene_id: string; // varchar not null
-  pin_type?: HotspotPinCategory; // varchar not null
-  color_token?: string; // varchar not null (amber, emerald, blue, teal, coral)
-  pitch: number; // float8 not null
-  yaw: number; // float8 not null
-  title: string; // varchar not null
-  target_ref?: string; // varchar not null (scene_id target atau audio URL)
-  voice_text?: string; // text not null (teks narasi sejarah Minangkabau)
-  description: string; // text not null
-  created_at?: string; // timestamptz not null
-
-  // UI convenience aliases:
-  category?: HotspotPinCategory;
-  target_scene_id?: string;
-  audio_url?: string;
-  music_url?: string;
-  narration_duration_sec?: number;
-  facility_subtype?: string;
-  operating_hours?: string;
-  type?: string;
-  whatsapp_number?: string;
-  partner_name?: string;
-  partner_fee?: number;
-}
-export type HotspotPin = PanoramaHotspot;
-export type Hotspot360 = PanoramaHotspot;
-
-// ============================================================================
-// 7. BUNDEL POCKET OFFLINE (offline_bundles)
-// ============================================================================
-export interface OfflineBundle {
-  id: string; // varchar pk
-  destination_id: string; // varchar unique not null
-  bundle_version: string; // varchar not null
-  file_size_kb: number; // int4 not null
-  map_tiles_url: string; // text not null
-  compressed_payload: Record<string, unknown>; // jsonb not null
-  updated_at: string; // timestamptz not null
+export interface DenahPoint {
+  id: string;
+  destination_id: string;
+  category: DenahPointCategory;
+  title: string;
+  description: string;
+  x: number; // 0 - 100 (% horizontal)
+  y: number; // 0 - 100 (% vertikal)
+  partner_id?: string;
 }
 
 // ============================================================================
-// CHECK POINT LOKASI & KONTAK DARURAT OFFLINE (Destinasi)
+// 7. CHECK POINT LOKASI & CUACA DESTINASI
 // ============================================================================
 export interface DestinationCheckpoint {
   id: string;
@@ -187,167 +201,152 @@ export interface DestinationCheckpoint {
   notes?: string;
 }
 
-export interface OfflineEmergencyContact {
-  id: string;
-  destination_id: string;
-  unit_name: string;
-  phone_number: string;
-  service_type: 'SAR' | 'Puskesmas' | 'Polsek' | 'Pos Pengelola' | string;
-  notes?: string;
+export interface DestinationWeatherSnapshot {
+  city_regency: string;
+  temperature_c: number;
+  condition: string;
+  weather_status: 'Aman' | 'Waspada Hujan' | 'Siaga Cuaca Ekstrem' | string;
+  humidity_percent: number;
+  wind_speed_kmh: number;
+  rain_probability: number;
+  forecast?: string;
+  alert_note?: string;
+  source: string;
+  last_updated: string;
 }
 
 // ============================================================================
 // 8. DESTINASI UTAMA (destinations)
 // ============================================================================
-export type CrowdLevel = 'Sepi' | 'Sedang' | 'Ramai' | string;
-
 export interface Destination {
-  id: string; // varchar pk
-  slug: string | null; // varchar unique null
-  name: string; // varchar not null
-  category_id?: string; // varchar not null (Ref: categories.id)
-  city_regency: string; // varchar not null
-  description: string; // text not null
-  latitude: number; // float8 not null
-  longitude: number; // float8 not null
-  geog?: string | null; // geography null
-  elevation_m?: number; // int4 not null
-  cover_image: string; // text not null
-  crowd_level: CrowdLevel; // varchar not null
-  distance_km?: number; // numeric not null
-  travel_time_min?: number; // int4 not null
-  estimated_cost?: number; // numeric not null
-  is_hidden_gem?: boolean; // bool not null
-  qr_placard_code?: string | null; // varchar unique null
-  opening_hours?: string; // varchar not null
-  created_at?: string; // timestamptz not null
-  updated_at?: string; // timestamptz not null
-
-  // Relasi & UI convenience aliases:
-  category?: string;
-  estimated_distance_km?: number;
-  estimated_duration_min?: number;
+  id: string;
+  slug: string;
+  name: string;
+  category_id: string;
+  category: MasterDestinationCategory | string;
+  city_regency: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  geog?: string | null;
+  elevation_m?: number;
+  cover_image: string;
+  crowd_level: CrowdLevel;
+  distance_km: number;
+  travel_time_min: number;
+  estimated_cost: number;
   ticket_price_summary?: string;
-  is_blank_spot?: boolean;
+  is_hidden_gem?: boolean;
+  qr_placard_code?: string;
+  opening_hours?: string;
+  weather_status?: string;
+  weather?: DestinationWeatherSnapshot;
+  created_at?: string;
+  updated_at?: string;
+
+  // Relasi tersinkronisasi:
   medan_indicator?: IndikatorMedan;
-  indikator_medan?: IndikatorMedan;
   aturan_destinasi?: AturanDestinasi[];
   tips?: AturanDestinasi[];
   tariffs?: OfficialTariff[];
   official_tariffs?: OfficialTariff[];
   scenes_360?: PanoramaScene[];
-  panorama_scenes?: PanoramaScene[];
-  offline_bundle?: OfflineBundle;
+  denah_points?: DenahPoint[];
   checkpoints?: DestinationCheckpoint[];
-  offline_emergency_contacts?: OfflineEmergencyContact[];
 }
 
 // ============================================================================
 // 9. GAODE BEHAVIOR RANKINGS (gaode_behavior_rankings)
 // ============================================================================
 export interface GaodeBehaviorRanking {
-  id: string; // varchar pk
-  destination_id: string; // varchar unique not null
-  category_id: string; // varchar not null (Ref: categories.id)
-  rank_position: number; // int4 not null
-  gaode_authenticity_score: number; // numeric not null
-  active_nav_count_30d: number; // int4 not null
-  avg_dwell_time_min: number; // int4 not null
-  return_visit_rate_pct: number; // numeric not null
-  anti_fake_review_verified: boolean; // bool not null
-  trending_badge: string; // varchar not null
-  updated_at: string; // timestamptz not null
-
-  // UI convenience joins:
-  name?: string;
+  id: string;
+  destination_id: string;
+  category_id: string;
+  category: MasterDestinationCategory | string;
+  name: string;
   destination_name?: string;
-  city_regency?: string;
-  category?: string;
-  calculated_gaode_score?: number;
-  current_rank?: number;
-  previous_rank?: number;
-  avg_dwell_hours?: number;
-  pungli_free_index?: number;
-  satisfaction_rate?: number;
-  weekly_visits?: number;
-  medan_score?: number;
-  trend?: 'up' | 'down' | 'same';
+  city_regency: string;
+  rank_position: number;
+  current_rank: number;
+  previous_rank: number;
+  gaode_authenticity_score: number;
+  calculated_gaode_score: number;
+  active_nav_count_30d: number;
+  weekly_visits: number;
+  avg_dwell_time_min: number;
+  avg_dwell_hours: number;
+  return_visit_rate_pct: number;
+  satisfaction_rate: number;
+  pungli_free_index: number;
+  medan_score: number;
+  anti_fake_review_verified: boolean;
+  trending_badge: string;
+  trend: 'up' | 'down' | 'same';
+  updated_at: string;
 }
 export type GaodeRankingItem = GaodeBehaviorRanking;
 
-// ============================================================================
-// 10. LAPORAN PUNGLI & SATGAS (pungli_reports)
-// ============================================================================
-export type PungliStatus =
-  | 'Masuk'
-  | 'Diverifikasi'
-  | 'Ditindaklanjuti'
-  | 'Selesai'
-  | 'Ditolak'
-  | string;
-
-export interface PungliReport {
-  id: string; // varchar pk
-  ticket_code?: string; // varchar unique not null
-  user_id?: string; // varchar not null (Ref: users.id)
-  destination_id: string; // varchar not null (Ref: destinations.id)
-  tariff_id?: string | null; // varchar null (Ref: official_tariffs.id)
-  incident_category?: string; // varchar not null
-  charged_amount_idr?: number; // numeric not null
-  official_perda_price_idr?: number; // numeric not null
-  overcharge_amount_idr?: number; // numeric not null
-  photo_evidence?: string; // text not null
-  incident_geog?: string | null; // geography null
-  status: PungliStatus; // varchar not null
-  verified_by_admin_id?: string | null; // varchar null (Ref: users.id)
-  admin_action_notes?: string | null; // text null
-  created_at?: string; // timestamptz not null
-  updated_at?: string; // timestamptz not null
-
-  // UI convenience joins:
-  destination_name?: string;
-  kab_kota?: string;
-  reporter_name?: string;
-  reporter_phone?: string;
-  category?: string;
-  reported_amount?: number;
-  official_amount?: number;
-  description?: string;
-  photo_url?: string;
-  lat?: number;
-  lng?: number;
-  bap_notes?: string;
-  admin_notes?: string;
+export interface GaodeWeightConfig {
+  satisfaction_weight: number;
+  pungli_free_weight: number;
+  medan_access_weight: number;
+  visit_volume_weight: number;
 }
 
 // ============================================================================
-// 11. ULASAN DESTINASI & MODERASI (destination_reviews)
+// 10. LAPORAN PUNGLI & FASILITAS RUSAK (pungli_reports)
+// ============================================================================
+export interface PungliReport {
+  id: string;
+  ticket_code: string;
+  user_id?: string;
+  destination_id: string;
+  destination_name: string;
+  kab_kota: string;
+  tariff_id?: string | null;
+  report_type?: 'pungli' | 'fasilitas';
+  incident_category: string;
+  charged_amount_idr: number;
+  official_perda_price_idr: number;
+  overcharge_amount_idr: number;
+  photo_evidence: string;
+  latitude: number;
+  longitude: number;
+  incident_geog?: string | null;
+  reporter_name: string;
+  reporter_phone?: string;
+  description: string;
+  status: PungliStatus;
+  verified_by_admin_id?: string | null;
+  admin_action_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================================================
+// 11. ULASAN DESTINASI & KONDISI LAPANGAN (destination_reviews)
 // ============================================================================
 export interface DestinationReview {
-  id: string; // varchar pk
-  destination_id: string; // varchar not null (Ref: destinations.id)
-  user_id?: string; // varchar not null (Ref: users.id)
-  stemp_visit_id?: string | null; // varchar unique null (Ref: stemp_visit.id)
-  rating: number; // int4 not null (1-5)
-  review_comment?: string; // text not null
-  photo_url?: string | null; // text null
-  is_gps_verified?: boolean; // bool not null
-  created_at?: string; // timestamptz not null
-
-  // UI convenience joins:
-  user_name?: string;
-  destination_name?: string;
-  comment?: string;
-  tourist_name?: string;
+  id: string;
+  destination_id: string;
+  destination_name: string;
+  user_id?: string;
+  user_name: string;
   author_badge?: string;
-  tags?: string[];
-  helpful_count?: number;
-  is_hidden?: boolean;
-  admin_moderation_reason?: string;
+  stemp_visit_id?: string | null;
+  rating: number;
+  review_comment: string;
   raw_text?: string;
-  is_important?: boolean;
-  character_count?: number;
-  visited_at?: string;
+  photo_url?: string | null;
+  tags: string[];
+  helpful_count: number;
+  is_gps_verified: boolean;
+  is_important: boolean;
+  is_hidden: boolean;
+  admin_moderation_reason?: string;
+  character_count: number;
+  visited_at: string;
+  created_at: string;
 }
 export type TouristReview = DestinationReview;
 
@@ -355,441 +354,397 @@ export type TouristReview = DestinationReview;
 // 12. TELEMETRI LATENSI & SLA (api_telemetry_logs)
 // ============================================================================
 export interface ApiTelemetryLog {
-  id: string; // varchar pk
-  endpoint_path: string; // varchar not null
-  http_method: string; // varchar not null
-  status_code: number; // int4 not null
-  latency_ms: number; // numeric not null
-  cache_hit: boolean; // bool not null
-  recorded_at: string; // timestamptz not null
+  id: string;
+  endpoint_path: string;
+  http_method: string;
+  status_code: number;
+  latency_ms: number;
+  cache_hit: boolean;
+  recorded_at: string;
 }
 
 // ============================================================================
-// 13. TITIK SINGGAH SEARAH / SHUNLU (visit_point)
+// 13. ALERT JALUR EKSTREM & BENCANA (hazard_alerts)
 // ============================================================================
-export interface VisitPoint {
-  id: string; // varchar pk
-  name: string; // varchar not null
-  category_id: string; // varchar not null (Ref: categories.id)
-  corridor_road: string; // varchar not null
-  city_regency: string; // varchar not null
-  latitude: number; // float8 not null
-  longitude: number; // float8 not null
-  geog?: string | null; // geography null
-  detour_minutes: number; // int4 not null
-  detour_distance_meter: number; // int4 not null
-  highlight_note: string; // text not null
-  opening_hours: string; // varchar not null
-  is_recommended: boolean; // bool not null
-
-  // UI joins:
-  category_name?: string;
-}
-
-// ============================================================================
-// 14. ALERT JALUR EKSTREM & BENCANA (hazard_alerts)
-// ============================================================================
-export type HazardSeverity =
-  | 'Aman'
-  | 'Waspada'
-  | 'Buka-Tutup'
-  | 'Tutup Total'
-  | string;
-
 export interface HazardAlert {
-  id: string; // varchar pk
-  corridor_code: string; // varchar unique not null (e.g. 'CORR-SITINJAU', 'CORR-ANAI')
-  location: string; // varchar not null
-  road_segment: string; // varchar not null
-  city_regency: string; // varchar not null
-  latitude: number; // float8 not null
-  longitude: number; // float8 not null
-  geog?: string | null; // geography null
-  radius_meter: number; // int4 not null
-  severity: HazardSeverity; // varchar not null
-  hazard_type: string; // varchar not null
-  weather_status: string; // varchar not null
-  slope_gradient_deg: number; // int4 not null
-  message: string; // text not null
-  detour_route: string; // text not null
-  detour_route_geojson: Record<string, unknown> | null; // jsonb not null
-  nearest_rescue_post: string; // varchar not null
-  emergency_contact: string; // varchar not null
-  triggered_by_admin: string | null; // varchar null (Ref: users.id)
-  updated_at: string; // timestamptz not null
+  id: string;
+  corridor_code: string; // SITINJAU-LAUIK | LEMBAH-ANAI | KELOK-9 | KELOK-44
+  location: string;
+  road_segment: string;
+  city_regency: string;
+  latitude: number;
+  longitude: number;
+  geog?: string | null;
+  radius_meter: number;
+  severity: HazardSeverity;
+  hazard_type: string;
+  weather_status: string;
+  slope_gradient_deg: number;
+  message: string;
+  detour_route: string;
+  detour_route_geojson: Record<string, unknown> | null;
+  nearest_rescue_post: string;
+  emergency_contact: string;
+  triggered_by_admin: string | null;
+  updated_at: string;
 }
 export type HazardZoneAlert = HazardAlert;
 
 // ============================================================================
-// 15. SINYAL DARURAT SOS GPS (sos_signals)
+// 14. LOG SINKRONISASI SOS (sos_signals — Sekunder/Read-Audit Endpoint BE-1)
 // ============================================================================
-export type SosStatus =
-  | 'SIAGA_DARURAT'
-  | 'TIM_DIKERAHKAN'
-  | 'BERHASIL_DIEVAKUASI'
-  | 'DIBATALKAN'
-  | string;
-
 export interface SosSignal {
-  id: string; // varchar pk
-  sos_code?: string; // varchar unique not null (e.g. 'SOS-2026-081')
-  tourist_name: string; // varchar not null
-  phone_number?: string; // varchar not null
-  emergency_type?: string; // varchar not null
-  latitude: number; // float8 not null
-  longitude: number; // float8 not null
-  geog?: string | null; // geography null
-  battery_percent?: number; // int4 not null
-  passengers_count?: number; // int4 not null
-  nearest_corridor?: string; // varchar not null (Ref: hazard_alerts.corridor_code)
-  nearest_rescue_post?: string; // varchar not null
-  distance_to_rescue_km?: number; // numeric not null
-  eta_rescue_minutes?: number; // int4 not null
-  status: SosStatus; // varchar not null
-  notes?: string | null; // text null
-  created_at?: string; // timestamptz not null
-
-  // UI convenience aliases:
-  tourist_phone?: string;
+  id: string;
+  sos_code: string;
+  tourist_name: string;
+  phone_number: string;
+  emergency_type: string;
   destination_name?: string;
-  kab_kota?: string;
-  lat?: number;
-  lng?: number;
-  battery_level?: number;
-  signal_status?: string;
-  signal_channel?: 'ONLINE_GPS' | 'OFFLINE_MORSE_SIRINE' | string;
-  morse_active?: boolean;
-  siren_active?: boolean;
-  medical_notes?: string;
+  city_regency?: string;
+  latitude: number;
+  longitude: number;
+  battery_percent: number;
+  passengers_count: number;
+  nearest_corridor: string;
+  nearest_rescue_post: string;
+  distance_to_rescue_km: number;
+  eta_rescue_minutes: number;
+  status: SosStatus;
+  notes: string;
   sar_unit_assigned?: string;
-  delivery_method?: 'online' | 'offline_fallback';
-  last_signal_at?: string;
-  last_known_coords?: string;
-  sms_gateway_ref?: string;
+  is_offline_sync?: boolean;
+  created_at: string;
 }
 export type SosEmergencyTicket = SosSignal;
 
 // ============================================================================
-// MONITORING CUACA REAL-TIME KAWASAN WISATA
+// 15. MONITORING CUACA REAL-TIME (Open-Meteo Live)
 // ============================================================================
 export interface WeatherHourlyForecast {
   hour: string;
   temp_c: number;
   condition: string;
+  rain_prob?: number;
 }
 
 export interface WeatherMonitoringItem {
   id: string;
   city_regency: string;
   destination_name: string;
+  latitude: number;
+  longitude: number;
   current_temp_c: number;
-  condition: 'Cerah' | 'Cerah Berawan' | 'Hujan Ringan' | 'Hujan Lebat & Angin' | 'Kabut Tebal' | string;
+  condition: string;
+  weather_status: 'Aman' | 'Waspada Hujan' | 'Siaga Cuaca Ekstrem';
   humidity_pct: number;
   wind_speed_kmh: number;
+  rain_probability: number;
   hourly_forecast: WeatherHourlyForecast[];
   is_extreme_weather: boolean;
   extreme_warning_text?: string;
+  source: 'Open-Meteo Live' | 'Regional Cache';
   updated_at: string;
 }
 
 // ============================================================================
-// 16. KAMUS SAKU MINANG (minang_phrases)
+// 16. KAMUS SAKU AUDIO MINANG (minang_phrases)
 // ============================================================================
 export interface MinangPhrase {
-  id: string; // varchar pk
-  category_id: string; // varchar not null (Ref: categories.id)
-  indonesian_text: string; // text not null
-  minang_text: string; // text not null
-  phonetic_guide: string; // text not null
-  voice_text: string; // text not null
-  dialect_note: string; // varchar not null
-  usage_context_tip: string; // text not null
-  politeness_level: 'Biasa' | 'Sopan' | 'Halus / Adat' | string; // varchar not null
-
-  // UI convenience aliases:
-  phrase?: string;
-  pronunciation?: string;
-  meaning_id?: string;
-  meaning_en?: string;
+  id: string;
+  category_id: string;
+  category: MinangPhraseCategory;
+  indonesian_text: string;
+  english_text?: string;
+  minang_text: string;
+  phonetic_guide: string;
+  voice_text: string;
   audio_url?: string;
-  notes?: string;
-  category?: string;
+  dialect_note: string;
+  usage_context_tip: string;
+  politeness_level: MinangPolitenessLevel | string;
   updated_at?: string;
 }
 export type MinangAudioPhrase = MinangPhrase;
 
 // ============================================================================
-// 17. KONTAK DARURAT (emergency_contacts)
+// 17. KONTAK DARURAT RESMI SUMBAR (emergency_contacts — 6 Data Real 000004)
 // ============================================================================
 export interface EmergencyContact {
-  id: string; // varchar pk
-  agency_name: string; // varchar not null
-  agency_type: 'Polres' | 'BPBD' | 'SAR' | 'Rumah Sakit' | 'Dishub' | string; // varchar not null
-  phone_number: string; // varchar not null
-  whatsapp_number?: string | null; // varchar null
-  city_regency: string; // varchar not null
-  geog: string; // geography not null (e.g. "SRID=4326;POINT(100.354270 -0.949240)")
-  created_by_admin_id?: string; // varchar not null (Ref: users.id)
-  is_active?: boolean; // bool not null
-
-  // UI convenience:
-  latitude?: number;
-  longitude?: number;
-  call_number?: string;
-  description?: string;
-  category?: string;
+  id: string;
+  agency_name: string;
+  agency_type: EmergencyAgencyType;
+  phone_number: string;
+  whatsapp_number?: string | null;
+  city_regency: string;
   address?: string;
-  is_24_hours?: boolean;
+  description?: string;
+  is_24_hours: boolean;
+  latitude: number;
+  longitude: number;
+  geog?: string;
+  created_by_admin_id?: string;
+  is_active: boolean;
   updated_at?: string;
 }
 export type EmergencyContactNumber = EmergencyContact;
 
 // ============================================================================
-// 18. EVENT BUDAYA (cultural_events)
+// 18. KALENDER EVENT & FESTIVAL BUDAYA MINANG (cultural_events)
 // ============================================================================
 export interface CulturalEvent {
-  id: string; // varchar pk
-  user_id?: string; // varchar not null (Ref: users.id)
-  title: string; // varchar not null
-  event_type?: string; // varchar not null
-  nagari_location?: string; // varchar not null
-  city_regency: string; // varchar not null
-  schedule_rule?: string; // varchar not null
-  next_event_date?: string; // varchar not null
-  latitude?: number; // float8 not null
-  longitude?: number; // float8 not null
-  geog?: string | null; // geography null
-  highlight_item?: string; // text not null
-  cultural_etiquette?: string; // text not null
-
-  // UI convenience aliases:
-  location?: string;
-  start_date?: string;
+  id: string;
+  user_id?: string;
+  title: string;
+  event_type: string;
+  nagari_location: string;
+  city_regency: string;
+  schedule_rule: string;
+  next_event_date: string;
   end_date?: string;
-  description?: string;
+  latitude: number;
+  longitude: number;
+  geog?: string | null;
+  highlight_item: string;
+  cultural_etiquette: string;
+  rundown?: string[];
   poster_url?: string;
   organizer?: string;
-  status?: string;
-  category?: string;
+  status: CultureEventStatus;
   updated_at?: string;
 }
 export type CultureCalendarEvent = CulturalEvent;
 
 // ============================================================================
-// 19. TEMPAT TERSIMPAN (saved_places)
+// 19. TEMPAT TERSIMPAN & CHECK-IN STEMP VISIT
 // ============================================================================
 export interface SavedPlace {
-  id: string; // varchar pk
-  user_id: string; // varchar not null (Ref: users.id)
-  destination_id: string; // varchar not null (Ref: destinations.id)
-  created_at: string | null; // timestamptz null
+  id: string;
+  user_id: string;
+  destination_id: string;
+  created_at: string | null;
 }
 
-// ============================================================================
-// 20. VALIDASI CHECK-IN STEMP VISIT (stemp_visit)
-// ============================================================================
 export interface StempVisit {
-  id: string; // varchar pk
-  user_id: string; // varchar not null (Ref: users.id)
-  destination_id: string; // varchar not null (Ref: destinations.id)
-  checked_in_at: string | null; // timestamptz null
-  is_gps_valid: boolean; // bool not null
+  id: string;
+  user_id: string;
+  destination_id: string;
+  passport_code?: string; // e.g. CHL-BKT-01
+  checked_in_at: string | null;
+  is_gps_valid: boolean;
+}
+
+export interface DigitalPassportSpot {
+  code: string; // CHL-BKT-01 .. CHL-LBH-10
+  destination_id: string;
+  destination_title: string;
+  region: string;
+  icon_symbol: string;
+  cultural_quote: string;
 }
 
 // ============================================================================
-// 21. USULAN DESTINASI BARU (new_tour)
+// 20. USULAN DESTINASI BARU (new_tour — Sinkron usul_destinasi_sheet.dart)
 // ============================================================================
 export interface NewTour {
-  id: string; // varchar pk
-  user_id?: string; // varchar not null (Ref: users.id)
-  name?: string; // varchar not null
-  category_id?: string; // varchar not null (Ref: categories.id)
-  city_regency: string; // varchar not null
-  description: string | null; // text null
-  latitude?: number; // float8 not null
-  longitude?: number; // float8 not null
-  tips_menjaga?: string; // text not null (WAJIB!)
-  is_sensitive?: boolean | null; // bool null
-  status: 'pending' | 'approved' | 'rejected' | string; // varchar not null
-  created_at?: string | null; // timestamptz null
-
-  // UI convenience joins:
-  submitter_name?: string;
-  submitter_phone?: string;
-  title?: string;
-  category?: string;
-  admin_notes?: string;
-  submitted_at?: string;
-  pokdarwis_name?: string;
-  reviewer_notes?: string;
-  is_masked?: boolean;
-  photo_url?: string;
+  id: string;
+  user_id?: string;
+  name: string;
+  category_id: string;
+  category: MasterDestinationCategory | string;
+  city_regency: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  tips_menjaga: string;
+  facilities?: string[];
   estimated_price?: string;
+  photo_url?: string;
+  is_sensitive: boolean;
+  status: NewTourStatus;
+  submitter_name: string;
+  submitter_phone: string;
+  admin_notes?: string;
+  created_at: string;
 }
 export type TouristDestinationSubmission = NewTour;
-export type CommunityHiddenGemSubmission = NewTour;
 
 // ============================================================================
-// 22. TANTANGAN CEKLIS WISATA (challenges)
+// 21. TANTANGAN & KLAIM REWARD (challenges & user_challenge_rewards)
 // ============================================================================
 export interface Challenge {
-  id: string; // varchar pk
-  created_by_admin_id?: string; // varchar not null (Ref: users.id)
-  title: string; // varchar not null
-  description: string; // text not null
-  target_destination_count?: number; // int4 not null
-  reward_title?: string; // varchar not null
-  reward_type?: string; // varchar not null (e.g. 'Uang Tunai', 'Sertifikat', 'Voucher')
-  reward_points?: number; // int4 not null (default 0 untuk pure ceklis)
-  is_active: boolean; // bool not null
-  created_at: string; // timestamptz not null
-  updated_at?: string; // timestamptz
-
-  // UI convenience:
-  target_count?: number;
-  reward_description?: string;
+  id: string;
+  created_by_admin_id?: string;
+  title: string;
+  checkin_tagline?: string;
+  category?: MasterDestinationCategory | string;
+  description: string;
+  target_destination_count: number;
+  reward_title: string;
+  reward_type: string;
+  reward_points: number;
   duration_days?: number;
   target_destinations?: string[];
   target_checkpoints?: string[];
-  checkin_tagline?: string;
   participant_count?: number;
   completed_count?: number;
-  category?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
 }
 export type ChecklistChallenge = Challenge;
 export type TouristChallenge = Challenge;
 
-// ============================================================================
-// 23. KLAIM REWARD TANTANGAN (user_challenge_rewards)
-// ============================================================================
 export interface UserChallengeReward {
-  id: string; // varchar pk
-  challenge_id: string; // varchar not null (Ref: challenges.id)
-  user_id?: string; // varchar not null (Ref: users.id)
-  progress_count?: number; // int4 not null
-  status: 'DALAM_PROGRES' | 'SIAP_KLAIM' | 'HADIAH_TERKIRIM' | string; // varchar not null
-  jenis_reward?: string; // varchar not null (salinan dari challenges.reward_type)
-  reward?: string; // varchar not null (salinan dari challenges.reward_title)
-  certificate_code?: string | null; // varchar unique null
-  certificate_url?: string | null; // text null
-  completed_at?: string | null; // timestamptz null
-
-  // UI convenience joins:
+  id: string;
+  challenge_id: string;
   challenge_title?: string;
-  tourist_name?: string;
-  tourist_phone?: string;
-  target_count?: number;
-  target_destination_count?: number;
-  completed_count?: number;
-  reward_description?: string;
-  completed_destinations?: string[];
-  reward_sent_at?: string;
+  user_id: string;
+  tourist_name: string;
+  tourist_phone: string;
+  progress_count: number;
+  target_destination_count: number;
+  status: 'DALAM_PROGRES' | 'SIAP_KLAIM' | 'HADIAH_TERKIRIM';
+  jenis_reward: string;
+  reward: string;
+  certificate_code?: string | null;
+  certificate_url?: string | null;
+  completed_at?: string | null;
   reward_notes?: string;
 }
 export type TouristChecklistClaim = UserChallengeReward;
 
 // ============================================================================
-// 24. PENGGUNA SISTEM (users)
+// 22. 5 LEVEL PETUALANG & JEJAK WISGO (Paspor & Kunjungan Destinasi)
+// ============================================================================
+export interface AdventurerLevelConfig {
+  level: 1 | 2 | 3 | 4 | 5;
+  name: 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer';
+  title: string;
+  min_trips: number;
+  min_checkpoints: number;
+  min_xp: number;
+  max_xp: number;
+  badge_icon: string;
+  badge_color: string;
+  perk_description: string;
+}
+
+export interface JejakHistoryItem {
+  id?: string;
+  date: string;
+  destination_id?: string;
+  destination_name: string;
+  city_regency?: string;
+  checkpoint_name?: string;
+  source: JejakWisgoSource;
+  stamp_number: number;
+  xp_earned: number;
+  badge_title?: string;
+  notes?: string;
+  status: 'verified' | 'pending';
+}
+
+export interface UserProfileExperience {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  phone_number: string;
+  google_avatar?: string;
+  is_google_auth: boolean;
+  current_level: 1 | 2 | 3 | 4 | 5;
+  level_name: 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer';
+  visited_count: number;
+  total_trips: number;
+  total_checkpoints: number;
+  total_xp: number;
+  last_active_at: string;
+  experience_history: JejakHistoryItem[];
+}
+
+export interface PostingShareTemplate {
+  id: string;
+  template_name: string;
+  watermark_text: string;
+  qr_download_url: string;
+  qr_image_url: string;
+  background_banner_url: string;
+  badge_placeholder_text: string;
+  preview_mode: 'transparent_sticker' | 'full_card';
+}
+
+// ============================================================================
+// 23. PENGGUNA, TRIP GO & PENYELENGGARA TERVERIFIKASI
 // ============================================================================
 export interface User {
-  id: string; // varchar pk
-  phone_number: string; // varchar unique not null
-  full_name: string; // varchar not null
-  role: 'admin' | 'admin_utama' | 'wisatawan' | 'mitra' | 'pokdarwis' | string; // varchar not null
-  jenis_input?: string | null; // varchar null ('web_admin', 'mobile_app', 'qr_kiosk', etc.)
-  created_at?: string | null; // timestamptz null
-
-  // Optional session additions:
+  id: string;
+  phone_number: string;
+  full_name: string;
+  role: 'admin' | 'admin_utama' | 'admin_dispar' | 'wisatawan' | 'mitra' | 'pokdarwis' | string;
+  jenis_input?: string | null;
+  created_at?: string | null;
   email?: string;
   agency?: string;
 }
 
-// ============================================================================
-// 25. OPEN TRIPS / CARI BARENGAN (open_trips) — TRIP GO RESMI
-// ============================================================================
 export type EscrowStatus =
   | 'DITAHAN_DI_ESCROW'
   | 'DICAIRKAN_KE_PENYELENGGARA'
-  | 'DILAPORKAN_INSIDEN'
-  | string;
+  | 'DILAPORKAN_INSIDEN';
+
+export interface TripChatMessageItem {
+  id: string;
+  sender_name: string;
+  sender_role: 'Host' | 'Peserta';
+  message: string;
+  timestamp: string;
+  is_pinned_notice?: boolean;
+}
 
 export interface OpenTrip {
-  id: string; // varchar pk (Dipakai sebagai kode grup / invitation code)
-  user_id: string; // varchar not null (Ref: users.id)
-  title: string; // varchar not null
-  destination_route: string; // varchar not null (Single destination or route label)
-  departure_date: string; // timestamptz not null
-  available_seats: number; // int4 not null
-  cost_per_person: number; // numeric not null (IDR)
-  contact_wa: string; // varchar not null
-  created_at?: string | null; // timestamptz null
-
-  // UI convenience:
-  trip_code?: string;
-  leader_name?: string;
-  trip_leader_name?: string;
-  leader_phone?: string;
-  pokdarwis_partner?: string;
-  city_regency?: string;
-  destination_routes?: string[];
-  destinations?: string[];
-  total_quota?: number;
-  filled_quota?: number;
+  id: string;
+  user_id: string;
+  title: string;
+  singleDestination: string;
+  destination_id: string;
+  destination_name: string;
+  destination_route: string;
+  travel_category: MasterDestinationCategory;
+  departure_date: string;
+  available_seats: number;
   quota_filled?: number;
-  quota_max?: number;
-  duration_days?: number;
-  estimated_split_bill_idr?: number;
-  estimated_split_bill_myr?: number;
-  split_bill_idr?: number;
-  split_bill_myr?: number;
-  notes?: string;
-  status?: 'Terverifikasi' | 'Menunggu' | 'Ditangguhkan' | string;
-  pokdarwis_verified?: boolean;
-
-  // Single Destination & Auto-Category Constraint
-  singleDestination?: string;
-  destination_id?: string;
-  destination_name?: string;
-  travel_category?: string;
-  meeting_point_name?: string;
-  meeting_point_address?: string;
-  meeting_point_lat?: number;
-  meeting_point_lng?: number;
-  meeting_point_gmaps_url?: string;
+  cost_per_person: number;
+  contact_wa: string;
+  trip_leader_name: string;
+  status: OpenTripStatus;
+  meeting_point_name: string;
+  meeting_point_address: string;
+  meeting_point_lat: number;
+  meeting_point_lng: number;
+  meeting_point_gmaps_url: string;
   meeting_point_coords?: string;
-  external_activity_terms?: string;
-
-  // Rincian Biaya Transparan (Includes vs Excludes)
-  includes?: string[];
-  excludes?: string[];
-
-  // Rekening Penampung (Escrow) WISGO
-  escrow_status?: EscrowStatus;
-  escrow_amount_idr?: number;
-
-  // SOP & Ketentuan Aktivitas di Luar Aplikasi
-  offline_rules?: {
+  external_activity_terms: string;
+  includes: string[];
+  excludes: string[];
+  escrow_status: EscrowStatus;
+  escrow_amount_idr: number;
+  offline_rules: {
     title: string;
     ruleDescription: string;
     iconCode?: string;
   }[];
-
-  // Penyelenggara Terverifikasi Terkait
   organizer?: OpenTripOrganizer;
-
-  // Trip Planner Detail
-  trip_planner?: {
+  trip_planner: {
     checklist: string[];
     jobdesk_assignments: { role: string; person_name: string }[];
     packing_checklist: string[];
     itinerary: { day: number; time: string; activity: string }[];
+    messages?: TripChatMessageItem[];
   };
+  created_at?: string | null;
 }
 export type OpenTripItem = OpenTrip;
 
-// ============================================================================
-// VERIFIKASI PENYELENGGARA OPEN TRIP (7 Poin Kredibilitas Komunitas/Pemandu)
-// ============================================================================
 export interface OpenTripOrganizer {
   id: string;
   name: string;
@@ -803,25 +758,20 @@ export interface OpenTripOrganizer {
   submitted_at: string;
   verified_at?: string;
   notes?: string;
-
-  // 7 Poin Spesifikasi Frontend-2
   is_verified?: boolean;
-  verification_badge?: string; // 'Penyelenggara Terverifikasi WISGO'
-  ktp_status?: string; // 'Terverifikasi e-KTP Dukcapil RI'
-  ktp_upload_status?: string; // 'Dokumen e-KTP Terunggah & Valid'
-  face_verification_status?: string; // 'Verifikasi Wajah (Liveness Biometrik) Lolos'
-  license_number?: string; // SK Pramuwisata HPI / Pokdarwis
-  special_competency?: string; // 'Sertifikasi P3K & Wilderness First Aid BNSP'
-  rating?: number; // e.g. 4.95
-  completed_trips?: number; // e.g. 38
-  social_media?: string; // e.g. '@rahmathidayat_guide (Instagram)'
-  experience_years?: string; // e.g. '4+ Tahun Pengalaman Pemandu Wisata Alam'
+  verification_badge?: string;
+  ktp_status?: string;
+  ktp_upload_status?: string;
+  face_verification_status?: string;
+  license_number?: string;
+  special_competency?: string;
+  rating?: number;
+  completed_trips?: number;
+  social_media?: string;
+  experience_years?: string;
   escrow_protection_note?: string;
 }
 
-// ============================================================================
-// TRANSAKSI SISTEM KHUSUS OPEN TRIP (Sistem Transaksi HANYA untuk Open Trip)
-// ============================================================================
 export interface OpenTripTransaction {
   id: string;
   transaction_code: string;
@@ -831,99 +781,63 @@ export interface OpenTripTransaction {
   participant_phone: string;
   seats_booked: number;
   amount_idr: number;
-  payment_channel: string;
+  payment_channel: 'QRIS' | 'WISGO_PAY' | 'VIRTUAL_ACCOUNT' | string;
   status: 'BERHASIL' | 'MENUNGGU' | 'REFUND';
   paid_at: string;
 }
 
-// ============================================================================
-// TEMPLATE BARANG BAWAAN BERDASARKAN KATEGORI PERJALANAN
-// ============================================================================
 export interface PackingTemplate {
   id: string;
-  category_name: string; // 'Wisata Alam & Pegunungan' | 'Wisata Bahari & Pesisir' | 'Sejarah & Warisan Minangkabau' | 'Nagari Adat & Edukasi Budaya' | 'Kuliner Otentik & Agrowisata'
+  category_name: MasterDestinationCategory | string;
   item_name: string;
   is_mandatory: boolean;
   notes?: string;
 }
 
 // ============================================================================
-// 5 LEVEL PETUALANG RESMI WISGO (Leveling & Lencana)
+// 24. MITRA UMKM (DIRECT P2P 0% KOMISI)
 // ============================================================================
-export interface AdventurerLevelConfig {
-  level: 1 | 2 | 3 | 4 | 5;
-  name: string; // 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer'
-  title: string;
-  min_trips: number;
-  min_checkpoints: number;
-  min_xp: number;
-  max_xp?: number;
-  badge_icon: string;
-  badge_color: string;
-  perk_description: string;
-}
-
-// ============================================================================
-// PROFIL & EXPERIENCE PENGGUNA (Statistik Strava-style & Verifikasi Klaim)
-// ============================================================================
-export interface UserProfileExperience {
+export interface Partner {
   id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  phone_number: string;
-  google_avatar?: string;
-  is_google_auth: boolean;
-  current_level: 1 | 2 | 3 | 4 | 5;
-  level_name: string;
-  total_trips: number;
-  total_checkpoints: number;
-  total_distance_km: number;
-  total_xp: number;
-  last_active_at: string;
-  experience_history: {
-    date: string;
-    destination_name: string;
-    checkpoint_name?: string;
-    xp_earned: number;
-    notes?: string;
-    status?: 'verified' | 'pending';
-  }[];
+  name: string;
+  category: CanonicalPartnerCategory;
+  whatsapp: string;
+  spicy_level?: number;
+  is_verified: boolean;
+  standard_fee: number;
+  fee_myr_estimate?: number;
+  nagari_name: string;
+  city_regency: string;
+  owner_name: string;
+  pokdarwis_sk_number?: string;
+  photo_url?: string;
+  destination_id?: string;
+  destination_name?: string;
+  denah_point_id?: string;
+  halal_certified?: boolean;
+  created_at?: string;
+  wa_click_count: number;
+  direct_payment_methods: string[];
 }
+export type PartnerNagari = Partner;
 
 // ============================================================================
-// TEMPLATE POSTING SHARE & QR UNDUH
-// ============================================================================
-export interface PostingShareTemplate {
-  id: string;
-  template_name: string;
-  watermark_text: string;
-  qr_download_url: string;
-  qr_image_url: string;
-  background_banner_url: string;
-  badge_placeholder_text: string;
-  preview_strava_style: boolean;
-}
-
-// ============================================================================
-// 26. NOTIFIKASI PENGGUNA (notifikasi)
+// 25. NOTIFIKASI, AUTH, HEATMAP, BENCHMARK & GRUP
 // ============================================================================
 export interface Notifikasi {
-  id: string; // varchar pk
-  user_id?: string; // varchar not null (Ref: users.id)
+  id: string;
+  user_id?: string;
   notification_type?:
     | 'review_moderation'
     | 'new_tour_rejected'
     | 'pungli_action'
     | 'system'
-    | string; // varchar not null
-  title: string; // varchar not null
-  message: string; // text not null
-  reference_id?: string | null; // varchar null (e.g. new_tour.id atau destination_reviews.id)
-  is_read?: boolean; // bool not null
-  created_at?: string; // timestamptz not null
-
-  // UI aliases:
+    | string;
+  title: string;
+  message: string;
+  reference_id?: string | null;
+  is_read?: boolean;
+  created_at: string;
   type?: string;
   broadcasted_at?: string;
   is_delivered?: boolean;
@@ -932,9 +846,6 @@ export interface Notifikasi {
 }
 export type SystemNotification = Notifikasi;
 
-// ============================================================================
-// KOMPATIBILITAS AUTH, SIMULATOR & ANALITIK
-// ============================================================================
 export interface AdminAuthCredentials {
   email: string;
   password: string;
@@ -948,24 +859,6 @@ export interface AdminAuthResponse {
     email: string;
     agency: string;
   };
-}
-
-export interface WAWebhookResponse {
-  action: '1' | '0';
-  status: 'CONFIRMED' | 'REJECTED';
-  ticket_qr?: string;
-  escrow_info: string;
-}
-
-export interface WhatsAppSimulationMessage {
-  id: string;
-  sender: 'system' | 'tourist' | 'mitra';
-  message: string;
-  timestamp: string;
-  booking_code?: string;
-  qr_code_ticket?: string;
-  amount?: number;
-  service_date?: string;
 }
 
 export interface RegencyHeatmapData {
@@ -982,75 +875,35 @@ export interface RegencyHeatmapData {
   group_visitors_est?: number;
 }
 
-export interface Partner {
-  id: string;
-  name: string;
-  category: string;
-  whatsapp: string;
-  spicy_level?: number;
-  is_verified: boolean;
-  standard_fee: number;
-  fee_myr_estimate?: number;
-  nagari_name: string;
-  city_regency?: string;
-  owner_name?: string;
-  pokdarwis_sk_number?: string;
-  photo_url?: string;
-  photo_360_url?: string;
-  destination_id?: string;
-  destination_name?: string;
-  scene_id?: string;
-  pin_id?: string;
-  pitch?: number;
-  yaw?: number;
-  has_360_pin?: boolean;
-  halal_certified?: boolean;
-  created_at?: string;
-  wa_click_count?: number;
-  direct_payment_methods?: string[];
-}
-export type PartnerNagari = Partner;
-
-export interface GaodeWeightConfig {
-  satisfaction_weight: number;
-  pungli_free_weight: number;
-  medan_access_weight: number;
-  visit_volume_weight: number;
+export interface BenchmarkRunResult {
+  run_id: string;
+  timestamp: string;
+  concurrency: number;
+  total_requests: number;
+  latency_ms: number;
+  latency_p50_ms: number;
+  latency_p95_ms: number;
+  latency_p99_ms: number;
+  throughput_qps: number;
+  error_rate_pct: number;
+  memory_usage_mb: number;
+  status: 'OPTIMAL' | 'NORMAL' | 'WARNING';
 }
 
 export interface SystemBenchmarkMetrics {
   server_uptime_pct: number;
   api_response_time_ms: number;
+  go_engine_latency_ms: number;
+  postgres_spatial_query_ms: number;
+  panorama_load_speed_sec: number;
   database_connection_pool: string;
-  offline_cache_hit_rate: number;
+  cache_hit_rate_pct: number;
+  backend_version: string;
+  memory_allocated_mb: number;
+  requests_per_second: number;
   last_stress_test_date: string;
-  system_status: 'OPERATIONAL' | 'DEGRADED' | 'MAINTENANCE' | string;
-  server_status?: string;
-  benchmark_history?: any[];
-  postgres_spatial_query_ms?: number;
-  go_engine_latency_ms?: number;
-  offline_360_bundle_speed_sec?: number;
-  backend_version?: string;
-  memory_allocated_mb?: number;
-  requests_per_second?: number;
-}
-
-export interface BenchmarkRunResult {
-  run_id: string;
-  timestamp: string;
-  latency_ms: number;
-  memory_usage_mb: number;
-  active_sessions: number;
-  status: 'OPTIMAL' | 'NORMAL' | 'WARNING' | string;
-  total_requests?: number;
-}
-
-export interface DigitalPassportMetrics {
-  total_gps_checkins_verified: number;
-  total_governor_certificates_issued: number;
-  total_wa_leads_generated: number;
-  top_nagari_leads: { nagari: string; leads_count: number }[];
-  leads_by_category: { category: string; total_leads: number; count: number }[];
+  system_status: 'OPERATIONAL' | 'DEGRADED' | 'MAINTENANCE';
+  benchmark_history: BenchmarkRunResult[];
 }
 
 export interface GroupVotingItem {

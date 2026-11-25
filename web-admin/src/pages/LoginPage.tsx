@@ -13,7 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
-import { loginAdminJWT } from '../services/api';
+import { loginAdminJWT, saveAdminSession } from '../services/api';
 
 interface LoginPageProps {
   onLoginSuccess: (session: AdminAuthResponse) => void;
@@ -98,8 +98,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           created_at: new Date().toISOString(),
         },
       };
-      localStorage.setItem('wisgo_admin_token', googleSession.token);
-      localStorage.setItem('wisgo_admin_user', JSON.stringify(googleSession.user));
+      saveAdminSession(googleSession);
       onLoginSuccess(googleSession);
     } catch {
       setFormError('Gagal mengotentikasi akun Google.');
@@ -319,7 +318,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     setPasswordError(validatePasswordField(password));
                   }
                 }}
-                onInput={() => setEmailTouched(true)}
+                onInput={() => setPasswordTouched(true)}
                 autoComplete="current-password"
                 minLength={6}
                 enterKeyHint="done"

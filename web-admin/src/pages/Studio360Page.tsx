@@ -1,1730 +1,1136 @@
-import React, { useEffect, useRef, useState, useId } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   Camera,
-  Layers,
-  Plus,
-  Trash2,
-  Edit3,
-  Compass,
-  BookOpen,
-  Volume2,
-  ShoppingBag,
-  ExternalLink,
-  Info,
   CheckCircle2,
-  Eye,
+  Compass,
   Crosshair,
-  Sparkles,
-  ArrowRight,
-  Music,
-  MapPin,
-  X,
-  Save,
-  ZoomIn,
-  ZoomOut,
+  Edit3,
+  ExternalLink,
+  Layers,
+  Map,
   Maximize2,
   Minimize2,
+  Plus,
   RotateCcw,
-  Navigation,
-  Store,
-  VolumeX,
-  MessageSquare,
+  Save,
+  Trash2,
+  X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import {
+  DenahPoint,
+  DenahPointCategory,
   Destination,
-  HotspotPin,
-  HotspotPinCategory,
   PanoramaScene,
+  Partner,
 } from '../types/contract';
 import {
+  deleteDestinationDenahPoint,
   deleteDestinationScene,
-  deleteSceneHotspot,
+  saveDestinationDenahPoint,
   saveDestinationScene,
-  saveSceneHotspot,
 } from '../services/api';
+import { DENAH_POINT_CATEGORIES, getDenahSvgPath } from '../data/mockDestinations';
 import { ImageDropzone } from '../components/ImageDropzone';
-import { AudioDropzone } from '../components/AudioDropzone';
 
 interface Studio360PageProps {
   destinations: Destination[];
+  partners?: Partner[];
   onUpdateDestinations: (updated: Destination[]) => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   initialDestId?: string;
-  initialSceneId?: string;
-  initialHighlightPinId?: string;
+  initialTab?: 'panorama' | 'denah';
   onNavigateToPartner?: (partnerId?: string) => void;
 }
 
+const FALLBACK_PANORAMA = '/assets/synced/panorama_sumbar_default.jpg';
+
+const DENAH_META: Record<
+  DenahPointCategory,
+  { label: string; color: string; bg: string; border: string }
+> = {
+  PARKIR: {
+    label: 'Area Parkir',
+    color: '#1D4ED8',
+    bg: '#EFF6FF',
+    border: '#93C5FD',
+  },
+  UMKM: {
+    label: 'Mitra UMKM',
+    color: '#C2410C',
+    bg: '#FFF7ED',
+    border: '#FDBA74',
+  },
+  TOILET: {
+    label: 'Toilet Umum',
+    color: '#0F766E',
+    bg: '#F0FDFA',
+    border: '#99F6E4',
+  },
+  MUSHOLLA: {
+    label: 'Musholla / Surau',
+    color: '#166534',
+    bg: '#F0FDF4',
+    border: '#86EFAC',
+  },
+  LOKET: {
+    label: 'Loket Resmi Perda',
+    color: '#6D28D9',
+    bg: '#F5F3FF',
+    border: '#C4B5FD',
+  },
+};
+
 export const Studio360Page: React.FC<Studio360PageProps> = ({
   destinations,
+  partners = [],
   onUpdateDestinations,
   showToast,
   initialDestId,
-  initialSceneId,
-  initialHighlightPinId,
+  initialTab = 'panorama',
   onNavigateToPartner,
 }) => {
   const destSelectId = useId();
-  const sceneTitleId = useId();
-  const sceneTypeId = useId();
-  const sceneInitPitchId = useId();
-  const sceneInitYawId = useId();
-
-  const pinCatId = useId();
-  const pinTitleId = useId();
-  const pinDescId = useId();
-  const pinPitchId = useId();
-  const pinYawId = useId();
-  const pinTargetSceneId = useId();
-  const pinAudioUrlId = useId();
-  const pinPartnerNameId = useId();
-  const pinPartnerFeeId = useId();
-
-  // Selected Destination
+  const [activeTab, setActiveTab] = useState<'panorama' | 'denah'>(initialTab);
   const [selectedDestId, setSelectedDestId] = useState<string>(
     initialDestId || destinations[0]?.id || 'dest-001'
   );
 
-  const selectedDestination =
-    destinations.find((d) => d.id === selectedDestId) || destinations[0];
+  useEffect(() => {
+    if (initialDestId) setSelectedDestId(initialDestId);
+  }, [initialDestId]);
 
-  const currentScenes: PanoramaScene[] =
-    selectedDestination?.scenes_360 || [];
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
-  // Selected Scene
-  const [selectedSceneId, setSelectedSceneId] = useState<string>(
-    initialSceneId || currentScenes[0]?.id || ''
+  const selectedDestination = useMemo(
+    () => destinations.find((d) => d.id === selectedDestId) || destinations[0],
+    [destinations, selectedDestId]
   );
+
+  const currentScenes: PanoramaScene[] = selectedDestination?.scenes_360 || [];
+  const currentDenahPoints: DenahPoint[] = selectedDestination?.denah_points || [];
+
+  const [selectedSceneId, setSelectedSceneId] = useState<string>(currentScenes[0]?.id || '');
+
+  useEffect(() => {
+    if (!currentScenes.some((s) => s.id === selectedSceneId)) {
+      setSelectedSceneId(currentScenes[0]?.id || '');
+    }
+  }, [selectedDestId, currentScenes, selectedSceneId]);
 
   const activeScene =
     currentScenes.find((s) => s.id === selectedSceneId) || currentScenes[0];
 
-  // Viewer Camera State
-  const [cameraYaw, setCameraYaw] = useState<number>(
-    activeScene?.initial_yaw || 0
-  );
-  const [cameraPitch, setCameraPitch] = useState<number>(
-    activeScene?.initial_pitch || 0
-  );
-  const [zoomLevel, setZoomLevel] = useState<number>(1.0); // 0.8x s.d 2.2x
+  // ============================================================================
+  // STATE TAB 1: PURE PANORAMA 360° VIEWER
+  // ============================================================================
+  const [cameraYaw, setCameraYaw] = useState<number>(activeScene?.initial_yaw || 0);
+  const [cameraPitch, setCameraPitch] = useState<number>(activeScene?.initial_pitch || 0);
+  const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [interactionMode, setInteractionMode] = useState<'explore' | 'pin_picker'>(
-    'explore'
-  );
-  const [isSceneTransitioning, setIsSceneTransitioning] = useState<boolean>(false);
-  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
 
-  // Selected Pin for detailed popup/preview
-  const [selectedPin, setSelectedPin] = useState<HotspotPin | null>(null);
-  const [highlightPinId, setHighlightPinId] = useState<string | null>(
-    initialHighlightPinId || null
-  );
-
-  // Canvas Ref & Dragging state
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDraggingRef = useRef(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Modals
+  // Scene CRUD Modal
   const [isSceneModalOpen, setIsSceneModalOpen] = useState(false);
   const [editingScene, setEditingScene] = useState<PanoramaScene | null>(null);
+  const [sceneTitle, setSceneTitle] = useState('');
+  const [sceneType, setSceneType] = useState<'aerial' | 'ground'>('aerial');
+  const [sceneUrl, setSceneUrl] = useState('');
+  const [scenePitch, setScenePitch] = useState(0);
+  const [sceneYaw, setSceneYaw] = useState(0);
 
-  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
-  const [editingPin, setEditingPin] = useState<HotspotPin | null>(null);
-
-  // Form states for Scene Modal (Upload dari Device)
-  const [sceneFormTitle, setSceneFormTitle] = useState('');
-  const [sceneFormType, setSceneFormType] = useState<'aerial' | 'ground'>('aerial');
-  const [sceneFormPanoUrl, setSceneFormPanoUrl] = useState('');
-  const [sceneFormAudioUrl, setSceneFormAudioUrl] = useState('');
-  const [sceneFormPitch, setSceneFormPitch] = useState(0);
-  const [sceneFormYaw, setSceneFormYaw] = useState(0);
-
-  // Form states for Pin Modal (Kanvas Bersih 360°: Narasi Sejarah, Musik Minang, Navigasi)
-  const [pinFormCategory, setPinFormCategory] =
-    useState<HotspotPinCategory>('narasi_sejarah');
-  const [pinFormTitle, setPinFormTitle] = useState('');
-  const [pinFormDesc, setPinFormDesc] = useState('');
-  const [pinFormPitch, setPinFormPitch] = useState(0);
-  const [pinFormYaw, setPinFormYaw] = useState(0);
-  const [pinFormTargetScene, setPinFormTargetScene] = useState('');
-  const [pinFormAudioUrl, setPinFormAudioUrl] = useState('');
-  const [pinFormVoiceText, setPinFormVoiceText] = useState('');
-  const [pinFormPartnerName, setPinFormPartnerName] = useState('');
-  const [pinFormPartnerFee, setPinFormPartnerFee] = useState<number>(0);
-  const [pinFormWhatsapp, setPinFormWhatsapp] = useState('');
-  const [pinFormFacilitySubtype, setPinFormFacilitySubtype] = useState('Toilet Bersih & Sanitasi');
-  const [pinFormOperatingHours, setPinFormOperatingHours] = useState('08:00 - 17:00 WIB');
-
-  // Filter Pin List
-  const [pinCategoryFilter, setPinCategoryFilter] = useState<string>('all');
-
-  // Sync initial props if changed
-  useEffect(() => {
-    if (initialDestId && initialDestId !== selectedDestId) {
-      setSelectedDestId(initialDestId);
-    }
-    if (initialSceneId && initialSceneId !== selectedSceneId) {
-      setSelectedSceneId(initialSceneId);
-    }
-    if (initialHighlightPinId) {
-      setHighlightPinId(initialHighlightPinId);
-      const dest = destinations.find((d) => d.id === (initialDestId || selectedDestId));
-      const targetPin = dest?.scenes_360
-        ?.flatMap((s) => s.hotspots || [])
-        .find((h) => h.id === initialHighlightPinId);
-      if (targetPin) {
-        setSelectedPin(targetPin);
-        setCameraYaw(targetPin.yaw);
-        setCameraPitch(targetPin.pitch);
-      }
-    }
-  }, [initialDestId, initialSceneId, initialHighlightPinId]);
-
-  // Update camera on active scene switch
   useEffect(() => {
     if (activeScene) {
       setCameraYaw(activeScene.initial_yaw || 0);
       setCameraPitch(activeScene.initial_pitch || 0);
       setZoomLevel(1.0);
     }
-  }, [selectedSceneId]);
+  }, [activeScene?.id]);
 
-  // Ambient audio control
+  // Render Pure Panorama onto HTML5 Canvas (Zero Floating Pins)
   useEffect(() => {
-    if (audioRef.current) {
-      if (activeScene?.ambient_audio_url && !isAudioMuted) {
-        audioRef.current.play().catch(() => {
-          // Autoplay policy fallback
-        });
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [activeScene?.ambient_audio_url, isAudioMuted]);
-
-  // Render Panorama & Pins onto HTML5 Canvas
-  useEffect(() => {
+    if (activeTab !== 'panorama') return;
     const canvas = canvasRef.current;
-    if (!canvas || !activeScene?.panorama_url) return;
-
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    let cancelled = false;
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = activeScene.panorama_url;
+    img.onerror = () => {
+      if (!img.src.endsWith(FALLBACK_PANORAMA)) {
+        img.src = FALLBACK_PANORAMA;
+      }
+    };
+    img.src = activeScene?.panorama_url || FALLBACK_PANORAMA;
 
-    let animId: number;
-
-    const render = () => {
+    const drawFrame = () => {
+      if (cancelled) return;
       const width = canvas.width;
       const height = canvas.height;
-
       ctx.clearRect(0, 0, width, height);
 
       if (img.complete && img.naturalWidth > 0) {
-        // FOV calculations based on zoom
-        const fovX = 90 / Math.max(0.5, zoomLevel);
+        const fovX = 95 / Math.max(0.6, zoomLevel);
         const fovY = fovX * (height / width);
-
-        // Normalize cameraYaw into [0, 360)
         const normYaw = ((cameraYaw % 360) + 360) % 360;
-        const normPitch = Math.max(-80, Math.min(80, cameraPitch));
+        const normPitch = Math.max(-65, Math.min(65, cameraPitch));
 
-        // Source slice in equirectangular image (0 to 360 deg = 0 to img.width)
         const srcXDeg = normYaw - fovX / 2;
-        const srcYDeg = 90 - normPitch - fovY / 2;
+        const srcYDeg = Math.max(0, Math.min(180 - fovY, 90 - normPitch - fovY / 2));
 
         const srcX = (srcXDeg / 360) * img.naturalWidth;
         const srcY = (srcYDeg / 180) * img.naturalHeight;
         const srcW = (fovX / 360) * img.naturalWidth;
         const srcH = (fovY / 180) * img.naturalHeight;
 
-        // Handle wrap-around horizontally
         if (srcXDeg < 0) {
-          // Part 1: right end of image
           const leftDeg = -srcXDeg;
           const leftW = (leftDeg / fovX) * width;
           const src1X = ((360 - leftDeg) / 360) * img.naturalWidth;
           const src1W = (leftDeg / 360) * img.naturalWidth;
-
           ctx.drawImage(img, src1X, srcY, src1W, srcH, 0, 0, leftW, height);
 
-          // Part 2: start from 0
           const rightDeg = fovX - leftDeg;
           const rightW = width - leftW;
           const src2W = (rightDeg / 360) * img.naturalWidth;
-
           ctx.drawImage(img, 0, srcY, src2W, srcH, leftW, 0, rightW, height);
         } else if (srcXDeg + fovX > 360) {
-          // Part 1: up to 360
           const rightSpan = 360 - srcXDeg;
           const w1 = (rightSpan / fovX) * width;
           const src1W = (rightSpan / 360) * img.naturalWidth;
-
           ctx.drawImage(img, srcX, srcY, src1W, srcH, 0, 0, w1, height);
 
-          // Part 2: wrap from left
           const wrapSpan = fovX - rightSpan;
           const w2 = width - w1;
           const src2W = (wrapSpan / 360) * img.naturalWidth;
-
           ctx.drawImage(img, 0, srcY, src2W, srcH, w1, 0, w2, height);
         } else {
           ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, width, height);
         }
-
-        // Render Hotspot Pins inside the active FOV
-        const hotspots = activeScene.hotspots || [];
-        for (const pin of hotspots) {
-          // Delta angle from cameraYaw
-          let deltaYaw = pin.yaw - cameraYaw;
-          deltaYaw = ((((deltaYaw + 180) % 360) + 360) % 360) - 180;
-
-          const deltaPitch = pin.pitch - cameraPitch;
-
-          // Check if within visible FOV
-          if (Math.abs(deltaYaw) <= fovX / 2 && Math.abs(deltaPitch) <= fovY / 2) {
-            const screenX = (deltaYaw / (fovX / 2)) * (width / 2) + width / 2;
-            const screenY = (-deltaPitch / (fovY / 2)) * (height / 2) + height / 2;
-
-            const isSelected = selectedPin?.id === pin.id;
-            const isHighlighted = highlightPinId === pin.id;
-
-            // Draw pin marker on canvas
-            ctx.save();
-            ctx.translate(screenX, screenY);
-
-            // Pulsating glow ring
-            const pulse = Math.sin(Date.now() / 250) * 4;
-            ctx.beginPath();
-            ctx.arc(0, 0, 16 + (isHighlighted ? pulse + 4 : 0), 0, Math.PI * 2);
-            ctx.fillStyle =
-              pin.category === 'narasi_sejarah' || pin.category === 'narasi' || pin.category === 'loket_info'
-                ? 'rgba(217, 119, 6, 0.45)'
-                : pin.category === 'musik_minang' || pin.category === 'musik' || pin.category === 'fasilitas_umum'
-                ? 'rgba(22, 163, 74, 0.45)'
-                : pin.category === 'navigasi_arah' || pin.category === 'navigasi'
-                ? 'rgba(37, 99, 235, 0.45)'
-                : pin.category === 'mitra_umkm'
-                ? 'rgba(242, 107, 75, 0.45)'
-                : 'rgba(99, 102, 241, 0.45)';
-            ctx.fill();
-
-            // Pin base circle
-            ctx.beginPath();
-            ctx.arc(0, 0, 14, 0, Math.PI * 2);
-            ctx.fillStyle =
-              pin.category === 'narasi_sejarah' || pin.category === 'narasi' || pin.category === 'loket_info'
-                ? '#D97706'
-                : pin.category === 'musik_minang' || pin.category === 'musik' || pin.category === 'fasilitas_umum'
-                ? '#16A34A'
-                : pin.category === 'navigasi_arah' || pin.category === 'navigasi'
-                ? '#2563EB'
-                : pin.category === 'mitra_umkm'
-                ? '#F26B4B'
-                : '#7C3AED';
-            ctx.fill();
-            ctx.lineWidth = isSelected || isHighlighted ? 3 : 2;
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.stroke();
-
-            // Label text banner below pin
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            ctx.roundRect(-50, 18, 100, 20, 6);
-            ctx.fill();
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 9px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const shortTitle =
-              pin.title.length > 14 ? pin.title.slice(0, 12) + '..' : pin.title;
-            ctx.fillText(shortTitle, 0, 28);
-
-            ctx.restore();
-          }
-        }
       }
-
-      animId = requestAnimationFrame(render);
     };
 
-    img.onload = () => {
-      render();
-    };
-
+    img.onload = drawFrame;
+    drawFrame();
     return () => {
-      cancelAnimationFrame(animId);
+      cancelled = true;
     };
-  }, [
-    activeScene?.panorama_url,
-    activeScene?.hotspots,
-    cameraYaw,
-    cameraPitch,
-    zoomLevel,
-    selectedPin,
-    highlightPinId,
-  ]);
+  }, [activeTab, activeScene?.panorama_url, cameraYaw, cameraPitch, zoomLevel]);
 
-  // Handle Dragging / Panning on Canvas
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (interactionMode === 'pin_picker') {
-      // In pin picker mode, click determines coordinates
-      handleCanvasClickToPlacePin(e);
-      return;
-    }
-
     isDraggingRef.current = true;
     lastMousePosRef.current = { x: e.clientX, y: e.clientY };
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDraggingRef.current || interactionMode !== 'explore') return;
-
-    const deltaX = e.clientX - lastMousePosRef.current.x;
-    const deltaY = e.clientY - lastMousePosRef.current.y;
+    if (!isDraggingRef.current) return;
+    const dx = e.clientX - lastMousePosRef.current.x;
+    const dy = e.clientY - lastMousePosRef.current.y;
     lastMousePosRef.current = { x: e.clientX, y: e.clientY };
-
     const sensitivity = 0.25 / zoomLevel;
 
     setCameraYaw((prev) => {
-      const next = prev - deltaX * sensitivity;
+      const next = prev - dx * sensitivity;
       return ((((next + 180) % 360) + 360) % 360) - 180;
     });
-
-    setCameraPitch((prev) => {
-      const next = prev + deltaY * sensitivity;
-      return Math.max(-80, Math.min(80, next));
-    });
+    setCameraPitch((prev) => Math.max(-65, Math.min(65, prev + dy * sensitivity)));
   };
 
   const handleMouseUp = () => {
     isDraggingRef.current = false;
   };
 
-  // Convert click in pin_picker mode to Spherical Yaw & Pitch
-  const handleCanvasClickToPlacePin = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
-    const width = canvas.width;
-    const height = canvas.height;
-
-    const fovX = 90 / Math.max(0.5, zoomLevel);
-    const fovY = fovX * (height / width);
-
-    // Calculate delta from center
-    const xRatio = (clickX - width / 2) / (width / 2); // -1 to 1
-    const yRatio = (clickY - height / 2) / (height / 2); // -1 to 1
-
-    const clickYawDelta = xRatio * (fovX / 2);
-    const clickPitchDelta = -yRatio * (fovY / 2);
-
-    let pickedYaw = Math.round(cameraYaw + clickYawDelta);
-    pickedYaw = ((((pickedYaw + 180) % 360) + 360) % 360) - 180;
-
-    const pickedPitch = Math.round(
-      Math.max(-80, Math.min(80, cameraPitch + clickPitchDelta))
-    );
-
-    setPinFormPitch(pickedPitch);
-    setPinFormYaw(pickedYaw);
-    setPinFormCategory('narasi_sejarah');
-    setPinFormTitle('');
-    setPinFormDesc('');
-    setPinFormVoiceText('');
-    setPinFormTargetScene('');
-    setPinFormAudioUrl('');
-    setPinFormPartnerName('');
-    setPinFormPartnerFee(0);
-    setPinFormWhatsapp('');
-    setPinFormFacilitySubtype('Toilet Bersih & Sanitasi');
-    setPinFormOperatingHours('08:00 - 17:00 WIB');
-    setEditingPin(null);
-    setIsPinModalOpen(true);
-    setInteractionMode('explore'); // switch back to explore
+  const handleSaveDefaultCamera = async () => {
+    if (!selectedDestination || !activeScene) return;
+    const updated = await saveDestinationScene(selectedDestination.id, {
+      ...activeScene,
+      initial_yaw: Math.round(cameraYaw),
+      initial_pitch: Math.round(cameraPitch),
+    });
+    onUpdateDestinations(updated);
     showToast(
-      `Titik koordinat dipilih: Yaw ${pickedYaw}°, Pitch ${pickedPitch}°.`,
-      'info'
+      `Sudut pandang default tersimpan: Yaw ${Math.round(cameraYaw)}°, Pitch ${Math.round(cameraPitch)}°.`,
+      'success'
     );
   };
 
-  // Handle Canvas Click to Select Existing Pin in Explore Mode
-  const handleCanvasClickInExplore = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (interactionMode !== 'explore') return;
-
-    const canvas = canvasRef.current;
-    if (!canvas || !activeScene?.hotspots) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-    const fovX = 90 / Math.max(0.5, zoomLevel);
-    const fovY = fovX * (canvas.height / canvas.width);
-
-    for (const pin of activeScene.hotspots) {
-      let deltaYaw = pin.yaw - cameraYaw;
-      deltaYaw = ((((deltaYaw + 180) % 360) + 360) % 360) - 180;
-      const deltaPitch = pin.pitch - cameraPitch;
-
-      if (Math.abs(deltaYaw) <= fovX / 2 && Math.abs(deltaPitch) <= fovY / 2) {
-        const screenX = (deltaYaw / (fovX / 2)) * (canvas.width / 2) + canvas.width / 2;
-        const screenY = (-deltaPitch / (fovY / 2)) * (canvas.height / 2) + canvas.height / 2;
-
-        const dist = Math.hypot(clickX - screenX, clickY - screenY);
-        if (dist <= 24) {
-          setSelectedPin(pin);
-          // If navigation pin, ask or allow leap
-          return;
-        }
-      }
-    }
-  };
-
-  // Handle Leap to target scene
-  const handleTransitionToScene = (targetSceneId: string) => {
-    setIsSceneTransitioning(true);
-    showToast('Melompat ke scene panorama tujuan...', 'info');
-
-    setTimeout(() => {
-      setSelectedSceneId(targetSceneId);
-      const nextScene = currentScenes.find((s) => s.id === targetSceneId);
-      if (nextScene) {
-        setCameraYaw(nextScene.initial_yaw || 0);
-        setCameraPitch(nextScene.initial_pitch || 0);
-      }
-      setSelectedPin(null);
-      setIsSceneTransitioning(false);
-    }, 450);
-  };
-
-  // Save Scene
-  const handleSaveScene = async (e: React.FormEvent) => {
+  const handleSaveSceneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDestination) return;
-
-    if (!sceneFormTitle.trim() || !sceneFormPanoUrl.trim()) {
-      showToast('Judul scene dan file gambar panorama wajib diisi.', 'warning');
+    if (!sceneTitle.trim()) {
+      showToast('Judul scene panorama wajib diisi.', 'warning');
       return;
     }
 
-    const newScene: PanoramaScene = {
-      id: editingScene ? editingScene.id : `scene-${Date.now().toString(36)}`,
+    const nextScene: PanoramaScene = {
+      id: editingScene ? editingScene.id : `scn-${Date.now().toString(36)}`,
       destination_id: selectedDestination.id,
-      title: sceneFormTitle.trim(),
-      scene_type: sceneFormType,
-      type: sceneFormType,
-      panorama_url: sceneFormPanoUrl.trim(),
+      title: sceneTitle.trim(),
+      scene_type: sceneType,
+      view_mode: 'photo_panorama',
+      image_resolution: '4K Equirectangular Panorama',
+      panorama_url: sceneUrl.trim() || FALLBACK_PANORAMA,
       upload_format: 'equirectangular',
-      spatial_audio_url: sceneFormAudioUrl.trim() || '',
-      ambient_audio_url: sceneFormAudioUrl.trim() || undefined,
-      initial_pitch: sceneFormPitch,
-      initial_yaw: sceneFormYaw,
-      is_default_scene: editingScene ? editingScene.is_default_scene || false : false,
+      initial_pitch: Number(scenePitch),
+      initial_yaw: Number(sceneYaw),
+      is_default_scene: editingScene ? editingScene.is_default_scene : currentScenes.length === 0,
       created_at: editingScene?.created_at || new Date().toISOString(),
-      hotspots: editingScene ? editingScene.hotspots : [],
     };
 
-    const updatedDestinations = await saveDestinationScene(
-      selectedDestination.id,
-      newScene,
-      destinations
-    );
-
-    onUpdateDestinations(updatedDestinations);
-    setSelectedSceneId(newScene.id);
+    const updated = await saveDestinationScene(selectedDestination.id, nextScene);
+    onUpdateDestinations(updated);
+    setSelectedSceneId(nextScene.id);
     setIsSceneModalOpen(false);
     showToast(
       editingScene
-        ? 'Data scene panorama berhasil diperbarui.'
-        : 'Scene panorama 360° baru berhasil ditambahkan.',
+        ? `Scene "${nextScene.title}" berhasil diperbarui.`
+        : `Scene Pure Panorama 360° "${nextScene.title}" berhasil ditambahkan.`,
       'success'
     );
   };
 
-  // Save Pin (Kanvas Bersih 360°: Narasi Sejarah, Musik Minang, Navigasi Scene)
-  const handleSavePin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDestination || !activeScene) return;
+  const handleDeleteScene = async (scene: PanoramaScene) => {
+    if (!selectedDestination) return;
+    if (!window.confirm(`Hapus scene panorama "${scene.title}"?`)) return;
+    const updated = await deleteDestinationScene(selectedDestination.id, scene.id);
+    onUpdateDestinations(updated);
+    showToast(`Scene "${scene.title}" berhasil dihapus.`, 'info');
+  };
 
-    if (!pinFormTitle.trim()) {
-      showToast('Judul pin / audio narasi 360° wajib diisi.', 'warning');
+  // ============================================================================
+  // STATE TAB 2: EDITOR DENAH KAWASAN 2D (PARKIR, UMKM, TOILET, MUSHOLLA, LOKET)
+  // ============================================================================
+  const [denahFilter, setDenahFilter] = useState<'ALL' | DenahPointCategory>('ALL');
+  const [selectedDenahPoint, setSelectedDenahPoint] = useState<DenahPoint | null>(null);
+  const [isPlacingDenah, setIsPlacingDenah] = useState(false);
+
+  const [isDenahModalOpen, setIsDenahModalOpen] = useState(false);
+  const [editingDenah, setEditingDenah] = useState<DenahPoint | null>(null);
+  const [denahCategory, setDenahCategory] = useState<DenahPointCategory>('UMKM');
+  const [denahTitle, setDenahTitle] = useState('');
+  const [denahDesc, setDenahDesc] = useState('');
+  const [denahX, setDenahX] = useState(50);
+  const [denahY, setDenahY] = useState(50);
+  const [denahPartnerId, setDenahPartnerId] = useState('');
+
+  const filteredDenahPoints = useMemo(
+    () =>
+      denahFilter === 'ALL'
+        ? currentDenahPoints
+        : currentDenahPoints.filter((p) => p.category === denahFilter),
+    [currentDenahPoints, denahFilter]
+  );
+
+  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPlacingDenah) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const xPct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    const yPct = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+    setEditingDenah(null);
+    setDenahCategory('UMKM');
+    setDenahTitle('');
+    setDenahDesc('');
+    setDenahX(Math.max(4, Math.min(96, xPct)));
+    setDenahY(Math.max(4, Math.min(96, yPct)));
+    setDenahPartnerId('');
+    setIsPlacingDenah(false);
+    setIsDenahModalOpen(true);
+    showToast(`Koordinat Denah 2D dipilih: X ${xPct}%, Y ${yPct}%.`, 'info');
+  };
+
+  const handleOpenEditDenah = (pt: DenahPoint) => {
+    setEditingDenah(pt);
+    setDenahCategory(pt.category);
+    setDenahTitle(pt.title);
+    setDenahDesc(pt.description);
+    setDenahX(pt.x);
+    setDenahY(pt.y);
+    setDenahPartnerId(pt.partner_id || '');
+    setIsDenahModalOpen(true);
+  };
+
+  const handleSaveDenahSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDestination || !denahTitle.trim()) {
+      showToast('Nama titik fasilitas Denah 2D wajib diisi.', 'warning');
       return;
     }
 
-    const colorTokenMap: Record<string, string> = {
-      narasi_sejarah: 'amber',
-      narasi: 'amber',
-      musik_minang: 'emerald',
-      musik: 'emerald',
-      navigasi_arah: 'blue',
-      navigasi: 'blue',
-      audio_budaya: 'amber',
-      fasilitas_umum: 'teal',
-      mitra_umkm: 'coral',
-      loket_info: 'amber',
+    const nextPoint: DenahPoint = {
+      id: editingDenah ? editingDenah.id : `dnh-${Date.now().toString(36)}`,
+      destination_id: selectedDestination.id,
+      category: denahCategory,
+      title: denahTitle.trim(),
+      description: denahDesc.trim() || `${DENAH_META[denahCategory].label} resmi kawasan.`,
+      x: Number(denahX),
+      y: Number(denahY),
+      partner_id: denahCategory === 'UMKM' && denahPartnerId ? denahPartnerId : undefined,
     };
 
-    let targetRef = '';
-    if (pinFormCategory === 'navigasi_arah' || pinFormCategory === 'navigasi') {
-      targetRef = pinFormTargetScene || '';
-    } else if (pinFormAudioUrl.trim()) {
-      targetRef = pinFormAudioUrl.trim();
-    }
-
-    const newPin: HotspotPin = {
-      id: editingPin ? editingPin.id : `pin-${Date.now().toString(36)}`,
-      scene_id: activeScene.id,
-      pin_type: pinFormCategory,
-      color_token: colorTokenMap[pinFormCategory] || 'amber',
-      pitch: pinFormPitch,
-      yaw: pinFormYaw,
-      title: pinFormTitle.trim(),
-      target_ref: targetRef,
-      voice_text: pinFormVoiceText.trim() || pinFormDesc.trim(),
-      description: pinFormDesc.trim(),
-      created_at: editingPin?.created_at || new Date().toISOString(),
-
-      category: pinFormCategory,
-      target_scene_id:
-        pinFormCategory === 'navigasi_arah' || pinFormCategory === 'navigasi'
-          ? pinFormTargetScene
-          : undefined,
-      audio_url: pinFormAudioUrl.trim() || undefined,
-      partner_name:
-        pinFormCategory === 'mitra_umkm' ? pinFormPartnerName : undefined,
-      partner_fee:
-        pinFormCategory === 'mitra_umkm' ? pinFormPartnerFee : undefined,
-      whatsapp_number:
-        pinFormCategory === 'mitra_umkm' ? pinFormWhatsapp.trim() : undefined,
-      facility_subtype:
-        pinFormCategory === 'fasilitas_umum' ? pinFormFacilitySubtype : undefined,
-      operating_hours:
-        pinFormCategory === 'loket_info' ? pinFormOperatingHours : undefined,
-    };
-
-    const updatedDestinations = await saveSceneHotspot(
-      selectedDestination.id,
-      activeScene.id,
-      newPin,
-      destinations
-    );
-
-    onUpdateDestinations(updatedDestinations);
-    setIsPinModalOpen(false);
-    setSelectedPin(newPin);
+    const updated = await saveDestinationDenahPoint(selectedDestination.id, nextPoint);
+    onUpdateDestinations(updated);
+    setSelectedDenahPoint(nextPoint);
+    setIsDenahModalOpen(false);
     showToast(
-      editingPin
-        ? 'Pin hotspot berhasil diperbarui.'
-        : 'Pin hotspot baru berhasil ditempelkan ke panorama 360°.',
+      editingDenah
+        ? `Titik Denah 2D "${nextPoint.title}" diperbarui.`
+        : `Titik Denah 2D "${nextPoint.title}" (${nextPoint.category}) ditambahkan.`,
       'success'
     );
   };
 
-  const handleDeletePin = async (pinId: string) => {
-    if (!selectedDestination || !activeScene) return;
-    if (!window.confirm('Hapus pin hotspot ini dari scene?')) return;
-
-    const updated = await deleteSceneHotspot(
-      selectedDestination.id,
-      activeScene.id,
-      pinId,
-      destinations
-    );
+  const handleDeleteDenah = async (pt: DenahPoint) => {
+    if (!window.confirm(`Hapus titik "${pt.title}" dari Denah Kawasan 2D?`)) return;
+    const updated = await deleteDestinationDenahPoint(pt.id);
     onUpdateDestinations(updated);
-    if (selectedPin?.id === pinId) setSelectedPin(null);
-    showToast('Pin hotspot berhasil dihapus.', 'info');
+    if (selectedDenahPoint?.id === pt.id) setSelectedDenahPoint(null);
+    showToast(`Titik Denah 2D "${pt.title}" dihapus.`, 'info');
   };
-
-  const handleDeleteScene = async (sceneId: string) => {
-    if (!selectedDestination) return;
-    if (!window.confirm('Hapus scene panorama 360° ini beserta seluruh pin?')) return;
-
-    const updated = await deleteDestinationScene(
-      selectedDestination.id,
-      sceneId,
-      destinations
-    );
-    onUpdateDestinations(updated);
-    const remaining =
-      updated.find((d) => d.id === selectedDestination.id)?.scenes_360 || [];
-    setSelectedSceneId(remaining[0]?.id || '');
-    showToast('Scene panorama berhasil dihapus.', 'info');
-  };
-
-  const getCategoryMeta = (cat: HotspotPinCategory) => {
-    switch (cat) {
-      case 'narasi_sejarah':
-      case 'narasi':
-      case 'audio_budaya':
-        return {
-          label: 'Narasi Cerita Sejarah (Voice-Over)',
-          color: '#D97706',
-          bg: '#FEF3C7',
-          pinSvg: '/assets/synced/pin_narasi_sejarah.svg',
-          icon: <BookOpen className="w-4 h-4 text-[#D97706]" />,
-        };
-      case 'musik_minang':
-      case 'musik':
-        return {
-          label: 'Musik Tradisional Minang (Saluang & Talempong)',
-          color: '#16A34A',
-          bg: '#DCFCE7',
-          pinSvg: '/assets/synced/pin_musik_minang.svg',
-          icon: <Music className="w-4 h-4 text-[#16A34A]" />,
-        };
-      case 'navigasi_arah':
-      case 'navigasi':
-        return {
-          label: 'Navigasi Arah (Pindah Scene 360°)',
-          color: '#2563EB',
-          bg: '#DBEAFE',
-          pinSvg: '/assets/synced/pin_navigasi_arah.svg',
-          icon: <Compass className="w-4 h-4 text-[#2563EB]" />,
-        };
-      case 'mitra_umkm':
-        return {
-          label: 'Mitra UMKM (Arsip)',
-          color: '#C2410C',
-          bg: '#FFEDD5',
-          pinSvg: '/assets/synced/pin_mitra_umkm.svg',
-          icon: <ShoppingBag className="w-4 h-4 text-[#C2410C]" />,
-        };
-      case 'fasilitas_umum':
-      case 'loket_info':
-      default:
-        return {
-          label: 'Titik Informasi 360°',
-          color: '#234B24',
-          bg: '#E4E9DA',
-          pinSvg: '/assets/synced/pin_navigasi_arah.svg',
-          icon: <Info className="w-4 h-4 text-[#234B24]" />,
-        };
-    }
-  };
-
-  const sceneHotspots = activeScene?.hotspots || [];
-  const filteredHotspots =
-    pinCategoryFilter === 'all'
-      ? sceneHotspots
-      : sceneHotspots.filter((h) => h.category === pinCategoryFilter);
 
   return (
     <div className="space-y-6">
-      {/* Audio Ambient Player Element */}
-      {activeScene?.ambient_audio_url && (
-        <audio
-          ref={audioRef}
-          src={activeScene.ambient_audio_url}
-          loop
-          className="hidden"
-        />
-      )}
-
-      {/* Header Halaman */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-            Studio Panorama 360°
+            Panorama 360° &amp; Editor Denah Kawasan 2D
           </h1>
           <p className="text-xs text-[#4A5248] mt-0.5">
-            Foto panorama equirectangular, kondisi nyata destinasi, dan 4 kategori pin fasilitas.
+            Tab 1: Pure Panorama 360° bersih (Aerial &amp; Ground) · Tab 2: Denah Fasilitas 2D (Parkir, UMKM, Toilet, Musholla, Loket).
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor={destSelectId}
-              className="text-xs font-bold text-[#1B1F1A] shrink-0 hidden sm:inline"
-            >
-              Destinasi:
-            </label>
-            <select
-              id={destSelectId}
-              value={selectedDestId}
-              onChange={(e) => {
-                setSelectedDestId(e.target.value);
-                const dest = destinations.find((d) => d.id === e.target.value);
-                const firstScene = dest?.scenes_360?.[0];
-                setSelectedSceneId(firstScene?.id || '');
-                setSelectedPin(null);
-              }}
-              className="h-9 px-3 py-1 rounded-xl bg-white border border-[#234B24]/15 text-xs font-bold text-[#1B1F1A] shadow-2xs focus:outline-hidden focus:ring-1 focus:ring-[#234B24]"
-            >
-              {destinations.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name} ({d.scenes_360?.length || 0} Scene)
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setEditingScene(null);
-              setSceneFormTitle('');
-              setSceneFormType('aerial');
-              setSceneFormPanoUrl('');
-              setSceneFormAudioUrl('');
-              setSceneFormPitch(0);
-              setSceneFormYaw(0);
-              setIsSceneModalOpen(true);
+          <label htmlFor={destSelectId} className="text-xs font-bold text-[#1B1F1A] hidden sm:inline">
+            Destinasi:
+          </label>
+          <select
+            id={destSelectId}
+            value={selectedDestId}
+            onChange={(e) => {
+              setSelectedDestId(e.target.value);
+              setSelectedDenahPoint(null);
             }}
-            className="h-9 px-3.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-1.5 shadow-xs transition"
+            className="h-10 px-3 py-1.5 rounded-xl bg-white border border-[#234B24]/15 text-xs font-bold text-[#1B1F1A] shadow-2xs"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Scene</span>
-          </button>
+            {destinations.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name} ({d.scenes_360?.length || 0} Scene · {d.denah_points?.length || 0} Denah)
+              </option>
+            ))}
+          </select>
         </div>
       </header>
 
-      {/* Tab Navigasi Scene Aktif */}
+      {/* 2-Tab Switcher */}
       <nav
-        aria-label="Scene Panorama"
-        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+        aria-label="Mode Studio Panorama & Denah"
+        className="flex gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs w-fit"
       >
-        <span className="text-xs font-bold text-[#4A5248] px-2 py-1.5 flex items-center gap-1.5 shrink-0">
-          <Layers className="w-3.5 h-3.5 text-[#234B24]" />
-          <span>Scene:</span>
-        </span>
-        {currentScenes.length === 0 ? (
-          <span className="text-xs italic text-[#767676] px-2 py-1.5">
-            Belum ada scene 360°. Silakan tambah scene.
+        <button
+          type="button"
+          onClick={() => setActiveTab('panorama')}
+          className={`h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 transition ${
+            activeTab === 'panorama'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Camera className="w-3.5 h-3.5" />
+          <span>Panorama 360° (Pure View)</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20">
+            {currentScenes.length}
           </span>
-        ) : (
-          currentScenes.map((scene) => {
-            const isActive = scene.id === activeScene?.id;
-            return (
-              <button
-                key={scene.id}
-                type="button"
-                onClick={() => {
-                  setSelectedSceneId(scene.id);
-                  setSelectedPin(null);
-                }}
-                className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-                  isActive
-                    ? 'bg-[#234B24] text-[#F6F3EC] shadow-xs'
-                    : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-                }`}
-              >
-                <span>{scene.title}</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-[#234B24]/10 text-[#234B24]'
-                }`}>
-                  {scene.hotspots?.length || 0} Pin
-                </span>
-              </button>
-            );
-          })
-        )}
-        {activeScene && (
-          <div className="flex items-center gap-1.5 ml-auto shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setEditingScene(activeScene);
-                setSceneFormTitle(activeScene.title);
-                setSceneFormType(((activeScene.scene_type || activeScene.type || 'ground') as 'aerial' | 'ground'));
-                setSceneFormPanoUrl(activeScene.panorama_url);
-                setSceneFormAudioUrl(activeScene.spatial_audio_url || activeScene.ambient_audio_url || '');
-                setSceneFormPitch(activeScene.initial_pitch);
-                setSceneFormYaw(activeScene.initial_yaw);
-                setIsSceneModalOpen(true);
-              }}
-              className="h-9 px-3 rounded-lg bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24] font-bold text-xs flex items-center gap-1.5 border border-[#234B24]/10"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit Scene</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDeleteScene(activeScene.id)}
-              className="h-9 px-2.5 rounded-lg bg-[#F26B4B]/10 hover:bg-[#F26B4B]/20 text-[#D95637] font-bold text-xs flex items-center gap-1.5"
-              title="Hapus Scene"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Hapus</span>
-            </button>
-          </div>
-        )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('denah')}
+          className={`h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 transition ${
+            activeTab === 'denah'
+              ? 'bg-[#234B24] text-white shadow-xs'
+              : 'text-[#4A5248] hover:bg-[#234B24]/5'
+          }`}
+        >
+          <Map className="w-3.5 h-3.5" />
+          <span>Editor Denah Kawasan 2D</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20">
+            {currentDenahPoints.length}
+          </span>
+        </button>
       </nav>
 
-      {/* Main Content: Interactive Canvas & Pin List */}
-      {activeScene ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Kolom Kiri: Kanvas 360° Interaktif (8 Kolom) */}
-          <section
-            ref={canvasContainerRef}
-            className={`lg:col-span-8 bg-white rounded-2xl p-5 lg:p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4 ${
-              isFullscreen ? 'fixed inset-0 z-50 rounded-none p-6 overflow-hidden' : ''
-            }`}
-          >
-            {/* Top Bar Kanvas: Info & Mode Switcher */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-[#234B24]" />
-                  <span>{activeScene.title}</span>
-                </h2>
-                <p className="text-xs text-[#4A5248]">
-                  {interactionMode === 'explore'
-                    ? 'Tarik/geser kanvas untuk memutar sudut pandang 360° (Yaw & Pitch).'
-                    : 'Klik langsung pada titik kanvas untuk menempelkan pin hotspot baru.'}
-                </p>
-              </div>
-
-              {/* Mode Switcher Pill */}
-              <div className="flex items-center p-1 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] shrink-0 self-start sm:self-center">
-                <button
-                  type="button"
-                  onClick={() => setInteractionMode('explore')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                    interactionMode === 'explore'
-                      ? 'bg-[#234B24] text-[#F6F3EC] shadow-xs'
-                      : 'text-[#4A5248] hover:text-[#1B1F1A]'
-                  }`}
-                >
-                  <Navigation className="w-3.5 h-3.5" />
-                  <span>Mode Jelajah Kamera</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInteractionMode('pin_picker')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                    interactionMode === 'pin_picker'
-                      ? 'bg-[#F26B4B] text-white shadow-xs'
-                      : 'text-[#4A5248] hover:text-[#1B1F1A]'
-                  }`}
-                >
-                  <Crosshair className="w-3.5 h-3.5" />
-                  <span>Mode Tempel Pin</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Viewport Kanvas Panorama */}
-            <div
-              className={`relative w-full aspect-[2/1] rounded-2xl overflow-hidden bg-black select-none border-2 shadow-inner transition-opacity duration-300 ${
-                interactionMode === 'pin_picker'
-                  ? 'cursor-crosshair border-[#F26B4B]'
-                  : 'cursor-grab active:cursor-grabbing border-[#234B24]/40'
-              } ${isSceneTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
-            >
-              <canvas
-                ref={canvasRef}
-                width={1280}
-                height={640}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onClick={handleCanvasClickInExplore}
-                className="w-full h-full block"
-              />
-
-              {/* HUD: Kompas & Koordinat Real-time */}
-              <div className="absolute top-3 left-3 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-xs text-white text-[11px] font-mono flex items-center gap-2 pointer-events-none">
-                <Compass className="w-3.5 h-3.5 text-[#A7F3D0] animate-spin" />
-                <span>
-                  Yaw: <strong>{Math.round(cameraYaw)}°</strong> · Pitch:{' '}
-                  <strong>{Math.round(cameraPitch)}°</strong> · Zoom:{' '}
-                  <strong>{zoomLevel.toFixed(1)}x</strong>
+      {/* ==================================================================== */}
+      {/* TAB 1: PURE PANORAMA 360°                                            */}
+      {/* ==================================================================== */}
+      {activeTab === 'panorama' && (
+        <div className="space-y-5">
+          {/* Scene Switcher Bar */}
+          <div className="bg-white p-3.5 rounded-2xl border border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-[#4A5248] flex items-center gap-1.5 mr-1">
+                <Layers className="w-4 h-4 text-[#234B24]" /> Scene 360°:
+              </span>
+              {currentScenes.length === 0 ? (
+                <span className="text-xs text-[#767676] italic">
+                  Menggunakan panorama bawaan Sumbar (belum ada scene kustom)
                 </span>
-              </div>
-
-              {/* HUD: Kontrol Zoom, Reset, Audio, Fullscreen */}
-              <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                {activeScene.ambient_audio_url && (
-                  <button
-                    type="button"
-                    onClick={() => setIsAudioMuted(!isAudioMuted)}
-                    className="p-2 rounded-xl bg-black/70 hover:bg-black/90 text-white shadow-md backdrop-blur-xs"
-                    title={isAudioMuted ? 'Nyalakan Audio' : 'Matikan Audio'}
-                  >
-                    {isAudioMuted ? (
-                      <VolumeX className="w-4 h-4 text-[#D95637]" />
-                    ) : (
-                      <Volume2 className="w-4 h-4 text-[#A7F3D0]" />
-                    )}
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setZoomLevel((z) => Math.min(2.2, z + 0.2))}
-                  className="p-2 rounded-xl bg-black/70 hover:bg-black/90 text-white shadow-md backdrop-blur-xs"
-                  title="Perbesar (Zoom In)"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setZoomLevel((z) => Math.max(0.8, z - 0.2))}
-                  className="p-2 rounded-xl bg-black/70 hover:bg-black/90 text-white shadow-md backdrop-blur-xs"
-                  title="Perkecil (Zoom Out)"
-                >
-                  <ZoomOut className="w-4 h-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCameraYaw(activeScene.initial_yaw || 0);
-                    setCameraPitch(activeScene.initial_pitch || 0);
-                    setZoomLevel(1.0);
-                  }}
-                  className="p-2 rounded-xl bg-black/70 hover:bg-black/90 text-white shadow-md backdrop-blur-xs"
-                  title="Atur Ulang Sudut Pandang"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="p-2 rounded-xl bg-black/70 hover:bg-black/90 text-white shadow-md backdrop-blur-xs"
-                  title="Layar Penuh"
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="w-4 h-4" />
-                  ) : (
-                    <Maximize2 className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-
-              {/* Status Banner Bottom Canvas */}
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                <span className="px-2.5 py-1 rounded-lg bg-black/60 text-white text-[10px] font-bold backdrop-blur-xs">
-                  {interactionMode === 'pin_picker'
-                    ? '🎯 Klik pada panorama untuk menaruh pin'
-                    : '🔍 Geser mouse untuk memutar 360°'}
-                </span>
-
-                <span className="px-2.5 py-1 rounded-lg bg-black/60 text-[#A7F3D0] text-[10px] font-bold backdrop-blur-xs">
-                  {sceneHotspots.length} Pin Aktif di Scene
-                </span>
-              </div>
-            </div>
-
-            {/* Popup Card Pin Terpilih */}
-            {selectedPin && (
-              <div className="p-4 rounded-2xl bg-[#E4E9DA]/80 border border-[#CFD8BE] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-[#234B24]/10 shadow-xs">
-                    <img
-                      src={getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').pinSvg}
-                      alt=""
-                      className="w-7 h-8 object-contain"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-[#234B24]">
-                        {getCategoryMeta(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum').label}
-                      </span>
-                      <span className="text-[11px] text-[#4A5248] font-mono">
-                        Yaw: {selectedPin.yaw}° · Pitch: {selectedPin.pitch}°
-                      </span>
-                    </div>
-
-                    <h3 className="text-sm font-extrabold text-[#1B1F1A] mt-1 truncate">
-                      {selectedPin.title}
-                    </h3>
-                    <p className="text-xs text-[#4A5248] line-clamp-2 mt-0.5">
-                      {selectedPin.description || 'Tidak ada deskripsi rinci.'}
-                    </p>
-
-                    {/* Jika Pin Navigasi Pindah Scene */}
-                    {(selectedPin.category === 'navigasi_arah' || selectedPin.category === 'navigasi') &&
-                      selectedPin.target_scene_id && (
-                        <div className="mt-2">
+              ) : (
+                currentScenes.map((scene) => {
+                  const isActive = activeScene?.id === scene.id;
+                  return (
+                    <div key={scene.id} className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSceneId(scene.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                          isActive
+                            ? 'bg-[#234B24] text-white'
+                            : 'bg-[#F6F3EC] text-[#1B1F1A] hover:bg-[#E4E9DA]'
+                        }`}
+                      >
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-black/15">
+                          {scene.scene_type === 'aerial' ? 'Panorama Luas' : 'Sudut Dekat'}
+                        </span>
+                        <span>{scene.title}</span>
+                      </button>
+                      {isActive && (
+                        <>
                           <button
                             type="button"
-                            onClick={() =>
-                              handleTransitionToScene(selectedPin.target_scene_id!)
-                            }
-                            className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition"
+                            onClick={() => {
+                              setEditingScene(scene);
+                              setSceneTitle(scene.title);
+                              setSceneType(scene.scene_type);
+                              setSceneUrl(scene.panorama_url);
+                              setScenePitch(scene.initial_pitch);
+                              setSceneYaw(scene.initial_yaw);
+                              setIsSceneModalOpen(true);
+                            }}
+                            title="Edit Scene"
+                            className="p-1.5 rounded-lg bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24]"
                           >
-                            <span>Melompat ke Scene Tujuan</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                        </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteScene(scene)}
+                            title="Hapus Scene"
+                            className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
                       )}
-
-                    {/* Jika Pin Narasi Sejarah Audio */}
-                    {(selectedPin.category === 'narasi_sejarah' || selectedPin.category === 'narasi' || selectedPin.category === 'audio_budaya') && (
-                      <div className="mt-2 space-y-2">
-                        {selectedPin.voice_text && (
-                          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed font-serif italic">
-                            &ldquo;{selectedPin.voice_text}&rdquo;
-                          </div>
-                        )}
-                        {selectedPin.audio_url && (
-                          <div className="flex items-center gap-2">
-                            <audio
-                              controls
-                              src={selectedPin.audio_url}
-                              className="h-8 max-w-[240px]"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Jika Pin Musik Tradisional Minang */}
-                    {(selectedPin.category === 'musik_minang' || selectedPin.category === 'musik') && (
-                      <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center gap-2">
-                        <Music className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Alunan Musik Tradisional Minang (Saluang &amp; Talempong)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingPin(selectedPin);
-                      setPinFormCategory(selectedPin.pin_type || selectedPin.category || 'fasilitas_umum');
-                      setPinFormTitle(selectedPin.title);
-                      setPinFormDesc(selectedPin.description || '');
-                      setPinFormPitch(selectedPin.pitch);
-                      setPinFormYaw(selectedPin.yaw);
-                      setPinFormTargetScene(selectedPin.target_scene_id || '');
-                      setPinFormAudioUrl(selectedPin.audio_url || '');
-                      setPinFormPartnerName(selectedPin.partner_name || '');
-                      setPinFormPartnerFee(selectedPin.partner_fee || 0);
-                      setPinFormWhatsapp(selectedPin.whatsapp_number || '');
-                      setPinFormFacilitySubtype(selectedPin.facility_subtype || 'Toilet Bersih & Sanitasi');
-                      setPinFormOperatingHours(selectedPin.operating_hours || '08:00 - 17:00 WIB');
-                      setIsPinModalOpen(true);
-                    }}
-                    className="p-2 rounded-lg bg-white hover:bg-gray-100 text-[#234B24] border border-[#CFD8BE]"
-                    title="Edit Pin"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeletePin(selectedPin.id)}
-                    className="p-2 rounded-lg bg-[#F26B4B]/15 hover:bg-[#F26B4B]/25 text-[#D95637]"
-                    title="Hapus Pin"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPin(null)}
-                    className="p-2 rounded-lg text-[#767676] hover:bg-black/5"
-                    title="Tutup Popup"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* Kolom Kanan: Daftar Pin & Manajemen (4 Kolom) */}
-          <aside className="lg:col-span-4 bg-white rounded-2xl p-5 lg:p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-extrabold text-[#1B1F1A] flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#F26B4B]" />
-                  <span>Daftar Pin Hotspot ({sceneHotspots.length})</span>
-                </h2>
-                <p className="text-[11px] text-[#4A5248]">
-                  4 kategori titik interaktif
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setInteractionMode('pin_picker')}
-                className="min-h-[36px] px-3 py-1 rounded-lg bg-[#F26B4B] hover:bg-[#D95637] text-white font-bold text-xs flex items-center gap-1 shadow-xs"
-              >
-                <Crosshair className="w-3.5 h-3.5" />
-                <span>Tempel Pin</span>
-              </button>
-            </div>
-
-            {/* Filter Kategori Kanvas Bersih 360° */}
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                { id: 'all', label: 'Semua' },
-                { id: 'narasi_sejarah', label: 'Narasi Sejarah' },
-                { id: 'musik_minang', label: 'Musik Minang' },
-                { id: 'navigasi_arah', label: 'Navigasi' },
-              ].map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setPinCategoryFilter(f.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
-                    pinCategoryFilter === f.id
-                      ? 'bg-[#234B24] text-[#F6F3EC]'
-                      : 'bg-[#F6F3EC] text-[#4A5248] hover:bg-[#E4E9DA]'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-
-            {/* List Pin */}
-            <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-              {filteredHotspots.length === 0 ? (
-                <div className="p-6 text-center rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]">
-                  <Crosshair className="w-8 h-8 text-[#767676] mx-auto mb-2" />
-                  <p className="text-xs font-bold text-[#1B1F1A]">
-                    Belum ada pin untuk kategori ini
-                  </p>
-                  <p className="text-[11px] text-[#4A5248] mt-1">
-                    Aktifkan &quot;Mode Tempel Pin&quot; dan klik pada kanvas.
-                  </p>
-                </div>
-              ) : (
-                filteredHotspots.map((pin) => {
-                  const meta = getCategoryMeta(pin.pin_type || pin.category || 'fasilitas_umum');
-                  const isSelected = selectedPin?.id === pin.id;
-
-                  return (
-                    <div
-                      key={pin.id}
-                      onClick={() => {
-                        setSelectedPin(pin);
-                        // Rotate camera to face pin
-                        setCameraYaw(pin.yaw);
-                        setCameraPitch(pin.pitch);
-                      }}
-                      className={`p-3.5 rounded-2xl border transition cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#E4E9DA] border-[#234B24] shadow-sm'
-                          : 'bg-[#F6F3EC]/70 hover:bg-[#E4E9DA]/50 border-[#CFD8BE]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={meta.pinSvg}
-                            alt=""
-                            className="w-5 h-6 object-contain shrink-0"
-                          />
-                          <span className="text-[11px] font-bold text-[#234B24]">
-                            {meta.label}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-[#767676] font-mono">
-                          Y:{pin.yaw}° P:{pin.pitch}°
-                        </span>
-                      </div>
-
-                      <h3 className="text-xs font-extrabold text-[#1B1F1A] mt-2 line-clamp-1">
-                        {pin.title}
-                      </h3>
-
-                      {pin.partner_name && (
-                        <div className="mt-1 text-[10px] font-bold text-[#C2410C]">
-                          Mitra: {pin.partner_name}
-                        </div>
-                      )}
-
-                      <div className="mt-2.5 pt-2 border-t border-black/5 flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingPin(pin);
-                            setPinFormCategory(pin.pin_type || pin.category || 'fasilitas_umum');
-                            setPinFormTitle(pin.title);
-                            setPinFormDesc(pin.description || '');
-                            setPinFormPitch(pin.pitch);
-                            setPinFormYaw(pin.yaw);
-                            setPinFormTargetScene(pin.target_scene_id || '');
-                            setPinFormAudioUrl(pin.audio_url || '');
-                            setPinFormPartnerName(pin.partner_name || '');
-                            setPinFormPartnerFee(pin.partner_fee || 0);
-                            setPinFormWhatsapp(pin.whatsapp_number || '');
-                            setPinFormFacilitySubtype(pin.facility_subtype || 'Toilet Bersih & Sanitasi');
-                            setPinFormOperatingHours(pin.operating_hours || '08:00 - 17:00 WIB');
-                            setIsPinModalOpen(true);
-                          }}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-white text-[#234B24] border border-[#CFD8BE]"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePin(pin.id);
-                          }}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-bold text-[#D95637] hover:bg-[#F26B4B]/15"
-                        >
-                          Hapus
-                        </button>
-                      </div>
                     </div>
                   );
                 })
               )}
             </div>
-          </aside>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl p-12 text-center border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)]">
-          <Camera className="w-12 h-12 text-[#234B24] mx-auto mb-3" />
-          <h2 className="text-lg font-extrabold text-[#1B1F1A]">
-            Belum Ada Scene Panorama 360° untuk {selectedDestination?.name}
-          </h2>
-          <p className="text-xs text-[#4A5248] max-w-md mx-auto mt-1 mb-5">
-            Unggah file foto panorama 360° dari device untuk mulai merancang tur imersif.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setEditingScene(null);
-              setSceneFormTitle('');
-              setSceneFormType('aerial');
-              setSceneFormPanoUrl('');
-              setSceneFormAudioUrl('');
-              setIsSceneModalOpen(true);
-            }}
-            className="min-h-[48px] px-6 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-sm inline-flex items-center gap-2 shadow-md"
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditingScene(null);
+                setSceneTitle('');
+                setSceneType('aerial');
+                setSceneUrl('');
+                setScenePitch(0);
+                setSceneYaw(0);
+                setIsSceneModalOpen(true);
+              }}
+              className="h-9 px-3.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs inline-flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Scene 360°</span>
+            </button>
+          </div>
+
+          {/* Pure Panorama Canvas */}
+          <div
+            ref={canvasContainerRef}
+            className={`relative bg-[#1B1F1A] rounded-3xl overflow-hidden border-2 border-[#234B24]/20 shadow-xl ${
+              isFullscreen ? 'fixed inset-4 z-50' : 'h-[480px]'
+            }`}
           >
-            <Plus className="w-4 h-4" />
-            <span>Unggah Panorama 360° Baru dari Device</span>
-          </button>
+            <canvas
+              ref={canvasRef}
+              width={1280}
+              height={640}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              className="w-full h-full object-cover cursor-grab active:cursor-grabbing select-none"
+            />
+
+            {/* Top HUD */}
+            <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+              <div className="bg-black/65 backdrop-blur-md text-white px-4 py-2 rounded-2xl border border-white/15 pointer-events-auto">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#A7F3D0]">
+                  Pure Panorama 360° · {activeScene?.scene_type === 'ground' ? 'Sudut Dekat (Ground)' : 'Panorama Luas (Aerial)'}
+                </div>
+                <div className="text-sm font-extrabold">
+                  {activeScene?.title || `${selectedDestination?.name} — Panorama Bawaan`}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pointer-events-auto">
+                <div className="bg-black/65 backdrop-blur-md text-white px-3 py-2 rounded-xl border border-white/15 text-[11px] font-mono">
+                  Yaw: <strong>{Math.round(cameraYaw)}°</strong> · Pitch:{' '}
+                  <strong>{Math.round(cameraPitch)}°</strong> · Zoom:{' '}
+                  <strong>{zoomLevel.toFixed(1)}x</strong>
+                </div>
+                {activeScene && (
+                  <button
+                    type="button"
+                    onClick={handleSaveDefaultCamera}
+                    className="px-3.5 py-2 rounded-xl bg-[#1E9E5A] hover:bg-[#178248] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Simpan Sudut Pandang Default</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Controls */}
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+              <div className="bg-black/65 backdrop-blur-md text-white/90 px-3.5 py-2 rounded-xl text-[11px] font-medium pointer-events-auto flex items-center gap-2">
+                <Compass className="w-4 h-4 text-[#A7F3D0]" />
+                <span>Geser layar untuk melihat sekeliling 360° tanpa gangguan pin mengambang.</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-black/65 backdrop-blur-md p-1.5 rounded-2xl border border-white/15 pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((z) => Math.max(0.8, Number((z - 0.2).toFixed(1))))}
+                  aria-label="Perkecil zoom"
+                  className="p-2 rounded-xl text-white hover:bg-white/15"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((z) => Math.min(2.2, Number((z + 0.2).toFixed(1))))}
+                  aria-label="Perbesar zoom"
+                  className="p-2 rounded-xl text-white hover:bg-white/15"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCameraYaw(activeScene?.initial_yaw || 0);
+                    setCameraPitch(activeScene?.initial_pitch || 0);
+                    setZoomLevel(1.0);
+                  }}
+                  aria-label="Reset sudut pandang"
+                  className="p-2 rounded-xl text-white hover:bg-white/15"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreen((f) => !f)}
+                  aria-label="Layar penuh"
+                  className="p-2 rounded-xl text-white hover:bg-white/15"
+                >
+                  {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* ==================================================================== */}
-      {/* MODAL TAMBAH / EDIT SCENE PANORAMA (UPLOAD FILE DARI DEVICE)         */}
+      {/* TAB 2: EDITOR DENAH KAWASAN 2D                                       */}
       {/* ==================================================================== */}
+      {activeTab === 'denah' && (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          {/* Interactive 2D Map Board */}
+          <div className="xl:col-span-8 space-y-4">
+            <div className="bg-white p-4 rounded-2xl border border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setDenahFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${
+                    denahFilter === 'ALL'
+                      ? 'bg-[#234B24] text-white border-[#234B24]'
+                      : 'bg-[#F6F3EC] text-[#4A5248] border-[#CFD8BE]'
+                  }`}
+                >
+                  Semua ({currentDenahPoints.length})
+                </button>
+                {DENAH_POINT_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setDenahFilter(cat)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border inline-flex items-center gap-1.5 ${
+                      denahFilter === cat
+                        ? 'bg-[#234B24] text-white border-[#234B24]'
+                        : 'bg-[#F6F3EC] text-[#4A5248] border-[#CFD8BE]'
+                    }`}
+                  >
+                    <img src={getDenahSvgPath(cat)} alt="" className="w-4 h-4" />
+                    <span>{cat}</span>
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsPlacingDenah((v) => !v)}
+                className={`min-h-[38px] px-4 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition ${
+                  isPlacingDenah
+                    ? 'bg-[#F26B4B] text-white animate-pulse'
+                    : 'bg-[#234B24] hover:bg-[#1B3B1C] text-white'
+                }`}
+              >
+                <Crosshair className="w-3.5 h-3.5" />
+                <span>
+                  {isPlacingDenah
+                    ? 'Klik Pada Denah Untuk Menaruh Titik...'
+                    : 'Tambah Titik di Denah 2D'}
+                </span>
+              </button>
+            </div>
+
+            <div
+              onClick={handleMapClick}
+              className={`relative h-[460px] rounded-3xl overflow-hidden border-2 shadow-lg select-none ${
+                isPlacingDenah
+                  ? 'border-[#F26B4B] cursor-crosshair'
+                  : 'border-[#234B24]/20'
+              }`}
+              style={{
+                backgroundColor: '#E8EFE2',
+                backgroundImage:
+                  'linear-gradient(to right, rgba(35,75,36,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(35,75,36,0.08) 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+              }}
+            >
+              {/* Soft destination visual backdrop */}
+              {selectedDestination?.cover_image && (
+                <img
+                  src={selectedDestination.cover_image}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+                />
+              )}
+
+              {/* Map Compass & Legend */}
+              <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-xs px-3.5 py-2 rounded-2xl border border-[#CFD8BE] shadow-xs pointer-events-none">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#234B24]">
+                  Denah Kawasan 2D (Koordinat 0–100%)
+                </div>
+                <div className="text-xs font-extrabold text-[#1B1F1A]">
+                  {selectedDestination?.name}
+                </div>
+              </div>
+
+              {/* Placed Denah Markers */}
+              {filteredDenahPoints.map((pt) => {
+                const isSelected = selectedDenahPoint?.id === pt.id;
+                const meta = DENAH_META[pt.category];
+                return (
+                  <button
+                    key={pt.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedDenahPoint(pt);
+                    }}
+                    style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 group flex flex-col items-center transition-transform ${
+                      isSelected ? 'scale-110 z-20' : 'hover:scale-105 z-10'
+                    }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center border-2 ${
+                        isSelected ? 'ring-4 ring-[#F26B4B]/40' : ''
+                      }`}
+                      style={{ borderColor: meta.color }}
+                    >
+                      <img src={getDenahSvgPath(pt.category)} alt={pt.category} className="w-6 h-6" />
+                    </div>
+                    <span className="mt-1 px-2 py-0.5 rounded-lg bg-[#1B1F1A]/85 text-white text-[10px] font-bold whitespace-nowrap shadow-xs">
+                      {pt.title.length > 22 ? `${pt.title.slice(0, 20)}..` : pt.title}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Panel: Selected Point & Full List */}
+          <div className="xl:col-span-4 space-y-4">
+            {selectedDenahPoint && (
+              <div className="bg-white p-5 rounded-3xl border-2 border-[#234B24]/25 shadow-sm space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={getDenahSvgPath(selectedDenahPoint.category)}
+                      alt=""
+                      className="w-9 h-9 shrink-0"
+                    />
+                    <div>
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase"
+                        style={{
+                          backgroundColor: DENAH_META[selectedDenahPoint.category].bg,
+                          color: DENAH_META[selectedDenahPoint.category].color,
+                        }}
+                      >
+                        {selectedDenahPoint.category}
+                      </span>
+                      <h3 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
+                        {selectedDenahPoint.title}
+                      </h3>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDenahPoint(null)}
+                    className="p-1 text-[#767676] hover:text-[#1B1F1A]"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-[#4A5248]">{selectedDenahPoint.description}</p>
+                <div className="text-[11px] font-mono text-[#234B24] bg-[#F6F3EC] px-3 py-1.5 rounded-xl">
+                  Posisi Denah: X = {selectedDenahPoint.x}% · Y = {selectedDenahPoint.y}%
+                </div>
+
+                {selectedDenahPoint.partner_id && onNavigateToPartner && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigateToPartner(selectedDenahPoint.partner_id)}
+                    className="w-full py-2 px-3 rounded-xl bg-[#F26B4B]/15 text-[#D95637] hover:bg-[#F26B4B] hover:text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 transition"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Buka Profil Mitra UMKM Terhubung</span>
+                  </button>
+                )}
+
+                <div className="flex items-center gap-2 pt-2 border-t border-[#E4E9DA]">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditDenah(selectedDenahPoint)}
+                    className="flex-1 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold inline-flex items-center justify-center gap-1"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" /> Edit Titik
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDenah(selectedDenahPoint)}
+                    className="py-2 px-3 rounded-xl bg-red-50 text-red-700 text-xs font-bold inline-flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Hapus
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#234B24]">
+                  Daftar Titik Denah 2D ({filteredDenahPoints.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingDenah(null);
+                    setDenahCategory('PARKIR');
+                    setDenahTitle('');
+                    setDenahDesc('');
+                    setDenahX(50);
+                    setDenahY(50);
+                    setDenahPartnerId('');
+                    setIsDenahModalOpen(true);
+                  }}
+                  className="text-xs font-bold text-[#234B24] hover:underline inline-flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Manual
+                </button>
+              </div>
+
+              {filteredDenahPoints.length === 0 ? (
+                <p className="text-xs text-[#767676] text-center py-6">
+                  Belum ada titik fasilitas di denah kawasan ini.
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+                  {filteredDenahPoints.map((pt) => (
+                    <div
+                      key={pt.id}
+                      onClick={() => setSelectedDenahPoint(pt)}
+                      className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between gap-2 transition ${
+                        selectedDenahPoint?.id === pt.id
+                          ? 'bg-[#E4E9DA]/60 border-[#234B24]'
+                          : 'bg-[#F6F3EC]/60 border-[#CFD8BE] hover:bg-[#F6F3EC]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img src={getDenahSvgPath(pt.category)} alt="" className="w-7 h-7 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-xs font-extrabold text-[#1B1F1A] truncate">
+                            {pt.title}
+                          </div>
+                          <div className="text-[10px] text-[#4A5248]">
+                            {pt.category} · ({pt.x}%, {pt.y}%)
+                          </div>
+                        </div>
+                      </div>
+                      <CheckCircle2
+                        className={`w-4 h-4 shrink-0 ${
+                          selectedDenahPoint?.id === pt.id ? 'text-[#234B24]' : 'text-transparent'
+                        }`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TAMBAH/EDIT SCENE 360° */}
       {isSceneModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-xs">
-                  <Camera className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                    {editingScene ? 'Edit Scene Panorama 360°' : 'Tambah Scene Panorama 360°'}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Destinasi: {selectedDestination?.name}
-                  </p>
-                </div>
-              </div>
+          <form
+            onSubmit={handleSaveSceneSubmit}
+            className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl border border-[#234B24]/15 space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4E9DA]">
+              <h3 className="text-base font-extrabold text-[#1B1F1A]">
+                {editingScene ? 'Edit Scene Panorama 360°' : 'Tambah Scene Pure Panorama 360°'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsSceneModalOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
+                className="p-1.5 rounded-full hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveScene} className="mt-5 space-y-4">
-              {/* Upload Foto Panorama 360 dari Device */}
-              <div>
-                <ImageDropzone
-                  label="File Foto Panorama Equirectangular 360° (Upload dari Device)"
-                  value={sceneFormPanoUrl}
-                  onChange={(dataUrl) => setSceneFormPanoUrl(dataUrl)}
-                  onClear={() => setSceneFormPanoUrl('')}
-                  isPanorama={true}
-                  maxDimension={2560}
-                  quality={0.82}
-                  helperText="Pilih foto panorama dari komputer. Format ideal equirectangular 2:1 (misal 2048×1024 atau 2560×1280 px). Otomatis dikompresi ringan."
-                  required={true}
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-bold mb-1">Judul Scene Panorama *</label>
+              <input
+                type="text"
+                required
+                value={sceneTitle}
+                onChange={(e) => setSceneTitle(e.target.value)}
+                placeholder="Contoh: Panorama Luas Tebing Granit Harau"
+                className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+              />
+            </div>
 
+            <div>
+              <label className="block text-xs font-bold mb-1">Sudut Pengambilan</label>
+              <select
+                value={sceneType}
+                onChange={(e) => setSceneType(e.target.value as 'aerial' | 'ground')}
+                className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+              >
+                <option value="aerial">Panorama Luas (Aerial / Drone)</option>
+                <option value="ground">Sudut Dekat (Ground View)</option>
+              </select>
+            </div>
+
+            <ImageDropzone
+              label="Foto Panorama Equirectangular 360°"
+              value={sceneUrl}
+              onChange={setSceneUrl}
+              onClear={() => setSceneUrl('')}
+              helperText="Kosongkan untuk menggunakan panorama bawaan Sumbar."
+            />
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label
-                  htmlFor={sceneTitleId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Judul Scene Panorama <span className="text-[#F26B4B]">*</span>
-                </label>
+                <label className="block text-xs font-bold mb-1">Initial Yaw (°)</label>
                 <input
-                  id={sceneTitleId}
-                  type="text"
-                  value={sceneFormTitle}
-                  onChange={(e) => setSceneFormTitle(e.target.value)}
-                  placeholder="Contoh: Tinjauan Udara Aerial Tebing Sarasah Bunta (150m)"
-                  required
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
+                  type="number"
+                  value={sceneYaw}
+                  onChange={(e) => setSceneYaw(Number(e.target.value))}
+                  className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor={sceneTypeId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Tipe Scene (Aerial / Ground) <span className="text-[#F26B4B]">*</span>
-                </label>
-                <select
-                  id={sceneTypeId}
-                  value={sceneFormType}
-                  onChange={(e) =>
-                    setSceneFormType(e.target.value as 'aerial' | 'ground')
-                  }
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-                >
-                  <option value="aerial">Aerial (Drone Lanskap Udara)</option>
-                  <option value="ground">Ground (Pelataran Permukaan Bumi)</option>
-                </select>
-              </div>
-
-              {/* Upload File Audio Latar dari Device */}
-              <div>
-                <AudioDropzone
-                  label="File Audio Suasana Latar / Spatial Ambient (Upload dari Device, Opsional)"
-                  value={sceneFormAudioUrl}
-                  onChange={(audioDataUrl) => setSceneFormAudioUrl(audioDataUrl)}
-                  onClear={() => setSceneFormAudioUrl('')}
-                  helperText="Pilih file MP3/WAV gemuruh air terjun, angin lembah, atau suasana alam dari komputer."
+                <label className="block text-xs font-bold mb-1">Initial Pitch (°)</label>
+                <input
+                  type="number"
+                  value={scenePitch}
+                  onChange={(e) => setScenePitch(Number(e.target.value))}
+                  className="w-full min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor={sceneInitPitchId}
-                    className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                  >
-                    Sudut Awal Pitch (-80° s.d 80°)
-                  </label>
-                  <input
-                    id={sceneInitPitchId}
-                    type="number"
-                    min={-80}
-                    max={80}
-                    value={sceneFormPitch}
-                    onChange={(e) => setSceneFormPitch(Number(e.target.value))}
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor={sceneInitYawId}
-                    className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                  >
-                    Sudut Awal Yaw (-180° s.d 180°)
-                  </label>
-                  <input
-                    id={sceneInitYawId}
-                    type="number"
-                    min={-180}
-                    max={180}
-                    value={sceneFormYaw}
-                    onChange={(e) => setSceneFormYaw(Number(e.target.value))}
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
-                <button
-                  type="button"
-                  onClick={() => setIsSceneModalOpen(false)}
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Simpan Scene Panorama</span>
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="pt-3 border-t border-[#E4E9DA] flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSceneModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248]"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
+              >
+                Simpan Scene 360°
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
-      {/* ==================================================================== */}
-      {/* MODAL TAMBAH / EDIT HOTSPOT PIN                                      */}
-      {/* ==================================================================== */}
-      {isPinModalOpen && (
+      {/* MODAL TAMBAH/EDIT TITIK DENAH 2D */}
+      {isDenahModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                    {editingPin ? 'Edit Pin Hotspot' : 'Tambah Pin Hotspot Baru'}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Scene: {activeScene?.title}
-                  </p>
-                </div>
-              </div>
+          <form
+            onSubmit={handleSaveDenahSubmit}
+            className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl border border-[#234B24]/15 space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4E9DA]">
+              <h3 className="text-base font-extrabold text-[#1B1F1A]">
+                {editingDenah ? 'Edit Titik Denah 2D' : 'Tambah Titik Denah Kawasan 2D'}
+              </h3>
               <button
                 type="button"
-                onClick={() => setIsPinModalOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
+                onClick={() => setIsDenahModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSavePin} className="mt-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label
-                  htmlFor={pinCatId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Kategori Hotspot 360° (Kanvas Bersih) <span className="text-[#F26B4B]">*</span>
-                </label>
+                <label className="block text-xs font-bold mb-1">Kategori Denah *</label>
                 <select
-                  id={pinCatId}
-                  value={pinFormCategory}
-                  onChange={(e) =>
-                    setPinFormCategory(e.target.value as HotspotPinCategory)
-                  }
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                  value={denahCategory}
+                  onChange={(e) => setDenahCategory(e.target.value as DenahPointCategory)}
+                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
                 >
-                  <option value="narasi_sejarah">
-                    1. Narasi Cerita Sejarah (Voice-Over &amp; Budaya Minang)
-                  </option>
-                  <option value="musik_minang">
-                    2. Musik Tradisional Minang (Saluang &amp; Talempong)
-                  </option>
-                  <option value="navigasi_arah">
-                    3. Navigasi Arah (Pindah Scene Panorama 360°)
-                  </option>
+                  {DENAH_POINT_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat} — {DENAH_META[cat].label}
+                    </option>
+                  ))}
                 </select>
               </div>
-
-              <div>
-                <label
-                  htmlFor={pinTitleId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Judul Hotspot 360° <span className="text-[#F26B4B]">*</span>
-                </label>
-                <input
-                  id={pinTitleId}
-                  type="text"
-                  value={pinFormTitle}
-                  onChange={(e) => setPinFormTitle(e.target.value)}
-                  placeholder="Contoh: Narasi Sejarah Tebing Purba Harau"
-                  required
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor={pinDescId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Ringkasan Keterangan
-                </label>
-                <textarea
-                  id={pinDescId}
-                  rows={2}
-                  value={pinFormDesc}
-                  onChange={(e) => setPinFormDesc(e.target.value)}
-                  placeholder="Deskripsi singkat konten budaya atau sudut pandang..."
-                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
-                />
-              </div>
-
-              {/* Sub-form Kategori: Narasi Cerita Sejarah */}
-              {(pinFormCategory === 'narasi_sejarah' || pinFormCategory === 'narasi' || pinFormCategory === 'audio_budaya') && (
-                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2.5">
-                  <div>
-                    <label
-                      htmlFor="pin-narration-text"
-                      className="block text-xs font-bold text-[#D97706] mb-1"
-                    >
-                      Teks Sulih Suara (Voice-Over) Narasi Budaya
-                    </label>
-                    <textarea
-                      id="pin-narration-text"
-                      rows={3}
-                      value={pinFormVoiceText}
-                      onChange={(e) => setPinFormVoiceText(e.target.value)}
-                      placeholder="Teks naskah yang dibacakan voice-over saat wisatawan berinteraksi dengan titik ini..."
-                      className="w-full p-2.5 rounded-lg bg-white border border-amber-200 text-xs font-medium text-[#1B1F1A]"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="pin-audio-url"
-                      className="block text-xs font-bold text-[#D97706] mb-1"
-                    >
-                      URL File Audio Voice-Over (MP3 / WAV)
-                    </label>
-                    <input
-                      id="pin-audio-url"
-                      type="url"
-                      value={pinFormAudioUrl}
-                      onChange={(e) => setPinFormAudioUrl(e.target.value)}
-                      placeholder="https://cdn.wisgo.sumbarprov.go.id/audio/narasi_harau.mp3"
-                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-amber-200 text-xs font-mono font-medium text-[#1B1F1A]"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Sub-form Kategori: Musik Tradisional Minang */}
-              {(pinFormCategory === 'musik_minang' || pinFormCategory === 'musik') && (
-                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2.5">
-                  <div>
-                    <label
-                      htmlFor="pin-music-name"
-                      className="block text-xs font-bold text-[#16A34A] mb-1"
-                    >
-                      Jenis Instrumen / Komposisi Musik Minang
-                    </label>
-                    <input
-                      id="pin-music-name"
-                      type="text"
-                      value={pinFormVoiceText}
-                      onChange={(e) => setPinFormVoiceText(e.target.value)}
-                      placeholder="Contoh: Alunan Saluang Pauah & Talempong Pacik Harau"
-                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-emerald-200 text-xs font-medium text-[#1B1F1A]"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="pin-music-url"
-                      className="block text-xs font-bold text-[#16A34A] mb-1"
-                    >
-                      URL Audio File Musik Tradisional
-                    </label>
-                    <input
-                      id="pin-music-url"
-                      type="url"
-                      value={pinFormAudioUrl}
-                      onChange={(e) => setPinFormAudioUrl(e.target.value)}
-                      placeholder="https://cdn.wisgo.sumbarprov.go.id/audio/saluang_talempong.mp3"
-                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-emerald-200 text-xs font-mono font-medium text-[#1B1F1A]"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Sub-form Kategori: Navigasi Pindah Scene */}
-              {(pinFormCategory === 'navigasi_arah' || pinFormCategory === 'navigasi') && (
-                <div className="p-3.5 rounded-xl bg-[#BFDBFE]/30 border border-[#93C5FD]">
-                  <label
-                    htmlFor={pinTargetSceneId}
-                    className="block text-xs font-bold text-[#1D4ED8] mb-1"
-                  >
-                    Target Scene Pindah Tujuan <span className="text-[#F26B4B]">*</span>
-                  </label>
-                  <select
-                    id={pinTargetSceneId}
-                    value={pinFormTargetScene}
-                    onChange={(e) => setPinFormTargetScene(e.target.value)}
-                    required
-                    className="w-full min-h-[40px] px-3 py-1.5 rounded-lg bg-white border border-[#93C5FD] text-xs font-bold text-[#1B1F1A]"
-                  >
-                    <option value="">Pilih Scene Tujuan...</option>
-                    {currentScenes
-                      .filter((s) => s.id !== activeScene?.id)
-                      .map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.title} ({s.type})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Koordinat Posisi */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label
-                    htmlFor={pinPitchId}
-                    className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                  >
-                    Koordinat Pitch (-80° s.d 80°)
-                  </label>
+                  <label className="block text-xs font-bold mb-1">X (%)</label>
                   <input
-                    id={pinPitchId}
                     type="number"
-                    min={-80}
-                    max={80}
-                    value={pinFormPitch}
-                    onChange={(e) => setPinFormPitch(Number(e.target.value))}
-                    required
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono font-bold text-[#1B1F1A]"
+                    min={2}
+                    max={98}
+                    value={denahX}
+                    onChange={(e) => setDenahX(Number(e.target.value))}
+                    className="w-full min-h-[42px] px-2.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label
-                    htmlFor={pinYawId}
-                    className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                  >
-                    Koordinat Yaw (-180° s.d 180°)
-                  </label>
+                  <label className="block text-xs font-bold mb-1">Y (%)</label>
                   <input
-                    id={pinYawId}
                     type="number"
-                    min={-180}
-                    max={180}
-                    value={pinFormYaw}
-                    onChange={(e) => setPinFormYaw(Number(e.target.value))}
-                    required
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono font-bold text-[#1B1F1A]"
+                    min={2}
+                    max={98}
+                    value={denahY}
+                    onChange={(e) => setDenahY(Number(e.target.value))}
+                    className="w-full min-h-[42px] px-2.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
-                <button
-                  type="button"
-                  onClick={() => setIsPinModalOpen(false)}
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
+            <div>
+              <label className="block text-xs font-bold mb-1">Nama Titik Fasilitas / UMKM *</label>
+              <input
+                type="text"
+                required
+                value={denahTitle}
+                onChange={(e) => setDenahTitle(e.target.value)}
+                placeholder="Contoh: Loket Retribusi Resmi / Kedai Kawa Mak Etek"
+                className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+              />
+            </div>
+
+            {denahCategory === 'UMKM' && partners.length > 0 && (
+              <div>
+                <label className="block text-xs font-bold mb-1">
+                  Hubungkan ke Mitra UMKM Resmi (Opsional)
+                </label>
+                <select
+                  value={denahPartnerId}
+                  onChange={(e) => {
+                    setDenahPartnerId(e.target.value);
+                    const matched = partners.find((p) => p.id === e.target.value);
+                    if (matched && !denahTitle) setDenahTitle(matched.name);
+                  }}
+                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
                 >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="min-h-[44px] px-5 py-2 rounded-xl bg-[#F26B4B] hover:bg-[#D95637] text-white text-xs font-bold flex items-center gap-2 shadow-sm"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Simpan Pin Hotspot</span>
-                </button>
+                  <option value="">-- Tidak dihubungkan --</option>
+                  {partners.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.category})
+                    </option>
+                  ))}
+                </select>
               </div>
-            </form>
-          </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold mb-1">Deskripsi Singkat</label>
+              <textarea
+                rows={2}
+                value={denahDesc}
+                onChange={(e) => setDenahDesc(e.target.value)}
+                className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-[#E4E9DA] flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsDenahModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248]"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
+              >
+                Simpan Titik Denah 2D
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/colors.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_tokens.dart';
 
-/// CrowdBadge - Penanda Keramaian (Sepi, Sedang, Ramai)
+/// CrowdBadge - Penanda Keramaian Sesuai Token Semantik (desain.md Section 07.2)
 enum CrowdLevel { sepi, sedang, ramai }
 
 class CrowdBadge extends StatelessWidget {
@@ -17,27 +18,30 @@ class CrowdBadge extends StatelessWidget {
 
     switch (level) {
       case CrowdLevel.sepi:
-        bg = AppColors.green500.withOpacity(0.15);
-        fg = AppColors.green500;
+        bg = AppColors.successBg;
+        fg = AppColors.success;
         text = 'Sepi';
         break;
       case CrowdLevel.sedang:
-        bg = AppColors.orange500.withOpacity(0.15);
-        fg = AppColors.orange500;
+        bg = AppColors.warningBg;
+        fg = AppColors.warningDark;
         text = 'Sedang';
         break;
       case CrowdLevel.ramai:
-        bg = AppColors.coral500.withOpacity(0.15);
-        fg = AppColors.coral500;
+        bg = AppColors.coralTint;
+        fg = AppColors.terracotta;
         text = 'Ramai';
         break;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.rXs,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -50,13 +54,12 @@ class CrowdBadge extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.xs + 2),
           Text(
             text,
-            style: TextStyle(
+            style: AppTypography.caption.copyWith(
               color: fg,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -64,4 +67,3 @@ class CrowdBadge extends StatelessWidget {
     );
   }
 }
-

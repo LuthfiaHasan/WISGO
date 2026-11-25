@@ -1,9 +1,9 @@
 {
-  "name": "rancakin-web-admin",
-  "version": "1.0.0",
+  "name": "wisgo-web-admin",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "Dashboard Eksekutif Dispar, CMS Studio 360, Komando Saber Pungli & Simulator WA Mitra (Rancak.in)",
+  "description": "Dashboard Eksekutif Dispar Sumbar, Studio Panorama 360 & Denah 2D, Komando SOS, serta UMKM & Trip Go (WISGO)",
   "scripts": {
     "dev": "vite --port 3000 --host",
     "build": "tsc && vite build",

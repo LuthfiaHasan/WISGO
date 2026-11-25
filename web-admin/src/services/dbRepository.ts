@@ -1,215 +1,266 @@
 // ============================================================================
-// DATA REPOSITORY LAYER & LOCALSTORAGE AUTO-RESET (26 TABEL WISGO V2)
-// Sinkron dengan skema final PostgreSQL 16 + PostGIS 3.4
+// DATA REPOSITORY LAYER & LOCALSTORAGE MIGRATION (WISGO V3.0.0)
+// Satu Sumber Kebenaran (Single Source of Truth) untuk Seluruh Web Admin
 // ============================================================================
 
 import {
-  Category,
-  Destination,
-  DestinationCheckpoint,
-  OfflineEmergencyContact,
-  IndikatorMedan,
-  AturanDestinasi,
-  OfficialTariff,
-  PanoramaScene,
-  PanoramaHotspot,
-  OfflineBundle,
-  GaodeBehaviorRanking,
-  PungliReport,
-  DestinationReview,
+  AdventurerLevelConfig,
   ApiTelemetryLog,
-  VisitPoint,
-  HazardAlert,
-  SosSignal,
-  MinangPhrase,
-  EmergencyContact,
-  CulturalEvent,
-  SavedPlace,
-  StempVisit,
-  NewTour,
+  AturanDestinasi,
+  Category,
   Challenge,
-  UserChallengeReward,
-  User,
-  OpenTrip,
+  CulturalEvent,
+  DenahPoint,
+  Destination,
+  DestinationReview,
+  DestinationWeatherSnapshot,
+  DigitalPassportSpot,
+  EmergencyContact,
+  GaodeBehaviorRanking,
+  GaodeWeightConfig,
+  HazardAlert,
+  IndikatorMedan,
+  MinangPhrase,
+  NewTour,
   Notifikasi,
+  OfficialTariff,
+  OpenTrip,
   OpenTripOrganizer,
   OpenTripTransaction,
   PackingTemplate,
-  WeatherMonitoringItem,
-  AdventurerLevelConfig,
-  UserProfileExperience,
+  PanoramaScene,
+  Partner,
   PostingShareTemplate,
+  PungliReport,
+  RegencyHeatmapData,
+  SavedPlace,
+  SosSignal,
+  StempVisit,
+  SystemBenchmarkMetrics,
+  User,
+  UserChallengeReward,
+  UserProfileExperience,
+  WeatherMonitoringItem,
 } from '../types/contract';
 
 import {
-  SEED_CATEGORIES,
-  SEED_DESTINATIONS,
-  SEED_INDIKATOR_MEDAN,
-  SEED_ATURAN_DESTINASI,
-  SEED_OFFICIAL_TARIFFS,
-  SEED_PANORAMA_SCENES,
-  SEED_PANORAMA_HOTSPOTS,
-  SEED_OFFLINE_BUNDLES,
-  SEED_GAODE_RANKINGS,
-  SEED_PUNGLI_REPORTS,
-  SEED_DESTINATION_REVIEWS,
-  SEED_API_TELEMETRY_LOGS,
-  SEED_VISIT_POINTS,
-  SEED_HAZARD_ALERTS,
-  SEED_SOS_SIGNALS,
-  SEED_MINANG_PHRASES,
-  SEED_EMERGENCY_CONTACTS,
-  SEED_CULTURAL_EVENTS,
-  SEED_SAVED_PLACES,
-  SEED_STEMP_VISITS,
-  SEED_NEW_TOURS,
-  SEED_CHALLENGES,
-  SEED_USER_CHALLENGE_REWARDS,
-  SEED_USERS,
-  SEED_OPEN_TRIPS,
-  SEED_NOTIFIKASI,
-  SEED_ORGANIZERS,
-  SEED_OPEN_TRIP_TRANSACTIONS,
-  SEED_PACKING_TEMPLATES,
-  SEED_WEATHER_MONITORING,
   SEED_ADVENTURER_LEVELS,
-  SEED_USER_PROFILES,
+  SEED_API_TELEMETRY_LOGS,
+  SEED_ATURAN_DESTINASI,
+  SEED_CATEGORIES,
+  SEED_CHALLENGES,
+  SEED_CULTURAL_EVENTS,
+  SEED_DENAH_POINTS,
+  SEED_DESTINATION_REVIEWS,
+  SEED_DESTINATIONS,
+  SEED_EMERGENCY_CONTACTS,
+  SEED_GAODE_RANKINGS,
+  SEED_HAZARD_ALERTS,
+  SEED_INDIKATOR_MEDAN,
+  SEED_MINANG_PHRASES,
+  SEED_NEW_TOURS,
+  SEED_NOTIFIKASI,
+  SEED_OFFICIAL_TARIFFS,
+  SEED_OPEN_TRIPS,
+  SEED_OPEN_TRIP_TRANSACTIONS,
+  SEED_ORGANIZERS,
+  SEED_PACKING_TEMPLATES,
+  SEED_PANORAMA_SCENES,
+  SEED_PARTNERS,
+  SEED_PASSPORT_SPOTS,
   SEED_POSTING_TEMPLATES,
+  SEED_PUNGLI_REPORTS,
+  SEED_REGENCY_HEATMAP,
+  SEED_SAVED_PLACES,
+  SEED_SOS_SIGNALS,
+  SEED_STEMP_VISITS,
+  SEED_USERS,
+  SEED_USER_CHALLENGE_REWARDS,
+  SEED_USER_PROFILES,
+  SEED_WEATHER_MONITORING,
+  categoryNameToId,
 } from '../data/mockDatabaseV2';
+
+import {
+  INITIAL_SYSTEM_BENCHMARK,
+  calculateAdventurerLevel,
+  normalizeDestinationCategory,
+  normalizeHazardSeverity,
+  normalizePartnerCategory,
+  normalizePungliStatus,
+  normalizeTariffCategory,
+  tariffCategoryToId,
+  toDestinationSlug,
+} from '../data/mockDestinations';
 
 import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
 const DB_VERSION_KEY = 'wisgo_v2_db_version';
-const CURRENT_DB_VERSION = '2.1.0';
+export const CURRENT_DB_VERSION = '3.0.0';
 
-// Prefiks tabel penyimpanan lokal baru
 export const DB_KEYS = {
-  CATEGORIES: 'wisgo_v2_db_categories',
-  DESTINATIONS: 'wisgo_v2_db_destinations',
-  INDIKATOR_MEDAN: 'wisgo_v2_db_indikator_medan',
-  ATURAN_DESTINASI: 'wisgo_v2_db_aturan_destinasi',
-  OFFICIAL_TARIFFS: 'wisgo_v2_db_official_tariffs',
-  PANORAMA_SCENES: 'wisgo_v2_db_panorama_scenes',
-  PANORAMA_HOTSPOTS: 'wisgo_v2_db_panorama_hotspots',
-  OFFLINE_BUNDLES: 'wisgo_v2_db_offline_bundles',
-  GAODE_RANKINGS: 'wisgo_v2_db_gaode_rankings',
-  PUNGLI_REPORTS: 'wisgo_v2_db_pungli_reports',
-  DESTINATION_REVIEWS: 'wisgo_v2_db_destination_reviews',
-  API_TELEMETRY_LOGS: 'wisgo_v2_db_api_telemetry_logs',
-  VISIT_POINTS: 'wisgo_v2_db_visit_points',
-  HAZARD_ALERTS: 'wisgo_v2_db_hazard_alerts',
-  SOS_SIGNALS: 'wisgo_v2_db_sos_signals',
-  MINANG_PHRASES: 'wisgo_v2_db_minang_phrases',
-  EMERGENCY_CONTACTS: 'wisgo_v2_db_emergency_contacts',
-  CULTURAL_EVENTS: 'wisgo_v2_db_cultural_events',
-  SAVED_PLACES: 'wisgo_v2_db_saved_places',
-  STEMP_VISITS: 'wisgo_v2_db_stemp_visits',
-  NEW_TOURS: 'wisgo_v2_db_new_tours',
-  CHALLENGES: 'wisgo_v2_db_challenges',
-  USER_CHALLENGE_REWARDS: 'wisgo_v2_db_user_challenge_rewards',
-  USERS: 'wisgo_v2_db_users',
-  OPEN_TRIPS: 'wisgo_v2_db_open_trips',
-  NOTIFIKASI: 'wisgo_v2_db_notifikasi',
-  ORGANIZERS: 'wisgo_v2_db_organizers',
-  OPEN_TRIP_TRANSACTIONS: 'wisgo_v2_db_open_trip_transactions',
-  PACKING_TEMPLATES: 'wisgo_v2_db_packing_templates',
-  WEATHER_MONITORING: 'wisgo_v2_db_weather_monitoring',
-  ADVENTURER_LEVELS: 'wisgo_v2_db_adventurer_levels',
-  USER_PROFILES: 'wisgo_v2_db_user_profiles',
-  POSTING_TEMPLATES: 'wisgo_v2_db_posting_templates',
-  REVIEW_SETTINGS: 'wisgo_v2_db_review_settings',
+  CATEGORIES: 'wisgo_v3_db_categories',
+  DESTINATIONS: 'wisgo_v3_db_destinations',
+  INDIKATOR_MEDAN: 'wisgo_v3_db_indikator_medan',
+  ATURAN_DESTINASI: 'wisgo_v3_db_aturan_destinasi',
+  OFFICIAL_TARIFFS: 'wisgo_v3_db_official_tariffs',
+  PANORAMA_SCENES: 'wisgo_v3_db_panorama_scenes',
+  DENAH_POINTS: 'wisgo_v3_db_denah_points',
+  PARTNERS: 'wisgo_v3_db_partners',
+  GAODE_RANKINGS: 'wisgo_v3_db_gaode_rankings',
+  GAODE_CONFIG: 'wisgo_v3_db_gaode_config',
+  PUNGLI_REPORTS: 'wisgo_v3_db_pungli_reports',
+  DESTINATION_REVIEWS: 'wisgo_v3_db_destination_reviews',
+  API_TELEMETRY_LOGS: 'wisgo_v3_db_api_telemetry_logs',
+  HAZARD_ALERTS: 'wisgo_v3_db_hazard_alerts',
+  SOS_SIGNALS: 'wisgo_v3_db_sos_signals',
+  MINANG_PHRASES: 'wisgo_v3_db_minang_phrases',
+  EMERGENCY_CONTACTS: 'wisgo_v3_db_emergency_contacts',
+  CULTURAL_EVENTS: 'wisgo_v3_db_cultural_events',
+  SAVED_PLACES: 'wisgo_v3_db_saved_places',
+  STEMP_VISITS: 'wisgo_v3_db_stemp_visits',
+  NEW_TOURS: 'wisgo_v3_db_new_tours',
+  CHALLENGES: 'wisgo_v3_db_challenges',
+  USER_CHALLENGE_REWARDS: 'wisgo_v3_db_user_challenge_rewards',
+  USERS: 'wisgo_v3_db_users',
+  OPEN_TRIPS: 'wisgo_v3_db_open_trips',
+  NOTIFIKASI: 'wisgo_v3_db_notifikasi',
+  ORGANIZERS: 'wisgo_v3_db_organizers',
+  OPEN_TRIP_TRANSACTIONS: 'wisgo_v3_db_open_trip_transactions',
+  PACKING_TEMPLATES: 'wisgo_v3_db_packing_templates',
+  WEATHER_MONITORING: 'wisgo_v3_db_weather_monitoring',
+  ADVENTURER_LEVELS: 'wisgo_v3_db_adventurer_levels',
+  USER_PROFILES: 'wisgo_v3_db_user_profiles',
+  POSTING_TEMPLATES: 'wisgo_v3_db_posting_templates',
+  REVIEW_SETTINGS: 'wisgo_v3_db_review_settings',
+  REGENCY_HEATMAP: 'wisgo_v3_db_regency_heatmap',
+  SYSTEM_BENCHMARK: 'wisgo_v3_db_system_benchmark',
 } as const;
 
-/**
- * Mekanisme Auto-Reset & Migration:
- * Membersihkan cache localStorage versi lama (v1/rancakin) yang strukturnya bentrok,
- * lalu menginisialisasi dengan dataset 26 tabel versi 2.1.0.
- */
-export function initializeAndMigrateDatabase(): void {
+const LEGACY_KEYS_TO_PURGE = [
+  'wisgo_dispar_destinations_v2',
+  'rancakin_dispar_destinations_v2',
+  'wisgo_dispar_partners_v2',
+  'wisgo_dispar_pungli_v2',
+  'wisgo_dispar_sos_v2',
+  'wisgo_dispar_hazard_v2',
+  'wisgo_dispar_groups_v2',
+  'wisgo_community_submissions_v2',
+  'wisgo_tourist_challenges',
+  'wisgo_checklist_challenges',
+  'wisgo_checklist_claims',
+  'wisgo_tourist_ugc_submissions',
+  'wisgo_tourist_reviews',
+  'wisgo_minang_phrases_v1',
+  'wisgo_culture_events_v1',
+  'wisgo_gaode_rankings_v1',
+  'wisgo_gaode_config_v1',
+  'wisgo_open_trips_v1',
+  'wisgo_emergency_contacts',
+  'wisgo_system_benchmark_v1',
+  'wisgo_regency_heatmap_v2',
+  'wisgo_passport_metrics_v2',
+  'wisgo_system_notifications',
+  'wisgo_v2_db_categories',
+  'wisgo_v2_db_destinations',
+  'wisgo_v2_db_indikator_medan',
+  'wisgo_v2_db_aturan_destinasi',
+  'wisgo_v2_db_official_tariffs',
+  'wisgo_v2_db_panorama_scenes',
+  'wisgo_v2_db_panorama_hotspots',
+  'wisgo_v2_db_offline_bundles',
+  'wisgo_v2_db_visit_points',
+  'wisgo_v2_db_gaode_rankings',
+  'wisgo_v2_db_pungli_reports',
+  'wisgo_v2_db_destination_reviews',
+  'wisgo_v2_db_api_telemetry_logs',
+  'wisgo_v2_db_hazard_alerts',
+  'wisgo_v2_db_sos_signals',
+  'wisgo_v2_db_minang_phrases',
+  'wisgo_v2_db_emergency_contacts',
+  'wisgo_v2_db_cultural_events',
+  'wisgo_v2_db_saved_places',
+  'wisgo_v2_db_stemp_visits',
+  'wisgo_v2_db_new_tours',
+  'wisgo_v2_db_challenges',
+  'wisgo_v2_db_user_challenge_rewards',
+  'wisgo_v2_db_users',
+  'wisgo_v2_db_open_trips',
+  'wisgo_v2_db_notifikasi',
+  'wisgo_v2_db_organizers',
+  'wisgo_v2_db_open_trip_transactions',
+  'wisgo_v2_db_packing_templates',
+  'wisgo_v2_db_weather_monitoring',
+  'wisgo_v2_db_adventurer_levels',
+  'wisgo_v2_db_user_profiles',
+  'wisgo_v2_db_posting_templates',
+  'wisgo_v2_db_review_settings',
+];
+
+function seedFreshV3Tables(): void {
+  safeSetLocalStorage(DB_KEYS.CATEGORIES, JSON.stringify(SEED_CATEGORIES));
+  safeSetLocalStorage(DB_KEYS.DESTINATIONS, JSON.stringify(SEED_DESTINATIONS));
+  safeSetLocalStorage(DB_KEYS.INDIKATOR_MEDAN, JSON.stringify(SEED_INDIKATOR_MEDAN));
+  safeSetLocalStorage(DB_KEYS.ATURAN_DESTINASI, JSON.stringify(SEED_ATURAN_DESTINASI));
+  safeSetLocalStorage(DB_KEYS.OFFICIAL_TARIFFS, JSON.stringify(SEED_OFFICIAL_TARIFFS));
+  safeSetLocalStorage(DB_KEYS.PANORAMA_SCENES, JSON.stringify(SEED_PANORAMA_SCENES));
+  safeSetLocalStorage(DB_KEYS.DENAH_POINTS, JSON.stringify(SEED_DENAH_POINTS));
+  safeSetLocalStorage(DB_KEYS.PARTNERS, JSON.stringify(SEED_PARTNERS));
+  safeSetLocalStorage(DB_KEYS.GAODE_RANKINGS, JSON.stringify(SEED_GAODE_RANKINGS));
+  safeSetLocalStorage(DB_KEYS.PUNGLI_REPORTS, JSON.stringify(SEED_PUNGLI_REPORTS));
+  safeSetLocalStorage(DB_KEYS.DESTINATION_REVIEWS, JSON.stringify(SEED_DESTINATION_REVIEWS));
+  safeSetLocalStorage(DB_KEYS.API_TELEMETRY_LOGS, JSON.stringify(SEED_API_TELEMETRY_LOGS));
+  safeSetLocalStorage(DB_KEYS.HAZARD_ALERTS, JSON.stringify(SEED_HAZARD_ALERTS));
+  safeSetLocalStorage(DB_KEYS.SOS_SIGNALS, JSON.stringify(SEED_SOS_SIGNALS));
+  safeSetLocalStorage(DB_KEYS.MINANG_PHRASES, JSON.stringify(SEED_MINANG_PHRASES));
+  safeSetLocalStorage(DB_KEYS.EMERGENCY_CONTACTS, JSON.stringify(SEED_EMERGENCY_CONTACTS));
+  safeSetLocalStorage(DB_KEYS.CULTURAL_EVENTS, JSON.stringify(SEED_CULTURAL_EVENTS));
+  safeSetLocalStorage(DB_KEYS.SAVED_PLACES, JSON.stringify(SEED_SAVED_PLACES));
+  safeSetLocalStorage(DB_KEYS.STEMP_VISITS, JSON.stringify(SEED_STEMP_VISITS));
+  safeSetLocalStorage(DB_KEYS.NEW_TOURS, JSON.stringify(SEED_NEW_TOURS));
+  safeSetLocalStorage(DB_KEYS.CHALLENGES, JSON.stringify(SEED_CHALLENGES));
+  safeSetLocalStorage(DB_KEYS.USER_CHALLENGE_REWARDS, JSON.stringify(SEED_USER_CHALLENGE_REWARDS));
+  safeSetLocalStorage(DB_KEYS.USERS, JSON.stringify(SEED_USERS));
+  safeSetLocalStorage(DB_KEYS.OPEN_TRIPS, JSON.stringify(SEED_OPEN_TRIPS));
+  safeSetLocalStorage(DB_KEYS.NOTIFIKASI, JSON.stringify(SEED_NOTIFIKASI));
+  safeSetLocalStorage(DB_KEYS.ORGANIZERS, JSON.stringify(SEED_ORGANIZERS));
+  safeSetLocalStorage(DB_KEYS.OPEN_TRIP_TRANSACTIONS, JSON.stringify(SEED_OPEN_TRIP_TRANSACTIONS));
+  safeSetLocalStorage(DB_KEYS.PACKING_TEMPLATES, JSON.stringify(SEED_PACKING_TEMPLATES));
+  safeSetLocalStorage(DB_KEYS.WEATHER_MONITORING, JSON.stringify(SEED_WEATHER_MONITORING));
+  safeSetLocalStorage(DB_KEYS.ADVENTURER_LEVELS, JSON.stringify(SEED_ADVENTURER_LEVELS));
+  safeSetLocalStorage(DB_KEYS.USER_PROFILES, JSON.stringify(SEED_USER_PROFILES));
+  safeSetLocalStorage(DB_KEYS.POSTING_TEMPLATES, JSON.stringify(SEED_POSTING_TEMPLATES));
+  safeSetLocalStorage(DB_KEYS.REVIEW_SETTINGS, JSON.stringify({ min_character_limit: 30 }));
+  safeSetLocalStorage(DB_KEYS.REGENCY_HEATMAP, JSON.stringify(SEED_REGENCY_HEATMAP));
+  safeSetLocalStorage(DB_KEYS.SYSTEM_BENCHMARK, JSON.stringify(INITIAL_SYSTEM_BENCHMARK));
+}
+
+export function initializeAndMigrateDatabase(forceReset = false): void {
   try {
     const installedVersion = localStorage.getItem(DB_VERSION_KEY);
-
-    if (installedVersion !== CURRENT_DB_VERSION) {
-      // Hapus seluruh cache lama
-      const legacyKeys = [
-        'wisgo_dispar_destinations_v2',
-        'rancakin_dispar_destinations_v2',
-        'wisgo_dispar_pungli_v2',
-        'wisgo_dispar_sos_v2',
-        'wisgo_dispar_hazard_v2',
-        'wisgo_dispar_groups_v2',
-        'wisgo_community_submissions_v2',
-        'wisgo_tourist_challenges',
-        'wisgo_checklist_challenges',
-        'wisgo_checklist_claims',
-        'wisgo_tourist_ugc_submissions',
-        'wisgo_tourist_reviews',
-        'wisgo_minang_phrases_v1',
-        'wisgo_culture_events_v1',
-        'wisgo_gaode_rankings_v1',
-        'wisgo_open_trips_v1',
-        'wisgo_emergency_contacts',
-      ];
-
-      for (const k of legacyKeys) {
+    if (forceReset || installedVersion !== CURRENT_DB_VERSION) {
+      for (const k of LEGACY_KEYS_TO_PURGE) {
         localStorage.removeItem(k);
       }
-
-      // Tulis seed baru
-      safeSetLocalStorage(DB_KEYS.CATEGORIES, JSON.stringify(SEED_CATEGORIES));
-      safeSetLocalStorage(DB_KEYS.DESTINATIONS, JSON.stringify(SEED_DESTINATIONS));
-      safeSetLocalStorage(DB_KEYS.INDIKATOR_MEDAN, JSON.stringify(SEED_INDIKATOR_MEDAN));
-      safeSetLocalStorage(DB_KEYS.ATURAN_DESTINASI, JSON.stringify(SEED_ATURAN_DESTINASI));
-      safeSetLocalStorage(DB_KEYS.OFFICIAL_TARIFFS, JSON.stringify(SEED_OFFICIAL_TARIFFS));
-      safeSetLocalStorage(DB_KEYS.PANORAMA_SCENES, JSON.stringify(SEED_PANORAMA_SCENES));
-      safeSetLocalStorage(DB_KEYS.PANORAMA_HOTSPOTS, JSON.stringify(SEED_PANORAMA_HOTSPOTS));
-      safeSetLocalStorage(DB_KEYS.OFFLINE_BUNDLES, JSON.stringify(SEED_OFFLINE_BUNDLES));
-      safeSetLocalStorage(DB_KEYS.GAODE_RANKINGS, JSON.stringify(SEED_GAODE_RANKINGS));
-      safeSetLocalStorage(DB_KEYS.PUNGLI_REPORTS, JSON.stringify(SEED_PUNGLI_REPORTS));
-      safeSetLocalStorage(DB_KEYS.DESTINATION_REVIEWS, JSON.stringify(SEED_DESTINATION_REVIEWS));
-      safeSetLocalStorage(DB_KEYS.API_TELEMETRY_LOGS, JSON.stringify(SEED_API_TELEMETRY_LOGS));
-      safeSetLocalStorage(DB_KEYS.VISIT_POINTS, JSON.stringify(SEED_VISIT_POINTS));
-      safeSetLocalStorage(DB_KEYS.HAZARD_ALERTS, JSON.stringify(SEED_HAZARD_ALERTS));
-      safeSetLocalStorage(DB_KEYS.SOS_SIGNALS, JSON.stringify(SEED_SOS_SIGNALS));
-      safeSetLocalStorage(DB_KEYS.MINANG_PHRASES, JSON.stringify(SEED_MINANG_PHRASES));
-      safeSetLocalStorage(DB_KEYS.EMERGENCY_CONTACTS, JSON.stringify(SEED_EMERGENCY_CONTACTS));
-      safeSetLocalStorage(DB_KEYS.CULTURAL_EVENTS, JSON.stringify(SEED_CULTURAL_EVENTS));
-      safeSetLocalStorage(DB_KEYS.SAVED_PLACES, JSON.stringify(SEED_SAVED_PLACES));
-      safeSetLocalStorage(DB_KEYS.STEMP_VISITS, JSON.stringify(SEED_STEMP_VISITS));
-      safeSetLocalStorage(DB_KEYS.NEW_TOURS, JSON.stringify(SEED_NEW_TOURS));
-      safeSetLocalStorage(DB_KEYS.CHALLENGES, JSON.stringify(SEED_CHALLENGES));
-      safeSetLocalStorage(DB_KEYS.USER_CHALLENGE_REWARDS, JSON.stringify(SEED_USER_CHALLENGE_REWARDS));
-      safeSetLocalStorage(DB_KEYS.USERS, JSON.stringify(SEED_USERS));
-      safeSetLocalStorage(DB_KEYS.OPEN_TRIPS, JSON.stringify(SEED_OPEN_TRIPS));
-      safeSetLocalStorage(DB_KEYS.NOTIFIKASI, JSON.stringify(SEED_NOTIFIKASI));
-      safeSetLocalStorage(DB_KEYS.ORGANIZERS, JSON.stringify(SEED_ORGANIZERS));
-      safeSetLocalStorage(DB_KEYS.OPEN_TRIP_TRANSACTIONS, JSON.stringify(SEED_OPEN_TRIP_TRANSACTIONS));
-      safeSetLocalStorage(DB_KEYS.PACKING_TEMPLATES, JSON.stringify(SEED_PACKING_TEMPLATES));
-      safeSetLocalStorage(DB_KEYS.WEATHER_MONITORING, JSON.stringify(SEED_WEATHER_MONITORING));
-      safeSetLocalStorage(DB_KEYS.ADVENTURER_LEVELS, JSON.stringify(SEED_ADVENTURER_LEVELS));
-      safeSetLocalStorage(DB_KEYS.USER_PROFILES, JSON.stringify(SEED_USER_PROFILES));
-      safeSetLocalStorage(DB_KEYS.POSTING_TEMPLATES, JSON.stringify(SEED_POSTING_TEMPLATES));
-      safeSetLocalStorage(DB_KEYS.REVIEW_SETTINGS, JSON.stringify({ min_character_limit: 40 }));
-
+      seedFreshV3Tables();
       localStorage.setItem(DB_VERSION_KEY, CURRENT_DB_VERSION);
     }
   } catch (err) {
-    console.error('Failed to initialize or migrate database cache:', err);
+    console.error('Failed to initialize or migrate WISGO V3 database:', err);
   }
 }
 
-// Inisialisasi otomatis saat modul ini dimuat
 initializeAndMigrateDatabase();
 
 // ============================================================================
-// REPOSITORY HELPERS (Generic Read & Write)
+// GENERIC TABLE HELPERS
 // ============================================================================
 function readTable<T>(key: string, fallback: T[]): T[] {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : fallback;
+    return Array.isArray(parsed) ? parsed : fallback;
   } catch {
     return fallback;
   }
@@ -219,8 +270,54 @@ function writeTable<T>(key: string, data: T[]): void {
   safeSetLocalStorage(key, JSON.stringify(data));
 }
 
+function stripLegacyMedanFields(raw: IndikatorMedan & Record<string, unknown>, destId: string): IndikatorMedan {
+  return {
+    id: raw.id || `med-${destId}`,
+    destination_id: destId,
+    vehicle_access: raw.vehicle_access || 'Mobil OK',
+    trekking_level: raw.trekking_level || 'Mudah (Datar)',
+    facilities: raw.facilities || 'Toilet, Musala & Parkir Lengkap',
+    guide_need: raw.guide_need || 'Mandiri',
+    terrain_note: raw.terrain_note || raw.readiness_notes || '',
+    readiness_notes: raw.readiness_notes || raw.terrain_note || '',
+  };
+}
+
+function stripLegacyDestinationFields(raw: Destination & Record<string, unknown>): Destination {
+  const normalizedCategory = normalizeDestinationCategory(raw.category);
+  const clean: Destination = {
+    id: raw.id,
+    slug: raw.slug || toDestinationSlug(raw.name || raw.id),
+    name: raw.name,
+    category_id: raw.category_id && raw.category_id.startsWith('cat-') && !raw.category_id.startsWith('cat-dest-')
+      ? raw.category_id
+      : categoryNameToId(normalizedCategory),
+    category: normalizedCategory,
+    city_regency: raw.city_regency || 'Kota Padang',
+    description: raw.description || '',
+    latitude: Number(raw.latitude ?? -0.9471),
+    longitude: Number(raw.longitude ?? 100.3543),
+    geog: raw.geog || `SRID=4326;POINT(${Number(raw.longitude ?? 100.3543).toFixed(6)} ${Number(raw.latitude ?? -0.9471).toFixed(6)})`,
+    elevation_m: raw.elevation_m,
+    cover_image: raw.cover_image || '/assets/synced/panorama_sumbar_default.jpg',
+    crowd_level: raw.crowd_level || 'Sedang',
+    distance_km: Number(raw.distance_km ?? 20),
+    travel_time_min: Number(raw.travel_time_min ?? 40),
+    estimated_cost: Number(raw.estimated_cost ?? 15000),
+    ticket_price_summary: raw.ticket_price_summary,
+    is_hidden_gem: Boolean(raw.is_hidden_gem || normalizedCategory === 'Hidden Gem'),
+    qr_placard_code: raw.qr_placard_code,
+    opening_hours: raw.opening_hours || '08.00 - 17.00 WIB',
+    weather_status: raw.weather_status,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+    checkpoints: raw.checkpoints,
+  };
+  return clean;
+}
+
 // ============================================================================
-// 1. REPOSITORY: CATEGORIES
+// 1. CATEGORIES REPO
 // ============================================================================
 export const CategoriesRepo = {
   getAll: (): Category[] => readTable<Category>(DB_KEYS.CATEGORIES, SEED_CATEGORIES),
@@ -231,127 +328,31 @@ export const CategoriesRepo = {
 };
 
 // ============================================================================
-// 2. REPOSITORY: DESTINATIONS & RELASI (1-to-1 Medan, Aturan, Tarif)
-// ============================================================================
-export const DestinationsRepo = {
-  getAll: (): Destination[] => {
-    const dests = readTable<Destination>(DB_KEYS.DESTINATIONS, SEED_DESTINATIONS);
-    const medans = readTable<IndikatorMedan>(DB_KEYS.INDIKATOR_MEDAN, SEED_INDIKATOR_MEDAN);
-    const aturans = readTable<AturanDestinasi>(DB_KEYS.ATURAN_DESTINASI, SEED_ATURAN_DESTINASI);
-    const tariffs = readTable<OfficialTariff>(DB_KEYS.OFFICIAL_TARIFFS, SEED_OFFICIAL_TARIFFS);
-    const scenes = readTable<PanoramaScene>(DB_KEYS.PANORAMA_SCENES, SEED_PANORAMA_SCENES);
-    const hotspots = readTable<PanoramaHotspot>(DB_KEYS.PANORAMA_HOTSPOTS, SEED_PANORAMA_HOTSPOTS);
-
-    return dests.map((d) => ({
-      ...d,
-      medan_indicator: medans.find((m) => m.destination_id === d.id),
-      aturan_destinasi: aturans.filter((a) => a.destination_id === d.id),
-      tariffs: tariffs.filter((t) => t.destination_id === d.id),
-      official_tariffs: tariffs.filter((t) => t.destination_id === d.id),
-      scenes_360: scenes
-        .filter((s) => s.destination_id === d.id)
-        .map((s) => ({
-          ...s,
-          hotspots: hotspots.filter((h) => h.scene_id === s.id),
-        })),
-    }));
-  },
-  getById: (id: string): Destination | undefined => {
-    return DestinationsRepo.getAll().find((d) => d.id === id);
-  },
-  getBySlug: (slug: string): Destination | undefined => {
-    return DestinationsRepo.getAll().find((d) => d.slug === slug || d.id === slug);
-  },
-  save: (item: Destination): Destination[] => {
-    const current = readTable<Destination>(DB_KEYS.DESTINATIONS, SEED_DESTINATIONS);
-    const idx = current.findIndex((d) => d.id === item.id);
-    const updated = [...current];
-    const timestamp = new Date().toISOString();
-
-    const normalized: Destination = {
-      ...item,
-      updated_at: timestamp,
-      created_at: item.created_at || timestamp,
-    };
-
-    if (idx >= 0) {
-      updated[idx] = normalized;
-    } else {
-      updated.unshift(normalized);
-    }
-    writeTable(DB_KEYS.DESTINATIONS, updated);
-
-    // Sinkronkan 1-to-1 Indikator Medan
-    if (item.medan_indicator || item.indikator_medan) {
-      const med = item.medan_indicator || item.indikator_medan;
-      if (med) {
-        IndikatorMedanRepo.save({
-          ...med,
-          id: med.id || `med-${item.id}`,
-          destination_id: item.id,
-        });
-      }
-    }
-
-    // Sinkronkan Aturan
-    if (item.aturan_destinasi && Array.isArray(item.aturan_destinasi)) {
-      writeTable(
-        DB_KEYS.ATURAN_DESTINASI,
-        [
-          ...readTable<AturanDestinasi>(DB_KEYS.ATURAN_DESTINASI, SEED_ATURAN_DESTINASI).filter(
-            (a) => a.destination_id !== item.id
-          ),
-          ...item.aturan_destinasi,
-        ]
-      );
-    }
-
-    // Sinkronkan Tarif
-    if (item.official_tariffs || item.tariffs) {
-      const trfs = item.official_tariffs || item.tariffs || [];
-      writeTable(
-        DB_KEYS.OFFICIAL_TARIFFS,
-        [
-          ...readTable<OfficialTariff>(DB_KEYS.OFFICIAL_TARIFFS, SEED_OFFICIAL_TARIFFS).filter(
-            (t) => t.destination_id !== item.id
-          ),
-          ...trfs,
-        ]
-      );
-    }
-
-    return DestinationsRepo.getAll();
-  },
-  delete: (id: string): Destination[] => {
-    const current = readTable<Destination>(DB_KEYS.DESTINATIONS, SEED_DESTINATIONS);
-    const filtered = current.filter((d) => d.id !== id);
-    writeTable(DB_KEYS.DESTINATIONS, filtered);
-    return DestinationsRepo.getAll();
-  },
-};
-
-// ============================================================================
-// 3. REPOSITORY: INDIKATOR MEDAN (indikator_medan)
+// 2. INDIKATOR MEDAN REPO (4 Indikator Kanonik)
 // ============================================================================
 export const IndikatorMedanRepo = {
-  getAll: (): IndikatorMedan[] => readTable<IndikatorMedan>(DB_KEYS.INDIKATOR_MEDAN, SEED_INDIKATOR_MEDAN),
+  getAll: (): IndikatorMedan[] =>
+    readTable<IndikatorMedan>(DB_KEYS.INDIKATOR_MEDAN, SEED_INDIKATOR_MEDAN).map((m) =>
+      stripLegacyMedanFields(m as IndikatorMedan & Record<string, unknown>, m.destination_id)
+    ),
   getByDestinationId: (destId: string): IndikatorMedan | undefined =>
     IndikatorMedanRepo.getAll().find((m) => m.destination_id === destId),
   save: (item: IndikatorMedan): void => {
+    const clean = stripLegacyMedanFields(
+      item as IndikatorMedan & Record<string, unknown>,
+      item.destination_id
+    );
     const list = IndikatorMedanRepo.getAll();
-    const idx = list.findIndex((m) => m.destination_id === item.destination_id);
+    const idx = list.findIndex((m) => m.destination_id === clean.destination_id);
     const updated = [...list];
-    if (idx >= 0) {
-      updated[idx] = item;
-    } else {
-      updated.push(item);
-    }
+    if (idx >= 0) updated[idx] = clean;
+    else updated.push(clean);
     writeTable(DB_KEYS.INDIKATOR_MEDAN, updated);
   },
 };
 
 // ============================================================================
-// 4. REPOSITORY: ATURAN DESTINASI (aturan_destinasi)
+// 3. ATURAN DESTINASI REPO (Sinkron Dua Arah dengan tips)
 // ============================================================================
 export const AturanDestinasiRepo = {
   getAll: (): AturanDestinasi[] => readTable<AturanDestinasi>(DB_KEYS.ATURAN_DESTINASI, SEED_ATURAN_DESTINASI),
@@ -365,6 +366,15 @@ export const AturanDestinasiRepo = {
     else updated.push(item);
     writeTable(DB_KEYS.ATURAN_DESTINASI, updated);
   },
+  replaceForDestination: (destId: string, items: AturanDestinasi[]): void => {
+    const others = AturanDestinasiRepo.getAll().filter((a) => a.destination_id !== destId);
+    const normalized = items.map((a, index) => ({
+      ...a,
+      id: a.id || `art-${destId}-${Date.now()}-${index}`,
+      destination_id: destId,
+    }));
+    writeTable(DB_KEYS.ATURAN_DESTINASI, [...others, ...normalized]);
+  },
   delete: (id: string): void => {
     writeTable(
       DB_KEYS.ATURAN_DESTINASI,
@@ -374,18 +384,32 @@ export const AturanDestinasiRepo = {
 };
 
 // ============================================================================
-// 5. REPOSITORY: OFFICIAL TARIFFS (official_tariffs)
+// 4. OFFICIAL TARIFFS REPO
 // ============================================================================
 export const OfficialTariffsRepo = {
-  getAll: (): OfficialTariff[] => readTable<OfficialTariff>(DB_KEYS.OFFICIAL_TARIFFS, SEED_OFFICIAL_TARIFFS),
+  getAll: (): OfficialTariff[] =>
+    readTable<OfficialTariff>(DB_KEYS.OFFICIAL_TARIFFS, SEED_OFFICIAL_TARIFFS).map((t) => {
+      const cat = normalizeTariffCategory(t.category);
+      return {
+        ...t,
+        category: cat,
+        category_id: t.category_id || tariffCategoryToId(cat),
+      };
+    }),
   getByDestinationId: (destId: string): OfficialTariff[] =>
     OfficialTariffsRepo.getAll().filter((t) => t.destination_id === destId),
   save: (item: OfficialTariff): void => {
+    const cat = normalizeTariffCategory(item.category);
+    const normalized: OfficialTariff = {
+      ...item,
+      category: cat,
+      category_id: item.category_id || tariffCategoryToId(cat),
+    };
     const list = OfficialTariffsRepo.getAll();
-    const idx = list.findIndex((t) => t.id === item.id);
+    const idx = list.findIndex((t) => t.id === normalized.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = item;
-    else updated.push(item);
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.push(normalized);
     writeTable(DB_KEYS.OFFICIAL_TARIFFS, updated);
   },
   delete: (id: string): void => {
@@ -397,55 +421,472 @@ export const OfficialTariffsRepo = {
 };
 
 // ============================================================================
-// 6. REPOSITORY: PANORAMA SCENES & HOTSPOTS (360)
+// 5. STUDIO PANORAMA 360° REPO (Pure Panorama — Nol Hotspot)
 // ============================================================================
 export const Studio360Repo = {
   getScenes: (destId?: string): PanoramaScene[] => {
     const scenes = readTable<PanoramaScene>(DB_KEYS.PANORAMA_SCENES, SEED_PANORAMA_SCENES);
-    const hotspots = readTable<PanoramaHotspot>(DB_KEYS.PANORAMA_HOTSPOTS, SEED_PANORAMA_HOTSPOTS);
-    const filtered = destId ? scenes.filter((s) => s.destination_id === destId) : scenes;
-    return filtered.map((s) => ({
-      ...s,
-      hotspots: hotspots.filter((h) => h.scene_id === s.id),
-    }));
+    return destId ? scenes.filter((s) => s.destination_id === destId) : scenes;
   },
-  saveScene: (scene: PanoramaScene): void => {
+  saveScene: (scene: PanoramaScene): PanoramaScene[] => {
     const list = readTable<PanoramaScene>(DB_KEYS.PANORAMA_SCENES, SEED_PANORAMA_SCENES);
     const idx = list.findIndex((s) => s.id === scene.id);
     const updated = [...list];
     const normalized: PanoramaScene = {
-      ...scene,
-      spatial_audio_url: scene.spatial_audio_url || '',
+      id: scene.id,
+      destination_id: scene.destination_id,
+      title: scene.title,
+      scene_type: scene.scene_type === 'aerial' ? 'aerial' : 'ground',
+      view_mode: scene.view_mode || 'photo_panorama',
+      image_resolution: scene.image_resolution || '4K Equirectangular Panorama',
+      panorama_url: scene.panorama_url || '/assets/synced/panorama_sumbar_default.jpg',
+      upload_format: scene.upload_format || 'equirectangular',
+      initial_pitch: Number(scene.initial_pitch ?? 0),
+      initial_yaw: Number(scene.initial_yaw ?? 0),
+      is_default_scene: Boolean(scene.is_default_scene),
+      created_at: scene.created_at || new Date().toISOString(),
     };
     if (idx >= 0) updated[idx] = normalized;
     else updated.push(normalized);
     writeTable(DB_KEYS.PANORAMA_SCENES, updated);
+    return updated;
   },
-  saveHotspot: (hotspot: PanoramaHotspot): void => {
-    const list = readTable<PanoramaHotspot>(DB_KEYS.PANORAMA_HOTSPOTS, SEED_PANORAMA_HOTSPOTS);
-    const idx = list.findIndex((h) => h.id === hotspot.id);
-    const updated = [...list];
-    const normalized: PanoramaHotspot = {
-      ...hotspot,
-      target_ref: hotspot.target_ref || '',
-      voice_text: hotspot.voice_text || '',
-      created_at: hotspot.created_at || new Date().toISOString(),
-    };
-    if (idx >= 0) updated[idx] = normalized;
-    else updated.push(normalized);
-    writeTable(DB_KEYS.PANORAMA_HOTSPOTS, updated);
-  },
-  deleteHotspot: (id: string): void => {
-    const list = readTable<PanoramaHotspot>(DB_KEYS.PANORAMA_HOTSPOTS, SEED_PANORAMA_HOTSPOTS);
-    writeTable(DB_KEYS.PANORAMA_HOTSPOTS, list.filter((h) => h.id !== id));
+  deleteScene: (sceneId: string): PanoramaScene[] => {
+    const filtered = readTable<PanoramaScene>(DB_KEYS.PANORAMA_SCENES, SEED_PANORAMA_SCENES).filter(
+      (s) => s.id !== sceneId
+    );
+    writeTable(DB_KEYS.PANORAMA_SCENES, filtered);
+    return filtered;
   },
 };
 
 // ============================================================================
-// 7. REPOSITORY: LAPORAN PUNGLI (pungli_reports)
+// 6. DENAH KAWASAN 2D REPO (PARKIR, UMKM, TOILET, MUSHOLLA, LOKET)
+// ============================================================================
+export const DenahPointsRepo = {
+  getAll: (): DenahPoint[] => readTable<DenahPoint>(DB_KEYS.DENAH_POINTS, SEED_DENAH_POINTS),
+  getByDestinationId: (destId: string): DenahPoint[] =>
+    DenahPointsRepo.getAll().filter((p) => p.destination_id === destId),
+  save: (point: DenahPoint): DenahPoint[] => {
+    const list = DenahPointsRepo.getAll();
+    const idx = list.findIndex((p) => p.id === point.id);
+    const updated = [...list];
+    const normalized: DenahPoint = {
+      ...point,
+      x: Math.max(2, Math.min(98, Number(point.x ?? 50))),
+      y: Math.max(2, Math.min(98, Number(point.y ?? 50))),
+    };
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.push(normalized);
+    writeTable(DB_KEYS.DENAH_POINTS, updated);
+    return updated;
+  },
+  delete: (id: string): DenahPoint[] => {
+    const filtered = DenahPointsRepo.getAll().filter((p) => p.id !== id);
+    writeTable(DB_KEYS.DENAH_POINTS, filtered);
+    return filtered;
+  },
+};
+
+// ============================================================================
+// 7. MITRA UMKM REPO (5 Kategori Kanonik Mobile — Direct P2P 0% Komisi)
+// ============================================================================
+export const PartnersRepo = {
+  getAll: (): Partner[] =>
+    readTable<Partner>(DB_KEYS.PARTNERS, SEED_PARTNERS).map((p) => ({
+      ...p,
+      category: normalizePartnerCategory(p.category),
+      wa_click_count: Number(p.wa_click_count ?? 0),
+      direct_payment_methods: Array.isArray(p.direct_payment_methods)
+        ? p.direct_payment_methods
+        : ['QRIS Bank Nagari', 'Tunai di Tempat'],
+    })),
+  save: (partner: Partner): Partner[] => {
+    const list = PartnersRepo.getAll();
+    const idx = list.findIndex((p) => p.id === partner.id);
+    const updated = [...list];
+    const normalized: Partner = {
+      ...partner,
+      category: normalizePartnerCategory(partner.category),
+      whatsapp: partner.whatsapp.replace(/\D/g, ''),
+      wa_click_count: Number(partner.wa_click_count ?? 0),
+      fee_myr_estimate:
+        partner.fee_myr_estimate ?? Number((partner.standard_fee / 3300).toFixed(1)),
+      created_at: partner.created_at || new Date().toISOString(),
+    };
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.unshift(normalized);
+    writeTable(DB_KEYS.PARTNERS, updated);
+    return updated;
+  },
+  delete: (id: string): Partner[] => {
+    const filtered = PartnersRepo.getAll().filter((p) => p.id !== id);
+    writeTable(DB_KEYS.PARTNERS, filtered);
+    return filtered;
+  },
+  incrementWaClicks: (id: string): Partner | null => {
+    const list = PartnersRepo.getAll();
+    let matched: Partner | null = null;
+    const updated = list.map((p) => {
+      if (p.id !== id) return p;
+      matched = { ...p, wa_click_count: (p.wa_click_count || 0) + 1 };
+      return matched;
+    });
+    if (matched) {
+      writeTable(DB_KEYS.PARTNERS, updated);
+    }
+    return matched;
+  },
+};
+
+// ============================================================================
+// 8. WEATHER MONITORING REPO (Open-Meteo Live + Sync Hazard Alerts)
+// ============================================================================
+function mapWmoCodeToIndonesian(code: number): {
+  condition: string;
+  weather_status: 'Aman' | 'Waspada Hujan' | 'Siaga Cuaca Ekstrem';
+  is_extreme: boolean;
+} {
+  if (code === 0) return { condition: 'Cerah', weather_status: 'Aman', is_extreme: false };
+  if (code <= 3) return { condition: 'Cerah Berawan', weather_status: 'Aman', is_extreme: false };
+  if (code === 45 || code === 48) return { condition: 'Berkabut Tebal', weather_status: 'Waspada Hujan', is_extreme: false };
+  if (code >= 51 && code <= 63) return { condition: 'Hujan Ringan – Sedang', weather_status: 'Waspada Hujan', is_extreme: false };
+  if (code >= 65 && code <= 82) return { condition: 'Hujan Lebat', weather_status: 'Siaga Cuaca Ekstrem', is_extreme: true };
+  if (code >= 95) return { condition: 'Badai Petir & Angin Kencang', weather_status: 'Siaga Cuaca Ekstrem', is_extreme: true };
+  return { condition: 'Berawan', weather_status: 'Aman', is_extreme: false };
+}
+
+export const WeatherMonitoringRepo = {
+  getAll: (): WeatherMonitoringItem[] =>
+    readTable<WeatherMonitoringItem>(DB_KEYS.WEATHER_MONITORING, SEED_WEATHER_MONITORING),
+  getSnapshotForRegency: (cityRegency: string): DestinationWeatherSnapshot => {
+    const list = WeatherMonitoringRepo.getAll();
+    const matched =
+      list.find((w) => w.city_regency.toLowerCase() === cityRegency.toLowerCase()) ||
+      list[0] ||
+      SEED_WEATHER_MONITORING[0];
+    return {
+      city_regency: matched.city_regency,
+      temperature_c: matched.current_temp_c,
+      condition: matched.condition,
+      weather_status: matched.weather_status,
+      humidity_percent: matched.humidity_pct,
+      wind_speed_kmh: matched.wind_speed_kmh,
+      rain_probability: matched.rain_probability,
+      forecast: matched.hourly_forecast?.[0]?.condition || matched.condition,
+      alert_note: matched.extreme_warning_text,
+      source: matched.source,
+      last_updated: matched.updated_at,
+    };
+  },
+  updateCondition: (
+    id: string,
+    condition: string,
+    temp_c: number,
+    is_extreme: boolean,
+    warning_text?: string
+  ): WeatherMonitoringItem[] => {
+    const list = WeatherMonitoringRepo.getAll();
+    const status: WeatherMonitoringItem['weather_status'] = is_extreme
+      ? 'Siaga Cuaca Ekstrem'
+      : condition.toLowerCase().includes('hujan')
+      ? 'Waspada Hujan'
+      : 'Aman';
+    const updated = list.map((w) =>
+      w.id === id
+        ? {
+            ...w,
+            condition,
+            current_temp_c: temp_c,
+            weather_status: status,
+            is_extreme_weather: is_extreme,
+            extreme_warning_text: warning_text !== undefined ? warning_text : w.extreme_warning_text,
+            updated_at: new Date().toISOString(),
+          }
+        : w
+    );
+    writeTable(DB_KEYS.WEATHER_MONITORING, updated);
+    return updated;
+  },
+  refreshFromOpenMeteo: async (): Promise<{
+    items: WeatherMonitoringItem[];
+    liveSuccessCount: number;
+  }> => {
+    const list = WeatherMonitoringRepo.getAll();
+    let liveSuccessCount = 0;
+
+    const refreshed = await Promise.all(
+      list.map(async (item) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        try {
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${item.latitude}&longitude=${item.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&forecast_days=1&timezone=Asia%2FJakarta`;
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const current = data?.current;
+          if (!current) throw new Error('Missing current payload');
+
+          const mapped = mapWmoCodeToIndonesian(Number(current.weather_code ?? 1));
+          const hourlyTimes: string[] = data?.hourly?.time || [];
+          const hourlyTemps: number[] = data?.hourly?.temperature_2m || [];
+          const hourlyRain: number[] = data?.hourly?.precipitation_probability || [];
+          const hourlyCodes: number[] = data?.hourly?.weather_code || [];
+
+          const nowHour = new Date().getHours();
+          const startIdx = Math.max(0, Math.min(Math.max(0, hourlyTimes.length - 6), nowHour));
+          const hourly_forecast = hourlyTimes.slice(startIdx, startIdx + 6).map((t, i) => {
+            const idx = startIdx + i;
+            const slotCode = mapWmoCodeToIndonesian(Number(hourlyCodes[idx] ?? current.weather_code ?? 1));
+            return {
+              hour: String(t).slice(11, 16) || `${String((nowHour + i) % 24).padStart(2, '0')}:00`,
+              temp_c: Math.round(Number(hourlyTemps[idx] ?? current.temperature_2m)),
+              condition: slotCode.condition,
+              rain_prob: Math.round(Number(hourlyRain[idx] ?? 20)),
+            };
+          });
+
+          liveSuccessCount += 1;
+          return {
+            ...item,
+            current_temp_c: Math.round(Number(current.temperature_2m ?? item.current_temp_c)),
+            humidity_pct: Math.round(Number(current.relative_humidity_2m ?? item.humidity_pct)),
+            wind_speed_kmh: Math.round(Number(current.wind_speed_10m ?? item.wind_speed_kmh)),
+            rain_probability: hourly_forecast[0]?.rain_prob ?? item.rain_probability,
+            condition: mapped.condition,
+            weather_status: mapped.weather_status,
+            is_extreme_weather: mapped.is_extreme,
+            extreme_warning_text: mapped.is_extreme
+              ? `Peringatan Open-Meteo: ${mapped.condition} di kawasan ${item.destination_name}.`
+              : item.extreme_warning_text,
+            hourly_forecast: hourly_forecast.length > 0 ? hourly_forecast : item.hourly_forecast,
+            source: 'Open-Meteo Live' as const,
+            updated_at: new Date().toISOString(),
+          };
+        } catch {
+          return {
+            ...item,
+            source: 'Regional Cache' as const,
+          };
+        } finally {
+          clearTimeout(timeout);
+        }
+      })
+    );
+
+    writeTable(DB_KEYS.WEATHER_MONITORING, refreshed);
+    return { items: refreshed, liveSuccessCount };
+  },
+  broadcastHazardAlert: (item: WeatherMonitoringItem): HazardAlert[] => {
+    const severity: HazardAlert['severity'] = item.is_extreme_weather
+      ? 'Siaga'
+      : item.weather_status === 'Waspada Hujan'
+      ? 'Waspada'
+      : 'Normal';
+
+    const newAlert: HazardAlert = {
+      id: `hz-wtr-${Date.now()}`,
+      corridor_code: `CUACA-${item.city_regency.replace(/[^A-Z0-9]/gi, '').slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-3)}`,
+      location: item.destination_name,
+      road_segment: `Kawasan ${item.destination_name}`,
+      city_regency: item.city_regency,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      geog: `SRID=4326;POINT(${item.longitude.toFixed(6)} ${item.latitude.toFixed(6)})`,
+      radius_meter: 4000,
+      severity,
+      hazard_type: `Peringatan Cuaca: ${item.condition}`,
+      weather_status: `${item.condition} (${item.current_temp_c}°C)`,
+      slope_gradient_deg: 15,
+      message:
+        item.extreme_warning_text ||
+        `Pantauan Open-Meteo: ${item.condition} (${item.current_temp_c}°C, curah hujan ${item.rain_probability}%). Harap berhati-hati di jalur wisata.`,
+      detour_route: 'Patuhi rambu petugas posko BPBD & Dishub setempat.',
+      detour_route_geojson: null,
+      nearest_rescue_post: `Posko Siaga BPBD ${item.city_regency}`,
+      emergency_contact: '(0751) 890721',
+      triggered_by_admin: 'usr-admin-01',
+      updated_at: new Date().toISOString(),
+    };
+    return HazardAlertsRepo.save(newAlert);
+  },
+};
+
+// ============================================================================
+// 9. DESTINATIONS REPO (Join 4 Indikator Medan, Aturan/Tips, Tarif, 360°, Denah 2D, Cuaca)
+// ============================================================================
+export const DestinationsRepo = {
+  getAll: (): Destination[] => {
+    const dests = readTable<Destination>(DB_KEYS.DESTINATIONS, SEED_DESTINATIONS);
+    const medans = IndikatorMedanRepo.getAll();
+    const aturans = AturanDestinasiRepo.getAll();
+    const tariffs = OfficialTariffsRepo.getAll();
+    const scenes = Studio360Repo.getScenes();
+    const denahPoints = DenahPointsRepo.getAll();
+
+    return dests.map((rawDest) => {
+      const d = stripLegacyDestinationFields(rawDest as Destination & Record<string, unknown>);
+      const rules = aturans.filter((a) => a.destination_id === d.id);
+      const destTariffs = tariffs.filter((t) => t.destination_id === d.id);
+      const weather = WeatherMonitoringRepo.getSnapshotForRegency(d.city_regency);
+      const medan =
+        medans.find((m) => m.destination_id === d.id) ||
+        stripLegacyMedanFields(
+          {
+            id: `med-${d.id}`,
+            destination_id: d.id,
+            vehicle_access: 'Mobil OK',
+            trekking_level: 'Mudah (Datar)',
+            facilities: 'Toilet, Musala & Parkir Lengkap',
+            guide_need: 'Mandiri',
+            terrain_note: 'Akses standar terpantau Dinas Pariwisata.',
+          },
+          d.id
+        );
+
+      return {
+        ...d,
+        weather,
+        weather_status: d.weather_status || weather.weather_status,
+        medan_indicator: medan,
+        aturan_destinasi: rules,
+        tips: rules,
+        tariffs: destTariffs,
+        official_tariffs: destTariffs,
+        scenes_360: scenes.filter((s) => s.destination_id === d.id),
+        denah_points: denahPoints.filter((p) => p.destination_id === d.id),
+      };
+    });
+  },
+  getById: (id: string): Destination | undefined =>
+    DestinationsRepo.getAll().find((d) => d.id === id),
+  getBySlug: (slug: string): Destination | undefined =>
+    DestinationsRepo.getAll().find((d) => d.slug === slug || d.id === slug),
+  save: (item: Destination): Destination[] => {
+    const currentRaw = readTable<Destination>(DB_KEYS.DESTINATIONS, SEED_DESTINATIONS);
+    const idx = currentRaw.findIndex((d) => d.id === item.id);
+    const updated = [...currentRaw];
+    const timestamp = new Date().toISOString();
+
+    const cleanCore = stripLegacyDestinationFields({
+      ...(item as Destination & Record<string, unknown>),
+      updated_at: timestamp,
+      created_at: item.created_at || timestamp,
+    });
+
+    if (idx >= 0) updated[idx] = cleanCore;
+    else updated.unshift(cleanCore);
+    writeTable(DB_KEYS.DESTINATIONS, updated);
+
+    // 1. Sinkronisasi 4 Indikator Medan kanonik
+    if (item.medan_indicator) {
+      IndikatorMedanRepo.save({
+        ...item.medan_indicator,
+        id: item.medan_indicator.id || `med-${item.id}`,
+        destination_id: item.id,
+      });
+    }
+
+    // 2. Sinkronisasi Dua Arah: tips <-> aturan_destinasi
+    const existingRules = AturanDestinasiRepo.getByDestinationId(item.id);
+    const hasTips = Array.isArray(item.tips);
+    const hasAturan = Array.isArray(item.aturan_destinasi);
+    if (hasTips || hasAturan) {
+      const existingSig = JSON.stringify(existingRules);
+      const tipsSig = hasTips ? JSON.stringify(item.tips) : existingSig;
+      const aturanSig = hasAturan ? JSON.stringify(item.aturan_destinasi) : existingSig;
+
+      if (hasTips && tipsSig !== existingSig) {
+        AturanDestinasiRepo.replaceForDestination(item.id, item.tips!);
+      } else if (hasAturan && aturanSig !== existingSig) {
+        AturanDestinasiRepo.replaceForDestination(item.id, item.aturan_destinasi!);
+      } else if (idx < 0) {
+        AturanDestinasiRepo.replaceForDestination(item.id, item.tips || item.aturan_destinasi || []);
+      }
+    }
+
+    // 3. Sinkronisasi Tarif Resmi
+    const existingTariffs = OfficialTariffsRepo.getByDestinationId(item.id);
+    const hasTariffs = Array.isArray(item.tariffs);
+    const hasOfficialTariffs = Array.isArray(item.official_tariffs);
+    if (hasTariffs || hasOfficialTariffs) {
+      const existingSig = JSON.stringify(existingTariffs);
+      const tariffsSig = hasTariffs ? JSON.stringify(item.tariffs) : existingSig;
+      const officialSig = hasOfficialTariffs ? JSON.stringify(item.official_tariffs) : existingSig;
+
+      let nextTariffs: OfficialTariff[] | null = null;
+      if (hasTariffs && tariffsSig !== existingSig) {
+        nextTariffs = item.tariffs!;
+      } else if (hasOfficialTariffs && officialSig !== existingSig) {
+        nextTariffs = item.official_tariffs!;
+      } else if (idx < 0) {
+        nextTariffs = item.tariffs || item.official_tariffs || [];
+      }
+
+      if (nextTariffs !== null) {
+        const otherTariffs = OfficialTariffsRepo.getAll().filter((t) => t.destination_id !== item.id);
+        const normalizedTariffs = nextTariffs.map((t) => {
+          const cat = normalizeTariffCategory(t.category);
+          return {
+            ...t,
+            destination_id: item.id,
+            category: cat,
+            category_id: t.category_id || tariffCategoryToId(cat),
+          };
+        });
+        writeTable(DB_KEYS.OFFICIAL_TARIFFS, [...otherTariffs, ...normalizedTariffs]);
+      }
+    }
+
+    return DestinationsRepo.getAll();
+  },
+  delete: (id: string): Destination[] => {
+    const filtered = readTable<Destination>(DB_KEYS.DESTINATIONS, SEED_DESTINATIONS).filter(
+      (d) => d.id !== id
+    );
+    writeTable(DB_KEYS.DESTINATIONS, filtered);
+    writeTable(
+      DB_KEYS.INDIKATOR_MEDAN,
+      IndikatorMedanRepo.getAll().filter((m) => m.destination_id !== id)
+    );
+    writeTable(
+      DB_KEYS.ATURAN_DESTINASI,
+      AturanDestinasiRepo.getAll().filter((a) => a.destination_id !== id)
+    );
+    writeTable(
+      DB_KEYS.OFFICIAL_TARIFFS,
+      OfficialTariffsRepo.getAll().filter((t) => t.destination_id !== id)
+    );
+    writeTable(
+      DB_KEYS.PANORAMA_SCENES,
+      Studio360Repo.getScenes().filter((s) => s.destination_id !== id)
+    );
+    writeTable(
+      DB_KEYS.DENAH_POINTS,
+      DenahPointsRepo.getAll().filter((p) => p.destination_id !== id)
+    );
+    return DestinationsRepo.getAll();
+  },
+  resetToDefault: (): Destination[] => {
+    safeSetLocalStorage(DB_KEYS.DESTINATIONS, JSON.stringify(SEED_DESTINATIONS));
+    safeSetLocalStorage(DB_KEYS.INDIKATOR_MEDAN, JSON.stringify(SEED_INDIKATOR_MEDAN));
+    safeSetLocalStorage(DB_KEYS.ATURAN_DESTINASI, JSON.stringify(SEED_ATURAN_DESTINASI));
+    safeSetLocalStorage(DB_KEYS.OFFICIAL_TARIFFS, JSON.stringify(SEED_OFFICIAL_TARIFFS));
+    safeSetLocalStorage(DB_KEYS.PANORAMA_SCENES, JSON.stringify(SEED_PANORAMA_SCENES));
+    safeSetLocalStorage(DB_KEYS.DENAH_POINTS, JSON.stringify(SEED_DENAH_POINTS));
+    return DestinationsRepo.getAll();
+  },
+};
+
+// ============================================================================
+// 10. PUNGLI & FASILITAS REPO
 // ============================================================================
 export const PungliReportsRepo = {
-  getAll: (): PungliReport[] => readTable<PungliReport>(DB_KEYS.PUNGLI_REPORTS, SEED_PUNGLI_REPORTS),
+  getAll: (): PungliReport[] =>
+    readTable<PungliReport>(DB_KEYS.PUNGLI_REPORTS, SEED_PUNGLI_REPORTS).map((r) => ({
+      ...r,
+      status: normalizePungliStatus(r.status),
+    })),
   save: (report: PungliReport): PungliReport[] => {
     const list = PungliReportsRepo.getAll();
     const idx = list.findIndex((r) => r.id === report.id);
@@ -453,7 +894,10 @@ export const PungliReportsRepo = {
     const timestamp = new Date().toISOString();
     const normalized: PungliReport = {
       ...report,
-      photo_evidence: report.photo_evidence || 'https://via.placeholder.com/400x300?text=Bukti+Pungli',
+      status: normalizePungliStatus(report.status),
+      photo_evidence:
+        report.photo_evidence ||
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
       updated_at: timestamp,
       created_at: report.created_at || timestamp,
     };
@@ -465,7 +909,7 @@ export const PungliReportsRepo = {
 };
 
 // ============================================================================
-// 8. REPOSITORY: MODERASI ULASAN (destination_reviews) & NOTIFIKASI
+// 11. MODERASI ULASAN & KONDISI LAPANGAN REPO
 // ============================================================================
 export const DestinationReviewsRepo = {
   getAll: (): DestinationReview[] =>
@@ -480,16 +924,14 @@ export const DestinationReviewsRepo = {
     return updated;
   },
   toggleImportant: (reviewId: string): DestinationReview[] => {
-    const list = DestinationReviewsRepo.getAll();
-    const updated = list.map((r) =>
+    const updated = DestinationReviewsRepo.getAll().map((r) =>
       r.id === reviewId ? { ...r, is_important: !r.is_important } : r
     );
     writeTable(DB_KEYS.DESTINATION_REVIEWS, updated);
     return updated;
   },
   toggleVisibility: (reviewId: string): DestinationReview[] => {
-    const list = DestinationReviewsRepo.getAll();
-    const updated = list.map((r) =>
+    const updated = DestinationReviewsRepo.getAll().map((r) =>
       r.id === reviewId ? { ...r, is_hidden: !r.is_hidden } : r
     );
     writeTable(DB_KEYS.DESTINATION_REVIEWS, updated);
@@ -517,8 +959,6 @@ export const DestinationReviewsRepo = {
     const target = list.find((r) => r.id === reviewId);
     const filtered = list.filter((r) => r.id !== reviewId);
     writeTable(DB_KEYS.DESTINATION_REVIEWS, filtered);
-
-    // Opsional: Buat notifikasi ke user bila ulasan dihapus
     if (target) {
       NotifikasiRepo.create({
         id: `notif-${Date.now()}`,
@@ -533,38 +973,44 @@ export const DestinationReviewsRepo = {
         created_at: new Date().toISOString(),
       });
     }
-
     return filtered;
   },
 };
 
 // ============================================================================
-// 9. REPOSITORY: USULAN DESTINASI USER (new_tour)
+// 12. USULAN DESTINASI BARU REPO (Satu Sumber Kebenaran — usul_destinasi_sheet.dart)
 // ============================================================================
 export const NewTourRepo = {
   getAll: (): NewTour[] => readTable<NewTour>(DB_KEYS.NEW_TOURS, SEED_NEW_TOURS),
   save: (item: NewTour): NewTour[] => {
+    const normalizedCategory = normalizeDestinationCategory(item.category);
+    const normalized: NewTour = {
+      ...item,
+      category: normalizedCategory,
+      category_id: categoryNameToId(normalizedCategory),
+    };
     const list = NewTourRepo.getAll();
-    const idx = list.findIndex((n) => n.id === item.id);
+    const idx = list.findIndex((n) => n.id === normalized.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = item;
-    else updated.unshift(item);
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.unshift(normalized);
     writeTable(DB_KEYS.NEW_TOURS, updated);
     return updated;
   },
   rejectWithNotice: (id: string, reason: string): NewTour[] => {
     const list = NewTourRepo.getAll();
     const target = list.find((n) => n.id === id);
-    const updated = list.map((n) => (n.id === id ? { ...n, status: 'rejected' } : n));
+    const updated = list.map((n) =>
+      n.id === id ? { ...n, status: 'rejected' as const, admin_notes: reason } : n
+    );
     writeTable(DB_KEYS.NEW_TOURS, updated);
-
     if (target) {
       NotifikasiRepo.create({
         id: `notif-${Date.now()}`,
         user_id: target.user_id,
         notification_type: 'new_tour_rejected',
         title: `Usulan Tempat "${target.name}" Belum Dapat Disetujui`,
-        message: `Alasan penolakan dari kurator Dispar: ${reason}`,
+        message: `Alasan kurator Dispar Sumbar: ${reason}`,
         reference_id: target.id,
         is_read: false,
         created_at: new Date().toISOString(),
@@ -572,54 +1018,78 @@ export const NewTourRepo = {
     }
     return updated;
   },
-  approveToDestinations: (tour: NewTour): void => {
-    // 1. Ubah status usulan menjadi approved
-    const list = NewTourRepo.getAll().map((n) => (n.id === tour.id ? { ...n, status: 'approved' } : n));
+  approveToDestinations: (tour: NewTour): Destination => {
+    const list = NewTourRepo.getAll().map((n) =>
+      n.id === tour.id ? { ...n, status: 'approved' as const } : n
+    );
     writeTable(DB_KEYS.NEW_TOURS, list);
 
-    const tourName = tour.name || tour.title || 'Destinasi Komunitas';
-    const tourLat = tour.latitude ?? -0.9492;
-    const tourLng = tour.longitude ?? 100.3543;
-    const tourTips = tour.tips_menjaga || 'Jaga kebersihan lingkungan wisata dan hormati kearifan lokal.';
+    const normalizedCategory = normalizeDestinationCategory(tour.category);
+    const parsedPrice = Number((tour.estimated_price || '').replace(/\D/g, '')) || 10000;
+    const tourLat = Number(tour.latitude ?? -0.9471);
+    const tourLng = Number(tour.longitude ?? 100.3543);
+    const newId = `dest-${Date.now()}`;
+    const facilitiesList = tour.facilities || [];
+    const facilitiesLevel =
+      facilitiesList.length >= 4
+        ? 'Toilet, Musala & Parkir Lengkap'
+        : facilitiesList.length >= 1
+        ? 'Terbatas'
+        : 'Belum Ada';
 
-    // 2. Daftarkan otomatis ke tabel destinations
     const newDest: Destination = {
-      id: `dest-${Date.now()}`,
-      slug: tourName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      name: tourName,
-      category_id: tour.category_id || 'cat-dest-alam',
+      id: newId,
+      slug: toDestinationSlug(tour.name),
+      name: tour.name,
+      category_id: categoryNameToId(normalizedCategory),
+      category: normalizedCategory,
       city_regency: tour.city_regency,
       description: tour.description || 'Destinasi yang diusulkan oleh komunitas wisatawan WISGO.',
       latitude: tourLat,
       longitude: tourLng,
       geog: `SRID=4326;POINT(${tourLng.toFixed(6)} ${tourLat.toFixed(6)})`,
-      elevation_m: 100,
-      cover_image: 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1200&q=80',
+      elevation_m: 250,
+      cover_image:
+        tour.photo_url ||
+        'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1200&q=80',
       crowd_level: 'Sepi',
-      distance_km: 50,
-      travel_time_min: 60,
-      estimated_cost: 10000,
-      is_hidden_gem: true,
+      distance_km: 35,
+      travel_time_min: 55,
+      estimated_cost: parsedPrice,
+      ticket_price_summary: tour.estimated_price || `Rp ${parsedPrice.toLocaleString('id-ID')}`,
+      is_hidden_gem: normalizedCategory === 'Hidden Gem' || tour.is_sensitive,
       qr_placard_code: `WISGO-PLG-${Date.now().toString().slice(-4)}`,
       opening_hours: '08.00 - 17.00 WIB',
+      medan_indicator: {
+        id: `med-${newId}`,
+        destination_id: newId,
+        vehicle_access: facilitiesList.includes('Area Parkir') ? 'Mobil OK' : 'Hanya Motor',
+        trekking_level: facilitiesList.includes('Jalur Trekking') ? 'Sedang' : 'Mudah (Datar)',
+        facilities: facilitiesLevel,
+        guide_need: facilitiesList.includes('Pemandu Lokal') ? 'Disarankan' : 'Mandiri',
+        terrain_note: `Hasil kurasi usulan komunitas oleh ${tour.submitter_name}. Fasilitas terpantau: ${facilitiesList.join(', ') || 'Alami'}.`,
+      },
+      tips: [
+        {
+          id: `art-${Date.now()}`,
+          destination_id: newId,
+          category_id: 'cat-rule-lingkungan',
+          title: 'Tips Menjaga Tempat Ini',
+          content: tour.tips_menjaga || 'Jaga kebersihan lingkungan wisata dan hormati kearifan lokal.',
+          is_important: true,
+        },
+      ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    DestinationsRepo.save(newDest);
 
-    // 3. Buat aturan wajib menjaga tempat dari tips_menjaga
-    AturanDestinasiRepo.save({
-      id: `art-${Date.now()}`,
-      destination_id: newDest.id,
-      category_id: 'cat-rule-lingkungan',
-      title: 'Tips Menjaga Tempat (Usulan Komunitas)',
-      content: tourTips,
-    });
+    DestinationsRepo.save(newDest);
+    return DestinationsRepo.getById(newId) || newDest;
   },
 };
 
 // ============================================================================
-// 10. REPOSITORY: TANTANGAN & KLAIM HADIAH (challenges & user_challenge_rewards)
+// 13. CHALLENGES, REWARDS & PASPOR DIGITAL REPO
 // ============================================================================
 export const ChallengesRepo = {
   getAll: (): Challenge[] => readTable<Challenge>(DB_KEYS.CHALLENGES, SEED_CHALLENGES),
@@ -627,8 +1097,8 @@ export const ChallengesRepo = {
     const list = ChallengesRepo.getAll();
     const idx = list.findIndex((c) => c.id === item.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = item;
-    else updated.unshift(item);
+    if (idx >= 0) updated[idx] = { ...item, updated_at: new Date().toISOString() };
+    else updated.unshift({ ...item, created_at: item.created_at || new Date().toISOString() });
     writeTable(DB_KEYS.CHALLENGES, updated);
     return updated;
   },
@@ -651,38 +1121,55 @@ export const UserChallengeRewardsRepo = {
     writeTable(DB_KEYS.USER_CHALLENGE_REWARDS, updated);
     return updated;
   },
-  validateAndSendReward: (claimId: string): UserChallengeReward[] => {
+  validateAndSendReward: (claimId: string, notes?: string): UserChallengeReward[] => {
     const list = UserChallengeRewardsRepo.getAll();
     const timestamp = new Date().toISOString();
-    const certCode = `CERT-WISGO-${Date.now().toString().slice(-6)}`;
-
-    const updated = list.map((claim) => {
-      if (claim.id === claimId) {
-        return {
-          ...claim,
-          status: 'HADIAH_TERKIRIM',
-          certificate_code: claim.certificate_code || certCode,
-          certificate_url:
-            claim.certificate_url || `https://wisgo.sumbarprov.go.id/certs/${certCode}.pdf`,
-          completed_at: claim.completed_at || timestamp,
-        };
-      }
-      return claim;
-    });
-
+    const certCode = `WG-CERT-2026-${Date.now().toString().slice(-5)}`;
+    const updated = list.map((claim) =>
+      claim.id === claimId
+        ? {
+            ...claim,
+            status: 'HADIAH_TERKIRIM' as const,
+            certificate_code: claim.certificate_code || certCode,
+            certificate_url:
+              claim.certificate_url || `https://wisgo.sumbarprov.go.id/certs/${certCode}.pdf`,
+            completed_at: claim.completed_at || timestamp,
+            reward_notes: notes || claim.reward_notes || 'Diterbitkan otomatis oleh Admin Dispar Sumbar.',
+          }
+        : claim
+    );
     writeTable(DB_KEYS.USER_CHALLENGE_REWARDS, updated);
     return updated;
   },
 };
 
+export const PassportSpotsRepo = {
+  getAll: (): DigitalPassportSpot[] => SEED_PASSPORT_SPOTS,
+};
+
+export const StempVisitsRepo = {
+  getAll: (): StempVisit[] => readTable<StempVisit>(DB_KEYS.STEMP_VISITS, SEED_STEMP_VISITS),
+  save: (visit: StempVisit): StempVisit[] => {
+    const list = StempVisitsRepo.getAll();
+    const updated = [visit, ...list];
+    writeTable(DB_KEYS.STEMP_VISITS, updated);
+    return updated;
+  },
+  getByUserId: (userId: string): StempVisit[] =>
+    StempVisitsRepo.getAll().filter((s) => s.user_id === userId),
+  countValidPersonalVisits: (): number =>
+    StempVisitsRepo.getAll().filter((s) => s.is_gps_valid).length,
+};
+
 // ============================================================================
-// 11. REPOSITORY: NOTIFIKASI (notifikasi)
+// 14. NOTIFIKASI REPO
 // ============================================================================
 export const NotifikasiRepo = {
   getAll: (): Notifikasi[] => readTable<Notifikasi>(DB_KEYS.NOTIFIKASI, SEED_NOTIFIKASI),
-  create: (item: Notifikasi): void => {
-    const list = NotifikasiRepo.getAll();
-    writeTable(DB_KEYS.NOTIFIKASI, [item, ...list]);
+  create: (item: Notifikasi): Notifikasi[] => {
+    const updated = [item, ...NotifikasiRepo.getAll()];
+    writeTable(DB_KEYS.NOTIFIKASI, updated);
+    return updated;
   },
   markAsRead: (id: string): void => {
     const updated = NotifikasiRepo.getAll().map((n) => (n.id === id ? { ...n, is_read: true } : n));
@@ -691,16 +1178,21 @@ export const NotifikasiRepo = {
 };
 
 // ============================================================================
-// 12. REPOSITORY: JALUR EKSTREM & DARURAT (hazard_alerts, sos_signals, emergency_contacts)
+// 15. KOMANDO SOS: HAZARDS, SOS LOGS & 6 KONTAK DARURAT REAL
 // ============================================================================
 export const HazardAlertsRepo = {
-  getAll: (): HazardAlert[] => readTable<HazardAlert>(DB_KEYS.HAZARD_ALERTS, SEED_HAZARD_ALERTS),
+  getAll: (): HazardAlert[] =>
+    readTable<HazardAlert>(DB_KEYS.HAZARD_ALERTS, SEED_HAZARD_ALERTS).map((h) => ({
+      ...h,
+      severity: normalizeHazardSeverity(h.severity),
+    })),
   save: (alert: HazardAlert): HazardAlert[] => {
     const list = HazardAlertsRepo.getAll();
     const idx = list.findIndex((h) => h.id === alert.id || h.corridor_code === alert.corridor_code);
     const updated = [...list];
     const normalized: HazardAlert = {
       ...alert,
+      severity: normalizeHazardSeverity(alert.severity),
       updated_at: new Date().toISOString(),
     };
     if (idx >= 0) updated[idx] = normalized;
@@ -730,8 +1222,12 @@ export const EmergencyContactsRepo = {
     const list = EmergencyContactsRepo.getAll();
     const idx = list.findIndex((c) => c.id === contact.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = contact;
-    else updated.push(contact);
+    const normalized: EmergencyContact = {
+      ...contact,
+      updated_at: new Date().toISOString(),
+    };
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.push(normalized);
     writeTable(DB_KEYS.EMERGENCY_CONTACTS, updated);
     return updated;
   },
@@ -743,7 +1239,7 @@ export const EmergencyContactsRepo = {
 };
 
 // ============================================================================
-// 13. REPOSITORY: OPEN TRIPS (open_trips)
+// 16. TRIP GO, PENYELENGGARA, ESCROW & PACKING TEMPLATES
 // ============================================================================
 export const OpenTripsRepo = {
   getAll: (): OpenTrip[] => readTable<OpenTrip>(DB_KEYS.OPEN_TRIPS, SEED_OPEN_TRIPS),
@@ -751,93 +1247,53 @@ export const OpenTripsRepo = {
     const list = OpenTripsRepo.getAll();
     const idx = list.findIndex((t) => t.id === trip.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = trip;
-    else updated.unshift(trip);
+    const normalized: OpenTrip = {
+      ...trip,
+      travel_category: normalizeDestinationCategory(trip.travel_category),
+      created_at: trip.created_at || new Date().toISOString(),
+    };
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.unshift(normalized);
     writeTable(DB_KEYS.OPEN_TRIPS, updated);
     return updated;
+  },
+  delete: (id: string): OpenTrip[] => {
+    const filtered = OpenTripsRepo.getAll().filter((t) => t.id !== id);
+    writeTable(DB_KEYS.OPEN_TRIPS, filtered);
+    return filtered;
   },
   updateEscrowStatus: (
     id: string,
-    escrow_status: 'DITAHAN_DI_ESCROW' | 'DICAIRKAN_KE_PENYELENGGARA' | 'DILAPORKAN_INSIDEN' | string
+    escrow_status: 'DITAHAN_DI_ESCROW' | 'DICAIRKAN_KE_PENYELENGGARA' | 'DILAPORKAN_INSIDEN'
   ): OpenTrip[] => {
-    const list = OpenTripsRepo.getAll();
-    const updated = list.map((t) => (t.id === id ? { ...t, escrow_status } : t));
+    const updated = OpenTripsRepo.getAll().map((t) =>
+      t.id === id ? { ...t, escrow_status } : t
+    );
     writeTable(DB_KEYS.OPEN_TRIPS, updated);
     return updated;
   },
 };
 
-// ============================================================================
-// 14. REPOSITORY: GAODE RANKINGS & VISIT STATS
-// ============================================================================
-export const GaodeRankingsRepo = {
-  getAll: (): GaodeBehaviorRanking[] =>
-    readTable<GaodeBehaviorRanking>(DB_KEYS.GAODE_RANKINGS, SEED_GAODE_RANKINGS),
-  saveAll: (items: GaodeBehaviorRanking[]): void => {
-    writeTable(DB_KEYS.GAODE_RANKINGS, items);
-  },
-};
-
-export const StempVisitsRepo = {
-  getAll: (): StempVisit[] => readTable<StempVisit>(DB_KEYS.STEMP_VISITS, SEED_STEMP_VISITS),
-  countValidPersonalVisits: (): number =>
-    StempVisitsRepo.getAll().filter((s) => s.is_gps_valid).length,
-};
-
-export const ApiTelemetryLogsRepo = {
-  getAll: (): ApiTelemetryLog[] =>
-    readTable<ApiTelemetryLog>(DB_KEYS.API_TELEMETRY_LOGS, SEED_API_TELEMETRY_LOGS),
-};
-
-export const MinangPhrasesRepo = {
-  getAll: (): MinangPhrase[] => readTable<MinangPhrase>(DB_KEYS.MINANG_PHRASES, SEED_MINANG_PHRASES),
-  save: (phrase: MinangPhrase): MinangPhrase[] => {
-    const list = MinangPhrasesRepo.getAll();
-    const idx = list.findIndex((p) => p.id === phrase.id);
-    const updated = [...list];
-    if (idx >= 0) updated[idx] = phrase;
-    else updated.unshift(phrase);
-    writeTable(DB_KEYS.MINANG_PHRASES, updated);
-    return updated;
-  },
-  delete: (id: string): MinangPhrase[] => {
-    const filtered = MinangPhrasesRepo.getAll().filter((p) => p.id !== id);
-    writeTable(DB_KEYS.MINANG_PHRASES, filtered);
-    return filtered;
-  },
-};
-
-export const CulturalEventsRepo = {
-  getAll: (): CulturalEvent[] => readTable<CulturalEvent>(DB_KEYS.CULTURAL_EVENTS, SEED_CULTURAL_EVENTS),
-  save: (event: CulturalEvent): CulturalEvent[] => {
-    const list = CulturalEventsRepo.getAll();
-    const idx = list.findIndex((e) => e.id === event.id);
-    const updated = [...list];
-    if (idx >= 0) updated[idx] = event;
-    else updated.unshift(event);
-    writeTable(DB_KEYS.CULTURAL_EVENTS, updated);
-    return updated;
-  },
-  delete: (id: string): CulturalEvent[] => {
-    const filtered = CulturalEventsRepo.getAll().filter((e) => e.id !== id);
-    writeTable(DB_KEYS.CULTURAL_EVENTS, filtered);
-    return filtered;
-  },
-};
-
-// ============================================================================
-// 15. REPOSITORY: OPEN TRIP ORGANIZERS
-// ============================================================================
 export const OpenTripOrganizersRepo = {
   getAll: (): OpenTripOrganizer[] =>
     readTable<OpenTripOrganizer>(DB_KEYS.ORGANIZERS, SEED_ORGANIZERS),
-  updateStatus: (id: string, status: 'Menunggu' | 'Terverifikasi' | 'Ditolak', notes?: string): OpenTripOrganizer[] => {
-    const list = OpenTripOrganizersRepo.getAll();
-    const updated = list.map((org) =>
+  updateStatus: (
+    id: string,
+    status: 'Menunggu' | 'Terverifikasi' | 'Ditolak',
+    notes?: string
+  ): OpenTripOrganizer[] => {
+    const updated = OpenTripOrganizersRepo.getAll().map((org) =>
       org.id === id
         ? {
             ...org,
             status,
+            is_verified: status === 'Terverifikasi',
+            verification_badge:
+              status === 'Terverifikasi'
+                ? 'Penyelenggara Terverifikasi WISGO'
+                : status === 'Ditolak'
+                ? 'Verifikasi Ditolak'
+                : 'Menunggu Verifikasi Legalitas',
             notes: notes !== undefined ? notes : org.notes,
             verified_at: status === 'Terverifikasi' ? new Date().toISOString() : org.verified_at,
           }
@@ -857,9 +1313,6 @@ export const OpenTripOrganizersRepo = {
   },
 };
 
-// ============================================================================
-// 16. REPOSITORY: OPEN TRIP TRANSACTIONS
-// ============================================================================
 export const OpenTripTransactionsRepo = {
   getAll: (): OpenTripTransaction[] =>
     readTable<OpenTripTransaction>(DB_KEYS.OPEN_TRIP_TRANSACTIONS, SEED_OPEN_TRIP_TRANSACTIONS),
@@ -872,28 +1325,27 @@ export const OpenTripTransactionsRepo = {
     writeTable(DB_KEYS.OPEN_TRIP_TRANSACTIONS, updated);
     return updated;
   },
-  getTotalRevenueIdr: (): number => {
-    return OpenTripTransactionsRepo.getAll()
+  getTotalRevenueIdr: (): number =>
+    OpenTripTransactionsRepo.getAll()
       .filter((t) => t.status === 'BERHASIL')
-      .reduce((sum, t) => sum + t.amount_idr, 0);
-  },
+      .reduce((sum, t) => sum + t.amount_idr, 0),
 };
 
-// ============================================================================
-// 17. REPOSITORY: PACKING TEMPLATES
-// ============================================================================
 export const PackingTemplatesRepo = {
   getAll: (): PackingTemplate[] =>
     readTable<PackingTemplate>(DB_KEYS.PACKING_TEMPLATES, SEED_PACKING_TEMPLATES),
-  getByCategory: (categoryName: string): PackingTemplate[] => {
-    return PackingTemplatesRepo.getAll().filter((p) => p.category_name === categoryName);
-  },
+  getByCategory: (categoryName: string): PackingTemplate[] =>
+    PackingTemplatesRepo.getAll().filter((p) => p.category_name === categoryName),
   save: (template: PackingTemplate): PackingTemplate[] => {
     const list = PackingTemplatesRepo.getAll();
     const idx = list.findIndex((p) => p.id === template.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = template;
-    else updated.unshift(template);
+    const normalized: PackingTemplate = {
+      ...template,
+      category_name: normalizeDestinationCategory(template.category_name),
+    };
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.unshift(normalized);
     writeTable(DB_KEYS.PACKING_TEMPLATES, updated);
     return updated;
   },
@@ -905,62 +1357,150 @@ export const PackingTemplatesRepo = {
 };
 
 // ============================================================================
-// 18. REPOSITORY: WEATHER MONITORING
+// 17. GAODE RANKING, KAMUS MINANG, KALENDER BUDAYA, TELEMETRI & HEATMAP
 // ============================================================================
-export const WeatherMonitoringRepo = {
-  getAll: (): WeatherMonitoringItem[] =>
-    readTable<WeatherMonitoringItem>(DB_KEYS.WEATHER_MONITORING, SEED_WEATHER_MONITORING),
-  updateCondition: (
-    id: string,
-    condition: string,
-    temp_c: number,
-    is_extreme: boolean,
-    warning_text?: string
-  ): WeatherMonitoringItem[] => {
-    const list = WeatherMonitoringRepo.getAll();
-    const updated = list.map((w) =>
-      w.id === id
-        ? {
-            ...w,
-            condition,
-            current_temp_c: temp_c,
-            is_extreme_weather: is_extreme,
-            extreme_warning_text: warning_text || w.extreme_warning_text,
-            updated_at: new Date().toISOString(),
-          }
-        : w
-    );
-    writeTable(DB_KEYS.WEATHER_MONITORING, updated);
+export const DEFAULT_GAODE_WEIGHTS: GaodeWeightConfig = {
+  satisfaction_weight: 35,
+  pungli_free_weight: 30,
+  medan_access_weight: 20,
+  visit_volume_weight: 15,
+};
+
+export const GaodeRankingsRepo = {
+  getAll: (): GaodeBehaviorRanking[] =>
+    readTable<GaodeBehaviorRanking>(DB_KEYS.GAODE_RANKINGS, SEED_GAODE_RANKINGS),
+  saveAll: (items: GaodeBehaviorRanking[]): void => {
+    writeTable(DB_KEYS.GAODE_RANKINGS, items);
+  },
+  getWeights: (): GaodeWeightConfig => {
+    try {
+      const raw = localStorage.getItem(DB_KEYS.GAODE_CONFIG);
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // fallback
+    }
+    return DEFAULT_GAODE_WEIGHTS;
+  },
+  recalculate: (config: GaodeWeightConfig): GaodeBehaviorRanking[] => {
+    safeSetLocalStorage(DB_KEYS.GAODE_CONFIG, JSON.stringify(config));
+    const current = GaodeRankingsRepo.getAll();
+    const totalWeight =
+      config.satisfaction_weight +
+        config.pungli_free_weight +
+        config.medan_access_weight +
+        config.visit_volume_weight || 100;
+
+    const recalculated = current.map((item) => {
+      const satScore = item.satisfaction_rate ?? 95;
+      const pungliScore = item.pungli_free_index ?? 98;
+      const medanScore = ((item.medan_score ?? 4) / 5) * 100;
+      const visitScore = Math.min(100, ((item.weekly_visits ?? 4000) / 14500) * 100);
+      const weighted =
+        (satScore * config.satisfaction_weight +
+          pungliScore * config.pungli_free_weight +
+          medanScore * config.medan_access_weight +
+          visitScore * config.visit_volume_weight) /
+        totalWeight;
+      const score = Number(weighted.toFixed(1));
+      return {
+        ...item,
+        previous_rank: item.current_rank,
+        calculated_gaode_score: score,
+        gaode_authenticity_score: score,
+        updated_at: new Date().toISOString(),
+      };
+    });
+
+    recalculated.sort((a, b) => b.calculated_gaode_score - a.calculated_gaode_score);
+    const finalized = recalculated.map((item, idx) => {
+      const nextRank = idx + 1;
+      const trend: 'up' | 'down' | 'same' =
+        nextRank < item.previous_rank ? 'up' : nextRank > item.previous_rank ? 'down' : 'same';
+      return {
+        ...item,
+        rank_position: nextRank,
+        current_rank: nextRank,
+        trend,
+      };
+    });
+
+    GaodeRankingsRepo.saveAll(finalized);
+    return finalized;
+  },
+};
+
+export const ApiTelemetryLogsRepo = {
+  getAll: (): ApiTelemetryLog[] =>
+    readTable<ApiTelemetryLog>(DB_KEYS.API_TELEMETRY_LOGS, SEED_API_TELEMETRY_LOGS),
+};
+
+export const MinangPhrasesRepo = {
+  getAll: (): MinangPhrase[] => readTable<MinangPhrase>(DB_KEYS.MINANG_PHRASES, SEED_MINANG_PHRASES),
+  save: (phrase: MinangPhrase): MinangPhrase[] => {
+    const list = MinangPhrasesRepo.getAll();
+    const idx = list.findIndex((p) => p.id === phrase.id);
+    const updated = [...list];
+    const normalized = { ...phrase, updated_at: new Date().toISOString() };
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.unshift(normalized);
+    writeTable(DB_KEYS.MINANG_PHRASES, updated);
     return updated;
   },
-  broadcastHazardAlert: (item: WeatherMonitoringItem): HazardAlert[] => {
-    const newAlert: HazardAlert = {
-      id: `hz-${Date.now()}`,
-      corridor_code: `CORR-WEATHER-${Date.now().toString().slice(-4)}`,
-      location: item.destination_name,
-      road_segment: `Kawasan ${item.destination_name}`,
-      city_regency: item.city_regency,
-      latitude: -0.94924,
-      longitude: 100.48512,
-      radius_meter: 4000,
-      severity: item.is_extreme_weather ? 'Waspada' : 'Aman',
-      hazard_type: `Peringatan Cuaca: ${item.condition}`,
-      weather_status: `${item.condition} (${item.current_temp_c}°C)`,
-      slope_gradient_deg: 18,
-      message: item.extreme_warning_text || `Kondisi cuaca terkini: ${item.condition} dengan suhu ${item.current_temp_c}°C. Tetap waspada di jalur wisata.`,
-      detour_route: 'Patuhi instruksi petugas posko siaga darurat setempat.',
-      detour_route_geojson: null,
-      nearest_rescue_post: `Posko Siaga BPBD & SAR ${item.city_regency}`,
-      emergency_contact: '0811-6600-2026',
-      triggered_by_admin: 'usr-admin-01',
-      updated_at: new Date().toISOString(),
-    };
-    return HazardAlertsRepo.save(newAlert);
+  delete: (id: string): MinangPhrase[] => {
+    const filtered = MinangPhrasesRepo.getAll().filter((p) => p.id !== id);
+    writeTable(DB_KEYS.MINANG_PHRASES, filtered);
+    return filtered;
+  },
+};
+
+export const CulturalEventsRepo = {
+  getAll: (): CulturalEvent[] =>
+    readTable<CulturalEvent>(DB_KEYS.CULTURAL_EVENTS, SEED_CULTURAL_EVENTS),
+  save: (event: CulturalEvent): CulturalEvent[] => {
+    const list = CulturalEventsRepo.getAll();
+    const idx = list.findIndex((e) => e.id === event.id);
+    const updated = [...list];
+    const normalized = { ...event, updated_at: new Date().toISOString() };
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.unshift(normalized);
+    writeTable(DB_KEYS.CULTURAL_EVENTS, updated);
+    return updated;
+  },
+  delete: (id: string): CulturalEvent[] => {
+    const filtered = CulturalEventsRepo.getAll().filter((e) => e.id !== id);
+    writeTable(DB_KEYS.CULTURAL_EVENTS, filtered);
+    return filtered;
+  },
+};
+
+export const RegencyHeatmapRepo = {
+  getAll: (): RegencyHeatmapData[] =>
+    readTable<RegencyHeatmapData>(DB_KEYS.REGENCY_HEATMAP, SEED_REGENCY_HEATMAP),
+};
+
+export const SystemBenchmarkRepo = {
+  get: (): SystemBenchmarkMetrics => {
+    try {
+      const raw = localStorage.getItem(DB_KEYS.SYSTEM_BENCHMARK);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.go_engine_latency_ms === 'number') {
+          return parsed;
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return INITIAL_SYSTEM_BENCHMARK;
+  },
+  save: (metrics: SystemBenchmarkMetrics): SystemBenchmarkMetrics => {
+    safeSetLocalStorage(DB_KEYS.SYSTEM_BENCHMARK, JSON.stringify(metrics));
+    return metrics;
   },
 };
 
 // ============================================================================
-// 19. REPOSITORY: 5 LEVEL & LENCANA PETUALANG
+// 18. LEVEL PETUALANG, PROFIL JEJAK WISGO & TEMPLATE SHARE
 // ============================================================================
 export const AdventurerLevelsRepo = {
   getAll: (): AdventurerLevelConfig[] =>
@@ -976,29 +1516,43 @@ export const AdventurerLevelsRepo = {
   },
 };
 
-// ============================================================================
-// 20. REPOSITORY: USER PROFILES & STRAVA-STYLE EXPERIENCES
-// ============================================================================
 export const UserProfilesRepo = {
   getAll: (): UserProfileExperience[] =>
-    readTable<UserProfileExperience>(DB_KEYS.USER_PROFILES, SEED_USER_PROFILES),
-  getById: (id: string): UserProfileExperience | undefined => {
-    return UserProfilesRepo.getAll().find((u) => u.id === id || u.user_id === id);
-  },
+    readTable<UserProfileExperience>(DB_KEYS.USER_PROFILES, SEED_USER_PROFILES).map((u) => {
+      const calc = calculateAdventurerLevel(u.total_xp);
+      const { total_distance_km: _drop, ...clean } = u as UserProfileExperience & {
+        total_distance_km?: unknown;
+      };
+      void _drop;
+      return {
+        ...clean,
+        current_level: calc.level,
+        level_name: calc.name,
+      };
+    }),
+  getById: (id: string): UserProfileExperience | undefined =>
+    UserProfilesRepo.getAll().find((u) => u.id === id || u.user_id === id),
   save: (profile: UserProfileExperience): UserProfileExperience[] => {
+    const calc = calculateAdventurerLevel(profile.total_xp);
+    const { total_distance_km: _drop, ...clean } = profile as UserProfileExperience & {
+      total_distance_km?: unknown;
+    };
+    void _drop;
+    const normalized: UserProfileExperience = {
+      ...clean,
+      current_level: calc.level,
+      level_name: calc.name,
+    };
     const list = UserProfilesRepo.getAll();
-    const idx = list.findIndex((u) => u.id === profile.id);
+    const idx = list.findIndex((u) => u.id === normalized.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = profile;
-    else updated.unshift(profile);
+    if (idx >= 0) updated[idx] = normalized;
+    else updated.unshift(normalized);
     writeTable(DB_KEYS.USER_PROFILES, updated);
     return updated;
   },
 };
 
-// ============================================================================
-// 21. REPOSITORY: POSTING TEMPLATES & QR
-// ============================================================================
 export const PostingTemplatesRepo = {
   getAll: (): PostingShareTemplate[] =>
     readTable<PostingShareTemplate>(DB_KEYS.POSTING_TEMPLATES, SEED_POSTING_TEMPLATES),
@@ -1011,4 +1565,12 @@ export const PostingTemplatesRepo = {
     writeTable(DB_KEYS.POSTING_TEMPLATES, updated);
     return updated;
   },
+};
+
+export const SavedPlacesRepo = {
+  getAll: (): SavedPlace[] => readTable<SavedPlace>(DB_KEYS.SAVED_PLACES, SEED_SAVED_PLACES),
+};
+
+export const UsersRepo = {
+  getAll: (): User[] => readTable<User>(DB_KEYS.USERS, SEED_USERS),
 };

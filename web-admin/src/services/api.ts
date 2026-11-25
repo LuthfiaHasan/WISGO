@@ -1,88 +1,66 @@
+// ============================================================================
+// API BRIDGE LAYER WISGO V3 — 100% DELEGASI KE dbRepository.ts (NO SPLIT-BRAIN)
+// ============================================================================
+
 import axios from 'axios';
 import {
   AdminAuthCredentials,
   AdminAuthResponse,
   BenchmarkRunResult,
-  CommunityHiddenGemSubmission,
-  CultureCalendarEvent,
+  Challenge,
+  CulturalEvent,
+  DenahPoint,
   Destination,
-  DigitalPassportMetrics,
-  EmergencyContactNumber,
-  EscrowTransaction,
-  GaodeRankingItem,
+  EmergencyContact,
+  GaodeBehaviorRanking,
   GaodeWeightConfig,
   GroupRoomPreview,
+  HazardAlert,
   HazardSeverity,
-  HazardZoneAlert,
-  HotspotPin,
-  MinangAudioPhrase,
-  OpenTripItem,
+  MinangPhrase,
+  Notifikasi,
+  OpenTrip,
   OpenTripStatus,
   PanoramaScene,
   Partner,
   PungliReport,
   PungliStatus,
   RegencyHeatmapData,
-  SosEmergencyStatus,
-  SosEmergencyTicket,
+  SosSignal,
+  SosStatus,
   SystemBenchmarkMetrics,
-  SystemNotification,
-  TouristChallenge,
-  WAWebhookResponse,
 } from '../types/contract';
+import { INITIAL_GROUP_ROOMS, toDestinationSlug } from '../data/mockDestinations';
 import {
-  INITIAL_COMMUNITY_SUBMISSIONS,
-  INITIAL_CULTURE_EVENTS,
-  INITIAL_DIGITAL_PASSPORT_METRICS,
-  INITIAL_EMERGENCY_CONTACTS,
-  INITIAL_GAODE_RANKINGS,
-  INITIAL_GROUP_ROOMS,
-  INITIAL_HAZARD_ALERTS,
-  INITIAL_MINANG_PHRASES,
-  INITIAL_OPEN_TRIPS,
-  INITIAL_PARTNERS,
-  INITIAL_PUNGLI_REPORTS,
-  INITIAL_REGENCY_HEATMAP,
-  INITIAL_SOS_TICKETS,
-  INITIAL_SYSTEM_BENCHMARK,
-  INITIAL_SYSTEM_NOTIFICATIONS,
-  INITIAL_TOURIST_CHALLENGES,
-  MOCK_20_DESTINATIONS,
-  toDestinationSlug,
-} from '../data/mockDestinations';
-import { safeSetLocalStorage } from '../utils/imageOptimizer';
+  ChallengesRepo,
+  CulturalEventsRepo,
+  DEFAULT_GAODE_WEIGHTS,
+  DenahPointsRepo,
+  DestinationsRepo,
+  EmergencyContactsRepo,
+  GaodeRankingsRepo,
+  HazardAlertsRepo,
+  MinangPhrasesRepo,
+  NotifikasiRepo,
+  OpenTripsRepo,
+  PartnersRepo,
+  PungliReportsRepo,
+  RegencyHeatmapRepo,
+  SosSignalsRepo,
+  Studio360Repo,
+  SystemBenchmarkRepo,
+} from './dbRepository';
 
 const TOKEN_STORAGE_KEY = 'wisgo_admin_jwt';
 const USER_STORAGE_KEY = 'wisgo_admin_user';
-const EMERGENCY_CONTACTS_KEY = 'wisgo_emergency_contacts';
-const CHALLENGES_STORAGE_KEY = 'wisgo_tourist_challenges';
-const NOTIFICATIONS_STORAGE_KEY = 'wisgo_system_notifications';
-const DESTINATIONS_STORAGE_KEY = 'wisgo_dispar_destinations_v2';
-const PARTNERS_STORAGE_KEY = 'wisgo_dispar_partners_v2';
-const PUNGLI_STORAGE_KEY = 'wisgo_dispar_pungli_v2';
-const SOS_STORAGE_KEY = 'wisgo_dispar_sos_v2';
-const HAZARD_STORAGE_KEY = 'wisgo_dispar_hazard_v2';
-const GROUPS_STORAGE_KEY = 'wisgo_dispar_groups_v2';
-const SUBMISSIONS_STORAGE_KEY = 'wisgo_community_submissions_v2';
-const HEATMAP_STORAGE_KEY = 'wisgo_regency_heatmap_v2';
-const PASSPORT_METRICS_KEY = 'wisgo_passport_metrics_v2';
-const PHRASES_STORAGE_KEY = 'wisgo_minang_phrases_v1';
-const EVENTS_STORAGE_KEY = 'wisgo_culture_events_v1';
-const GAODE_STORAGE_KEY = 'wisgo_gaode_rankings_v1';
-const GAODE_CONFIG_KEY = 'wisgo_gaode_config_v1';
-const OPENTRIPS_STORAGE_KEY = 'wisgo_open_trips_v1';
-const BENCHMARK_STORAGE_KEY = 'wisgo_system_benchmark_v1';
+const GROUPS_STORAGE_KEY = 'wisgo_v3_group_rooms';
 
-function getStoredWithFallback(newKey: string, legacyKey: string): string | null {
-  return localStorage.getItem(newKey) || localStorage.getItem(legacyKey);
-}
+export const DEFAULT_GAODE_CONFIG: GaodeWeightConfig = DEFAULT_GAODE_WEIGHTS;
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
-  timeout: 4500,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 4000,
+  headers: { 'Content-Type': 'application/json' },
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -93,58 +71,26 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-function readStoredDestinations(): Destination[] | null {
-  try {
-    const raw = getStoredWithFallback(
-      DESTINATIONS_STORAGE_KEY,
-      'rancakin_dispar_destinations_v2'
-    );
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export function writeStoredDestinations(destinations: Destination[]): void {
-  safeSetLocalStorage(DESTINATIONS_STORAGE_KEY, JSON.stringify(destinations));
-}
-
-/**
- * Cek koneksi langsung ke server utama (/health)
- */
-export async function checkBackendHealth(): Promise<{
-  online: boolean;
-  env?: string;
-}> {
+// ============================================================================
+// 1. HEALTH & OTENTIKASI ADMINISTRATOR (JWT + Google SSO Terpadu)
+// ============================================================================
+export async function checkBackendHealth(): Promise<{ online: boolean; env?: string }> {
   try {
     const res = await axios.get('/health', { timeout: 2500 });
-    return {
-      online: res.data?.status === 'ok',
-      env: res.data?.env || 'production',
-    };
+    return { online: res.data?.status === 'ok', env: res.data?.env || 'production' };
   } catch {
     return { online: false };
   }
 }
 
-/**
- * Otentikasi Administrator Utama — Pusat Komando Terpadu WISGO (Single Admin JWT Auth)
- */
 export async function loginAdminJWT(
   credentials: AdminAuthCredentials
 ): Promise<AdminAuthResponse> {
-  await new Promise((resolve) => setTimeout(resolve, 350));
+  await new Promise((resolve) => setTimeout(resolve, 250));
 
   const emailLower = credentials.email.trim().toLowerCase();
   if (!emailLower.includes('@') || credentials.password.length < 6) {
-    throw new Error(
-      'Alamat email dinas tidak valid atau kata sandi kurang dari 6 karakter.'
-    );
+    throw new Error('Alamat email dinas tidak valid atau kata sandi kurang dari 6 karakter.');
   }
 
   const jwtToken =
@@ -169,8 +115,7 @@ export async function loginAdminJWT(
       role: 'admin_utama',
       jenis_input: 'web_admin',
       email: emailLower,
-      agency:
-        'Pusat Komando Terpadu WISGO (Dispar Sumbar • Penindakan Pungli • Siaga SAR)',
+      agency: 'Pusat Komando Terpadu WISGO (Dispar Sumbar • Penindakan Pungli • Siaga SAR)',
       created_at: new Date().toISOString(),
     },
   };
@@ -180,16 +125,17 @@ export async function loginAdminJWT(
   return authResponse;
 }
 
+export function saveAdminSession(session: AdminAuthResponse): void {
+  localStorage.setItem(TOKEN_STORAGE_KEY, session.token);
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(session.user));
+}
+
 export function getStoredAdminSession(): AdminAuthResponse | null {
-  const token = getStoredWithFallback(TOKEN_STORAGE_KEY, 'rancakin_admin_jwt');
-  const rawUser = getStoredWithFallback(USER_STORAGE_KEY, 'rancakin_admin_user');
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  const rawUser = localStorage.getItem(USER_STORAGE_KEY);
   if (!token || !rawUser) return null;
   try {
-    return {
-      token,
-      expires_at: '',
-      user: JSON.parse(rawUser),
-    };
+    return { token, expires_at: '', user: JSON.parse(rawUser) };
   } catch {
     return null;
   }
@@ -198,115 +144,53 @@ export function getStoredAdminSession(): AdminAuthResponse | null {
 export function logoutAdminJWT(): void {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem('wisgo_admin_token');
   localStorage.removeItem('rancakin_admin_jwt');
   localStorage.removeItem('rancakin_admin_user');
 }
 
-/**
- * Ambil data destinasi dengan persistensi localStorage & sinkronisasi ke server Go Gin
- */
+// ============================================================================
+// 2. DESTINASI, PANORAMA 360° & DENAH 2D (Delegasi ke dbRepository V3)
+// ============================================================================
 export async function fetchDestinationsWithBridge(): Promise<{
   destinations: Destination[];
   online: boolean;
 }> {
-  const stored = readStoredDestinations();
-  const baseList = stored || MOCK_20_DESTINATIONS;
-
+  const localDestinations = DestinationsRepo.getAll();
   try {
-    const [listRes, detailRes] = await Promise.all([
-      apiClient.get<Destination[]>('/destinations'),
-      apiClient.get<Destination>('/destinations/detail').catch(() => null),
-    ]);
-
-    const apiItems = Array.isArray(listRes.data) ? listRes.data : [];
-    const detailItem = detailRes?.data;
-
-    // Jika user belum punya modifikasi lokal, sinkronkan pembaruan dari Go Gin
-    if (!stored) {
-      const mergedMap = new Map<string, Destination>();
-      for (const item of baseList) {
-        mergedMap.set(item.id, item);
-      }
-
-      for (const apiDest of apiItems) {
-        const existing = mergedMap.get(apiDest.id);
-        mergedMap.set(apiDest.id, {
-          ...existing,
-          ...apiDest,
-          slug:
-            apiDest.slug ||
-            existing?.slug ||
-            toDestinationSlug(apiDest.name || 'destinasi'),
-          medan_indicator: {
-            ...existing?.medan_indicator,
-            ...(detailItem && detailItem.id === apiDest.id
-              ? detailItem.medan_indicator
-              : apiDest.medan_indicator),
-          } as Destination['medan_indicator'],
-          tariffs: apiDest.tariffs || existing?.tariffs || [],
-          tips: apiDest.tips || existing?.tips || [],
-          scenes_360: apiDest.scenes_360 || existing?.scenes_360 || [],
-        });
-      }
-
-      const merged = Array.from(mergedMap.values());
-      writeStoredDestinations(merged);
-      return { destinations: merged, online: true };
-    }
-
-    return { destinations: stored, online: true };
+    const res = await apiClient.get<Destination[]>('/destinations');
+    return { destinations: localDestinations, online: res.status >= 200 && res.status < 300 };
   } catch {
-    if (!stored) {
-      writeStoredDestinations(MOCK_20_DESTINATIONS);
-    }
-    return {
-      destinations: baseList,
-      online: false,
-    };
+    return { destinations: localDestinations, online: false };
   }
 }
 
-/**
- * Simpan destinasi baru atau perbarui destinasi ke localStorage + kirim POST/PUT ke Go Gin
- */
 export async function saveDestinationWithBridge(
   destination: Destination,
-  currentList: Destination[]
+  _currentList?: Destination[]
 ): Promise<{ updatedList: Destination[]; syncedRemote: boolean }> {
+  void _currentList;
   const normalized: Destination = {
     ...destination,
     slug: destination.slug || toDestinationSlug(destination.name),
     updated_at: new Date().toISOString(),
   };
-
-  const exists = currentList.some((d) => d.id === normalized.id);
-  const updatedList = exists
-    ? currentList.map((d) => (d.id === normalized.id ? normalized : d))
-    : [normalized, ...currentList];
-
-  writeStoredDestinations(updatedList);
+  const updatedList = DestinationsRepo.save(normalized);
 
   try {
-    if (exists) {
-      await apiClient.put(`/destinations/${normalized.id}`, normalized);
-    } else {
-      await apiClient.post('/destinations', normalized);
-    }
+    await apiClient.post('/destinations', normalized);
     return { updatedList, syncedRemote: true };
   } catch {
     return { updatedList, syncedRemote: false };
   }
 }
 
-/**
- * Hapus destinasi dari localStorage + kirim DELETE ke Go Gin
- */
 export async function deleteDestinationWithBridge(
   destinationId: string,
-  currentList: Destination[]
+  _currentList?: Destination[]
 ): Promise<{ updatedList: Destination[]; syncedRemote: boolean }> {
-  const updatedList = currentList.filter((d) => d.id !== destinationId);
-  writeStoredDestinations(updatedList);
+  void _currentList;
+  const updatedList = DestinationsRepo.delete(destinationId);
 
   try {
     await apiClient.delete(`/destinations/${destinationId}`);
@@ -316,138 +200,45 @@ export async function deleteDestinationWithBridge(
   }
 }
 
-/**
- * Kembalikan 20 destinasi standar Sumatera Barat ke kondisi awal
- */
 export function resetDestinationsToDefault(): Destination[] {
-  writeStoredDestinations(MOCK_20_DESTINATIONS);
-  return MOCK_20_DESTINATIONS;
+  return DestinationsRepo.resetToDefault();
 }
-
-// ============================================================================
-// CMS STUDIO VIRTUAL 360° (FS1-M2-02)
-// ============================================================================
 
 export async function saveDestinationScene(
   destId: string,
-  scene: PanoramaScene,
-  destinationsList: Destination[]
+  scene: PanoramaScene
 ): Promise<Destination[]> {
-  const updated = destinationsList.map((dest) => {
-    if (dest.id !== destId) return dest;
-    const currentScenes = dest.scenes_360 || [];
-    const exists = currentScenes.some((s) => s.id === scene.id);
-    const updatedScenes = exists
-      ? currentScenes.map((s) => (s.id === scene.id ? scene : s))
-      : [...currentScenes, scene];
-    return {
-      ...dest,
-      scenes_360: updatedScenes,
-      updated_at: new Date().toISOString(),
-    };
-  });
-  writeStoredDestinations(updated);
-  return updated;
+  Studio360Repo.saveScene({ ...scene, destination_id: destId });
+  return DestinationsRepo.getAll();
 }
 
 export async function deleteDestinationScene(
-  destId: string,
-  sceneId: string,
-  destinationsList: Destination[]
+  _destId: string,
+  sceneId: string
 ): Promise<Destination[]> {
-  const updated = destinationsList.map((dest) => {
-    if (dest.id !== destId) return dest;
-    const currentScenes = dest.scenes_360 || [];
-    return {
-      ...dest,
-      scenes_360: currentScenes.filter((s) => s.id !== sceneId),
-      updated_at: new Date().toISOString(),
-    };
-  });
-  writeStoredDestinations(updated);
-  return updated;
+  void _destId;
+  Studio360Repo.deleteScene(sceneId);
+  return DestinationsRepo.getAll();
 }
 
-export async function saveSceneHotspot(
+export async function saveDestinationDenahPoint(
   destId: string,
-  sceneId: string,
-  hotspot: HotspotPin,
-  destinationsList: Destination[]
+  point: DenahPoint
 ): Promise<Destination[]> {
-  const updated = destinationsList.map((dest) => {
-    if (dest.id !== destId) return dest;
-    const currentScenes = dest.scenes_360 || [];
-    const updatedScenes = currentScenes.map((scene) => {
-      if (scene.id !== sceneId) return scene;
-      const currentHotspots = scene.hotspots || [];
-      const exists = currentHotspots.some((h) => h.id === hotspot.id);
-      const updatedHotspots = exists
-        ? currentHotspots.map((h) => (h.id === hotspot.id ? hotspot : h))
-        : [...currentHotspots, hotspot];
-      return {
-        ...scene,
-        hotspots: updatedHotspots,
-      };
-    });
-    return {
-      ...dest,
-      scenes_360: updatedScenes,
-      updated_at: new Date().toISOString(),
-    };
-  });
-  writeStoredDestinations(updated);
-  return updated;
+  DenahPointsRepo.save({ ...point, destination_id: destId });
+  return DestinationsRepo.getAll();
 }
 
-export async function deleteSceneHotspot(
-  destId: string,
-  sceneId: string,
-  hotspotId: string,
-  destinationsList: Destination[]
-): Promise<Destination[]> {
-  const updated = destinationsList.map((dest) => {
-    if (dest.id !== destId) return dest;
-    const currentScenes = dest.scenes_360 || [];
-    const updatedScenes = currentScenes.map((scene) => {
-      if (scene.id !== sceneId) return scene;
-      const currentHotspots = scene.hotspots || [];
-      return {
-        ...scene,
-        hotspots: currentHotspots.filter((h) => h.id !== hotspotId),
-      };
-    });
-    return {
-      ...dest,
-      scenes_360: updatedScenes,
-      updated_at: new Date().toISOString(),
-    };
-  });
-  writeStoredDestinations(updated);
-  return updated;
+export async function deleteDestinationDenahPoint(pointId: string): Promise<Destination[]> {
+  DenahPointsRepo.delete(pointId);
+  return DestinationsRepo.getAll();
 }
 
 // ============================================================================
-// PUSAT KOMANDO TERPADU: PENINDAKAN PUNGLI & SIAGA SOS TIM SAR (FS1-M2-03)
+// 3. PUSAT KOMANDO: PUNGLI, SOS, JALUR EKSTREM & KONTAK DARURAT
 // ============================================================================
-
 export async function fetchPungliReports(): Promise<PungliReport[]> {
-  try {
-    const raw = localStorage.getItem(PUNGLI_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    // Remote bridge fallback
-    const res = await apiClient.get<PungliReport[]>('/reports/pungli').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Fallback to initial
-  }
-  localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(INITIAL_PUNGLI_REPORTS));
-  return INITIAL_PUNGLI_REPORTS;
+  return PungliReportsRepo.getAll();
 }
 
 export async function updatePungliReportStatus(
@@ -455,133 +246,66 @@ export async function updatePungliReportStatus(
   status: PungliStatus,
   adminNotes?: string
 ): Promise<PungliReport[]> {
-  const current = await fetchPungliReports();
-  const updated = current.map((r) => {
-    if (r.id !== reportId) return r;
-    return {
-      ...r,
-      status,
-      admin_notes: adminNotes !== undefined ? adminNotes : r.admin_notes,
-    };
+  const existing = PungliReportsRepo.getAll().find((r) => r.id === reportId);
+  if (!existing) return PungliReportsRepo.getAll();
+  const updated = PungliReportsRepo.save({
+    ...existing,
+    status,
+    admin_action_notes: adminNotes !== undefined ? adminNotes : existing.admin_action_notes,
   });
-  localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(updated));
-
   try {
-    await apiClient.put(`/reports/pungli/${reportId}/status`, {
-      status,
-      admin_notes: adminNotes,
-    });
+    await apiClient.put(`/reports/pungli/${reportId}/status`, { status, admin_action_notes: adminNotes });
   } catch {
-    // Offline mode
+    // local cache active
   }
   return updated;
 }
 
 export async function submitPungliReport(
-  reportData: Omit<PungliReport, 'id' | 'created_at'>
+  reportData: Omit<PungliReport, 'id' | 'created_at' | 'updated_at'>
 ): Promise<PungliReport> {
+  const now = new Date().toISOString();
   const newReport: PungliReport = {
     ...reportData,
-    id: `rep-${Date.now().toString(36)}`,
-    created_at: new Date().toISOString(),
+    id: `pgl-${Date.now().toString(36)}`,
+    created_at: now,
+    updated_at: now,
   };
-
-  const current = await fetchPungliReports();
-  const updated = [newReport, ...current];
-  localStorage.setItem(PUNGLI_STORAGE_KEY, JSON.stringify(updated));
-
+  PungliReportsRepo.save(newReport);
   try {
     await apiClient.post('/reports/pungli', newReport);
   } catch {
-    // Offline mode
+    // local cache active
   }
   return newReport;
 }
 
-export async function fetchSosTickets(): Promise<SosEmergencyTicket[]> {
-  try {
-    const raw = localStorage.getItem(SOS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    const res = await apiClient.get<SosEmergencyTicket[]>('/sos/tickets').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Fallback
-  }
-  localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(INITIAL_SOS_TICKETS));
-  return INITIAL_SOS_TICKETS;
+export async function fetchSosTickets(): Promise<SosSignal[]> {
+  return SosSignalsRepo.getAll();
 }
 
 export async function updateSosTicketStatus(
   ticketId: string,
-  status: SosEmergencyStatus,
+  status: SosStatus,
   sarUnitAssigned?: string
-): Promise<SosEmergencyTicket[]> {
-  const current = await fetchSosTickets();
-  const updated = current.map((t) => {
-    if (t.id !== ticketId) return t;
-    return {
-      ...t,
-      status,
-      sar_unit_assigned: sarUnitAssigned || t.sar_unit_assigned,
-    };
+): Promise<SosSignal[]> {
+  const existing = SosSignalsRepo.getAll().find((s) => s.id === ticketId);
+  if (!existing) return SosSignalsRepo.getAll();
+  const updated = SosSignalsRepo.save({
+    ...existing,
+    status,
+    sar_unit_assigned: sarUnitAssigned || existing.sar_unit_assigned,
   });
-  localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(updated));
-
   try {
-    await apiClient.put(`/sos/tickets/${ticketId}/status`, {
-      status,
-      sar_unit_assigned: sarUnitAssigned,
-    });
+    await apiClient.put(`/sos/tickets/${ticketId}/status`, { status, sar_unit_assigned: sarUnitAssigned });
   } catch {
-    // Offline mode
+    // local cache active
   }
   return updated;
 }
 
-export async function submitSosEmergency(
-  data: Omit<SosEmergencyTicket, 'id' | 'created_at'>
-): Promise<SosEmergencyTicket> {
-  const newTicket: SosEmergencyTicket = {
-    ...data,
-    id: `sos-${Date.now().toString(36)}`,
-    created_at: new Date().toISOString(),
-  };
-
-  const current = await fetchSosTickets();
-  const updated = [newTicket, ...current];
-  localStorage.setItem(SOS_STORAGE_KEY, JSON.stringify(updated));
-
-  try {
-    await apiClient.post('/sos/trigger', newTicket);
-  } catch {
-    // Offline mode
-  }
-  return newTicket;
-}
-
-export async function fetchHazardAlerts(): Promise<HazardZoneAlert[]> {
-  try {
-    const raw = localStorage.getItem(HAZARD_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    const res = await apiClient.get<HazardZoneAlert[]>('/hazards').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      localStorage.setItem(HAZARD_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Fallback
-  }
-  localStorage.setItem(HAZARD_STORAGE_KEY, JSON.stringify(INITIAL_HAZARD_ALERTS));
-  return INITIAL_HAZARD_ALERTS;
+export async function fetchHazardAlerts(): Promise<HazardAlert[]> {
+  return HazardAlertsRepo.getAll();
 }
 
 export async function updateHazardAlert(
@@ -589,58 +313,177 @@ export async function updateHazardAlert(
   severity: HazardSeverity,
   message: string,
   detourRoute: string
-): Promise<HazardZoneAlert[]> {
-  const current = await fetchHazardAlerts();
-  const updated = current.map((h) => {
-    if (h.id !== alertId) return h;
-    return {
-      ...h,
-      severity,
-      message,
-      detour_route: detourRoute,
-      updated_at: new Date().toISOString(),
-    };
+): Promise<HazardAlert[]> {
+  const existing = HazardAlertsRepo.getAll().find((h) => h.id === alertId);
+  if (!existing) return HazardAlertsRepo.getAll();
+  const updated = HazardAlertsRepo.save({
+    ...existing,
+    severity,
+    message,
+    detour_route: detourRoute,
   });
-  localStorage.setItem(HAZARD_STORAGE_KEY, JSON.stringify(updated));
-
   try {
-    await apiClient.put(`/hazards/${alertId}`, {
-      severity,
-      message,
-      detour_route: detourRoute,
-    });
+    await apiClient.put(`/hazards/${alertId}`, { severity, message, detour_route: detourRoute });
   } catch {
-    // Offline mode
+    // local cache active
   }
   return updated;
 }
 
-// ============================================================================
-// WEB GROUP INVITE & PRIVATE ROOM (FS1-M2-04)
-// ============================================================================
+export async function fetchEmergencyContacts(): Promise<EmergencyContact[]> {
+  return EmergencyContactsRepo.getAll();
+}
 
-export async function fetchGroupRoom(
-  groupCode: string
-): Promise<GroupRoomPreview | null> {
+export async function saveEmergencyContact(
+  contact: EmergencyContact
+): Promise<EmergencyContact[]> {
+  return EmergencyContactsRepo.save(contact);
+}
+
+export async function deleteEmergencyContact(id: string): Promise<EmergencyContact[]> {
+  return EmergencyContactsRepo.delete(id);
+}
+
+// ============================================================================
+// 4. MITRA UMKM (DIRECT P2P 0% KOMISI) & TRIP GO
+// ============================================================================
+export async function fetchPartnersCatalog(): Promise<Partner[]> {
+  return PartnersRepo.getAll();
+}
+
+export async function savePartnerWithBridge(
+  partner: Partner,
+  _currentList?: Partner[]
+): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
+  void _currentList;
+  const updatedList = PartnersRepo.save(partner);
+  try {
+    await apiClient.post('/partners', partner);
+    return { updatedList, syncedRemote: true };
+  } catch {
+    return { updatedList, syncedRemote: false };
+  }
+}
+
+export async function deletePartnerWithBridge(
+  partnerId: string,
+  _currentList?: Partner[]
+): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
+  void _currentList;
+  const updatedList = PartnersRepo.delete(partnerId);
+  try {
+    await apiClient.delete(`/partners/${partnerId}`);
+    return { updatedList, syncedRemote: true };
+  } catch {
+    return { updatedList, syncedRemote: false };
+  }
+}
+
+export async function trackPartnerWaLead(partnerId: string): Promise<Partner | null> {
+  return PartnersRepo.incrementWaClicks(partnerId);
+}
+
+export async function fetchOpenTrips(): Promise<OpenTrip[]> {
+  return OpenTripsRepo.getAll();
+}
+
+export async function updateOpenTripStatus(
+  tripId: string,
+  status: OpenTripStatus
+): Promise<OpenTrip[]> {
+  const existing = OpenTripsRepo.getAll().find((t) => t.id === tripId);
+  if (!existing) return OpenTripsRepo.getAll();
+  return OpenTripsRepo.save({ ...existing, status });
+}
+
+// ============================================================================
+// 5. BUDAYA MINANG, GAODE RANKING, CHALLENGE, NOTIFIKASI & HEATMAP
+// ============================================================================
+export async function fetchMinangPhrases(): Promise<MinangPhrase[]> {
+  return MinangPhrasesRepo.getAll();
+}
+
+export async function saveMinangPhrase(phrase: MinangPhrase): Promise<MinangPhrase[]> {
+  return MinangPhrasesRepo.save(phrase);
+}
+
+export async function deleteMinangPhrase(phraseId: string): Promise<MinangPhrase[]> {
+  return MinangPhrasesRepo.delete(phraseId);
+}
+
+export async function fetchCultureEvents(): Promise<CulturalEvent[]> {
+  return CulturalEventsRepo.getAll();
+}
+
+export async function saveCultureEvent(event: CulturalEvent): Promise<CulturalEvent[]> {
+  return CulturalEventsRepo.save(event);
+}
+
+export async function deleteCultureEvent(eventId: string): Promise<CulturalEvent[]> {
+  return CulturalEventsRepo.delete(eventId);
+}
+
+export async function fetchGaodeConfig(): Promise<GaodeWeightConfig> {
+  return GaodeRankingsRepo.getWeights();
+}
+
+export async function fetchGaodeRankings(): Promise<GaodeBehaviorRanking[]> {
+  return GaodeRankingsRepo.getAll();
+}
+
+export async function recalculateGaodeRankings(
+  config: GaodeWeightConfig
+): Promise<GaodeBehaviorRanking[]> {
+  return GaodeRankingsRepo.recalculate(config);
+}
+
+export async function fetchTouristChallenges(): Promise<Challenge[]> {
+  return ChallengesRepo.getAll();
+}
+
+export async function saveTouristChallenge(challenge: Challenge): Promise<Challenge[]> {
+  return ChallengesRepo.save(challenge);
+}
+
+export async function deleteTouristChallenge(id: string): Promise<Challenge[]> {
+  return ChallengesRepo.delete(id);
+}
+
+export async function fetchSystemNotifications(): Promise<Notifikasi[]> {
+  return NotifikasiRepo.getAll();
+}
+
+export async function broadcastSystemNotification(
+  notif: Omit<Notifikasi, 'id' | 'created_at'>
+): Promise<{ notifications: Notifikasi[]; newlyBroadcasted: Notifikasi }> {
+  const now = new Date().toISOString();
+  const newlyBroadcasted: Notifikasi = {
+    ...notif,
+    id: `notif-${Date.now().toString(36)}`,
+    created_at: now,
+    broadcasted_at: now,
+    is_delivered: true,
+    is_read: false,
+  };
+  const notifications = NotifikasiRepo.create(newlyBroadcasted);
+  return { notifications, newlyBroadcasted };
+}
+
+export async function fetchRegencyHeatmap(): Promise<RegencyHeatmapData[]> {
+  return RegencyHeatmapRepo.getAll();
+}
+
+// ============================================================================
+// 6. GROUP INVITE PUBLIK (/join)
+// ============================================================================
+export async function fetchGroupRoom(groupCode: string): Promise<GroupRoomPreview | null> {
   const code = groupCode.trim().toUpperCase();
   try {
     const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
     const groups: Record<string, GroupRoomPreview> = raw
-      ? JSON.parse(raw)
-      : INITIAL_GROUP_ROOMS;
-
+      ? { ...INITIAL_GROUP_ROOMS, ...JSON.parse(raw) }
+      : { ...INITIAL_GROUP_ROOMS };
     if (groups[code]) return groups[code];
-
-    const res = await apiClient
-      .get<GroupRoomPreview>(`/groups/${code}`)
-      .catch(() => null);
-    if (res?.data) {
-      groups[code] = res.data;
-      localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
-      return res.data;
-    }
-
-    if (INITIAL_GROUP_ROOMS[code]) return INITIAL_GROUP_ROOMS[code];
     return null;
   } catch {
     return INITIAL_GROUP_ROOMS[code] || null;
@@ -655,659 +498,83 @@ export async function voteGroupItem(
   const current = await fetchGroupRoom(code);
   if (!current) return null;
 
-  const updatedVoting = current.voting_items.map((item) => {
-    if (item.id !== itemId) return item;
-    return {
-      ...item,
-      votes_count: item.votes_count + 1,
-    };
-  });
+  const updatedVoting = current.voting_items.map((item) =>
+    item.id === itemId ? { ...item, votes_count: item.votes_count + 1 } : item
+  );
+  const maxVotes = Math.max(...updatedVoting.map((v) => v.votes_count));
+  const normalizedVoting = updatedVoting.map((v) => ({
+    ...v,
+    is_winner: v.votes_count === maxVotes && maxVotes > 0,
+  }));
 
   const updatedGroup: GroupRoomPreview = {
     ...current,
-    voting_items: updatedVoting,
+    voting_items: normalizedVoting,
   };
 
-  const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
-  const groups: Record<string, GroupRoomPreview> = raw
-    ? JSON.parse(raw)
-    : { ...INITIAL_GROUP_ROOMS };
-  groups[code] = updatedGroup;
-  localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
-
+  try {
+    const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
+    const groups: Record<string, GroupRoomPreview> = raw
+      ? { ...INITIAL_GROUP_ROOMS, ...JSON.parse(raw) }
+      : { ...INITIAL_GROUP_ROOMS };
+    groups[code] = updatedGroup;
+    localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
+  } catch {
+    // ignore
+  }
   return updatedGroup;
 }
 
 // ============================================================================
-// MITRA UMKM NAGARI & ESCROW
+// 7. SYSTEM HEALTH & BENCHMARK (Komplet Nol Undefined)
 // ============================================================================
-
-export async function fetchPartnersCatalog(): Promise<Partner[]> {
-  try {
-    const raw = localStorage.getItem(PARTNERS_STORAGE_KEY);
-    const cached: Partner[] | null = raw ? JSON.parse(raw) : null;
-    const res = await apiClient.get<Partner[]>('/partners');
-    if (Array.isArray(res.data) && res.data.length > 0) {
-      const merged = [...res.data];
-      for (const initPtr of INITIAL_PARTNERS) {
-        if (!merged.some((p) => p.id === initPtr.id)) {
-          merged.push(initPtr);
-        }
-      }
-      localStorage.setItem(PARTNERS_STORAGE_KEY, JSON.stringify(merged));
-      return merged;
-    }
-    return cached || INITIAL_PARTNERS;
-  } catch {
-    const raw = localStorage.getItem(PARTNERS_STORAGE_KEY);
-    if (raw) {
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return INITIAL_PARTNERS;
-      }
-    }
-    localStorage.setItem(PARTNERS_STORAGE_KEY, JSON.stringify(INITIAL_PARTNERS));
-    return INITIAL_PARTNERS;
-  }
-}
-
-export async function triggerWAWebhookSimulation(
-  action: '1' | '0'
-): Promise<WAWebhookResponse> {
-  const res = await apiClient.post<WAWebhookResponse>('/bookings/wa-webhook', {
-    action,
-  });
-  return res.data;
-}
-
-export async function savePartnerWithBridge(
-  partner: Partner,
-  currentList: Partner[]
-): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
-  const exists = currentList.some((p) => p.id === partner.id);
-  const updatedList = exists
-    ? currentList.map((p) => (p.id === partner.id ? partner : p))
-    : [partner, ...currentList];
-
-  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedList));
-
-  try {
-    if (exists) {
-      await apiClient.put(`/partners/${partner.id}`, partner);
-    } else {
-      await apiClient.post('/partners', partner);
-    }
-    return { updatedList, syncedRemote: true };
-  } catch {
-    return { updatedList, syncedRemote: false };
-  }
-}
-
-export async function deletePartnerWithBridge(
-  partnerId: string,
-  currentList: Partner[]
-): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
-  const updatedList = currentList.filter((p) => p.id !== partnerId);
-  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedList));
-
-  try {
-    await apiClient.delete(`/partners/${partnerId}`);
-    return { updatedList, syncedRemote: true };
-  } catch {
-    return { updatedList, syncedRemote: false };
-  }
-}
-
-export async function trackPartnerWaLead(partnerId: string): Promise<Partner | null> {
-  const currentPartners = await fetchPartnersCatalog();
-  const updatedPartners = currentPartners.map((p) => {
-    if (p.id !== partnerId) return p;
-    return {
-      ...p,
-      wa_click_count: (p.wa_click_count || 0) + 1,
-    };
-  });
-  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedPartners));
-  const target = updatedPartners.find((p) => p.id === partnerId) || null;
-  return target;
-}
-
-// ============================================================================
-// SIMULATOR INTERAKSI WA MITRA & CHAT P2P LANGSUNG (MINGGU 3 & REVISI P2P)
-// ============================================================================
-
-export async function processWASimulationAction(
-  action: '1' | '0' | 'chat',
-  partnerIdOrBookingCode: string,
-  inquiryMessage?: string
-): Promise<{
-  action: '1' | '0' | 'chat';
-  status: 'CONFIRMED' | 'REJECTED' | 'INQUIRY_SENT';
-  message: string;
-  wa_chat_url?: string;
-  updatedPartner?: Partner;
-}> {
-  const currentPartners = await fetchPartnersCatalog();
-  let targetPartner = currentPartners.find(
-    (p) => p.id === partnerIdOrBookingCode || p.name.includes(partnerIdOrBookingCode)
-  );
-
-  if (!targetPartner) {
-    targetPartner = currentPartners[0] || INITIAL_PARTNERS[0];
-  }
-
-  let returnStatus: 'CONFIRMED' | 'REJECTED' | 'INQUIRY_SENT' = 'CONFIRMED';
-  let resultMsg = '';
-  const waNumber = targetPartner.whatsapp.replace(/\D/g, '');
-  const defaultText = `Halo ${targetPartner.name}, saya melihat profil Anda di WISGO 360°. Apakah layanan ini tersedia untuk jadwal kunjungan saya?`;
-  const encodedText = encodeURIComponent(inquiryMessage || defaultText);
-  const waChatUrl = `https://wa.me/${waNumber}?text=${encodedText}`;
-
-  if (action === '1') {
-    returnStatus = 'CONFIRMED';
-    resultMsg = `Pesan konfirmasi ketersediaan dan rincian pembayaran langsung (P2P QRIS/Transfer Bank Nagari) berhasil dikirimkan oleh ${targetPartner.name} kepada wisatawan via WhatsApp.`;
-  } else if (action === '0') {
-    returnStatus = 'REJECTED';
-    resultMsg = `Mitra ${targetPartner.name} mengabarkan slot penuh/jadwal bentrok dengan ramah via WhatsApp. Alternatif mitra UMKM nagari sejenis telah disarankan.`;
-  } else {
-    returnStatus = 'INQUIRY_SENT';
-    resultMsg = `Permintaan informasi wisatawan berhasil diteruskan ke chat WhatsApp resmi mitra (+${targetPartner.whatsapp}). Transaksi 100% mandiri (P2P).`;
-  }
-
-  // Increment wa_click_count for the partner
-  const updatedPartners = currentPartners.map((p) => {
-    if (p.id !== targetPartner!.id) return p;
-    return {
-      ...p,
-      wa_click_count: (p.wa_click_count || 0) + 1,
-    };
-  });
-
-  safeSetLocalStorage(PARTNERS_STORAGE_KEY, JSON.stringify(updatedPartners));
-
-  try {
-    await apiClient.post('/bookings/wa-webhook', {
-      action,
-      partner_id: targetPartner.id,
-      inquiry: inquiryMessage,
-    });
-  } catch {
-    // Offline mode
-  }
-
-  const updatedTarget = updatedPartners.find((p) => p.id === targetPartner!.id);
-
-  return {
-    action,
-    status: returnStatus,
-    message: resultMsg,
-    wa_chat_url: waChatUrl,
-    updatedPartner: updatedTarget,
-  };
-}
-
-// ============================================================================
-// ANALITIK EKSEKUTIF, HEATMAP 19 KAB/KOTA & MEJA KURASI (MINGGU 3 & 4)
-// ============================================================================
-
-export async function fetchRegencyHeatmap(): Promise<RegencyHeatmapData[]> {
-  try {
-    const raw = localStorage.getItem(HEATMAP_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    const res = await apiClient.get<RegencyHeatmapData[]>('/analytics/heatmap').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      localStorage.setItem(HEATMAP_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Fallback
-  }
-  localStorage.setItem(HEATMAP_STORAGE_KEY, JSON.stringify(INITIAL_REGENCY_HEATMAP));
-  return INITIAL_REGENCY_HEATMAP;
-}
-
-export async function fetchCommunitySubmissions(): Promise<CommunityHiddenGemSubmission[]> {
-  try {
-    const raw = localStorage.getItem(SUBMISSIONS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    const res = await apiClient.get<CommunityHiddenGemSubmission[]>('/curation/submissions').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Fallback
-  }
-  localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(INITIAL_COMMUNITY_SUBMISSIONS));
-  return INITIAL_COMMUNITY_SUBMISSIONS;
-}
-
-export async function updateCommunitySubmission(
-  submissionId: string,
-  updates: Partial<CommunityHiddenGemSubmission>
-): Promise<CommunityHiddenGemSubmission[]> {
-  const current = await fetchCommunitySubmissions();
-  const updated = current.map((sub) => {
-    if (sub.id !== submissionId) return sub;
-    return { ...sub, ...updates };
-  });
-  safeSetLocalStorage(SUBMISSIONS_STORAGE_KEY, JSON.stringify(updated));
-
-  try {
-    await apiClient.put(`/curation/submissions/${submissionId}`, updates);
-  } catch {
-    // Offline mode
-  }
-  return updated;
-}
-
-export async function fetchDigitalPassportMetrics(): Promise<DigitalPassportMetrics> {
-  try {
-    const raw = localStorage.getItem(PASSPORT_METRICS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.total_gps_checkins_verified) return parsed;
-    }
-    const res = await apiClient.get<DigitalPassportMetrics>('/analytics/passport').catch(() => null);
-    if (res?.data?.total_gps_checkins_verified) {
-      localStorage.setItem(PASSPORT_METRICS_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Fallback
-  }
-  localStorage.setItem(PASSPORT_METRICS_KEY, JSON.stringify(INITIAL_DIGITAL_PASSPORT_METRICS));
-  return INITIAL_DIGITAL_PASSPORT_METRICS;
-}
-
-// ============================================================================
-// 1. KAMUS SAKU AUDIO MINANG (USE CASE ADMIN DISPAR)
-// ============================================================================
-
-export async function fetchMinangPhrases(): Promise<MinangAudioPhrase[]> {
-  try {
-    const raw = localStorage.getItem(PHRASES_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    const res = await apiClient.get<MinangAudioPhrase[]>('/culture/phrases').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      safeSetLocalStorage(PHRASES_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Offline mode
-  }
-  safeSetLocalStorage(PHRASES_STORAGE_KEY, JSON.stringify(INITIAL_MINANG_PHRASES));
-  return INITIAL_MINANG_PHRASES;
-}
-
-export async function saveMinangPhrase(phrase: MinangAudioPhrase): Promise<MinangAudioPhrase[]> {
-  const current = await fetchMinangPhrases();
-  const exists = current.some((p) => p.id === phrase.id);
-  const updated = exists
-    ? current.map((p) => (p.id === phrase.id ? phrase : p))
-    : [phrase, ...current];
-  safeSetLocalStorage(PHRASES_STORAGE_KEY, JSON.stringify(updated));
-  try {
-    await apiClient.post('/culture/phrases', phrase);
-  } catch {
-    // Offline mode
-  }
-  return updated;
-}
-
-export async function deleteMinangPhrase(phraseId: string): Promise<MinangAudioPhrase[]> {
-  const current = await fetchMinangPhrases();
-  const updated = current.filter((p) => p.id !== phraseId);
-  safeSetLocalStorage(PHRASES_STORAGE_KEY, JSON.stringify(updated));
-  try {
-    await apiClient.delete(`/culture/phrases/${phraseId}`);
-  } catch {
-    // Offline mode
-  }
-  return updated;
-}
-
-// ============================================================================
-// 2. KALENDER BUDAYA SUMATERA BARAT (19 KAB/KOTA)
-// ============================================================================
-
-export async function fetchCultureEvents(): Promise<CultureCalendarEvent[]> {
-  try {
-    const raw = localStorage.getItem(EVENTS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    const res = await apiClient.get<CultureCalendarEvent[]>('/culture/events').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      safeSetLocalStorage(EVENTS_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Offline mode
-  }
-  safeSetLocalStorage(EVENTS_STORAGE_KEY, JSON.stringify(INITIAL_CULTURE_EVENTS));
-  return INITIAL_CULTURE_EVENTS;
-}
-
-export async function saveCultureEvent(event: CultureCalendarEvent): Promise<CultureCalendarEvent[]> {
-  const current = await fetchCultureEvents();
-  const exists = current.some((e) => e.id === event.id);
-  const updated = exists
-    ? current.map((e) => (e.id === event.id ? event : e))
-    : [event, ...current];
-  safeSetLocalStorage(EVENTS_STORAGE_KEY, JSON.stringify(updated));
-  try {
-    await apiClient.post('/culture/events', event);
-  } catch {
-    // Offline mode
-  }
-  return updated;
-}
-
-export async function deleteCultureEvent(eventId: string): Promise<CultureCalendarEvent[]> {
-  const current = await fetchCultureEvents();
-  const updated = current.filter((e) => e.id !== eventId);
-  safeSetLocalStorage(EVENTS_STORAGE_KEY, JSON.stringify(updated));
-  try {
-    await apiClient.delete(`/culture/events/${eventId}`);
-  } catch {
-    // Offline mode
-  }
-  return updated;
-}
-
-// ============================================================================
-// 3. REKALKULASI GAODE RANKING DESTINASI WISATA
-// ============================================================================
-
-export const DEFAULT_GAODE_CONFIG: GaodeWeightConfig = {
-  satisfaction_weight: 35,
-  pungli_free_weight: 30,
-  medan_access_weight: 20,
-  visit_volume_weight: 15,
-};
-
-export async function fetchGaodeConfig(): Promise<GaodeWeightConfig> {
-  try {
-    const raw = localStorage.getItem(GAODE_CONFIG_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // fallback
-  }
-  return DEFAULT_GAODE_CONFIG;
-}
-
-export async function fetchGaodeRankings(): Promise<GaodeRankingItem[]> {
-  try {
-    const raw = localStorage.getItem(GAODE_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {
-    // fallback
-  }
-  safeSetLocalStorage(GAODE_STORAGE_KEY, JSON.stringify(INITIAL_GAODE_RANKINGS));
-  return INITIAL_GAODE_RANKINGS;
-}
-
-export async function recalculateGaodeRankings(config: GaodeWeightConfig): Promise<GaodeRankingItem[]> {
-  const current = await fetchGaodeRankings();
-  safeSetLocalStorage(GAODE_CONFIG_KEY, JSON.stringify(config));
-
-  // Hitung ulang skor setiap destinasi berdasarkan formula berbobot
-  const recalculated = current.map((item) => {
-    // normalisasi komponen ke skala 0 - 100
-    const satScore = item.satisfaction_rate ?? 95; // 0 - 100
-    const pungliScore = item.pungli_free_index ?? 98; // 0 - 100
-    const medanScore = ((item.medan_score ?? 4) / 5) * 100; // 0 - 100
-    // visit score logaritmik (maksimal 15.000 kunjungan)
-    const visitScore = Math.min(100, ((item.weekly_visits ?? 5000) / 12500) * 100);
-
-    const totalWeight =
-      config.satisfaction_weight +
-      config.pungli_free_weight +
-      config.medan_access_weight +
-      config.visit_volume_weight || 100;
-
-    const weightedScore =
-      (satScore * config.satisfaction_weight +
-        pungliScore * config.pungli_free_weight +
-        medanScore * config.medan_access_weight +
-        visitScore * config.visit_volume_weight) /
-      totalWeight;
-
-    // jitter sedikit agar terjadi dinamika pemeringkatan
-    const finalScore = Number(weightedScore.toFixed(1));
-
-    return {
-      ...item,
-      calculated_gaode_score: finalScore,
-      previous_rank: item.current_rank ?? item.previous_rank ?? 1,
-    };
-  });
-
-  // Urutkan menurun berdasarkan skor akhir
-  recalculated.sort((a, b) => (b.calculated_gaode_score || 0) - (a.calculated_gaode_score || 0));
-
-  // Perbarui current_rank dan tren
-  const finalized = recalculated.map((item, index) => {
-    const rank = index + 1;
-    let trend: 'up' | 'down' | 'same' = 'same';
-    const prevRank = item.previous_rank ?? rank;
-    if (rank < prevRank) trend = 'up';
-    else if (rank > prevRank) trend = 'down';
-
-    return {
-      ...item,
-      current_rank: rank,
-      trend,
-    };
-  });
-
-  safeSetLocalStorage(GAODE_STORAGE_KEY, JSON.stringify(finalized));
-  return finalized;
-}
-
-// ============================================================================
-// 4. PANTAU OPEN TRIP / CARI BARENGAN WISATAWAN
-// ============================================================================
-
-export async function fetchOpenTrips(): Promise<OpenTripItem[]> {
-  try {
-    const raw = localStorage.getItem(OPENTRIPS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-    const res = await apiClient.get<OpenTripItem[]>('/trips/open').catch(() => null);
-    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-      safeSetLocalStorage(OPENTRIPS_STORAGE_KEY, JSON.stringify(res.data));
-      return res.data;
-    }
-  } catch {
-    // Offline mode
-  }
-  safeSetLocalStorage(OPENTRIPS_STORAGE_KEY, JSON.stringify(INITIAL_OPEN_TRIPS));
-  return INITIAL_OPEN_TRIPS;
-}
-
-export async function updateOpenTripStatus(tripId: string, status: OpenTripStatus): Promise<OpenTripItem[]> {
-  const current = await fetchOpenTrips();
-  const updated: OpenTripItem[] = current.map((t) => (t.id === tripId ? { ...t, status } : t));
-  safeSetLocalStorage(OPENTRIPS_STORAGE_KEY, JSON.stringify(updated));
-  try {
-    await apiClient.put(`/trips/open/${tripId}/status`, { status });
-  } catch {
-    // Offline mode
-  }
-  return updated;
-}
-
-// ============================================================================
-// 5. HEALTH & BENCHMARK SISTEM ENDPOINT
-// ============================================================================
-
 export async function fetchSystemBenchmark(): Promise<SystemBenchmarkMetrics> {
-  try {
-    const raw = localStorage.getItem(BENCHMARK_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.backend_version) return parsed;
-    }
-  } catch {
-    // fallback
-  }
-  safeSetLocalStorage(BENCHMARK_STORAGE_KEY, JSON.stringify(INITIAL_SYSTEM_BENCHMARK));
-  return INITIAL_SYSTEM_BENCHMARK;
+  return SystemBenchmarkRepo.get();
 }
 
-export async function runSystemBenchmark(concurrency: number = 20): Promise<SystemBenchmarkMetrics> {
-  const current = await fetchSystemBenchmark();
-
-  // Simulasi pengujian latensi query spasial PostGIS (<100ms) & Go Gin
-  const latencyP50 = Math.floor(14 + Math.random() * 8); // 14-22 ms
-  const latencyP95 = Math.floor(35 + Math.random() * 15); // 35-50 ms
-  const latencyP99 = Math.floor(65 + Math.random() * 20); // 65-85 ms
-  const throughput = Math.floor(480 + Math.random() * 150); // 480-630 QPS
-  const spatialMs = Math.floor(32 + Math.random() * 25); // 32-57 ms (<100ms)
+export async function runSystemBenchmark(
+  concurrency: number = 20
+): Promise<SystemBenchmarkMetrics> {
+  const current = SystemBenchmarkRepo.get();
+  const latencyP50 = Math.floor(14 + Math.random() * 8);
+  const latencyP95 = Math.floor(34 + Math.random() * 14);
+  const latencyP99 = Math.floor(62 + Math.random() * 20);
+  const throughput = Math.floor(480 + Math.random() * 160);
+  const spatialMs = Math.floor(28 + Math.random() * 22);
+  const memMb = Math.floor(118 + Math.random() * 18);
 
   const newRun: BenchmarkRunResult = {
     run_id: `run-${Date.now()}`,
     timestamp: new Date().toISOString(),
+    concurrency,
+    total_requests: concurrency * 10,
     latency_ms: latencyP50,
-    memory_usage_mb: 128,
-    active_sessions: concurrency,
-    status: 'OPTIMAL',
-    total_requests: 100,
+    latency_p50_ms: latencyP50,
+    latency_p95_ms: latencyP95,
+    latency_p99_ms: latencyP99,
+    throughput_qps: throughput,
+    error_rate_pct: 0.0,
+    memory_usage_mb: memMb,
+    status: latencyP95 < 80 ? 'OPTIMAL' : 'NORMAL',
   };
 
   const updated: SystemBenchmarkMetrics = {
     ...current,
-    server_status: 'ONLINE',
     system_status: 'OPERATIONAL',
     api_response_time_ms: latencyP50,
-    benchmark_history: [newRun, ...(current.benchmark_history || []).slice(0, 4)],
+    go_engine_latency_ms: latencyP50,
+    postgres_spatial_query_ms: spatialMs,
+    requests_per_second: throughput,
+    memory_allocated_mb: memMb,
+    last_stress_test_date: new Date().toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }) + ' WIB',
+    benchmark_history: [newRun, ...(current.benchmark_history || []).slice(0, 7)],
   };
 
-  safeSetLocalStorage(BENCHMARK_STORAGE_KEY, JSON.stringify(updated));
-  return updated;
+  return SystemBenchmarkRepo.save(updated);
 }
-
-// ============================================================================
-// USE CASE ADMIN DISPAR: NOMOR DARURAT (INPUT & LIHAT LAPORAN)
-// ============================================================================
-
-export async function fetchEmergencyContacts(): Promise<EmergencyContactNumber[]> {
-  try {
-    const raw = localStorage.getItem(EMERGENCY_CONTACTS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {
-    // fallback
-  }
-  safeSetLocalStorage(EMERGENCY_CONTACTS_KEY, JSON.stringify(INITIAL_EMERGENCY_CONTACTS));
-  return INITIAL_EMERGENCY_CONTACTS;
-}
-
-export async function saveEmergencyContact(contact: EmergencyContactNumber): Promise<EmergencyContactNumber[]> {
-  const current = await fetchEmergencyContacts();
-  const exists = current.some((c) => c.id === contact.id);
-  const updated = exists
-    ? current.map((c) => (c.id === contact.id ? { ...contact, updated_at: new Date().toISOString() } : c))
-    : [{ ...contact, updated_at: new Date().toISOString() }, ...current];
-  safeSetLocalStorage(EMERGENCY_CONTACTS_KEY, JSON.stringify(updated));
-  return updated;
-}
-
-export async function deleteEmergencyContact(id: string): Promise<EmergencyContactNumber[]> {
-  const current = await fetchEmergencyContacts();
-  const updated = current.filter((c) => c.id !== id);
-  safeSetLocalStorage(EMERGENCY_CONTACTS_KEY, JSON.stringify(updated));
-  return updated;
-}
-
-// ============================================================================
-// USE CASE ADMIN DISPAR: BUAT TANTANGAN & TENTUKAN REWARD
-// ============================================================================
-
-export async function fetchTouristChallenges(): Promise<TouristChallenge[]> {
-  try {
-    const raw = localStorage.getItem(CHALLENGES_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {
-    // fallback
-  }
-  safeSetLocalStorage(CHALLENGES_STORAGE_KEY, JSON.stringify(INITIAL_TOURIST_CHALLENGES));
-  return INITIAL_TOURIST_CHALLENGES;
-}
-
-export async function saveTouristChallenge(challenge: TouristChallenge): Promise<TouristChallenge[]> {
-  const current = await fetchTouristChallenges();
-  const exists = current.some((c) => c.id === challenge.id);
-  const updated = exists
-    ? current.map((c) => (c.id === challenge.id ? { ...challenge, updated_at: new Date().toISOString() } : c))
-    : [{ ...challenge, updated_at: new Date().toISOString() }, ...current];
-  safeSetLocalStorage(CHALLENGES_STORAGE_KEY, JSON.stringify(updated));
-  return updated;
-}
-
-export async function deleteTouristChallenge(id: string): Promise<TouristChallenge[]> {
-  const current = await fetchTouristChallenges();
-  const updated = current.filter((c) => c.id !== id);
-  safeSetLocalStorage(CHALLENGES_STORAGE_KEY, JSON.stringify(updated));
-  return updated;
-}
-
-// ============================================================================
-// USE CASE ADMIN DISPAR: SIARAN NOTIFIKASI SISTEM KE WISATAWAN
-// ============================================================================
-
-export async function fetchSystemNotifications(): Promise<SystemNotification[]> {
-  try {
-    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {
-    // fallback
-  }
-  safeSetLocalStorage(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(INITIAL_SYSTEM_NOTIFICATIONS));
-  return INITIAL_SYSTEM_NOTIFICATIONS;
-}
-
-export async function broadcastSystemNotification(
-  notif: Omit<SystemNotification, 'id' | 'broadcasted_at' | 'is_delivered'>
-): Promise<{ notifications: SystemNotification[]; newlyBroadcasted: SystemNotification }> {
-  const current = await fetchSystemNotifications();
-  const newNotif: SystemNotification = {
-    ...notif,
-    id: `notif-${Date.now().toString(36)}`,
-    broadcasted_at: new Date().toISOString(),
-    is_delivered: true,
-  };
-  const updated = [newNotif, ...current];
-  safeSetLocalStorage(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updated));
-  return { notifications: updated, newlyBroadcasted: newNotif };
-}
-
-
-
-

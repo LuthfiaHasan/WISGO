@@ -1,29 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Activity,
   Server,
   Database,
-  Wifi,
   ShieldCheck,
   Zap,
-  Play,
   CheckCircle2,
-  AlertCircle,
   RefreshCw,
-  Clock,
-  Cpu,
-  Layers,
   HardDrive,
-  BarChart2,
 } from 'lucide-react';
-import {
-  BenchmarkRunResult,
-  SystemBenchmarkMetrics,
-} from '../types/contract';
-import {
-  fetchSystemBenchmark,
-  runSystemBenchmark,
-} from '../services/api';
+import { SystemBenchmarkMetrics } from '../types/contract';
+import { fetchSystemBenchmark, runSystemBenchmark } from '../services/api';
 
 interface SystemHealthBenchmarkSubTabProps {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -33,25 +19,20 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
   showToast,
 }) => {
   const [metrics, setMetrics] = useState<SystemBenchmarkMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
   const [benchmarking, setBenchmarking] = useState(false);
   const [concurrencyChoice, setConcurrencyChoice] = useState<number>(20);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchSystemBenchmark();
-      setMetrics(data);
-    } catch {
-      showToast('Gagal memuat metrik sistem backend.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await fetchSystemBenchmark();
+        setMetrics(data);
+      } catch {
+        showToast('Gagal memuat metrik sistem backend.', 'error');
+      }
+    };
     loadData();
-  }, []);
+  }, [showToast]);
 
   const handleRunBenchmark = async () => {
     setBenchmarking(true);
@@ -60,14 +41,13 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
         `Menjalankan benchmark beban ${concurrencyChoice} concurrent connections...`,
         'info'
       );
-      // Run benchmark test
-      await new Promise((r) => setTimeout(r, 1200));
+      await new Promise((r) => setTimeout(r, 700));
       const updated = await runSystemBenchmark(concurrencyChoice);
       setMetrics(updated);
       const latest = updated.benchmark_history?.[0];
       if (latest) {
         showToast(
-          `Benchmark selesai: p50=${latest.latency_p50_ms || latest.latency_ms || 28}ms, p95=${latest.latency_p95_ms || 45}ms, Throughput=${latest.throughput_qps || latest.requests_per_second || 350} QPS (Error 0%)`,
+          `Benchmark selesai: p50=${latest.latency_p50_ms}ms, p95=${latest.latency_p95_ms}ms, Throughput=${latest.throughput_qps} QPS (Error ${latest.error_rate_pct}%)`,
           'success'
         );
       } else {
@@ -88,7 +68,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
     );
   }
 
-  const isSpatialOptimal = (metrics.postgres_spatial_query_ms ?? 24) < 100;
+  const isSpatialOptimal = metrics.postgres_spatial_query_ms < 100;
 
   return (
     <div className="space-y-6">
@@ -97,7 +77,6 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
         aria-label="Ringkasan Status Health dan Performa Backend"
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        {/* KPI 1: Go Gin Server Engine */}
         <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
@@ -106,17 +85,15 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
             <Server className="w-4 h-4 text-[#234B24]" />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#1E9E5A]">
-              ONLINE
-            </span>
+            <span className="text-3xl font-extrabold text-[#1E9E5A]">ONLINE</span>
             <span className="w-2.5 h-2.5 rounded-full bg-[#1E9E5A] animate-ping" />
           </div>
           <p className="mt-1 text-xs text-[#4A5248]">
-            Latensi Inti: <strong>{metrics.go_engine_latency_ms} ms</strong> (Port :8080)
+            Latensi Inti: <strong>{metrics.go_engine_latency_ms} ms</strong> (Uptime{' '}
+            {metrics.server_uptime_pct}%)
           </p>
         </div>
 
-        {/* KPI 2: Query Spasial PostGIS (<100ms) */}
         <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
@@ -129,11 +106,10 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
               {metrics.postgres_spatial_query_ms} ms
             </span>
             <span
-              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                isSpatialOptimal
+              className={`text-xs font-bold px-2 py-0.5 rounded-full ${isSpatialOptimal
                   ? 'bg-[#1E9E5A]/15 text-[#166534]'
                   : 'bg-yellow-100 text-yellow-800'
-              }`}
+                }`}
             >
               Target &lt;100ms
             </span>
@@ -143,28 +119,26 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
           </p>
         </div>
 
-        {/* KPI 3: Kecepatan Bundel 360° */}
         <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#4A5248]">
-              Bundel Offline 360°
+              Pemuatan Panorama 360°
             </span>
             <HardDrive className="w-4 h-4 text-[#234B24]" />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-3xl font-mono font-extrabold text-[#F26B4B]">
-              {metrics.offline_360_bundle_speed_sec} dtk
+              {metrics.panorama_load_speed_sec} dtk
             </span>
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#F26B4B]/15 text-[#D95637]">
-              Pocket Cache
+              Pure 360°
             </span>
           </div>
           <p className="mt-1 text-xs text-[#4A5248]">
-            Pemuatan panorama equirectangular 60 FPS
+            Pemuatan panorama equirectangular 60 FPS &amp; Denah 2D
           </p>
         </div>
 
-        {/* KPI 4: Rate-Limiting Protection */}
         <div className="bg-[#E4E9DA] p-5 rounded-3xl border border-[#CFD8BE] shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#234B24]">
@@ -173,24 +147,19 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
             <ShieldCheck className="w-4 h-4 text-[#234B24]" />
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold text-[#234B24]">
-              Proteksi Aktif
-            </span>
+            <span className="text-2xl font-extrabold text-[#234B24]">Proteksi Aktif</span>
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#234B24] text-[#F6F3EC]">
               DDoS Shield
             </span>
           </div>
           <p className="mt-1 text-xs text-[#1B1F1A]">
-            120 req/menit per IP (Token Bucket Algorithm)
+            Cache Hit Rate {metrics.cache_hit_rate_pct}% · 120 req/menit per IP
           </p>
         </div>
       </section>
 
       {/* Control Panel Uji Benchmark Endpoint */}
-      <section
-        aria-label="Panel Uji Benchmark Endpoint Terpadu"
-        className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-5"
-      >
+      <section className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm shrink-0">
@@ -199,21 +168,24 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-extrabold text-[#1B1F1A]">
-                  Simulator Uji Stres &amp; Benchmark Bebas Hambatan (HTTP Endpoint Test)
+                  Simulator Uji Stres &amp; Benchmark Endpoint WISGO
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E4E9DA] text-[#234B24]">
                   Benchmarking Suite
                 </span>
               </div>
               <p className="text-xs text-[#4A5248] mt-0.5">
-                Menguji ketahanan Go Gin REST API, latensi respons kueri spasial PostgreSQL PostGIS, dan kapasitas *concurrency*.
+                Menguji ketahanan Go Gin REST API, latensi kueri spasial PostGIS, dan kapasitas beban serentak.
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <label htmlFor="concurrency-select" className="text-xs font-bold text-[#1B1F1A] whitespace-nowrap">
+              <label
+                htmlFor="concurrency-select"
+                className="text-xs font-bold text-[#1B1F1A] whitespace-nowrap"
+              >
                 Beban Bersamaan:
               </label>
               <select
@@ -225,7 +197,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
                 <option value={10}>10 Concurrent (Beban Ringan)</option>
                 <option value={20}>20 Concurrent (Standar Lapangan)</option>
                 <option value={50}>50 Concurrent (Musim Libur)</option>
-                <option value={100}>100 Concurrent (Puncak Lebaran/Festival)</option>
+                <option value={100}>100 Concurrent (Puncak Festival)</option>
               </select>
             </div>
 
@@ -236,26 +208,19 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
               className="min-h-[46px] px-6 py-2.5 rounded-pill bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-2 shadow-sm transition disabled:opacity-50"
             >
               <RefreshCw
-                className={`w-4 h-4 text-[#F26B4B] ${
-                  benchmarking ? 'animate-spin' : ''
-                }`}
+                className={`w-4 h-4 text-[#F26B4B] ${benchmarking ? 'animate-spin' : ''}`}
               />
               <span>
-                {benchmarking
-                  ? 'Menjalankan Uji Beban...'
-                  : '⚡ Jalankan Uji Benchmark Sekarang'}
+                {benchmarking ? 'Menjalankan Uji Beban...' : 'Jalankan Uji Benchmark Sekarang'}
               </span>
             </button>
           </div>
         </div>
 
-        {/* Ringkasan Arsitektur Spesifikasi Teknis */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs">
           <div>
             <span className="text-[#767676]">Versi Backend &amp; Runtime:</span>
-            <p className="font-extrabold text-[#1B1F1A] mt-0.5">
-              {metrics.backend_version}
-            </p>
+            <p className="font-extrabold text-[#1B1F1A] mt-0.5">{metrics.backend_version}</p>
           </div>
           <div>
             <span className="text-[#767676]">Alokasi Memori Sistem:</span>
@@ -280,7 +245,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
               Riwayat Pengujian Benchmark Endpoint &amp; Telemetri Latensi
             </h4>
             <p className="text-xs text-[#4A5248] mt-0.5">
-              Distribusi persentil waktu respons (p50 median, p95, p99) serta kepastian 0% kegagalan transaksi.
+              Uji terakhir: {metrics.last_stress_test_date} · {metrics.database_connection_pool}
             </p>
           </div>
           <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#1E9E5A]/15 text-[#166534]">
@@ -295,22 +260,20 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
                 <th className="py-3.5 px-4">Waktu Uji</th>
                 <th className="py-3.5 px-4 text-center">Total Requests</th>
                 <th className="py-3.5 px-4 text-center">Concurrency</th>
-                <th className="py-3.5 px-4 text-right">Latensi p50 (Median)</th>
+                <th className="py-3.5 px-4 text-right">Latensi p50</th>
                 <th className="py-3.5 px-4 text-right">Latensi p95</th>
                 <th className="py-3.5 px-4 text-right">Latensi p99</th>
-                <th className="py-3.5 px-4 text-center">Tingkat Error</th>
+                <th className="py-3.5 px-4 text-center">Error Rate</th>
                 <th className="py-3.5 px-4 text-right">Throughput QPS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E4E9DA]">
-              {(metrics.benchmark_history || []).map((run, idx) => (
-                <tr key={idx} className="hover:bg-[#F6F3EC]/70 transition">
+              {(metrics.benchmark_history || []).map((run) => (
+                <tr key={run.run_id} className="hover:bg-[#F6F3EC]/70 transition">
                   <td className="py-3.5 px-4 font-mono text-[#4A5248]">
                     {new Date(run.timestamp).toLocaleString('id-ID')}
                   </td>
-                  <td className="py-3.5 px-4 text-center font-bold">
-                    {run.total_requests} req
-                  </td>
+                  <td className="py-3.5 px-4 text-center font-bold">{run.total_requests} req</td>
                   <td className="py-3.5 px-4 text-center">
                     <span className="px-2 py-0.5 rounded-full bg-[#E4E9DA] text-[#234B24] font-bold">
                       {run.concurrency} worker

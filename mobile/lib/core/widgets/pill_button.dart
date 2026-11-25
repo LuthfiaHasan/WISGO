@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/colors.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_tokens.dart';
 
-/// PillButton - Tombol Utama CTA 52px sesuai standar desain.md
+/// PillButton - Tombol Utama CTA 52px sesuai standar desain.md (Section 05.1)
 class PillButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
@@ -14,8 +15,8 @@ class PillButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onPressed,
-    this.backgroundColor = AppColors.green800,
-    this.textColor = Colors.white,
+    this.backgroundColor = AppColors.forest,
+    this.textColor = AppColors.cream,
     this.icon,
     this.isFullWidth = true,
   });
@@ -28,36 +29,40 @@ class PillButton extends StatelessWidget {
       children: [
         if (icon != null) ...[
           Icon(icon, color: textColor, size: 20),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
         ],
         Text(
           label,
-          style: TextStyle(
+          style: AppTypography.title.copyWith(
             color: textColor,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
           ),
         ),
       ],
     );
 
-    return SizedBox(
-      height: 52, // Standar tinggi 52px wajib sesuai desain.md
-      width: isFullWidth ? double.infinity : null,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26), // Bentuk Pill sempurna
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Semantics(
+        button: true,
+        label: label,
+        child: SizedBox(
+          height: 52, // Standar tinggi 52px wajib sesuai desain.md
+          width: isFullWidth ? double.infinity : null,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: backgroundColor,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: AppRadius.rPill, // Bentuk Pill sempurna
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+            ),
+            onPressed: onPressed,
+            child: buttonContent,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
-        onPressed: onPressed,
-        child: buttonContent,
       ),
     );
   }
 }
-

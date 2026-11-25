@@ -1,58 +1,53 @@
-import React, { useEffect, useState, useId } from 'react';
+import React, { useId, useState } from 'react';
 import {
-  Radio,
-  ShieldAlert,
   AlertTriangle,
-  LifeBuoy,
-  CheckCircle2,
-  Clock,
-  Phone,
-  MapPin,
-  ExternalLink,
   Battery,
-  Wifi,
-  Search,
-  Check,
-  ChevronRight,
-  Eye,
-  FileText,
-  AlertCircle,
-  Truck,
-  ArrowRight,
-  X,
-  Save,
-  Navigation,
+  CheckCircle2,
   CloudSun,
-  Wind,
-  Thermometer,
   Droplets,
-  WifiOff,
+  Edit3,
+  ExternalLink,
+  FileText,
+  Flashlight,
+  LifeBuoy,
+  MapPin,
+  Navigation,
+  Phone,
+  RefreshCw,
+  Search,
   Send,
+  ShieldAlert,
+  Thermometer,
+  Truck,
+  Volume2,
+  Wind,
+  X,
 } from 'lucide-react';
 import {
+  HazardAlert,
   HazardSeverity,
-  HazardZoneAlert,
-  PungliCategoryType,
   PungliReport,
   PungliStatus,
-  SosEmergencyStatus,
-  SosEmergencyTicket,
+  SosSignal,
+  SosStatus,
   WeatherMonitoringItem,
 } from '../types/contract';
 import {
-  fetchHazardAlerts,
-  fetchPungliReports,
-  fetchSosTickets,
-  updateHazardAlert,
-  updatePungliReportStatus,
-  updateSosTicketStatus,
-} from '../services/api';
+  HAZARD_SEVERITIES,
+  PUNGLI_STATUSES,
+  TOLL_FREE_EMERGENCY_NUMBERS,
+} from '../data/mockDestinations';
+import {
+  HazardAlertsRepo,
+  PungliReportsRepo,
+  SosSignalsRepo,
+  WeatherMonitoringRepo,
+} from '../services/dbRepository';
 import { EmergencyContactsManager } from '../components/EmergencyContactsManager';
-import { WeatherMonitoringRepo } from '../services/dbRepository';
 
 interface CommandCenterPageProps {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
-  onUpdateBadgeCount?: (openPungli: number, openSos: number) => void;
+  onUpdateBadgeCount?: (openPungli: number, activeHazardCount: number) => void;
 }
 
 export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
@@ -60,323 +55,197 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   onUpdateBadgeCount,
 }) => {
   const searchInputId = useId();
-  const statusFilterId = useId();
-  const categoryFilterId = useId();
-  const sarUnitInputId = useId();
-  const hazardSeverityId = useId();
-  const hazardMsgId = useId();
-  const hazardDetourId = useId();
-
-  // Active Tab: 4 Operational Panels
   const [activeTab, setActiveTab] = useState<'pungli' | 'sos' | 'hazard' | 'weather'>('pungli');
-  const [sosSubView, setSosSubView] = useState<'view_reports' | 'input_contacts'>('view_reports');
 
-  // Data States
-  const [pungliReports, setPungliReports] = useState<PungliReport[]>([]);
-  const [sosTickets, setSosTickets] = useState<SosEmergencyTicket[]>([]);
-  const [hazardAlerts, setHazardAlerts] = useState<HazardZoneAlert[]>([]);
+  const [pungliReports, setPungliReports] = useState<PungliReport[]>(() =>
+    PungliReportsRepo.getAll()
+  );
+  const [sosSignals, setSosSignals] = useState<SosSignal[]>(() => SosSignalsRepo.getAll());
+  const [hazardAlerts, setHazardAlerts] = useState<HazardAlert[]>(() =>
+    HazardAlertsRepo.getAll()
+  );
   const [weatherList, setWeatherList] = useState<WeatherMonitoringItem[]>(() =>
     WeatherMonitoringRepo.getAll()
   );
-  const [loading, setLoading] = useState(true);
+  const [isRefreshingMeteo, setIsRefreshingMeteo] = useState(false);
 
-  const extremeWeatherCount = weatherList.filter((w) => w.is_extreme_weather).length;
+  // Filters Tab 1
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | PungliStatus>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'pungli' | 'fasilitas'>('all');
+
+  // Modals
+  const [selectedPungli, setSelectedPungli] = useState<PungliReport | null>(null);
+  const [adminNoteInput, setAdminNoteInput] = useState('');
+
+  const [selectedSos, setSelectedSos] = useState<SosSignal | null>(null);
+  const [assignedSarUnit, setAssignedSarUnit] = useState('');
+  const [selectedSosStatus, setSelectedSosStatus] = useState<SosStatus>('Tim SAR Meluncur');
+
+  const [selectedHazard, setSelectedHazard] = useState<HazardAlert | null>(null);
+  const [hazardSeverity, setHazardSeverity] = useState<HazardSeverity>('Normal');
+  const [hazardMessage, setHazardMessage] = useState('');
+  const [hazardDetour, setHazardDetour] = useState('');
+
+  const [editingWeather, setEditingWeather] = useState<WeatherMonitoringItem | null>(null);
+  const [weatherCondInput, setWeatherCondInput] = useState('');
+  const [weatherTempInput, setWeatherTempInput] = useState(26);
+  const [weatherExtremeInput, setWeatherExtremeInput] = useState(false);
+  const [weatherWarnInput, setWeatherWarnInput] = useState('');
+
+  const syncSidebarBadge = (reports: PungliReport[], hazards: HazardAlert[]) => {
+    const openPungli = reports.filter((r) => r.status !== 'Selesai').length;
+    const activeHazards = hazards.filter(
+      (h) => h.severity === 'Siaga' || h.severity === 'Awas Tutup Total'
+    ).length;
+    onUpdateBadgeCount?.(openPungli, activeHazards);
+  };
+
+  const handleUpdatePungliStatus = (newStatus: PungliStatus) => {
+    if (!selectedPungli) return;
+    const updated = PungliReportsRepo.save({
+      ...selectedPungli,
+      status: newStatus,
+      admin_action_notes: adminNoteInput.trim() || selectedPungli.admin_action_notes,
+    });
+    setPungliReports(updated);
+    setSelectedPungli(null);
+    syncSidebarBadge(updated, hazardAlerts);
+    showToast(`Status aduan ${selectedPungli.ticket_code} diperbarui menjadi: ${newStatus}`, 'success');
+  };
+
+  const handleUpdateSosStatus = () => {
+    if (!selectedSos) return;
+    const updated = SosSignalsRepo.save({
+      ...selectedSos,
+      status: selectedSosStatus,
+      sar_unit_assigned: assignedSarUnit.trim() || selectedSos.sar_unit_assigned,
+    });
+    setSosSignals(updated);
+    setSelectedSos(null);
+    showToast(`Log koordinasi SOS ${selectedSos.sos_code} diperbarui: ${selectedSosStatus}`, 'success');
+  };
+
+  const handleSaveHazardAlert = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedHazard) return;
+    const updated = HazardAlertsRepo.save({
+      ...selectedHazard,
+      severity: hazardSeverity,
+      message: hazardMessage.trim(),
+      detour_route: hazardDetour.trim(),
+    });
+    setHazardAlerts(updated);
+    setSelectedHazard(null);
+    syncSidebarBadge(pungliReports, updated);
+    showToast(`Status koridor "${selectedHazard.location}" diperbarui: ${hazardSeverity}`, 'success');
+  };
+
+  const handleRefreshOpenMeteo = async () => {
+    setIsRefreshingMeteo(true);
+    try {
+      const { items, liveSuccessCount } = await WeatherMonitoringRepo.refreshFromOpenMeteo();
+      setWeatherList(items);
+      showToast(
+        liveSuccessCount > 0
+          ? `Cuaca berhasil disegarkan langsung dari Open-Meteo Live (${liveSuccessCount}/${items.length} wilayah).`
+          : 'Koneksi Open-Meteo tidak tersedia — menampilkan Regional Cache tersinkronisasi.',
+        liveSuccessCount > 0 ? 'success' : 'info'
+      );
+    } finally {
+      setIsRefreshingMeteo(false);
+    }
+  };
+
+  const handleSaveWeatherEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWeather) return;
+    const updated = WeatherMonitoringRepo.updateCondition(
+      editingWeather.id,
+      weatherCondInput.trim() || editingWeather.condition,
+      Number(weatherTempInput),
+      weatherExtremeInput,
+      weatherWarnInput.trim()
+    );
+    setWeatherList(updated);
+    setEditingWeather(null);
+    showToast(`Kondisi cuaca ${editingWeather.city_regency} berhasil diperbarui.`, 'success');
+  };
 
   const handleBroadcastWeatherHazard = (wtr: WeatherMonitoringItem) => {
     const updatedHazards = WeatherMonitoringRepo.broadcastHazardAlert(wtr);
     setHazardAlerts(updatedHazards);
+    syncSidebarBadge(pungliReports, updatedHazards);
     showToast(
-      `Peringatan Cuaca Ekstrem (${wtr.condition}) untuk ${wtr.destination_name} berhasil disiarkan ke radar wisatawan!`,
+      `Peringatan cuaca (${wtr.condition}) untuk ${wtr.destination_name} berhasil disiarkan ke Tab Jalur Rawan!`,
       'success'
     );
   };
 
-  // Tab 1 Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-
-  // Selected Pungli Ticket for Action Modal
-  const [selectedPungli, setSelectedPungli] = useState<PungliReport | null>(null);
-  const [adminNoteInput, setAdminNoteInput] = useState('');
-  const [isUpdatingPungli, setIsUpdatingPungli] = useState(false);
-
-  // Selected SOS Ticket for Dispatch Modal
-  const [selectedSos, setSelectedSos] = useState<SosEmergencyTicket | null>(null);
-  const [assignedSarUnit, setAssignedSarUnit] = useState('');
-  const [selectedSosStatus, setSelectedSosStatus] =
-    useState<SosEmergencyStatus>('Tim SAR Dikerahkan');
-  const [isUpdatingSos, setIsUpdatingSos] = useState(false);
-
-  // Selected Hazard Alert for Status Modal
-  const [selectedHazard, setSelectedHazard] = useState<HazardZoneAlert | null>(null);
-  const [hazardSeverity, setHazardSeverity] = useState<HazardSeverity>('Aman Terkendali');
-  const [hazardMessage, setHazardMessage] = useState('');
-  const [hazardDetour, setHazardDetour] = useState('');
-
-  // Load Data
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [reports, tickets, hazards] = await Promise.all([
-        fetchPungliReports(),
-        fetchSosTickets(),
-        fetchHazardAlerts(),
-      ]);
-      setPungliReports(reports);
-      setSosTickets(tickets);
-      setHazardAlerts(hazards);
-
-      const openPungli = reports.filter((r) => r.status !== 'Selesai').length;
-      const openSos = tickets.filter((t) => t.status !== 'Penanganan Selesai').length;
-      onUpdateBadgeCount?.(openPungli, openSos);
-    } catch {
-      showToast('Gagal memuat data pusat komando.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // Update Pungli Status Action
-  const handleUpdatePungliStatus = async (newStatus: PungliStatus) => {
-    if (!selectedPungli) return;
-    setIsUpdatingPungli(true);
-    try {
-      const updated = await updatePungliReportStatus(
-        selectedPungli.id,
-        newStatus,
-        adminNoteInput.trim() || selectedPungli.admin_notes
-      );
-      setPungliReports(updated);
-      setSelectedPungli(null);
-      const openCount = updated.filter((r) => r.status !== 'Selesai').length;
-      const openSosCount = sosTickets.filter((t) => t.status !== 'Penanganan Selesai').length;
-      onUpdateBadgeCount?.(openCount, openSosCount);
-      showToast(`Status laporan berhasil diubah menjadi: ${newStatus}`, 'success');
-    } catch {
-      showToast('Gagal memperbarui status laporan pungli.', 'error');
-    } finally {
-      setIsUpdatingPungli(false);
-    }
-  };
-
-  // Update SOS Status Action
-  const handleUpdateSosStatus = async () => {
-    if (!selectedSos) return;
-    setIsUpdatingSos(true);
-    try {
-      const updated = await updateSosTicketStatus(
-        selectedSos.id,
-        selectedSosStatus,
-        assignedSarUnit.trim() || undefined
-      );
-      setSosTickets(updated);
-      setSelectedSos(null);
-      const openSosCount = updated.filter((t) => t.status !== 'Penanganan Selesai').length;
-      const openPungliCount = pungliReports.filter((r) => r.status !== 'Selesai').length;
-      onUpdateBadgeCount?.(openPungliCount, openSosCount);
-      showToast(
-        `Status koordinasi SAR berhasil diperbarui: ${selectedSosStatus}`,
-        'success'
-      );
-    } catch {
-      showToast('Gagal memperbarui status darurat SAR.', 'error');
-    } finally {
-      setIsUpdatingSos(false);
-    }
-  };
-
-  // Update Hazard Zone Alert Action
-  const handleSaveHazardAlert = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedHazard) return;
-    try {
-      const updated = await updateHazardAlert(
-        selectedHazard.id,
-        hazardSeverity,
-        hazardMessage.trim(),
-        hazardDetour.trim()
-      );
-      setHazardAlerts(updated);
-      setSelectedHazard(null);
-      showToast(
-        `Status jalur rawan "${selectedHazard.location}" berhasil diperbarui: ${hazardSeverity}`,
-        'success'
-      );
-    } catch {
-      showToast('Gagal memperbarui peringatan jalur rawan.', 'error');
-    }
-  };
-
-  // Helper Stats Tab 1
-  const countBaru = pungliReports.filter((r) => r.status === 'Laporan Baru').length;
-  const countVerif = pungliReports.filter((r) => r.status === 'Sedang Diverifikasi').length;
-  const countTindak = pungliReports.filter((r) => r.status === 'Ditindaklanjuti Lapangan').length;
+  // KPI Pungli
+  const countMasuk = pungliReports.filter((r) => r.status === 'Masuk').length;
+  const countVerif = pungliReports.filter((r) => r.status === 'Diverifikasi').length;
+  const countTindak = pungliReports.filter((r) => r.status === 'Ditindaklanjuti').length;
   const countSelesai = pungliReports.filter((r) => r.status === 'Selesai').length;
+  const extremeWeatherCount = weatherList.filter((w) => w.is_extreme_weather).length;
 
-  // Filtered Pungli Reports
   const filteredPungli = pungliReports.filter((r) => {
-    const destName = r.destination_name || '';
-    const repName = r.reporter_name || '';
-    const kab = r.kab_kota || '';
-    const desc = r.description || r.admin_action_notes || '';
-    const cat = r.category || r.incident_category || '';
-
-    const matchQuery =
-      destName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      kab.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      desc.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchStatus =
-      statusFilter === 'all' ? true : r.status === statusFilter;
-    const matchCat =
-      categoryFilter === 'all' ? true : cat === categoryFilter;
-
-    return matchQuery && matchStatus && matchCat;
+    const q = searchQuery.trim().toLowerCase();
+    const matchQ =
+      !q ||
+      r.destination_name.toLowerCase().includes(q) ||
+      r.reporter_name.toLowerCase().includes(q) ||
+      r.kab_kota.toLowerCase().includes(q) ||
+      r.description.toLowerCase().includes(q) ||
+      r.ticket_code.toLowerCase().includes(q);
+    const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+    const matchType = typeFilter === 'all' || (r.report_type || 'pungli') === typeFilter;
+    return matchQ && matchStatus && matchType;
   });
 
-  // Active SOS Tickets
-  const activeSosCount = sosTickets.filter(
-    (t) => t.status !== 'Penanganan Selesai' && t.status !== 'BERHASIL_DIEVAKUASI'
-  ).length;
-
-  // Pungli Status Style
   const getPungliStatusMeta = (status: PungliStatus) => {
     switch (status) {
-      case 'Laporan Baru':
       case 'Masuk':
-        return {
-          bg: 'bg-[#F26B4B]/15',
-          text: 'text-[#D95637]',
-          border: 'border-[#F26B4B]/30',
-        };
-      case 'Sedang Diverifikasi':
+        return 'bg-[#F26B4B]/15 text-[#D95637] border-[#F26B4B]/30';
       case 'Diverifikasi':
-        return {
-          bg: 'bg-[#FEF08A]/80',
-          text: 'text-[#854D0E]',
-          border: 'border-[#EAB308]/40',
-        };
-      case 'Ditindaklanjuti Lapangan':
+        return 'bg-amber-100 text-amber-900 border-amber-300';
       case 'Ditindaklanjuti':
-        return {
-          bg: 'bg-[#BFDBFE]/80',
-          text: 'text-[#1E40AF]',
-          border: 'border-[#3B82F6]/40',
-        };
+        return 'bg-blue-100 text-blue-900 border-blue-300';
       case 'Selesai':
-        return {
-          bg: 'bg-[#DCFCE7]',
-          text: 'text-[#166534]',
-          border: 'border-[#22C55E]/40',
-        };
-      default:
-        return {
-          bg: 'bg-[#E4E9DA]',
-          text: 'text-[#234B24]',
-          border: 'border-[#234B24]/30',
-        };
+        return 'bg-emerald-100 text-emerald-900 border-emerald-300';
     }
   };
 
-  // SOS Status Style
-  const getSosStatusMeta = (status: SosEmergencyStatus) => {
-    switch (status) {
-      case 'Sinyal SOS Masuk':
-      case 'SIAGA_DARURAT':
-        return {
-          bg: 'bg-[#F26B4B]',
-          text: 'text-white',
-          pulse: true,
-        };
-      case 'Tim SAR Dikerahkan':
-      case 'TIM_DIKERAHKAN':
-        return {
-          bg: 'bg-[#EA580C]',
-          text: 'text-white',
-          pulse: true,
-        };
-      case 'Evakuasi Berjalan':
-        return {
-          bg: 'bg-[#2563EB]',
-          text: 'text-white',
-          pulse: false,
-        };
-      case 'Penanganan Selesai':
-      case 'BERHASIL_DIEVAKUASI':
-        return {
-          bg: 'bg-[#16A34A]',
-          text: 'text-white',
-          pulse: false,
-        };
-      default:
-        return {
-          bg: 'bg-[#234B24]',
-          text: 'text-white',
-          pulse: false,
-        };
-    }
-  };
-
-  // Hazard Severity Style
   const getHazardSeverityMeta = (sev: HazardSeverity) => {
     switch (sev) {
-      case 'Aman Terkendali':
-      case 'Aman':
-        return {
-          badge: 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC]',
-          dot: 'bg-[#16A34A]',
-        };
-      case 'Waspada Bencana':
+      case 'Normal':
+        return { badge: 'bg-emerald-100 text-emerald-900 border-emerald-300', dot: 'bg-emerald-600' };
       case 'Waspada':
-        return {
-          badge: 'bg-[#FEF08A] text-[#854D0E] border-[#FDE047]',
-          dot: 'bg-[#CA8A04]',
-        };
-      case 'Buka-Tutup Jalur':
-      case 'Buka-Tutup':
-        return {
-          badge: 'bg-[#FFEDD5] text-[#C2410C] border-[#FDBA74]',
-          dot: 'bg-[#EA580C]',
-        };
-      case 'Tutup Total':
-        return {
-          badge: 'bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5]',
-          dot: 'bg-[#DC2626]',
-        };
-      default:
-        return {
-          badge: 'bg-[#E4E9DA] text-[#234B24] border-[#234B24]/30',
-          dot: 'bg-[#234B24]',
-        };
+        return { badge: 'bg-amber-100 text-amber-900 border-amber-300', dot: 'bg-amber-500' };
+      case 'Siaga':
+        return { badge: 'bg-orange-100 text-orange-900 border-orange-300', dot: 'bg-orange-600' };
+      case 'Awas Tutup Total':
+        return { badge: 'bg-red-100 text-red-900 border-red-300', dot: 'bg-red-600' };
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Utama Pusat Komando */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-            Pusat Komando Terpadu Pungli &amp; SOS SAR
+            Pusat Komando Terpadu Pungli, SOS &amp; Cuaca Sumbar
           </h1>
           <p className="text-xs text-[#4A5248] mt-0.5">
-            Penindakan aduan pungli, respon darurat SOS SAR, dan peringatan dini cuaca 19 Kab/Kota.
+            Penindakan pungli &amp; fasilitas rusak, 6 kontak darurat real Sumbar (000004), 4 koridor rawan, dan cuaca Open-Meteo Live.
           </p>
         </div>
-
-        <div className="flex items-center gap-2 text-xs font-semibold text-[#234B24] shrink-0 bg-white px-3 py-1.5 rounded-xl border border-[#234B24]/10 shadow-2xs">
+        <div className="flex items-center gap-2 text-xs font-semibold text-[#234B24] bg-white px-3 py-1.5 rounded-xl border border-[#234B24]/10 shadow-2xs shrink-0">
           <span className="w-2 h-2 rounded-full bg-[#1E9E5A] animate-pulse" />
-          <span>Siaga 24/7 · Satgas &amp; Basarnas</span>
+          <span>Siaga 24/7 · Satgas &amp; BPBD Sumbar</span>
         </div>
       </header>
 
-      {/* Sub-Tabs Navigasi Pusat Komando */}
       <nav
         aria-label="Tab Pusat Komando"
         className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
@@ -384,17 +253,14 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('pungli')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'pungli'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold flex items-center gap-2 ${activeTab === 'pungli' ? 'bg-[#234B24] text-white' : 'text-[#4A5248] hover:bg-[#234B24]/5'
+            }`}
         >
-          <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>Aduan Pungli</span>
-          {countBaru > 0 && (
+          <ShieldAlert className="w-3.5 h-3.5" />
+          <span>Aduan Pungli &amp; Fasilitas</span>
+          {countMasuk > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white font-bold">
-              {countBaru} Baru
+              {countMasuk} Masuk
             </span>
           )}
         </button>
@@ -402,33 +268,22 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('sos')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'sos'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold flex items-center gap-2 ${activeTab === 'sos' ? 'bg-[#234B24] text-white' : 'text-[#4A5248] hover:bg-[#234B24]/5'
+            }`}
         >
-          <LifeBuoy className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
-          <span>Siaga SOS SAR</span>
-          {activeSosCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F26B4B] text-white animate-pulse font-bold">
-              {activeSosCount} Sinyal
-            </span>
-          )}
+          <Phone className="w-3.5 h-3.5 text-[#F26B4B]" />
+          <span>Kontak Darurat &amp; Alat SOS</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('hazard')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'hazard'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold flex items-center gap-2 ${activeTab === 'hazard' ? 'bg-[#234B24] text-white' : 'text-[#4A5248] hover:bg-[#234B24]/5'
+            }`}
         >
-          <AlertTriangle className="w-3.5 h-3.5 text-[#CA8A04]" aria-hidden="true" />
-          <span>Jalur Rawan</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/10 text-[#234B24] font-bold">
+          <AlertTriangle className="w-3.5 h-3.5 text-[#CA8A04]" />
+          <span>Jalur Rawan (4 Koridor)</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 font-bold">
             {hazardAlerts.length}
           </span>
         </button>
@@ -436,279 +291,181 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('weather')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-            activeTab === 'weather'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
-          }`}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold flex items-center gap-2 ${activeTab === 'weather' ? 'bg-[#234B24] text-white' : 'text-[#4A5248] hover:bg-[#234B24]/5'
+            }`}
         >
-          <CloudSun className="w-3.5 h-3.5 text-[#3B82F6]" aria-hidden="true" />
-          <span>Cuaca Real-Time</span>
-          {extremeWeatherCount > 0 ? (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-600 text-white animate-pulse font-black">
+          <CloudSun className="w-3.5 h-3.5 text-[#3B82F6]" />
+          <span>Cuaca Open-Meteo Live</span>
+          {extremeWeatherCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-600 text-white font-bold">
               {extremeWeatherCount} Ekstrem
-            </span>
-          ) : (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#234B24]/10 text-[#234B24] font-bold">
-              {weatherList.length} Titik
             </span>
           )}
         </button>
       </nav>
 
       {/* ==================================================================== */}
-      {/* TAB 1: PENINDAKAN ADUAN PUNGLI & FASILITAS                           */}
+      {/* TAB 1: ADUAN PUNGLI & FASILITAS RUSAK                                */}
       {/* ==================================================================== */}
       {activeTab === 'pungli' && (
-        <div className="space-y-6">
-          {/* 4 Kartu KPI Ringkasan Aduan */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#D95637]">Laporan Baru</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-[#F26B4B] animate-ping" />
-              </div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
-                {countBaru}
-              </div>
-              <p className="mt-1 text-[11px] text-[#4A5248]">
-                Menunggu verifikasi bukti
-              </p>
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+              <span className="text-xs font-bold text-[#D95637]">Masuk</span>
+              <div className="mt-2 text-2xl font-extrabold">{countMasuk}</div>
+              <p className="text-[11px] text-[#4A5248] mt-1">Menunggu verifikasi bukti</p>
             </div>
-
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
-              <span className="text-xs font-bold text-[#854D0E]">
-                Sedang Diverifikasi
-              </span>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
-                {countVerif}
-              </div>
-              <p className="mt-1 text-[11px] text-[#4A5248]">
-                Pengecekan lapangan &amp; Perda
-              </p>
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+              <span className="text-xs font-bold text-amber-800">Diverifikasi</span>
+              <div className="mt-2 text-2xl font-extrabold">{countVerif}</div>
+              <p className="text-[11px] text-[#4A5248] mt-1">Pengecekan lapangan &amp; Perda</p>
             </div>
-
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
-              <span className="text-xs font-bold text-[#1E40AF]">
-                Ditindaklanjuti Lapangan
-              </span>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
-                {countTindak}
-              </div>
-              <p className="mt-1 text-[11px] text-[#4A5248]">
-                Satgas / Pol PP bertindak
-              </p>
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+              <span className="text-xs font-bold text-blue-800">Ditindaklanjuti</span>
+              <div className="mt-2 text-2xl font-extrabold">{countTindak}</div>
+              <p className="text-[11px] text-[#4A5248] mt-1">Satgas / Pol PP bertindak</p>
             </div>
-
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
-              <span className="text-xs font-bold text-[#166534]">
-                Selesai Ditertibkan
-              </span>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1B1F1A]">
-                {countSelesai}
-              </div>
-              <p className="mt-1 text-[11px] text-[#4A5248]">
-                Sanksi &amp; perbaikan terlaksana
-              </p>
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+              <span className="text-xs font-bold text-emerald-800">Selesai</span>
+              <div className="mt-2 text-2xl font-extrabold">{countSelesai}</div>
+              <p className="text-[11px] text-[#4A5248] mt-1">Tertib &amp; perbaikan tuntas</p>
             </div>
           </div>
 
-          {/* Filter Bar & Search */}
-          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="bg-white rounded-2xl p-4 border border-[#234B24]/10 flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <label htmlFor={searchInputId} className="sr-only">
-                Cari laporan aduan
+                Cari laporan
               </label>
-              <Search
-                className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]"
-                aria-hidden="true"
-              />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#767676]" />
               <input
                 id={searchInputId}
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nama wisatawan, destinasi, kab/kota, atau isi aduan..."
-                className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
+                placeholder="Cari kode tiket, destinasi, pelapor, atau uraian..."
+                className="w-full min-h-[42px] pl-10 pr-4 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <label htmlFor={statusFilterId} className="sr-only">
-                Filter Status
-              </label>
-              <select
-                id={statusFilterId}
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-              >
-                <option value="all">Semua Status</option>
-                <option value="Laporan Baru">Laporan Baru</option>
-                <option value="Sedang Diverifikasi">Sedang Diverifikasi</option>
-                <option value="Ditindaklanjuti Lapangan">Ditindaklanjuti Lapangan</option>
-                <option value="Selesai">Selesai</option>
-              </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | PungliStatus)}
+              className="min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+            >
+              <option value="all">Semua Status</option>
+              {PUNGLI_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
 
-              <label htmlFor={categoryFilterId} className="sr-only">
-                Filter Kategori
-              </label>
-              <select
-                id={categoryFilterId}
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
-              >
-                <option value="all">Semua Kategori</option>
-                <option value="Parkir Liar">Parkir Liar</option>
-                <option value="Tiket Di Atas Perda">Tiket Di Atas Perda</option>
-                <option value="Pemaksaan Pemandu/Kapal">Pemaksaan Pemandu/Kapal</option>
-                <option value="Fasilitas Rusak">Fasilitas Rusak</option>
-              </select>
-            </div>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as 'all' | 'pungli' | 'fasilitas')}
+              className="min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
+            >
+              <option value="all">Semua Tipe Aduan</option>
+              <option value="pungli">Aduan Pungli Tarif</option>
+              <option value="fasilitas">Fasilitas Rusak</option>
+            </select>
           </div>
 
-          {/* Tabel Tiket Aduan Pungli & Fasilitas */}
-          <div className="bg-white rounded-2xl border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-[#234B24]/10 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[#234B24]/10 bg-[#F6F3EC]/90 text-[11px] font-extrabold text-[#234B24] uppercase tracking-wider">
-                    <th scope="col" className="py-3.5 px-4">
-                      Tiket / Tanggal
-                    </th>
-                    <th scope="col" className="py-3.5 px-4">
-                      Lokasi Destinasi
-                    </th>
-                    <th scope="col" className="py-3.5 px-4">
-                      Wisatawan Pelapor
-                    </th>
-                    <th scope="col" className="py-3.5 px-4">
-                      Kategori Aduan
-                    </th>
-                    <th scope="col" className="py-3.5 px-4">
-                      Dipungut vs Perda
-                    </th>
-                    <th scope="col" className="py-3.5 px-4">
-                      Status Tindakan
-                    </th>
-                    <th scope="col" className="py-3.5 px-4 text-right">
-                      Aksi Verifikasi
-                    </th>
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[#F6F3EC] text-[#234B24] text-[11px] font-extrabold uppercase border-b border-[#CFD8BE]">
+                  <tr>
+                    <th className="py-3.5 px-4">Tiket &amp; Tanggal</th>
+                    <th className="py-3.5 px-4">Destinasi &amp; Wilayah</th>
+                    <th className="py-3.5 px-4">Pelapor</th>
+                    <th className="py-3.5 px-4">Kategori</th>
+                    <th className="py-3.5 px-4">Dipungut vs Perda</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E4E9DA] text-xs text-[#1B1F1A]">
-                  {filteredPungli.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-xs text-[#767676]">
-                        Tidak ada aduan pungli yang cocok dengan kriteria filter.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPungli.map((report) => {
-                      const statusMeta = getPungliStatusMeta(report.status);
-                      const repAmt = report.reported_amount ?? report.charged_amount_idr ?? 0;
-                      const offAmt = report.official_amount ?? report.official_perda_price_idr ?? 0;
-                      const isOvercharge = repAmt > offAmt;
-
-                      return (
-                        <tr
-                          key={report.id}
-                          className="hover:bg-[#F6F3EC]/40 transition"
-                        >
-                          <td className="py-3.5 px-4 whitespace-nowrap">
-                            <span className="font-mono font-bold text-[#234B24]">
-                              {(report.ticket_code || report.id).toUpperCase()}
+                <tbody className="divide-y divide-[#E4E9DA]">
+                  {filteredPungli.map((report) => {
+                    const isFasilitas = report.report_type === 'fasilitas';
+                    return (
+                      <tr key={report.id} className="hover:bg-[#F6F3EC]/40">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className="font-mono font-bold text-[#234B24]">
+                            {report.ticket_code}
+                          </span>
+                          <div className="text-[10px] text-[#767676]">
+                            {new Date(report.created_at).toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-extrabold">{report.destination_name}</div>
+                          <div className="text-[11px] text-[#4A5248] flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-[#234B24]" /> {report.kab_kota}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold">{report.reporter_name}</div>
+                          <div className="text-[10px] font-mono text-[#767676]">
+                            {report.reporter_phone || '-'}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${isFasilitas
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-[#E4E9DA] text-[#234B24]'
+                              }`}
+                          >
+                            {report.incident_category}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {isFasilitas ? (
+                            <span className="text-[11px] text-[#4A5248] font-medium">
+                              Laporan Sarana Fisik
                             </span>
-                            <div className="text-[10px] text-[#767676] mt-0.5">
-                              {report.created_at ? new Date(report.created_at).toLocaleDateString(
-                                'id-ID',
-                                {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                }
-                              ) : '-'}
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-4 min-w-[180px]">
-                            <div className="font-extrabold text-[#1B1F1A]">
-                              {report.destination_name}
-                            </div>
-                            <div className="text-[11px] text-[#4A5248] flex items-center gap-1 mt-0.5">
-                              <MapPin className="w-3 h-3 text-[#234B24]" aria-hidden="true" />
-                              <span>{report.kab_kota}</span>
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-4 min-w-[160px]">
-                            <div className="font-bold text-[#1B1F1A]">
-                              {report.reporter_name}
-                            </div>
-                            <div className="text-[11px] text-[#767676] flex items-center gap-1 mt-0.5">
-                              <Phone className="w-3 h-3 text-[#767676]" aria-hidden="true" />
-                              <span>{report.reporter_phone}</span>
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-4 whitespace-nowrap">
-                            <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                              {report.category || report.incident_category}
-                            </span>
-                          </td>
-
-                          <td className="py-3.5 px-4 min-w-[170px]">
-                            {report.category === 'Fasilitas Rusak' ? (
-                              <span className="text-[11px] text-[#767676]">
-                                Laporan Fisik Sarana
-                              </span>
-                            ) : (
-                              <div>
-                                <div className="font-extrabold text-[#D95637]">
-                                  Rp {repAmt.toLocaleString('id-ID')}
-                                </div>
-                                <div className="text-[10px] text-[#166534]">
-                                  Resmi: Rp {offAmt.toLocaleString('id-ID')}
-                                </div>
-                                {isOvercharge && (
-                                  <div className="text-[9px] font-bold text-[#D95637]">
-                                    (Selisih +Rp{' '}
-                                    {(repAmt - offAmt).toLocaleString('id-ID')}
-                                    )
-                                  </div>
-                                )}
+                          ) : (
+                            <div>
+                              <div className="font-extrabold text-[#D95637]">
+                                Rp {report.charged_amount_idr.toLocaleString('id-ID')}
                               </div>
-                            )}
-                          </td>
-
-                          <td className="py-3.5 px-4 whitespace-nowrap">
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${statusMeta.bg} ${statusMeta.text} ${statusMeta.border}`}
-                            >
-                              {report.status}
-                            </span>
-                          </td>
-
-                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedPungli(report);
-                                setAdminNoteInput(report.admin_notes || '');
-                              }}
-                              className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs"
-                            >
-                              <FileText className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>Tindak Lanjut</span>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                              <div className="text-[10px] text-[#166534]">
+                                Perda: Rp {report.official_perda_price_idr.toLocaleString('id-ID')} (+Rp{' '}
+                                {report.overcharge_amount_idr.toLocaleString('id-ID')})
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${getPungliStatusMeta(
+                              report.status
+                            )}`}
+                          >
+                            {report.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPungli(report);
+                              setAdminNoteInput(report.admin_action_notes || '');
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-[#234B24] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> Tindak Lanjut
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -717,996 +474,610 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* TAB 2: NOMOR DARURAT & SIAGA SOS SAR (INPUT & LIHAT LAPORAN)         */}
+      {/* TAB 2: KONTAK DARURAT REAL (000004) + HOTLINE BEBAS PULSA + ALAT SOS */}
       {/* ==================================================================== */}
       {activeTab === 'sos' && (
         <div className="space-y-6">
-          {/* Sub-View Switcher: Lihat Laporan vs Input Nomor Darurat */}
-          <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-white border border-[#CFD8BE] shadow-xs">
-            <button
-              type="button"
-              onClick={() => setSosSubView('view_reports')}
-              className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                sosSubView === 'view_reports'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'text-[#4A5248] hover:text-[#1B1F1A] hover:bg-[#F6F3EC]'
-              }`}
-            >
-              <LifeBuoy className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
-              <span>Lihat Laporan Sinyal Darurat SOS</span>
-              <span
-                className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                  sosSubView === 'view_reports'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[#234B24]/10 text-[#234B24]'
-                }`}
+          {/* 4 Hotline Bebas Pulsa Nasional */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {TOLL_FREE_EMERGENCY_NUMBERS.map((item) => (
+              <a
+                key={item.number}
+                href={`tel:${item.number}`}
+                className="p-4 rounded-2xl bg-[#234B24] text-[#F6F3EC] hover:bg-[#1B3B1C] transition flex items-center justify-between gap-3 shadow-sm"
               >
-                {sosTickets.length} Tiket
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSosSubView('input_contacts')}
-              className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                sosSubView === 'input_contacts'
-                  ? 'bg-[#234B24] text-[#F6F3EC] shadow-sm'
-                  : 'text-[#4A5248] hover:text-[#1B1F1A] hover:bg-[#F6F3EC]'
-              }`}
-            >
-              <Phone className="w-4 h-4 text-[#1E9E5A]" aria-hidden="true" />
-              <span>Input &amp; Kelola Direktori Nomor Darurat</span>
-            </button>
-          </div>
-
-          {sosSubView === 'input_contacts' ? (
-            <EmergencyContactsManager showToast={showToast} />
-          ) : (
-            <>
-              {/* Alert Peringatan Siaga SAR Aktif */}
-          {activeSosCount > 0 ? (
-            <div className="p-5 rounded-2xl bg-[#F26B4B]/15 border-2 border-[#F26B4B] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-[#F26B4B] text-white flex items-center justify-center animate-bounce shrink-0">
-                  <LifeBuoy className="w-6 h-6" aria-hidden="true" />
-                </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#1B1F1A]">
-                    Terdapat {activeSosCount} Sinyal Darurat SOS Wisatawan Aktif di Lapangan!
-                  </h2>
-                  <p className="text-xs text-[#4A5248]">
-                    Segera lakukan konfirmasi kontak dan koordinasi pengerahan tim evakuasi Basarnas Padang / BPBD wilayah terdekat.
-                  </p>
-                </div>
-              </div>
-              <div className="px-3.5 py-1.5 rounded-full bg-[#F26B4B] text-white text-xs font-extrabold self-start sm:self-center">
-                SIAGA MERAH TINGKAT 1
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 rounded-2xl bg-[#DCFCE7] border border-[#86EFAC] flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16A34A] shrink-0" aria-hidden="true" />
-              <p className="text-xs font-bold text-[#166534]">
-                Kondisi Lapangan Terkendali — Tidak ada sinyal darurat SOS wisatawan aktif saat ini.
-              </p>
-            </div>
-          )}
-
-          {/* Card Mekanisme Fitur SOS Offline di Area Tanpa Jaringan / Blank Spot */}
-          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center shrink-0">
-                <WifiOff className="w-4 h-4 text-[#F26B4B]" />
-              </div>
-              <div>
-                <h3 className="text-xs font-extrabold text-[#1B1F1A]">
-                  Protokol &amp; Mekanisme SOS di Lokasi Tanpa Sinyal (Blank Spot / Zero Cellular Data)
-                </h3>
-                <p className="text-[11px] text-[#4A5248]">
-                  Sistem otomatis mengaktifkan 4 jalur alternatif saat aplikasi mendeteksi hilangnya koneksi internet:
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs pt-1">
-              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
-                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
-                  <span>1. SMS Satelit / Gateway GSM</span>
-                </div>
-                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
-                  Kirim teks otomatis ringkas berformat koordinat satelit yang tetap tembus jaringan seluler dasar 2G/GSM tanpa kuota internet.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
-                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
-                  <span>2. Cache Kontak Darurat Lokal</span>
-                </div>
-                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
-                  Nomor posko SAR, BPBD kab/kota, dan nomor pengelola nagari di-cache otomatis ke HP sebelum wisatawan memasuki jalur ekstrem.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
-                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
-                  <span>3. Tombol Darurat Seluler 112 / 115</span>
-                </div>
-                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
-                  Panggilan darurat terpadu yang dijamin operator telekomunikasi nasional untuk tetap terhubung meski tanpa pulsa dan tanpa data.
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#F6F3EC]/70 border border-[#234B24]/10 space-y-1">
-                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5 text-[11px]">
-                  <span>4. Kode Morse Senter &amp; Sirine Darurat</span>
-                </div>
-                <p className="text-[10.5px] text-[#4A5248] leading-relaxed">
-                  Aplikasi mengaktifkan kedipan senter Kode Morse (S-O-S: 3 pendek, 3 panjang, 3 pendek) dan sirine audio lapangan HP saat blank spot total untuk mempermudah pencarian tim SAR.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Daftar Tiket Sinyal Darurat SOS */}
-          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
-                  <LifeBuoy className="w-5 h-5 text-[#F26B4B]" aria-hidden="true" />
-                  <span>Daftar Tiket Sinyal Darurat SOS GPS ({sosTickets.length})</span>
-                </h2>
-                <p className="text-xs text-[#4A5248]">
-                  Data telemetri langsung dari aplikasi wisatawan: Titik GPS, sisa baterai ponsel, dan kondisi sinyal kawasan.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sosTickets.map((ticket) => {
-                const statusMeta = getSosStatusMeta(ticket.status);
-                const bat = ticket.battery_level ?? ticket.battery_percent ?? 100;
-                const isBatteryLow = bat < 20;
-
-                return (
-                  <div
-                    key={ticket.id}
-                    className="p-5 rounded-2xl border-2 border-[#CFD8BE] hover:border-[#234B24] transition bg-[#F6F3EC]/50 flex flex-col justify-between space-y-4"
-                  >
-                    <div>
-                      {/* Baris Atas: Status & Tiket */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="font-mono text-xs font-bold text-[#234B24]">
-                            {(ticket.sos_code || ticket.id).toUpperCase()}
-                          </span>
-                          <h3 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
-                            {ticket.tourist_name}
-                          </h3>
-                          <div className="text-xs text-[#4A5248] flex items-center gap-1.5 mt-0.5">
-                            <Phone className="w-3.5 h-3.5 text-[#234B24]" aria-hidden="true" />
-                            <span>{ticket.tourist_phone || ticket.phone_number}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col items-end gap-1.5">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-extrabold shadow-xs ${
-                              statusMeta.bg
-                            } ${statusMeta.text} ${
-                              statusMeta.pulse ? 'animate-pulse' : ''
-                            }`}
-                          >
-                            {ticket.status}
-                          </span>
-                          {ticket.delivery_method === 'offline_fallback' ? (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-xs">
-                              <WifiOff className="w-3 h-3 text-amber-600" />
-                              <span>Offline Fallback (SMS Gateway / Cache)</span>
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-xs">
-                              <Wifi className="w-3 h-3 text-emerald-600" />
-                              <span>Online GPS Langsung</span>
-                            </span>
-                          )}
-                          {(ticket.morse_active || ticket.signal_channel === 'OFFLINE_MORSE_SIRINE') && (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1 shadow-xs animate-pulse">
-                              <AlertTriangle className="w-3 h-3 text-rose-600" />
-                              <span>Morse Senter &amp; Sirine Aktif</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Lokasi & Telemetri */}
-                      <div className="mt-3 p-3 rounded-xl bg-white border border-[#234B24]/10 space-y-2">
-                        <div className="flex items-start justify-between gap-2 text-xs">
-                          <div className="flex items-center gap-1.5 font-bold text-[#1B1F1A]">
-                            <MapPin className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
-                            <span>
-                              {ticket.destination_name} ({ticket.kab_kota})
-                            </span>
-                          </div>
-                          <a
-                            href={`https://maps.google.com/?q=${ticket.lat},${ticket.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] font-bold text-[#1D4ED8] hover:underline flex items-center gap-1 shrink-0"
-                          >
-                            <span>Buka Maps</span>
-                            <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                          </a>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs pt-1 border-t border-black/5">
-                          <div className="flex items-center gap-1.5">
-                            <Battery
-                              className={`w-3.5 h-3.5 ${
-                                isBatteryLow ? 'text-[#D95637]' : 'text-[#16A34A]'
-                              }`}
-                              aria-hidden="true"
-                            />
-                            <span
-                              className={`font-mono font-bold ${
-                                isBatteryLow ? 'text-[#D95637]' : 'text-[#1B1F1A]'
-                              }`}
-                            >
-                              Baterai: {ticket.battery_level}%
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#4A5248]">
-                            <Wifi className="w-3 h-3 text-[#234B24]" aria-hidden="true" />
-                            <span>{ticket.signal_status}</span>
-                          </div>
-                        </div>
-
-                        {ticket.last_signal_at && (
-                          <div className="text-[10px] text-[#767676] flex flex-wrap items-center justify-between pt-1 border-t border-black/5 gap-1">
-                            <span>Sinyal Terakhir: {new Date(ticket.last_signal_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                            {ticket.last_known_coords && (
-                              <span className="font-mono text-[9px] text-[#4A5248] bg-[#F6F3EC] px-1.5 py-0.5 rounded">
-                                GPS Terakhir: {ticket.last_known_coords}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Catatan Medis & Situasi Darurat */}
-                      <div className="mt-3 p-3 rounded-xl bg-[#FEF08A]/40 border border-[#FDE047]/60">
-                        <div className="text-[11px] font-bold text-[#854D0E] flex items-center gap-1 mb-1">
-                          <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Kondisi Medis &amp; Darurat Lapangan:</span>
-                        </div>
-                        <p className="text-xs text-[#1B1F1A] font-medium leading-relaxed">
-                          {ticket.medical_notes}
-                        </p>
-                      </div>
-
-                      {ticket.sar_unit_assigned && (
-                        <div className="mt-2 text-xs font-bold text-[#1E40AF] flex items-center gap-1.5">
-                          <Truck className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Unit Ditugaskan: {ticket.sar_unit_assigned}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-3 border-t border-[#CFD8BE] flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-[#767676]">
-                        Dilaporkan:{' '}
-                        {ticket.created_at ? new Date(ticket.created_at).toLocaleTimeString('id-ID', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        }) : '-'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedSos(ticket);
-                          setAssignedSarUnit(ticket.sar_unit_assigned || '');
-                          setSelectedSosStatus(ticket.status);
-                        }}
-                        className="min-h-[40px] px-4 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
-                      >
-                        <LifeBuoy className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
-                        <span>Kerahkan / Perbarui SAR</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* TAB 3: TRIGGER PERINGATAN JALUR RAWAN / BENCANA (LIVE HAZARD ALERT)  */}
-      {/* ==================================================================== */}
-      {activeTab === 'hazard' && (
-        <div className="space-y-6">
-          {/* Banner Peringatan Siaga Darurat */}
-          <div className="bg-[#234B24] text-[#F6F3EC] rounded-2xl p-6 lg:p-7 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0 shadow-md">
-                <AlertTriangle className="w-6 h-6 animate-pulse" aria-hidden="true" />
-              </div>
-              <div>
-                <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/15 text-[#A7F3D0]">
-                  SISTEM BROADCAST KESELAMATAN JALUR SUMBAR (LIVE)
-                </span>
-                <h2 className="text-lg lg:text-xl font-extrabold mt-1.5 text-white">
-                  Pusat Kendali 5 Jalur Rawan Bencana &amp; Titik Ekstrem
-                </h2>
-                <p className="text-xs text-[#E4E9DA]/90 mt-1 max-w-2xl leading-relaxed">
-                  Setiap perubahan status jalur di bawah ini langsung disiarkan secara *real-time* ke aplikasi mobile wisatawan, notifikasi offline pocket, dan plang Smart QR destinasi terkait.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-bold text-[#A7F3D0] flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#1E9E5A] animate-ping" />
-                Live Broadcast Aktif
-              </span>
-            </div>
-          </div>
-
-          {/* Panel Kontrol Status Jalur Rawan Bencana (Hazard Zone Alerts) */}
-          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
-                  <Navigation className="w-5 h-5 text-[#234B24]" aria-hidden="true" />
-                  <span>Daftar 5 Jalur Ekstrem Rawan Longsor &amp; Bencana Sumbar</span>
-                </h3>
-                <p className="text-xs text-[#4A5248]">
-                  Pembaruan status Sitinjau Lauik, Lembah Anai, Kelok 9, Malalak, dan Kelok 44 beserta rute alternatif resmi.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {hazardAlerts.map((hazard) => {
-                const meta = getHazardSeverityMeta(hazard.severity);
-
-                return (
-                  <div
-                    key={hazard.id}
-                    className="p-5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex flex-col justify-between space-y-3 hover:shadow-md transition"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-sm font-extrabold text-[#1B1F1A] leading-snug">
-                          {hazard.location}
-                        </h4>
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border shrink-0 flex items-center gap-1.5 ${meta.badge}`}
-                        >
-                          <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
-                          <span>{hazard.severity}</span>
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-xs text-[#4A5248] leading-relaxed">
-                        {hazard.message}
-                      </p>
-
-                      <div className="mt-2.5 p-2.5 rounded-xl bg-white border border-[#CFD8BE] text-xs">
-                        <span className="font-bold text-[#234B24]">Jalur Pengalihan: </span>
-                        <span className="text-[#1B1F1A]">{hazard.detour_route}</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-[#CFD8BE] flex items-center justify-between">
-                      <span className="text-[10px] text-[#767676]">
-                        Diperbarui:{' '}
-                        {new Date(hazard.updated_at).toLocaleTimeString('id-ID', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedHazard(hazard);
-                          setHazardSeverity(hazard.severity);
-                          setHazardMessage(hazard.message);
-                          setHazardDetour(hazard.detour_route);
-                        }}
-                        className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-xs shadow-xs transition"
-                      >
-                        Ubah Status Jalur
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 4. TAB MONITORING CUACA REAL-TIME PER KAB/KOTA & DESTINASI          */}
-      {/* ==================================================================== */}
-      {activeTab === 'weather' && (
-        <div className="space-y-6">
-          {/* Banner Peringatan Cuaca Ekstrem jika ada */}
-          {extremeWeatherCount > 0 ? (
-            <div className="p-5 rounded-2xl bg-red-500/15 border-2 border-red-500 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center shrink-0 shadow-md animate-pulse">
-                  <Wind className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-600 text-white">
-                    PERINGATAN BMKG &amp; SENSOR WISGO AKTIF
+                  <span className="text-[10px] font-bold uppercase text-[#A7F3D0]">
+                    Bebas Pulsa 24/7
                   </span>
-                  <h3 className="text-base font-extrabold text-[#1B1F1A] mt-1">
-                    Terdeteksi {extremeWeatherCount} Wilayah Destinasi Mengalami Cuaca Ekstrem!
-                  </h3>
-                  <p className="text-xs text-[#4A5248]">
-                    Hujan lebat, angin kencang, atau kabut tebal berisiko memicu longsoran tebing dan jarak pandang minim.
-                  </p>
+                  <div className="text-2xl font-black font-mono text-white">{item.number}</div>
+                  <div className="text-xs font-bold">{item.label}</div>
+                  <div className="text-[10px] text-white/70">{item.desc}</div>
                 </div>
-              </div>
-              <div className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold self-start md:self-center">
-                SIAGA CUACA BURUK
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 rounded-2xl bg-[#DCFCE7] border border-[#86EFAC] flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16A34A] shrink-0" />
-              <div className="text-xs text-[#166534]">
-                <strong>Seluruh Kawasan Wisata Terpantau Aman:</strong> Tidak ada anomali cuaca ekstrem saat ini di 19 Kab/Kota Sumbar.
-              </div>
-            </div>
-          )}
+                <Phone className="w-6 h-6 text-[#F26B4B] shrink-0" />
+              </a>
+            ))}
+          </div>
 
-          {/* Kartu Grid Pemantauan Cuaca Real-Time */}
-          <div className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-[0_4px_24px_rgba(35,75,36,0.04)] space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#234B24]/10">
+          {/* Alat Darurat Fisik Offline di Mobile (FE-2 e269e94) */}
+          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-xs grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0">
+                <Volume2 className="w-5 h-5" />
+              </div>
               <div>
-                <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
-                  <CloudSun className="w-5 h-5 text-[#3B82F6]" />
-                  <span>Kondisi Cuaca Real-Time per Kab/Kota &amp; Destinasi Wisata</span>
-                </h3>
-                <p className="text-xs text-[#4A5248] mt-0.5">
-                  Suhu saat ini, kondisi visual, prakiraan per jam ke depan, serta tombol broadcast peringatan cepat ke wisatawan.
+                <h4 className="text-xs font-extrabold text-[#1B1F1A]">
+                  Sirine Audio Darurat 110dB (Alat Fisik Mobile)
+                </h4>
+                <p className="text-[11px] text-[#4A5248] mt-1">
+                  Membunyikan frekuensi peluit penyelamatan secara luring untuk menarik perhatian warga atau tim penyelamat di sekitar lokasi.
                 </p>
               </div>
-              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#234B24]/10 text-[#234B24]">
-                {weatherList.length} Titik Sensor Terhubung
-              </span>
             </div>
+            <div className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#234B24] text-white flex items-center justify-center shrink-0">
+                <Flashlight className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-extrabold text-[#1B1F1A]">
+                  Senter Isyarat Kode Morse S-O-S (· · · — — — · · ·)
+                </h4>
+                <p className="text-[11px] text-[#4A5248] mt-1">
+                  Kedipan lampu kilat LED otomatis sesuai standar penyelamatan internasional untuk visibilitas malam hari di medan alam.
+                </p>
+              </div>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {weatherList.map((item) => (
+          {/* Direktori 6 Kontak Darurat Real Sumbar */}
+          <EmergencyContactsManager showToast={showToast} />
+
+          {/* Sekunder: Log Sinkronisasi SOS (Audit BE-1) */}
+          <details className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-xs">
+            <summary className="cursor-pointer font-extrabold text-sm text-[#234B24] flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <LifeBuoy className="w-4 h-4 text-[#F26B4B]" />
+                Log Sinkronisasi SOS Lapangan (Audit Endpoint BE-1 · {sosSignals.length} Catatan)
+              </span>
+              <span className="text-xs text-[#4A5248] font-semibold">Klik untuk buka/tutup</span>
+            </summary>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sosSignals.map((sig) => (
                 <div
-                  key={item.id}
-                  className={`p-5 rounded-3xl border transition flex flex-col justify-between ${
-                    item.is_extreme_weather
-                      ? 'border-red-300 bg-red-50/30 ring-2 ring-red-400/20'
-                      : 'border-[#CFD8BE] bg-[#F6F3EC]/50 hover:border-[#234B24]'
-                  }`}
+                  key={sig.id}
+                  className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] space-y-2.5 text-xs"
                 >
-                  <div className="space-y-3.5">
-                    {/* Header: Kab/Kota & Destinasi */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-[#767676] block">
-                          {item.city_regency}
-                        </span>
-                        <h4 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
-                          {item.destination_name}
-                        </h4>
-                      </div>
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
-                          item.is_extreme_weather
-                            ? 'bg-red-600 text-white animate-pulse'
-                            : 'bg-[#1E9E5A]/15 text-[#166534]'
-                        }`}
-                      >
-                        {item.is_extreme_weather ? 'CUACA EKSTREM' : 'AMAN'}
-                      </span>
-                    </div>
-
-                    {/* Suhu & Kondisi Saat Ini */}
-                    <div className="p-4 rounded-2xl bg-white border border-[#234B24]/10 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-[#234B24]/10 text-[#234B24] flex items-center justify-center font-bold text-xl">
-                          <Thermometer className="w-6 h-6 text-[#F26B4B]" />
-                        </div>
-                        <div>
-                          <div className="text-2xl font-black text-[#234B24] font-mono">
-                            {item.current_temp_c}°C
-                          </div>
-                          <span className="text-xs font-bold text-[#4A5248]">
-                            {item.condition}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-right text-[11px] text-[#767676] space-y-1">
-                        <div className="flex items-center justify-end gap-1">
-                          <Droplets className="w-3.5 h-3.5 text-blue-500" />
-                          <span>{item.humidity_pct}% Lembap</span>
-                        </div>
-                        <div className="flex items-center justify-end gap-1">
-                          <Wind className="w-3.5 h-3.5 text-gray-500" />
-                          <span>{item.wind_speed_kmh} km/jam</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Warning text jika ekstrem */}
-                    {item.is_extreme_weather && item.extreme_warning_text && (
-                      <div className="p-3 rounded-xl bg-red-100/70 border border-red-300 text-[11px] text-red-900 leading-snug">
-                        <strong>Perhatian:</strong> {item.extreme_warning_text}
-                      </div>
-                    )}
-
-                    {/* Prakiraan Jam ke Depan */}
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#4A5248] block mb-1.5">
-                        Prakiraan 6 Jam ke Depan:
-                      </span>
-                      <div className="grid grid-cols-3 gap-1.5 text-center">
-                        {item.hourly_forecast.slice(0, 3).map((hf, i) => (
-                          <div key={i} className="p-2 rounded-xl bg-white border border-[#234B24]/10">
-                            <span className="text-[10px] font-mono text-[#767676] block">{hf.hour}</span>
-                            <strong className="text-xs font-extrabold text-[#234B24] block mt-0.5">{hf.temp_c}°C</strong>
-                            <span className="text-[9px] text-[#4A5248] block truncate">{hf.condition}</span>
-                          </div>
-                        ))}
+                      <span className="font-mono font-bold text-[#234B24]">{sig.sos_code}</span>
+                      <h4 className="font-extrabold text-[#1B1F1A] text-sm">{sig.tourist_name}</h4>
+                      <div className="text-[11px] text-[#4A5248]">
+                        {sig.phone_number} · {sig.passengers_count} Orang · {sig.emergency_type}
                       </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#234B24] text-white">
+                      {sig.status}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white border border-[#CFD8BE] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold">
+                        {sig.destination_name || sig.nearest_corridor} ({sig.city_regency || 'Sumbar'})
+                      </span>
+                      <a
+                        href={`https://maps.google.com/?q=${sig.latitude},${sig.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-700 font-bold inline-flex items-center gap-1"
+                      >
+                        Maps <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-[#4A5248]">
+                      <span className="inline-flex items-center gap-1 font-mono">
+                        <Battery className="w-3.5 h-3.5 text-emerald-600" /> Baterai {sig.battery_percent}%
+                      </span>
+                      <span>
+                        Posko: {sig.nearest_rescue_post} ({sig.distance_to_rescue_km} km · ETA {sig.eta_rescue_minutes} mnt)
+                      </span>
                     </div>
                   </div>
 
-                  {/* Tombol Cepat: Siarkan Peringatan Cuaca */}
-                  <div className="mt-4 pt-3.5 border-t border-[#CFD8BE]">
+                  <p className="text-[11px] text-[#1B1F1A]">{sig.notes}</p>
+                  {sig.sar_unit_assigned && (
+                    <div className="text-[11px] font-bold text-blue-800 flex items-center gap-1">
+                      <Truck className="w-3.5 h-3.5" /> Unit: {sig.sar_unit_assigned}
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-[#CFD8BE] flex justify-end">
                     <button
                       type="button"
-                      onClick={() => handleBroadcastWeatherHazard(item)}
-                      className={`w-full min-h-[40px] px-3.5 py-1.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-xs ${
-                        item.is_extreme_weather
-                          ? 'bg-red-600 hover:bg-red-700 text-white'
-                          : 'bg-[#234B24] hover:bg-[#1B3A1C] text-white'
-                      }`}
+                      onClick={() => {
+                        setSelectedSos(sig);
+                        setAssignedSarUnit(sig.sar_unit_assigned || '');
+                        setSelectedSosStatus(sig.status);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#234B24] text-white text-xs font-bold"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Siarkan Peringatan Cuaca ke Wisatawan</span>
+                      Perbarui Koordinasi
                     </button>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </details>
         </div>
       )}
 
       {/* ==================================================================== */}
-      {/* MODAL VERIFIKASI & PENINDAKAN LAPORAN PUNGLI                        */}
+      {/* TAB 3: JALUR RAWAN (4 KORIDOR BAKU + BROADCAST CUACA)                */}
       {/* ==================================================================== */}
-      {selectedPungli && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="pungli-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
-                  <ShieldAlert className="w-5 h-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <h3
-                    id="pungli-modal-title"
-                    className="text-base font-extrabold text-[#1B1F1A]"
-                  >
-                    Verifikasi Laporan {selectedPungli.id.toUpperCase()}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Destinasi: {selectedPungli.destination_name} · {selectedPungli.kab_kota}
-                  </p>
-                </div>
+      {activeTab === 'hazard' && (
+        <div className="space-y-5">
+          <div className="bg-[#234B24] text-[#F6F3EC] rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6" />
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedPungli(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              {/* Bukti Foto & Koordinat Lokasi */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <span className="block text-xs font-bold text-[#1B1F1A] mb-1.5">
-                    Bukti Foto Kejadian / Karcis
-                  </span>
-                  <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black/10 border border-[#CFD8BE]">
-                    <img
-                      src={selectedPungli.photo_url}
-                      alt="Bukti foto laporan"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <span className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                      Data Pelapor
-                    </span>
-                    <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs">
-                      <div className="font-extrabold text-[#1B1F1A]">
-                        {selectedPungli.reporter_name}
-                      </div>
-                      <div className="text-[11px] text-[#4A5248] mt-0.5">
-                        Kontak: {selectedPungli.reporter_phone}
-                      </div>
-                      <div className="text-[11px] text-[#767676] mt-0.5">
-                        Dilaporkan:{' '}
-                        {selectedPungli.created_at ? new Date(selectedPungli.created_at).toLocaleString('id-ID') : '-'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                      Titik Koordinat GPS Kejadian
-                    </span>
-                    <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs flex items-center justify-between">
-                      <span className="font-mono text-[#234B24]">
-                        {(selectedPungli.lat ?? -0.9492).toFixed(4)}, {(selectedPungli.lng ?? 100.3543).toFixed(4)}
-                      </span>
-                      <a
-                        href={`https://maps.google.com/?q=${selectedPungli.lat ?? -0.9492},${selectedPungli.lng ?? 100.3543}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] font-bold text-[#1D4ED8] flex items-center gap-1"
-                      >
-                        <span>Lihat Google Maps</span>
-                        <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rincian Pelanggaran & Selisih Tarif */}
-              {(() => {
-                const repAmount = selectedPungli.reported_amount ?? selectedPungli.charged_amount_idr ?? 0;
-                const offAmount = selectedPungli.official_amount ?? selectedPungli.official_perda_price_idr ?? 0;
-                return (
-                  <div className="p-4 rounded-2xl bg-[#FFEDD5]/60 border border-[#FDBA74]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-[#C2410C]">
-                        Kategori: {selectedPungli.category || selectedPungli.incident_category}
-                      </span>
-                      <span className="text-xs font-bold text-[#D95637]">
-                        Nominal Dipungut: Rp{' '}
-                        {repAmount.toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-[#166534] font-bold pt-1 border-t border-[#FDBA74]">
-                      <span>Standar Tarif Resmi Perda:</span>
-                      <span>
-                        Rp {offAmount.toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                    {repAmount > offAmount && (
-                      <div className="mt-1 text-right text-xs font-extrabold text-[#D95637]">
-                        Selisih Pungli Oknum: +Rp{' '}
-                        {(repAmount - offAmount).toLocaleString('id-ID')}
-                      </div>
-                    )}
-                    <p className="mt-2 text-xs text-[#1B1F1A] leading-relaxed">
-                      &quot;{selectedPungli.description || selectedPungli.admin_action_notes || 'Laporan tiket ' + selectedPungli.ticket_code}&quot;
-                    </p>
-                  </div>
-                );
-              })()}
-
-              {/* Form Input Catatan Tindakan Resmi Admin */}
               <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                  Catatan Tindakan Resmi Administrator / Tim Saber Pungli
-                </label>
-                <textarea
-                  rows={3}
-                  value={adminNoteInput}
-                  onChange={(e) => setAdminNoteInput(e.target.value)}
-                  placeholder="Contoh: Petugas lapangan telah menertibkan juru parkir tanpa karcis resmi dan menyita rompi liar..."
-                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
-                />
-              </div>
-
-              {/* Tombol Perubahan Status Laporan */}
-              <div className="pt-4 border-t border-[#234B24]/10">
-                <span className="block text-xs font-bold text-[#1B1F1A] mb-2.5">
-                  Tindakan Otoritas &amp; Pembaruan Status Tiket:
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#A7F3D0]">
+                  4 KORIDOR JALUR EKSTREM SUMATERA BARAT
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <button
-                    type="button"
-                    disabled={isUpdatingPungli}
-                    onClick={() => handleUpdatePungliStatus('Sedang Diverifikasi')}
-                    className="min-h-[44px] px-3 py-2 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] text-[#854D0E] font-bold text-xs flex items-center justify-center gap-1.5 transition"
-                  >
-                    <span>Verifikasi Laporan</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={isUpdatingPungli}
-                    onClick={() =>
-                      handleUpdatePungliStatus('Ditindaklanjuti Lapangan')
-                    }
-                    className="min-h-[44px] px-3 py-2 rounded-xl bg-[#BFDBFE] hover:bg-[#93C5FD] text-[#1E40AF] font-bold text-xs flex items-center justify-center gap-1.5 transition"
-                  >
-                    <span>Tindak di Lapangan</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={isUpdatingPungli}
-                    onClick={() => handleUpdatePungliStatus('Selesai')}
-                    className="min-h-[44px] px-3 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-[#A7F3D0]" aria-hidden="true" />
-                    <span>Selesaikan Laporan</span>
-                  </button>
-                </div>
+                <h2 className="text-lg font-extrabold text-white mt-0.5">
+                  Sitinjau Lauik · Lembah Anai · Kelok 9 · Kelok 44
+                </h2>
+                <p className="text-xs text-[#E4E9DA]/85 mt-1">
+                  Tingkat siaga baku: Normal, Waspada, Siaga, dan Awas Tutup Total. Tersinkron dengan siaran cuaca Open-Meteo.
+                </p>
               </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {hazardAlerts.map((hazard) => {
+              const meta = getHazardSeverityMeta(hazard.severity);
+              return (
+                <div
+                  key={hazard.id}
+                  className="p-5 rounded-2xl bg-white border border-[#CFD8BE] flex flex-col justify-between space-y-3 shadow-xs"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-mono font-bold text-[#4A5248]">
+                          {hazard.corridor_code} · {hazard.city_regency}
+                        </span>
+                        <h4 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
+                          {hazard.location}
+                        </h4>
+                        <div className="text-[11px] text-[#767676]">{hazard.road_segment}</div>
+                      </div>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border shrink-0 inline-flex items-center gap-1.5 ${meta.badge}`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+                        {hazard.severity}
+                      </span>
+                    </div>
+
+                    <p className="mt-2.5 text-xs text-[#4A5248] leading-relaxed">{hazard.message}</p>
+
+                    <div className="mt-2.5 p-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs">
+                      <span className="font-bold text-[#234B24]">Rute Alternatif: </span>
+                      <span>{hazard.detour_route}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#E4E9DA] flex items-center justify-between text-[11px]">
+                    <span className="text-[#4A5248]">
+                      Posko: <strong>{hazard.nearest_rescue_post}</strong> ({hazard.emergency_contact})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedHazard(hazard);
+                        setHazardSeverity(hazard.severity);
+                        setHazardMessage(hazard.message);
+                        setHazardDetour(hazard.detour_route);
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-[#234B24] text-white font-bold text-xs inline-flex items-center gap-1"
+                    >
+                      <Navigation className="w-3.5 h-3.5" /> Ubah Status
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* ==================================================================== */}
-      {/* MODAL PENUGASAN TIM SAR & UPDATE EVAKUASI                            */}
+      {/* TAB 4: CUACA OPEN-METEO LIVE (REFRESH ON-DEMAND + 6 SLOT + EDIT)     */}
       {/* ==================================================================== */}
-      {selectedSos && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="sos-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10">
-            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
-                  <LifeBuoy className="w-5 h-5" aria-hidden="true" />
+      {activeTab === 'weather' && (
+        <div className="space-y-5">
+          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div>
+              <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
+                <CloudSun className="w-5 h-5 text-sky-600" />
+                <span>Pemantauan Cuaca Real-Time Destinasi (Open-Meteo Live API)</span>
+              </h3>
+              <p className="text-xs text-[#4A5248] mt-0.5">
+                Menyediakan data suhu, kelembapan, angin, peluang hujan, dan prakiraan 6 jam ke depan ke Direktori Destinasi &amp; Plang Smart QR.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={isRefreshingMeteo}
+              onClick={handleRefreshOpenMeteo}
+              className="min-h-[42px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold inline-flex items-center gap-2 shrink-0 disabled:opacity-60"
+            >
+              <RefreshCw className={`w-4 h-4 text-[#A7F3D0] ${isRefreshingMeteo ? 'animate-spin' : ''}`} />
+              <span>
+                {isRefreshingMeteo ? 'Menarik Open-Meteo...' : 'Segarkan dari Open-Meteo Live'}
+              </span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {weatherList.map((item) => (
+              <div
+                key={item.id}
+                className={`p-5 rounded-3xl border flex flex-col justify-between space-y-4 ${item.is_extreme_weather
+                    ? 'border-red-300 bg-red-50/30'
+                    : 'border-[#CFD8BE] bg-white'
+                  }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-[#767676]">
+                        {item.city_regency} · {item.source}
+                      </span>
+                      <h4 className="text-sm font-extrabold text-[#1B1F1A]">{item.destination_name}</h4>
+                    </div>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0 ${item.is_extreme_weather
+                          ? 'bg-red-600 text-white'
+                          : item.weather_status === 'Waspada Hujan'
+                            ? 'bg-amber-100 text-amber-900'
+                            : 'bg-emerald-100 text-emerald-900'
+                        }`}
+                    >
+                      {item.weather_status}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Thermometer className="w-6 h-6 text-[#F26B4B]" />
+                      <div>
+                        <div className="text-2xl font-black text-[#234B24] font-mono">
+                          {item.current_temp_c}°C
+                        </div>
+                        <span className="text-xs font-bold text-[#4A5248]">{item.condition}</span>
+                      </div>
+                    </div>
+                    <div className="text-right text-[11px] text-[#4A5248] space-y-0.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <Droplets className="w-3.5 h-3.5 text-sky-600" />
+                        <span>{item.humidity_pct}% · Hujan {item.rain_probability}%</span>
+                      </div>
+                      <div className="flex items-center justify-end gap-1">
+                        <Wind className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{item.wind_speed_kmh} km/jam</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {item.extreme_warning_text && (
+                    <div className="p-2.5 rounded-xl bg-red-100/70 border border-red-200 text-[11px] text-red-900">
+                      <strong>Catatan:</strong> {item.extreme_warning_text}
+                    </div>
+                  )}
+
+                  {/* Honest 6 Hourly Forecast Slots */}
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase text-[#4A5248] block mb-1.5">
+                      Prakiraan 6 Jam ke Depan:
+                    </span>
+                    <div className="grid grid-cols-3 gap-1.5 text-center">
+                      {item.hourly_forecast.slice(0, 6).map((hf, i) => (
+                        <div key={i} className="p-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                          <span className="text-[10px] font-mono text-[#767676] block">{hf.hour}</span>
+                          <strong className="text-xs font-extrabold text-[#234B24] block">
+                            {hf.temp_c}°C
+                          </strong>
+                          <span className="text-[9px] text-[#4A5248] block truncate">
+                            {hf.condition}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3
-                    id="sos-modal-title"
-                    className="text-base font-extrabold text-[#1B1F1A]"
+
+                <div className="pt-3 border-t border-[#E4E9DA] flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingWeather(item);
+                      setWeatherCondInput(item.condition);
+                      setWeatherTempInput(item.current_temp_c);
+                      setWeatherExtremeInput(item.is_extreme_weather);
+                      setWeatherWarnInput(item.extreme_warning_text || '');
+                    }}
+                    className="px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#234B24] inline-flex items-center gap-1"
                   >
-                    Koordinasi Evakuasi SAR — {selectedSos.id.toUpperCase()}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Wisatawan: {selectedSos.tourist_name} ({selectedSos.tourist_phone})
-                  </p>
+                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBroadcastWeatherHazard(item)}
+                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-1.5 ${item.is_extreme_weather
+                        ? 'bg-red-600 text-white'
+                        : 'bg-[#234B24] text-white'
+                      }`}
+                  >
+                    <Send className="w-3.5 h-3.5" /> Siarkan ke Jalur Rawan
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedSos(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" aria-hidden="true" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TINDAK LANJUT PUNGLI */}
+      {selectedPungli && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <div>
+                <h3 className="text-base font-extrabold">
+                  Verifikasi Laporan {selectedPungli.ticket_code}
+                </h3>
+                <p className="text-xs text-[#4A5248]">
+                  {selectedPungli.destination_name} · {selectedPungli.kab_kota}
+                </p>
+              </div>
+              <button type="button" onClick={() => setSelectedPungli(null)}>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="mt-5 space-y-4">
-              <div className="p-3.5 rounded-xl bg-[#FEF08A]/40 border border-[#FDE047] text-xs space-y-1.5">
-                <div className="font-bold text-[#854D0E]">
-                  Lokasi: {selectedSos.destination_name} ({selectedSos.kab_kota})
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <img
+                src={selectedPungli.photo_evidence}
+                alt="Bukti aduan"
+                className="w-full aspect-[4/3] object-cover rounded-2xl border border-[#CFD8BE]"
+              />
+              <div className="space-y-3 text-xs">
+                <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                  <div className="font-extrabold">{selectedPungli.reporter_name}</div>
+                  <div className="font-mono text-[#4A5248]">{selectedPungli.reporter_phone}</div>
+                  <div className="text-[#767676] mt-1">
+                    GPS: {selectedPungli.latitude.toFixed(4)}, {selectedPungli.longitude.toFixed(4)}
+                  </div>
                 </div>
-                <div className="text-[#1B1F1A]">
-                  Catatan Medis: <em>&quot;{selectedSos.medical_notes}&quot;</em>
-                </div>
-                <div className="font-mono text-[#234B24] font-bold">
-                  GPS: {(selectedSos.lat ?? selectedSos.latitude ?? 0).toFixed(5)}, {(selectedSos.lng ?? selectedSos.longitude ?? 0).toFixed(5)} · Baterai: {selectedSos.battery_level ?? selectedSos.battery_percent ?? 100}%
-                </div>
+                <p className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  &ldquo;{selectedPungli.description}&rdquo;
+                </p>
               </div>
+            </div>
 
+            <div>
+              <label className="block text-xs font-bold mb-1">Catatan Tindakan Satgas / Admin</label>
+              <textarea
+                rows={2}
+                value={adminNoteInput}
+                onChange={(e) => setAdminNoteInput(e.target.value)}
+                className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => handleUpdatePungliStatus('Diverifikasi')}
+                className="py-2.5 rounded-xl bg-amber-100 text-amber-900 font-bold text-xs"
+              >
+                Diverifikasi
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUpdatePungliStatus('Ditindaklanjuti')}
+                className="py-2.5 rounded-xl bg-blue-100 text-blue-900 font-bold text-xs"
+              >
+                Ditindaklanjuti
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUpdatePungliStatus('Selesai')}
+                className="py-2.5 rounded-xl bg-[#234B24] text-white font-bold text-xs inline-flex items-center justify-center gap-1"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL UPDATE SOS LOG */}
+      {selectedSos && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-extrabold">Perbarui Log SOS {selectedSos.sos_code}</h3>
+            <div className="space-y-3 text-xs">
               <div>
-                <label
-                  htmlFor={sarUnitInputId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Unit SAR / BPBD / Pokdarwis yang Ditugaskan
-                </label>
+                <label className="block font-bold mb-1">Unit BPBD / Basarnas Ditugaskan</label>
                 <input
-                  id={sarUnitInputId}
                   type="text"
                   value={assignedSarUnit}
                   onChange={(e) => setAssignedSarUnit(e.target.value)}
-                  placeholder="Contoh: Pos SAR Basarnas Padang Pariaman & Relawan Pokdarwis (6 Personil)"
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
                 />
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
-                  Status Evakuasi SAR
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    'Sinyal SOS Masuk',
-                    'Tim SAR Dikerahkan',
-                    'Evakuasi Berjalan',
-                    'Penanganan Selesai',
-                  ].map((st) => (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() =>
-                        setSelectedSosStatus(st as SosEmergencyStatus)
-                      }
-                      className={`min-h-[42px] px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
-                        selectedSosStatus === st
-                          ? 'bg-[#234B24] text-[#F6F3EC] border-[#234B24]'
-                          : 'bg-[#F6F3EC] text-[#4A5248] border-[#CFD8BE] hover:bg-[#E4E9DA]'
+              <div className="grid grid-cols-3 gap-2">
+                {(['Dipancarkan', 'Tim SAR Meluncur', 'Evakuasi Selesai'] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setSelectedSosStatus(st)}
+                    className={`py-2 px-2 rounded-xl font-bold border text-[11px] ${selectedSosStatus === st
+                        ? 'bg-[#234B24] text-white border-[#234B24]'
+                        : 'bg-[#F6F3EC] text-[#4A5248] border-[#CFD8BE]'
                       }`}
-                    >
-                      {st}
-                    </button>
-                  ))}
-                </div>
+                  >
+                    {st}
+                  </button>
+                ))}
               </div>
-
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSos(null)}
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  disabled={isUpdatingSos}
-                  onClick={handleUpdateSosStatus}
-                  className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm"
-                >
-                  <Save className="w-4 h-4" aria-hidden="true" />
-                  <span>Simpan Status SAR</span>
-                </button>
-              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setSelectedSos(null)}
+                className="px-4 py-2 text-xs font-bold text-[#4A5248]"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleUpdateSosStatus}
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
+              >
+                Simpan
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ==================================================================== */}
-      {/* MODAL PERBARUI STATUS JALUR RAWAN (HAZARD ZONE)                     */}
-      {/* ==================================================================== */}
+      {/* MODAL UBAH STATUS JALUR RAWAN */}
       {selectedHazard && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="hazard-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-lg p-6 lg:p-7 shadow-2xl border border-[#234B24]/10">
-            <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-xs">
-                  <Navigation className="w-5 h-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <h3
-                    id="hazard-modal-title"
-                    className="text-base font-extrabold text-[#1B1F1A]"
-                  >
-                    Status Peringatan: {selectedHazard.location}
-                  </h3>
-                  <p className="text-[11px] text-[#4A5248]">
-                    Informasi ini langsung terbit di peta peringatan dini wisatawan
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedHazard(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#767676] hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveHazardAlert} className="mt-5 space-y-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <form onSubmit={handleSaveHazardAlert} className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-extrabold">
+              Ubah Status Koridor: {selectedHazard.location}
+            </h3>
+            <div className="space-y-3 text-xs">
               <div>
-                <label
-                  htmlFor={hazardSeverityId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Tingkat Status Jalur
-                </label>
+                <label className="block font-bold mb-1">Tingkat Siaga Jalur</label>
                 <select
-                  id={hazardSeverityId}
                   value={hazardSeverity}
-                  onChange={(e) =>
-                    setHazardSeverity(e.target.value as HazardSeverity)
-                  }
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+                  onChange={(e) => setHazardSeverity(e.target.value as HazardSeverity)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-bold"
                 >
-                  <option value="Aman Terkendali">Aman Terkendali (Lalu Lintas Lancar)</option>
-                  <option value="Waspada Bencana">Waspada Bencana (Curah Hujan Tinggi/Potensi Longsor)</option>
-                  <option value="Buka-Tutup Jalur">Buka-Tutup Jalur (Pembersihan Material Jalan)</option>
-                  <option value="Tutup Total">Tutup Total (Akses Terputus/Darurat)</option>
+                  {HAZARD_SEVERITIES.map((sev) => (
+                    <option key={sev} value={sev}>
+                      {sev}
+                    </option>
+                  ))}
                 </select>
               </div>
-
               <div>
-                <label
-                  htmlFor={hazardMsgId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Pesan Peringatan kepada Wisatawan
-                </label>
+                <label className="block font-bold mb-1">Pesan Peringatan Wisatawan</label>
                 <textarea
-                  id={hazardMsgId}
-                  rows={3}
+                  rows={2}
                   value={hazardMessage}
                   onChange={(e) => setHazardMessage(e.target.value)}
-                  required
-                  placeholder="Jelaskan kondisi jalan, curah hujan, atau himbauan ke pengemudi..."
-                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
+                  className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor={hazardDetourId}
-                  className="block text-xs font-bold text-[#1B1F1A] mb-1"
-                >
-                  Rute Pengalihan / Jalur Alternatif
-                </label>
+                <label className="block font-bold mb-1">Rute Alternatif / Pengalihan</label>
                 <input
-                  id={hazardDetourId}
                   type="text"
                   value={hazardDetour}
                   onChange={(e) => setHazardDetour(e.target.value)}
-                  placeholder="Contoh: Jalur Utama Beroperasi Normal / Alternatif via Malalak"
-                  required
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-medium text-[#1B1F1A]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
                 />
               </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setSelectedHazard(null)}
+                className="px-4 py-2 text-xs font-bold text-[#4A5248]"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
+              >
+                Simpan &amp; Siarkan Status
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
-                <button
-                  type="button"
-                  onClick={() => setSelectedHazard(null)}
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="min-h-[44px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm"
-                >
-                  <Save className="w-4 h-4" aria-hidden="true" />
-                  <span>Simpan Status Jalur</span>
-                </button>
+      {/* MODAL EDIT KONDISI CUACA */}
+      {editingWeather && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <form onSubmit={handleSaveWeatherEdit} className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-extrabold">
+              Edit Kondisi Cuaca — {editingWeather.city_regency}
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold mb-1">Kondisi Cuaca</label>
+                <input
+                  type="text"
+                  value={weatherCondInput}
+                  onChange={(e) => setWeatherCondInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                />
               </div>
-            </form>
-          </div>
+              <div>
+                <label className="block font-bold mb-1">Suhu (°C)</label>
+                <input
+                  type="number"
+                  value={weatherTempInput}
+                  onChange={(e) => setWeatherTempInput(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-mono"
+                />
+              </div>
+              <label className="flex items-center gap-2 font-bold text-red-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={weatherExtremeInput}
+                  onChange={(e) => setWeatherExtremeInput(e.target.checked)}
+                />
+                <span>Tandai sebagai Cuaca Ekstrem / Siaga</span>
+              </label>
+              <div>
+                <label className="block font-bold mb-1">Catatan Peringatan (Opsional)</label>
+                <textarea
+                  rows={2}
+                  value={weatherWarnInput}
+                  onChange={(e) => setWeatherWarnInput(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setEditingWeather(null)}
+                className="px-4 py-2 text-xs font-bold text-[#4A5248]"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
+              >
+                Simpan Cuaca
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

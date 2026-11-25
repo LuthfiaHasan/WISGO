@@ -214,11 +214,10 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed transition cursor-pointer text-center flex flex-col items-center justify-center gap-2 ${
-            isDragging
+          className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed transition cursor-pointer text-center flex flex-col items-center justify-center gap-2 ${isDragging
               ? 'border-[#234B24] bg-[#E4E9DA]/50 scale-[1.01]'
               : 'border-[#CFD8BE] bg-[#F6F3EC]/70 hover:bg-[#E4E9DA]/40 hover:border-[#234B24]'
-          }`}
+            }`}
         >
           <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-xs">
             {isProcessing ? (

@@ -1,21 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   CheckCircle2,
-  X,
-  Store,
-  BarChart3,
-  RotateCcw,
-  Compass,
-  QrCode,
-  Radio,
-  Building2,
-  TrendingUp,
-  MapPin,
-  Users,
-  ShieldCheck,
-  Smartphone,
-  ExternalLink,
+  Info,
   Menu,
+  X,
+  XCircle,
 } from 'lucide-react';
 import {
   AdminAuthResponse,
@@ -30,10 +20,14 @@ import {
   fetchPartnersCatalog,
   getStoredAdminSession,
   logoutAdminJWT,
-  resetDestinationsToDefault,
   saveDestinationWithBridge,
   savePartnerWithBridge,
 } from './services/api';
+import {
+  HazardAlertsRepo,
+  OpenTripsRepo,
+  PungliReportsRepo,
+} from './services/dbRepository';
 import { INITIAL_PARTNERS, MOCK_20_DESTINATIONS } from './data/mockDestinations';
 import { Sidebar, AdminMenuKey } from './components/Sidebar';
 import { LoginPage } from './pages/LoginPage';
@@ -47,8 +41,15 @@ import { PublicSmartQRView } from './pages/PublicSmartQRView';
 import { PublicGroupInviteView } from './pages/PublicGroupInviteView';
 import { PublicLandingPage } from './pages/PublicLandingPage';
 import { SmartQRPlacardModal } from './components/SmartQRPlacardModal';
-import { WhatsAppBotSimulator } from './components/WhatsAppBotSimulator';
 import { ExecutiveAnalyticsPage } from './pages/ExecutiveAnalyticsPage';
+
+function computeLiveEmergencyBadge(): number {
+  const openPungli = PungliReportsRepo.getAll().filter((r) => r.status !== 'Selesai').length;
+  const activeHazards = HazardAlertsRepo.getAll().filter(
+    (h) => h.severity === 'Siaga' || h.severity === 'Awas Tutup Total'
+  ).length;
+  return openPungli + activeHazards;
+}
 
 export const App: React.FC = () => {
   const [session, setSession] = useState<AdminAuthResponse | null>(() =>
@@ -56,20 +57,16 @@ export const App: React.FC = () => {
   );
   const [activeMenu, setActiveMenu] = useState<AdminMenuKey>('destinations');
   const [backendOnline, setBackendOnline] = useState<boolean>(false);
-  const [destinations, setDestinations] = useState<Destination[]>(
-    MOCK_20_DESTINATIONS
-  );
+  const [destinations, setDestinations] = useState<Destination[]>(MOCK_20_DESTINATIONS);
   const [partners, setPartners] = useState<Partner[]>(INITIAL_PARTNERS);
-  const [selectedTariffDestId, setSelectedTariffDestId] =
-    useState<string>('dest-001');
-  const [smartQRModalDest, setSmartQRModalDest] =
-    useState<Destination | null>(null);
+  const [selectedTariffDestId, setSelectedTariffDestId] = useState<string>('dest-001');
+  const [smartQRModalDest, setSmartQRModalDest] = useState<Destination | null>(null);
 
-  // Badge alert counts for Pusat Komando
-  const [openPungliCount, setOpenPungliCount] = useState<number>(3);
-  const [openSosCount, setOpenSosCount] = useState<number>(2);
+  const [activeEmergencyCount, setActiveEmergencyCount] = useState<number>(() =>
+    computeLiveEmergencyBadge()
+  );
+  const [tripGoCount, setTripGoCount] = useState<number>(() => OpenTripsRepo.getAll().length);
 
-  // Public View State: 'landing' | 'login' | 'qr' | 'group' | null
   const [publicView, setPublicView] = useState<'landing' | 'login' | 'qr' | 'group' | null>(() => {
     const path = window.location.pathname;
     const hash = window.location.hash;
@@ -80,37 +77,25 @@ export const App: React.FC = () => {
     const stored = getStoredAdminSession();
     return stored ? null : 'landing';
   });
-  const [publicPreviewDest, setPublicPreviewDest] = useState<Destination | null>(
-    null
-  );
+  const [publicPreviewDest, setPublicPreviewDest] = useState<Destination | null>(null);
 
-  // Cross-Navigation between Studio 360 & Direktori Mitra UMKM
+  // Cross-Navigation antara Studio Panorama 360° / Denah 2D & Direktori Mitra UMKM
   const [studioNavTarget, setStudioNavTarget] = useState<{
     destId?: string;
-    sceneId?: string;
-    pinId?: string;
+    tab?: 'panorama' | 'denah';
   } | null>(null);
-  const [partnerNavTargetId, setPartnerNavTargetId] = useState<string | null>(
-    null
+  const [partnerNavTargetId, setPartnerNavTargetId] = useState<string | null>(null);
+  const [analyticsSubTab, setAnalyticsSubTab] = useState<'intel_heatmap' | 'system_benchmark'>(
+    'intel_heatmap'
   );
-
-  // Layar Demo Terpadu (Split-Screen Showcase)
-  const [isShowcaseMode, setIsShowcaseMode] = useState<boolean>(false);
-  const [showcaseRightTab, setShowcaseRightTab] = useState<'wa' | 'qr'>('wa');
-  const [analyticsSubTab, setAnalyticsSubTab] = useState<'intel_heatmap' | 'system_benchmark'>('intel_heatmap');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
-  const [toastType, setToastType] = useState<
-    'success' | 'info' | 'warning' | 'error'
-  >('info');
+  const [toastType, setToastType] = useState<'success' | 'info' | 'warning' | 'error'>('info');
 
   const showToast = useCallback(
-    (
-      msg: string,
-      type: 'success' | 'info' | 'warning' | 'error' = 'info'
-    ) => {
+    (msg: string, type: 'success' | 'info' | 'warning' | 'error' = 'success') => {
       setToastMessage(msg);
       setToastType(type);
     },
@@ -119,84 +104,78 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (!toastMessage) return;
-    const timer = setTimeout(() => {
-      setToastMessage('');
-    }, 4500);
+    const timer = setTimeout(() => setToastMessage(''), 4500);
     return () => clearTimeout(timer);
   }, [toastMessage]);
 
-  const loadSystemData = useCallback(async (notify = false) => {
-    setLoading(true);
-    try {
-      const [health, destResult, partnerList] = await Promise.all([
-        checkBackendHealth(),
-        fetchDestinationsWithBridge(),
-        fetchPartnersCatalog(),
-      ]);
-      setBackendOnline(health.online || destResult.online);
-      setDestinations(destResult.destinations);
-      setPartners(partnerList);
-      if (notify) {
-        setToastMessage(
-          health.online
-            ? 'Data berhasil disinkronkan dengan Database Utama.'
-            : 'Data berhasil dimuat dari penyimpanan lokal tersinkronisasi.'
-        );
+  const loadSystemData = useCallback(
+    async (notify = false) => {
+      setLoading(true);
+      try {
+        const [health, destResult, partnerList] = await Promise.all([
+          checkBackendHealth(),
+          fetchDestinationsWithBridge(),
+          fetchPartnersCatalog(),
+        ]);
+        setBackendOnline(health.online || destResult.online);
+        setDestinations(destResult.destinations);
+        setPartners(partnerList);
+        setActiveEmergencyCount(computeLiveEmergencyBadge());
+        setTripGoCount(OpenTripsRepo.getAll().length);
+        if (notify) {
+          showToast(
+            health.online
+              ? 'Data berhasil disinkronkan dengan Database Utama WISGO.'
+              : 'Data berhasil dimuat ulang dari penyimpanan lokal V3 tersinkronisasi.',
+            'info'
+          );
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [showToast]
+  );
 
   useEffect(() => {
     loadSystemData(false);
   }, [loadSystemData]);
 
-  // Check URL pathname or hash for direct public QR, Join, Login, or Landing link
   useEffect(() => {
-    const handleUrlRoute = () => {
-      const path = window.location.pathname;
-      const hash = window.location.hash;
-
-      if (path.includes('/qr/') || hash.includes('/qr/')) {
-        const slug = (path.split('/qr/')[1] || hash.split('/qr/')[1] || '').split('/')[0];
-        const match = destinations.find((d) => d.slug === slug || d.id === slug);
-        setPublicPreviewDest(match || destinations[0]);
-        setPublicView('qr');
-      } else if (path.includes('/join') || hash.includes('/join')) {
-        setPublicView('group');
-      } else if (path.includes('/login') || hash.includes('/login')) {
-        setPublicView('login');
-      }
-    };
-    handleUrlRoute();
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    if (path.includes('/qr/') || hash.includes('/qr/')) {
+      const slug = (path.split('/qr/')[1] || hash.split('/qr/')[1] || '').split('/')[0];
+      const match = destinations.find((d) => d.slug === slug || d.id === slug);
+      setPublicPreviewDest(match || destinations[0]);
+      setPublicView('qr');
+    } else if (path.includes('/join') || hash.includes('/join')) {
+      setPublicView('group');
+    } else if (path.includes('/login') || hash.includes('/login')) {
+      setPublicView('login');
+    }
   }, [destinations]);
 
-  const handleSaveDestination = async (
-    updated: Destination,
-    message: string
-  ) => {
+  const handleSaveDestination = async (updated: Destination, message: string) => {
     const res = await saveDestinationWithBridge(updated, destinations);
     setDestinations(res.updatedList);
     setSelectedTariffDestId(updated.id);
-    showToast(message);
+    showToast(message, 'success');
   };
 
-  const handleDeleteDestination = async (
-    target: Destination,
-    message: string
-  ) => {
+  const handleDeleteDestination = async (target: Destination, message: string) => {
     const res = await deleteDestinationWithBridge(target.id, destinations);
     setDestinations(res.updatedList);
     if (selectedTariffDestId === target.id && res.updatedList[0]) {
       setSelectedTariffDestId(res.updatedList[0].id);
     }
-    showToast(message);
+    showToast(message, 'info');
   };
 
   const handleSavePartner = async (partner: Partner) => {
     const res = await savePartnerWithBridge(partner, partners);
     setPartners(res.updatedList);
+    setTripGoCount(OpenTripsRepo.getAll().length);
   };
 
   const handleDeletePartner = async (partnerId: string) => {
@@ -206,13 +185,14 @@ export const App: React.FC = () => {
 
   const handleNavigateToStudio360 = (
     destId: string,
-    sceneId: string,
-    pinId: string
+    tab: 'panorama' | 'denah' = 'denah'
   ) => {
-    setStudioNavTarget({ destId, sceneId, pinId });
+    setStudioNavTarget({ destId, tab });
     setActiveMenu('cms_360');
     showToast(
-      'Membuka Studio Virtual 360° dan menyorot titik pin booking mitra.',
+      tab === 'denah'
+        ? 'Membuka Editor Denah Kawasan 2D untuk destinasi terkait.'
+        : 'Membuka Panorama 360° destinasi terkait.',
       'info'
     );
   };
@@ -221,24 +201,13 @@ export const App: React.FC = () => {
     if (partnerId) {
       setPartnerNavTargetId(partnerId);
     }
-    setActiveMenu('wa_simulator');
-    showToast(
-      'Membuka modul Simulator Interaksi WA Mitra (Direct P2P).',
-      'info'
-    );
+    setActiveMenu('partners');
+    showToast('Membuka Direktori Mitra UMKM (Direct P2P WhatsApp).', 'info');
   };
 
   const handleOpenTariffManager = (destId: string) => {
     setSelectedTariffDestId(destId);
     setActiveMenu('tariffs_qr');
-  };
-
-  const handleRestoreDefaultData = () => {
-    const restored = resetDestinationsToDefault();
-    setDestinations(restored);
-    showToast(
-      'Direktori 20 destinasi unggulan Sumatera Barat berhasil dipulihkan ke standar awal.'
-    );
   };
 
   const handleLogout = () => {
@@ -247,12 +216,10 @@ export const App: React.FC = () => {
   };
 
   const totalTariffsCount = useMemo(
-    () =>
-      destinations.reduce((acc, item) => acc + (item.tariffs?.length || 0), 0),
+    () => destinations.reduce((acc, item) => acc + (item.tariffs?.length || 0), 0),
     [destinations]
   );
 
-  // If in Public Web View Mode
   if (publicView === 'landing') {
     return (
       <PublicLandingPage
@@ -296,7 +263,8 @@ export const App: React.FC = () => {
           setSession(newSession);
           setPublicView(null);
           showToast(
-            `Selamat datang, ${newSession.user.full_name}. Sesi otoritas tunggal aktif.`
+            `Selamat datang, ${newSession.user.full_name}. Sesi otoritas tunggal aktif.`,
+            'success'
           );
         }}
         onBackToLanding={() => setPublicView('landing')}
@@ -304,6 +272,25 @@ export const App: React.FC = () => {
       />
     );
   }
+
+  const toastStyles: Record<'success' | 'info' | 'warning' | 'error', { bg: string; icon: React.ReactNode }> = {
+    success: {
+      bg: 'bg-[#234B24] border-[#1E9E5A] text-[#F6F3EC]',
+      icon: <CheckCircle2 className="w-5 h-5 text-[#1E9E5A] shrink-0" aria-hidden="true" />,
+    },
+    info: {
+      bg: 'bg-[#1E3A5F] border-[#38BDF8] text-white',
+      icon: <Info className="w-5 h-5 text-[#38BDF8] shrink-0" aria-hidden="true" />,
+    },
+    warning: {
+      bg: 'bg-[#78350F] border-[#F59E0B] text-[#FFFBEB]',
+      icon: <AlertTriangle className="w-5 h-5 text-[#FBBF24] shrink-0" aria-hidden="true" />,
+    },
+    error: {
+      bg: 'bg-[#7F1D1D] border-[#F26B4B] text-white',
+      icon: <XCircle className="w-5 h-5 text-[#FCA5A5] shrink-0" aria-hidden="true" />,
+    },
+  };
 
   const renderMainContent = () => {
     switch (activeMenu) {
@@ -335,11 +322,11 @@ export const App: React.FC = () => {
           <div className="p-6 lg:p-8">
             <Studio360Page
               destinations={destinations}
+              partners={partners}
               onUpdateDestinations={setDestinations}
               showToast={showToast}
               initialDestId={studioNavTarget?.destId}
-              initialSceneId={studioNavTarget?.sceneId}
-              initialHighlightPinId={studioNavTarget?.pinId}
+              initialTab={studioNavTarget?.tab}
               onNavigateToPartner={handleNavigateToPartner}
             />
           </div>
@@ -347,21 +334,16 @@ export const App: React.FC = () => {
       case 'challenges':
         return (
           <div className="p-6 lg:p-8">
-            <ChallengePage
-              destinations={destinations}
-              showToast={showToast}
-            />
+            <ChallengePage destinations={destinations} showToast={showToast} />
           </div>
         );
       case 'command_center':
-      case 'saber_pungli':
         return (
           <div className="p-6 lg:p-8">
             <CommandCenterPage
               showToast={showToast}
-              onUpdateBadgeCount={(openPungli, openSos) => {
-                setOpenPungliCount(openPungli);
-                setOpenSosCount(openSos);
+              onUpdateBadgeCount={(openPungli, activeHazardCount) => {
+                setActiveEmergencyCount(openPungli + activeHazardCount);
               }}
             />
           </div>
@@ -374,18 +356,9 @@ export const App: React.FC = () => {
               destinations={destinations}
               onSavePartner={handleSavePartner}
               onDeletePartner={handleDeletePartner}
-              onNavigateToStudio360={handleNavigateToStudio360}
+              onTripsChanged={() => setTripGoCount(OpenTripsRepo.getAll().length)}
+              onNavigateToStudio360={(destId, tab) => handleNavigateToStudio360(destId, tab)}
               initialSelectedPartnerId={partnerNavTargetId || undefined}
-              showToast={showToast}
-            />
-          </div>
-        );
-      case 'wa_simulator':
-        return (
-          <div className="p-6 lg:p-8">
-            <WhatsAppBotSimulator
-              partners={partners}
-              onPartnerUpdated={handleSavePartner}
               showToast={showToast}
             />
           </div>
@@ -406,6 +379,16 @@ export const App: React.FC = () => {
     }
   };
 
+  const activeLabelMap: Record<AdminMenuKey, string> = {
+    destinations: 'Destinasi',
+    tariffs_qr: 'Tarif & QR',
+    cms_360: 'Panorama 360°',
+    challenges: 'Challenge',
+    command_center: 'Komando SOS',
+    partners: 'UMKM & Trip Go',
+    dispar_analytics: 'Analitik',
+  };
+
   return (
     <div className="min-h-screen bg-[#F6F3EC] text-[#1B1F1A] flex flex-col lg:flex-row font-sans">
       <Sidebar
@@ -415,35 +398,25 @@ export const App: React.FC = () => {
           if (menu === 'dispar_analytics') {
             setAnalyticsSubTab('intel_heatmap');
           }
+          setActiveEmergencyCount(computeLiveEmergencyBadge());
         }}
         session={session}
         backendOnline={backendOnline}
         totalDestinations={destinations.length}
         totalTariffs={totalTariffsCount}
-        totalPartners={partners.length}
-        openPungliCount={openPungliCount}
-        openSosCount={openSosCount}
+        totalPartnersAndTrips={partners.length + tripGoCount}
+        activeEmergencyCount={activeEmergencyCount}
         onOpenLandingPage={() => setPublicView('landing')}
         onOpenPublicQR={() => {
           setPublicPreviewDest(destinations[0] || MOCK_20_DESTINATIONS[0]);
           setPublicView('qr');
         }}
-        onOpenGroupInvite={() => {
-          setPublicView('group');
-        }}
-        onOpenSystemBenchmark={() => {
-          setActiveMenu('dispar_analytics');
-          setAnalyticsSubTab('system_benchmark');
-        }}
-        isShowcaseMode={isShowcaseMode}
-        onToggleShowcaseMode={() => setIsShowcaseMode((prev) => !prev)}
         onLogout={handleLogout}
         isMobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
       <main className="flex-1 min-w-0 overflow-x-hidden relative flex flex-col">
-        {/* Mobile Header Bar */}
         <header className="lg:hidden sticky top-0 z-30 bg-[#234B24] text-[#F6F3EC] px-4 py-3 flex items-center justify-between border-b border-[#234B24]/20 shadow-sm shrink-0">
           <div className="flex items-center gap-3">
             <button
@@ -463,133 +436,32 @@ export const App: React.FC = () => {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-full bg-white/10 text-[#F6F3EC] font-medium text-[11px]">
-              {activeMenu === 'destinations' ? 'Destinasi' :
-               activeMenu === 'tariffs_qr' ? 'Tarif & QR' :
-               activeMenu === 'cms_360' ? 'Panorama 360°' :
-               activeMenu === 'challenges' ? 'Challenge' :
-               activeMenu === 'command_center' || activeMenu === 'saber_pungli' ? 'Komando SOS' :
-               activeMenu === 'partners' ? 'UMKM & Trip' :
-               activeMenu === 'wa_simulator' ? 'Simulator WA' : 'Analitik'}
-            </span>
-          </div>
+          <span className="px-2.5 py-1 rounded-full bg-white/10 text-[#F6F3EC] font-medium text-[11px]">
+            {activeLabelMap[activeMenu]}
+          </span>
         </header>
 
-        {/* Notifikasi Toast Halus */}
         {toastMessage && (
           <div
             role="status"
             aria-live="polite"
-            className="no-print fixed bottom-6 right-6 z-50 max-w-md bg-[#234B24] text-[#F6F3EC] px-5 py-3.5 rounded-2xl shadow-xl border border-[#1E9E5A] flex items-center gap-3"
+            className={`no-print fixed bottom-6 right-6 z-50 max-w-md px-5 py-3.5 rounded-2xl shadow-xl border flex items-center gap-3 ${toastStyles[toastType].bg}`}
           >
-            <CheckCircle2
-              className="w-5 h-5 text-[#1E9E5A] shrink-0"
-              aria-hidden="true"
-            />
-            <span className="text-xs font-bold leading-snug">
-              {toastMessage}
-            </span>
+            {toastStyles[toastType].icon}
+            <span className="text-xs font-bold leading-snug">{toastMessage}</span>
             <button
               type="button"
               aria-label="Tutup pemberitahuan"
               onClick={() => setToastMessage('')}
-              className="ml-2 p-1 rounded-lg hover:bg-white/10 text-[#E4E9DA]"
+              className="ml-2 p-1 rounded-lg hover:bg-white/10 text-current opacity-80 hover:opacity-100"
             >
               <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         )}
 
-        {/* Normal Mode vs Split-Screen Showcase Mode */}
-        {!isShowcaseMode ? (
-          <div className="flex-1">
-            {renderMainContent()}
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col xl:flex-row">
-            {/* Sisi Kiri: Web Admin Utama */}
-            <div className="flex-1 min-w-0 border-r border-[#CFD8BE]">
-              <div className="bg-[#234B24] text-white px-5 py-2.5 text-xs font-bold flex items-center justify-between no-print">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#1E9E5A] animate-ping" />
-                  <span>SHOWCASE PANEL KIRI: Portal Pusat Komando Web Admin WISGO</span>
-                </span>
-                <span className="text-[10px] text-[#A7F3D0] uppercase font-mono">
-                  Mode Penguji Terpadu
-                </span>
-              </div>
-              {renderMainContent()}
-            </div>
+        <div className="flex-1">{renderMainContent()}</div>
 
-            {/* Sisi Kanan: Showcase Live Device (Wisatawan / Bot WA Mitra) */}
-            <div className="w-full xl:w-[460px] 2xl:w-[500px] shrink-0 bg-[#EFEAE2] flex flex-col border-t xl:border-t-0 xl:border-l border-[#CFD8BE]">
-              {/* Header Showcase Kanan */}
-              <div className="bg-[#1B3B1C] text-[#F6F3EC] px-4 py-3 flex items-center justify-between shrink-0 shadow-sm no-print">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-[#A7F3D0]" />
-                  <span className="text-xs font-bold">Layar HP Pengguna (Live)</span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setShowcaseRightTab('wa')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                      showcaseRightTab === 'wa'
-                        ? 'bg-[#128C7E] text-white shadow-xs'
-                        : 'bg-white/10 hover:bg-white/20 text-[#E4E9DA]'
-                    }`}
-                  >
-                    Bot WA Mitra
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowcaseRightTab('qr')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-                      showcaseRightTab === 'qr'
-                        ? 'bg-[#F26B4B] text-white shadow-xs'
-                        : 'bg-white/10 hover:bg-white/20 text-[#E4E9DA]'
-                    }`}
-                  >
-                    Smart QR Wisatawan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsShowcaseMode(false)}
-                    className="p-1 rounded-lg hover:bg-white/20 text-white ml-1"
-                    title="Tutup Mode Showcase"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Konten Showcase Kanan */}
-              <div className="flex-1 overflow-y-auto p-4 flex justify-center">
-                {showcaseRightTab === 'wa' ? (
-                  <div className="w-full">
-                    <WhatsAppBotSimulator
-                      partners={partners}
-                      onPartnerUpdated={handleSavePartner}
-                      showToast={showToast}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full">
-                    <PublicSmartQRView
-                      destination={destinations[0] || MOCK_20_DESTINATIONS[0]}
-                      allDestinations={destinations}
-                      showToast={showToast}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal Pratinjau & Cetak Plang Smart QR */}
         <SmartQRPlacardModal
           destination={smartQRModalDest}
           onClose={() => setSmartQRModalDest(null)}
