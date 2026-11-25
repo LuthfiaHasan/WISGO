@@ -1,6 +1,7 @@
 package destination
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -97,7 +98,7 @@ func (s *service) GetOfflineBundle(idOrSlug string) (*OfflineBundleResponse, err
 	contacts := models.GetDefaultEmergencyContacts()
 	callProtocol := models.GetDefaultEmergencyCallProtocol()
 
-	return &OfflineBundleResponse{
+	resp := &OfflineBundleResponse{
 		BundleVersion:         "v2.1-offline-sos",
 		GeneratedAt:           time.Now().Format(time.RFC3339),
 		LocalStorageSDK:       "Flutter Hive / Sqflite Ready",
@@ -108,7 +109,13 @@ func (s *service) GetOfflineBundle(idOrSlug string) (*OfflineBundleResponse, err
 		AudioTriggers:         microMap.AudioTriggers,
 		EmergencyContacts:     contacts,
 		EmergencyCallProtocol: &callProtocol,
-	}, nil
+	}
+
+	if rawBytes, err := json.Marshal(resp); err == nil {
+		s.repo.SaveOfflineBundle(dest.ID, resp.BundleVersion, rawBytes)
+	}
+
+	return resp, nil
 }
 
 func (s *service) CreateCMS(input models.Destination) (models.Destination, error) {

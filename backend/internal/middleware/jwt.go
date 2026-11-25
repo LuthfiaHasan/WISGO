@@ -26,6 +26,13 @@ var validTokenRoles = map[string]string{
 	TokenVendor:      "vendor",
 }
 
+var validTokenUserIDs = map[string]string{
+	TokenAdminDispar: "user-admin-dispar-01",
+	TokenPokdarwis:   "user-pokdarwis-01",
+	TokenTourist:     "user-tourist-01",
+	TokenVendor:      "user-vendor-01",
+}
+
 // ResolveTokenRole memvalidasi token preset pengujian maupun token sesi dinamis hasil login OTP/Google BE-2
 func ResolveTokenRole(token string) (role string, userID string, valid bool) {
 	token = strings.TrimSpace(token)
@@ -35,7 +42,7 @@ func ResolveTokenRole(token string) (role string, userID string, valid bool) {
 
 	// 1. Cek preset token standar
 	if r, ok := validTokenRoles[token]; ok {
-		return r, "usr-preset", true
+		return r, validTokenUserIDs[token], true
 	}
 
 	// 2. Cek token dinamis yang diterbitkan oleh modul auth BE-2 (format: jwt-wisgo-[role-]<userID>-<timestamp>)
