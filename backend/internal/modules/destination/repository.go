@@ -22,6 +22,7 @@ type Repository interface {
 	SyncTariffsCMS(id string, tariffs []models.OfficialTariff) (*models.Destination, error)
 	FindPending() []models.Destination
 	VerifyDestination(id string, status string) (*models.Destination, error)
+	SaveOfflineBundle(destID, version string, payloadJSON []byte)
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -275,3 +276,6 @@ func (r *inMemoryRepository) VerifyDestination(id string, status string) (*model
 	}
 	return nil, fmt.Errorf("Destinasi '%s' tidak ditemukan untuk diverifikasi", id)
 }
+
+func (r *inMemoryRepository) SaveOfflineBundle(destID, version string, payloadJSON []byte) {}
+

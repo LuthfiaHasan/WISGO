@@ -1,8 +1,10 @@
 package system_core
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/LuthfiaHasan/WISGO/backend/internal/database"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
 )
 
@@ -42,6 +44,16 @@ func (s *service) GetBenchmark() *SystemBenchmarkResponse {
 	p50MS := toMS(spatialDirDur, 4.8)
 	p95MS := toMS(aggregateDur+scenes360Dur, 18.4)
 	p99MS := toMS(spatialDirDur+aggregateDur+scenes360Dur+gaodeHazardDur, 34.2)
+
+	// Catat log telemetri SLA ke tabel PostgreSQL api_telemetry_logs jika DB aktif (Sprint 4)
+	if db := database.GetDB(); db != nil && database.IsConnected() {
+		logID := fmt.Sprintf("tel-%d", time.Now().UnixNano()%100000000)
+		_, _ = db.Exec(`
+			INSERT INTO api_telemetry_logs (id, endpoint_path, http_method, status_code, latency_ms, cache_hit, recorded_at)
+			VALUES ($1, '/api/v1/admin/system/benchmark', 'GET', 200, $2, TRUE, NOW())
+			ON CONFLICT (id) DO NOTHING;
+		`, logID, p95MS)
+	}
 
 	return &SystemBenchmarkResponse{
 		Status:        "success",

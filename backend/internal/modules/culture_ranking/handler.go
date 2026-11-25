@@ -68,21 +68,15 @@ func (h *Handler) GetCulturalEventsCalendar(c *gin.Context) {
 
 // CreateCulturalEventVendor menangani POST /api/v1/culture/events oleh Vendor (atau Wisatawan)
 func (h *Handler) CreateCulturalEventVendor(c *gin.Context) {
-	// Validasi opsional token jika disertakan
+	// Validasi opsional token jika disertakan (mendukung preset token & token dinamis BE-2)
 	authHeader := c.GetHeader("Authorization")
 	var role string = "vendor"
 	var userID string
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-		if token == middleware.TokenVendor {
-			role = "vendor"
-			userID = "user-vendor-01"
-		} else if token == middleware.TokenTourist {
-			role = "tourist"
-			userID = "user-tourist-01"
-		} else if token == middleware.TokenAdminDispar {
-			role = "admin_dispar"
-			userID = "user-admin-dispar-01"
+		if resolvedRole, resolvedUID, valid := middleware.ResolveTokenRole(token); valid {
+			role = resolvedRole
+			userID = resolvedUID
 		}
 	}
 

@@ -475,3 +475,33 @@ func (r *postgresRepository) VerifyDestination(id string, status string) (*model
 
 	return d, nil
 }
+
+func (r *postgresRepository) SaveOfflineBundle(destID, version string, payloadJSON []byte) {
+	if len(payloadJSON) == 0 {
+		return
+	}
+	bundleID := fmt.Sprintf("bundle-%s", destID)
+	sizeKB := len(payloadJSON) / 1024
+	if sizeKB <= 0 {
+		sizeKB = 12
+	}
+	_, err := r.db.Exec(`
+		INSERT INTO offline_bundles (id, destination_id, bundle_version, file_size_kb, map_tiles_url, compressed_payload, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, NOW())
+		ON CONFLICT (destination_id) DO UPDATE SET
+			bundle_version = EXCLUDED.bundle_version,
+			file_size_kb = EXCLUDED.file_size_kb,
+			compressed_payload = EXCLUDED.compressed_payload,
+			updated_at = NOW();
+	`, bundleID, destID, version, sizeKB, fmt.Sprintf("https://cdn.wisgo.sumbarprov.go.id/tiles/%s.mbtiles", destID), string(payloadJSON))
+	if err != nil {
+		_, _ = r.db.Exec(`
+			INSERT INTO offline_bundles (id, destination_id, bundle_version, map_tiles_url, compressed_package)
+			VALUES ($1, $2, $3, $4, $5::jsonb)
+			ON CONFLICT (destination_id) DO UPDATE SET
+				bundle_version = EXCLUDED.bundle_version,
+				compressed_package = EXCLUDED.compressed_package;
+		`, bundleID, destID, version, fmt.Sprintf("https://cdn.wisgo.sumbarprov.go.id/tiles/%s.mbtiles", destID), string(payloadJSON))
+	}
+}
+
