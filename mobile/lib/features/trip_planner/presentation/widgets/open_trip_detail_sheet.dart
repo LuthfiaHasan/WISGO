@@ -373,7 +373,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                             child: const Text(
                               'DETAIL TRIP GO',
                               style: TextStyle(
-                                fontSize: 9.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.forest,
                                 letterSpacing: 0.8,
@@ -395,7 +395,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               child: const Text(
                                 'ANDA HOST',
                                 style: TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w900,
                                   color: AppColors.terracotta,
                                   letterSpacing: 0.8,
@@ -493,7 +493,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                   child: Text(
                                     _currentTrip.category,
                                     style: const TextStyle(
-                                      fontSize: 10.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                     ),
@@ -612,7 +612,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 _currentTrip.destinationDescription,
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF374151),
+                                  color: AppColors.ink,
                                   height: 1.45,
                                 ),
                               ),
@@ -662,7 +662,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF15803D),
+                                  color: AppColors.success,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -671,12 +671,12 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF16A34A)),
+                                    const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.success),
                                     const SizedBox(width: 6),
                                     Expanded(
                                       child: Text(
                                         inc,
-                                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF374151)),
+                                        style: const TextStyle(fontSize: 11.5, color: AppColors.ink),
                                       ),
                                     ),
                                   ],
@@ -688,7 +688,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFFB91C1C),
+                                  color: AppColors.danger,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -697,12 +697,12 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.cancel_rounded, size: 14, color: Color(0xFFDC2626)),
+                                    const Icon(Icons.cancel_rounded, size: 14, color: AppColors.danger),
                                     const SizedBox(width: 6),
                                     Expanded(
                                       child: Text(
                                         exc,
-                                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                                        style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
                                       ),
                                     ),
                                   ],
@@ -727,13 +727,13 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDF4),
+                              color: AppColors.successBg,
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFF86EFAC)),
+                              border: Border.all(color: AppColors.successBorder),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.verified_rounded, size: 24, color: Color(0xFF16A34A)),
+                                const Icon(Icons.verified_rounded, size: 24, color: AppColors.success),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
@@ -744,22 +744,22 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                         style: const TextStyle(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFF15803D),
+                                          color: AppColors.success,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         'Penyelenggara Terverifikasi 7-Poin WISGO • ★ ${_currentTrip.organizer.rating}',
                                         style: const TextStyle(
-                                          fontSize: 10.5,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF166534),
+                                          color: AppColors.forest,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right_rounded, color: Color(0xFF16A34A), size: 20),
+                                const Icon(Icons.chevron_right_rounded, color: AppColors.success, size: 20),
                               ],
                             ),
                           ),
@@ -790,7 +790,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 child: Text(
                                   'Sisa $_availableSeats',
                                   style: const TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.forest,
                                   ),
@@ -878,7 +878,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                             Text(
                                               'Gabung: ${p.joinedAt}',
                                               style: const TextStyle(
-                                                fontSize: 10.5,
+                                                fontSize: 11,
                                                 color: AppColors.muted,
                                               ),
                                             ),

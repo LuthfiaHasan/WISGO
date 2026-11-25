@@ -845,7 +845,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.sage : const Color(0xFFFAF3E6),
+                      color: isSelected ? AppColors.sage : AppColors.cream,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected ? AppColors.forest : AppColors.sageBorder,
@@ -884,11 +884,11 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                               ),
                               Text(
                                 '📍 ${spot.region} • ${spot.category}',
-                                style: const TextStyle(fontSize: 9.5, color: AppColors.muted),
+                                style: const TextStyle(fontSize: 11, color: AppColors.muted),
                               ),
                               Text(
                                 spot.feeInfo,
-                                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success),
                               ),
                             ],
                           ),
@@ -933,7 +933,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   children: [
                     const Text(
                       'TEMPAT WISATA OTOMATIS TERHUBUNG:',
-                      style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     Text(
                       _selectedSpots.isNotEmpty ? _selectedSpots.join(', ') : 'Belum ada tempat dipilih',
@@ -958,7 +958,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
               selected: isSel,
               label: Text(
                 cat.toUpperCase(),
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: isSel ? Colors.white : AppColors.forest),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isSel ? Colors.white : AppColors.forest),
               ),
               selectedColor: AppColors.forest,
               backgroundColor: AppColors.sage,
@@ -1022,13 +1022,13 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F1F8),
+                      color: AppColors.infoBg,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF1E5B82).withValues(alpha: 0.3)),
+                      border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       _tripDurationBadge,
-                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF1E5B82)),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.info),
                     ),
                   ),
                 ],
@@ -1044,7 +1044,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFAF3E6),
+                          color: AppColors.cream,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.warmBorder),
                         ),
@@ -1055,7 +1055,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                               children: [
                                 Icon(Icons.flight_takeoff_rounded, size: 13, color: AppColors.forest),
                                 SizedBox(width: 4),
-                                Text('TANGGAL BERANGKAT', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppColors.muted)),
+                                Text('TANGGAL BERANGKAT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted)),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -1063,7 +1063,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                               _formatIndoDate(_departureDate),
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.ink),
                             ),
-                            const Text('Ketuk untuk ubah tanggal', style: TextStyle(fontSize: 8.5, color: AppColors.muted)),
+                            const Text('Ketuk untuk ubah tanggal', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                           ],
                         ),
                       ),
@@ -1078,7 +1078,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFAF3E6),
+                          color: AppColors.cream,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.warmBorder),
                         ),
@@ -1089,7 +1089,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                               children: [
                                 Icon(Icons.flight_land_rounded, size: 13, color: AppColors.forest),
                                 SizedBox(width: 4),
-                                Text('TANGGAL PULANG', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppColors.muted)),
+                                Text('TANGGAL PULANG', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted)),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -1097,7 +1097,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                               _formatIndoDate(_returnDate),
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.ink),
                             ),
-                            const Text('Ketuk untuk ubah tanggal', style: TextStyle(fontSize: 8.5, color: AppColors.muted)),
+                            const Text('Ketuk untuk ubah tanggal', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                           ],
                         ),
                       ),
@@ -1113,7 +1113,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF3E6),
+                    color: AppColors.cream,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.warmBorder),
                   ),
@@ -1127,8 +1127,8 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('WAKTU KUMPUL (MEETING)', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppColors.muted)),
-                              Text('Pilih jam kumpul di meeting point', style: TextStyle(fontSize: 10, color: AppColors.ink)),
+                              Text('WAKTU KUMPUL (MEETING)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted)),
+                              Text('Pilih jam kumpul di meeting point', style: TextStyle(fontSize: 11, color: AppColors.ink)),
                             ],
                           ),
                         ],
@@ -1207,14 +1207,14 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFAF3E6),
+                        color: AppColors.cream,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.warmBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('MIN PESERTA', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppColors.muted)),
+                          const Text('MIN PESERTA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted)),
                           TextField(
                             controller: _minQuotaController,
                             keyboardType: TextInputType.number,
@@ -1230,14 +1230,14 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFAF3E6),
+                        color: AppColors.cream,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.warmBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('MAKSIMAL KUOTA', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppColors.muted)),
+                          const Text('MAKSIMAL KUOTA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted)),
                           TextField(
                             controller: _maxQuotaController,
                             keyboardType: TextInputType.number,
@@ -1255,14 +1255,14 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFAF3E6),
+                  color: AppColors.cream,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.warmBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('BATAS AKHIR PENDAFTARAN', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppColors.muted)),
+                    const Text('BATAS AKHIR PENDAFTARAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted)),
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -1281,7 +1281,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                                   const Icon(Icons.event_available_rounded, size: 14, color: AppColors.forest),
                                   const SizedBox(width: 6),
                                   Expanded(
-                                    child: Text(_formatIndoDate(_deadlineDate), style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700)),
+                                    child: Text(_formatIndoDate(_deadlineDate), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                                   ),
                                 ],
                               ),
@@ -1302,7 +1302,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                               children: [
                                 const Icon(Icons.schedule_rounded, size: 14, color: AppColors.terracotta),
                                 const SizedBox(width: 4),
-                                Text(_formatTime(_deadlineTime), style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.terracotta)),
+                                Text(_formatTime(_deadlineTime), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.terracotta)),
                               ],
                             ),
                           ),
@@ -1351,12 +1351,12 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                 selected: isSel,
                 label: Text(
                   diff.toUpperCase(),
-                  style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: isSel ? Colors.white : AppColors.ink),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isSel ? Colors.white : AppColors.ink),
                 ),
                 selectedColor: diff == 'easy'
-                    ? const Color(0xFF15803D)
+                    ? AppColors.success
                     : diff == 'medium'
-                        ? const Color(0xFFC89242)
+                        ? AppColors.goldMinang
                         : AppColors.terracotta,
                 backgroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1376,7 +1376,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Nama Pembuat', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.muted)),
+                  const Text('Nama Pembuat', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted)),
                   const SizedBox(height: 4),
                   TextField(controller: _hostNameController, decoration: _inputDecoration('Rahmat Hidayat')),
                 ],
@@ -1387,7 +1387,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Nomor WhatsApp', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.muted)),
+                  const Text('Nomor WhatsApp', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted)),
                   const SizedBox(height: 4),
                   TextField(controller: _hostPhoneController, keyboardType: TextInputType.phone, decoration: _inputDecoration('081267891234')),
                 ],
@@ -1416,7 +1416,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                 title: const Text('Visibilitas Publik', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
                 subtitle: Text(
                   _isPublic ? 'Tampil terbuka di board pencarian Open Trip' : 'Privat (Hanya lewat tautan undangan)',
-                  style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
                 ),
                 value: _isPublic,
                 activeColor: AppColors.forest,
@@ -1430,7 +1430,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   _requiresApproval
                       ? 'Calon peserta harus di-accept host sebelum mendapatkan link WhatsApp'
                       : 'Langsung join otomatis',
-                  style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
                 ),
                 value: _requiresApproval,
                 activeColor: AppColors.forest,
@@ -1506,7 +1506,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   ),
                   child: Text(
                     _currentTrip.category.toUpperCase(),
-                    style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Colors.white),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
                   ),
                 ),
               ),
@@ -1517,15 +1517,15 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _currentTrip.difficulty == 'easy'
-                        ? const Color(0xFF15803D)
+                        ? AppColors.success
                         : _currentTrip.difficulty == 'medium'
-                            ? const Color(0xFFC89242)
+                            ? AppColors.goldMinang
                             : AppColors.terracotta,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'KESULITAN: ${_currentTrip.difficulty.toUpperCase()}',
-                    style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Colors.white),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
                   ),
                 ),
               ),
@@ -1579,7 +1579,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   ),
                   Text(
                     'Deadline: ${_currentTrip.registrationDeadline}',
-                    style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.terracotta),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.terracotta),
                   ),
                 ],
               ),
@@ -1608,7 +1608,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('TEMPAT WISATA DALAM SISTEM:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.muted)),
+              const Text('TEMPAT WISATA DALAM SISTEM:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted)),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 6,
@@ -1621,13 +1621,13 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColors.forest.withValues(alpha: 0.3)),
                     ),
-                    child: Text(spot, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest)),
+                    child: Text(spot, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest)),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 8),
               Text('Titik Akhir: ${_currentTrip.destinationPoint}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.ink)),
-              Text('Meeting Point: ${_currentTrip.meetingPointNote}', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
+              Text('Meeting Point: ${_currentTrip.meetingPointNote}', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
             ],
           ),
         ),
@@ -1645,7 +1645,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('FASILITAS YANG TERMASUK:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.forest)),
+              const Text('FASILITAS YANG TERMASUK:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest)),
               const SizedBox(height: 6),
               Text(_currentTrip.inclusionsDescription, style: const TextStyle(fontSize: 11, color: AppColors.ink, height: 1.4)),
             ],
@@ -1665,7 +1665,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('ITINERARY LENGKAP:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.forest)),
+              const Text('ITINERARY LENGKAP:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest)),
               const SizedBox(height: 6),
               Text(_currentTrip.itineraryText, style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.ink, height: 1.4)),
             ],
@@ -1685,7 +1685,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('PERSIAPAN & BARANG WAJIB DIBAWA:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.terracotta)),
+              const Text('PERSIAPAN & BARANG WAJIB DIBAWA:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.terracotta)),
               const SizedBox(height: 6),
               Text(_currentTrip.preparationNotes, style: const TextStyle(fontSize: 11, color: AppColors.ink)),
               const Divider(height: 16),
@@ -1695,18 +1695,18 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Host / Pembuat Open Trip:', style: TextStyle(fontSize: 9.5, color: AppColors.muted)),
+                      const Text('Host / Pembuat Open Trip:', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                       Text(_currentTrip.hostName, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.forest)),
                     ],
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF22C55E)),
+                      border: Border.all(color: AppColors.success),
                     ),
-                    child: Text('WA: ${_currentTrip.hostWhatsApp}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF15803D))),
+                    child: Text('WA: ${_currentTrip.hostWhatsApp}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success)),
                   ),
                 ],
               ),
@@ -1730,20 +1730,20 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0FDF4),
+          color: AppColors.successBg,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFF22C55E), width: 1.5),
+          border: Border.all(color: AppColors.success, width: 1.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: Color(0xFF15803D), size: 20),
+                Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'PERMINTAAN GABUNG DISETUJUI HOST!',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF15803D)),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.success),
                 ),
               ],
             ),
@@ -1760,14 +1760,14 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Membuka Grup WhatsApp: ${_currentTrip.whatsappGroupLink}'),
-                      backgroundColor: const Color(0xFF15803D),
+                      backgroundColor: AppColors.success,
                     ),
                   );
                 },
                 icon: const Icon(Icons.forum_rounded, size: 18),
                 label: const Text('Masuk ke Grup WhatsApp Open Trip', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366),
+                  backgroundColor: AppColors.success,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1784,27 +1784,27 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF3C7),
+          color: AppColors.warningBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFF59E0B)),
+          border: Border.all(color: AppColors.warning),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
-                Icon(Icons.hourglass_top_rounded, color: Color(0xFFB45309), size: 18),
+                Icon(Icons.hourglass_top_rounded, color: AppColors.warningDark, size: 18),
                 SizedBox(width: 8),
                 Text(
                   'Menunggu Persetujuan Host...',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.warningDark),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               'Permintaan bergabung Anda atas nama ${_joinerNameController.text} sedang ditinjau oleh Host (${_currentTrip.hostName}). Link WhatsApp Group akan diberikan setelah host menekan tombol Terima / Accept.',
-              style: const TextStyle(fontSize: 10.5, color: Color(0xFF78350F)),
+              style: const TextStyle(fontSize: 11, color: AppColors.warningDark),
             ),
             const SizedBox(height: 8),
             TextButton(
@@ -1831,7 +1831,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
           const SizedBox(height: 4),
           const Text(
             'Isi data Anda untuk mengajukan bergabung. Host akan memverifikasi sebelum Anda dimasukkan ke WhatsApp Group koordinasi.',
-            style: TextStyle(fontSize: 10.5, color: AppColors.muted),
+            style: TextStyle(fontSize: 11, color: AppColors.muted),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -1893,7 +1893,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
               const SizedBox(height: 4),
               const Text(
                 'Saat Anda menekan tombol "Terima (Accept)", peserta dinyatakan resmi bergabung dan tautan link WhatsApp Group otomatis dirilis ke layar mereka.',
-                style: TextStyle(fontSize: 10.5, color: AppColors.ink),
+                style: TextStyle(fontSize: 11, color: AppColors.ink),
               ),
             ],
           ),
@@ -1917,15 +1917,15 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: isAccepted ? const Color(0xFF22C55E) : AppColors.sageBorder),
+                border: Border.all(color: isAccepted ? AppColors.success : AppColors.sageBorder),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: isAccepted ? const Color(0xFFF0FDF4) : AppColors.sage,
+                    backgroundColor: isAccepted ? AppColors.successBg : AppColors.sage,
                     child: Icon(
                       isAccepted ? Icons.check_circle_rounded : Icons.person_rounded,
-                      color: isAccepted ? const Color(0xFF15803D) : AppColors.forest,
+                      color: isAccepted ? AppColors.success : AppColors.forest,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1934,16 +1934,16 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(req.travelerName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink)),
-                        Text('WA: ${req.whatsappNumber} • ${req.requestedAt}', style: const TextStyle(fontSize: 10, color: AppColors.muted)),
+                        Text('WA: ${req.whatsappNumber} • ${req.requestedAt}', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
                         const SizedBox(height: 2),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: isAccepted
-                                ? const Color(0xFFF0FDF4)
+                                ? AppColors.successBg
                                 : isPending
-                                    ? const Color(0xFFFEF3C7)
-                                    : const Color(0xFFFEE2E2),
+                                    ? AppColors.warningBg
+                                    : AppColors.dangerBg,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -1953,13 +1953,13 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                                     ? '⏳ Menunggu Persetujuan'
                                     : '✕ Ditolak',
                             style: TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: isAccepted
-                                  ? const Color(0xFF15803D)
+                                  ? AppColors.success
                                   : isPending
-                                      ? const Color(0xFFB45309)
-                                      : const Color(0xFFB91C1C),
+                                      ? AppColors.warningDark
+                                      : AppColors.danger,
                             ),
                           ),
                         ),
@@ -1971,7 +1971,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF15803D), size: 28),
+                          icon: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
                           tooltip: 'Terima Permintaan',
                           onPressed: () => _acceptJoinRequest(req),
                         ),
@@ -1983,7 +1983,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
                       ],
                     )
                   else
-                    const Icon(Icons.lock_open_rounded, color: Color(0xFF15803D), size: 20),
+                    const Icon(Icons.lock_open_rounded, color: AppColors.success, size: 20),
                 ],
               ),
             );
@@ -2000,7 +2000,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.5, color: AppColors.forest),
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5, color: AppColors.forest),
       ),
     );
   }
@@ -2029,7 +2029,7 @@ class _TripPlannerSheetState extends State<TripPlannerSheet> with SingleTickerPr
       children: [
         Icon(icon, size: 14, color: AppColors.muted),
         const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.ink)),
+        Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.ink)),
       ],
     );
   }

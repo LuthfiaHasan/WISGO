@@ -46,12 +46,12 @@ class OpenTripOfflineRulesSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    color: AppColors.warning.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.rule_rounded,
-                    color: Color(0xFFD97706),
+                    color: AppColors.warning,
                     size: 24,
                   ),
                 ),
@@ -63,10 +63,10 @@ class OpenTripOfflineRulesSheet extends StatelessWidget {
                       Text(
                         'STANDAR OPERASIONAL PROSEDUR',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.6,
-                          color: Color(0xFFD97706),
+                          color: AppColors.warning,
                         ),
                       ),
                       SizedBox(height: 2),
@@ -89,7 +89,7 @@ class OpenTripOfflineRulesSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
+                color: AppColors.warningBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFFDE68A)),
               ),
@@ -97,7 +97,7 @@ class OpenTripOfflineRulesSheet extends StatelessWidget {
                 'Demi keamanan, kenyamanan bersama, dan kelestarian alam Sumatera Barat, seluruh peserta wajib membaca dan menaati ketentuan di bawah ini selama mengikuti Trip Go.',
                 style: TextStyle(
                   fontSize: 11.5,
-                  color: Color(0xFF92400E),
+                  color: AppColors.warningDark,
                   height: 1.4,
                   fontWeight: FontWeight.w500,
                 ),
@@ -116,9 +116,9 @@ class OpenTripOfflineRulesSheet extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
+                      color: AppColors.creamSubtle,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      border: Border.all(color: AppColors.divider),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +159,7 @@ class OpenTripOfflineRulesSheet extends StatelessWidget {
                                 rule.ruleDescription,
                                 style: const TextStyle(
                                   fontSize: 11.5,
-                                  color: Color(0xFF4B5563),
+                                  color: AppColors.muted,
                                   height: 1.4,
                                 ),
                               ),

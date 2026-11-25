@@ -239,7 +239,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                             ),
                             Text(
                               'Peringkat Spasial Wisatawan Minang',
-                              style: TextStyle(fontSize: 10, color: AppColors.muted),
+                              style: TextStyle(fontSize: 11, color: AppColors.muted),
                             ),
                           ],
                         ),
@@ -259,7 +259,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppColors.forest, Color(0xFF142618)],
+                      colors: [AppColors.forest, AppColors.ink],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -273,17 +273,17 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                           const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('POSISI ANDA SAAT INI', style: TextStyle(fontSize: 9.5, color: AppColors.sage, fontWeight: FontWeight.w800)),
+                              Text('POSISI ANDA SAAT INI', style: TextStyle(fontSize: 11, color: AppColors.sage, fontWeight: FontWeight.w800)),
                               Text('Peringkat #3 Se-Sumbar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                             ],
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFC89242),
+                              color: AppColors.goldMinang,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Colors.white)),
+                            child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
                           ),
                         ],
                       ),
@@ -293,22 +293,22 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                         children: [
                           Column(
                             children: [
-                              Text('${_unlockedCount * 250 + 250} GP', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFFE2B755))),
-                              const Text('Skor Geode', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                              Text('${_unlockedCount * 250 + 250} GP', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.goldSoft)),
+                              const Text('Skor Geode', style: TextStyle(fontSize: 11, color: AppColors.sage)),
                             ],
                           ),
                           Container(width: 1, height: 24, color: Colors.white24),
                           Column(
                             children: [
                               Text('$_unlockedCount/10', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white)),
-                              const Text('Ditaklukkan', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                              const Text('Ditaklukkan', style: TextStyle(fontSize: 11, color: AppColors.sage)),
                             ],
                           ),
                           Container(width: 1, height: 24, color: Colors.white24),
                           Column(
                             children: [
                               Text('${(_unlockedCount * 46.5).toStringAsFixed(1)} km', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white)),
-                              const Text('Jarak Geodesik', style: TextStyle(fontSize: 9.5, color: AppColors.sage)),
+                              const Text('Jarak Geodesik', style: TextStyle(fontSize: 11, color: AppColors.sage)),
                             ],
                           ),
                         ],
@@ -357,7 +357,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
 
                 const Text(
                   'LEADERBOARD PENJELAJAH SPASIAL (TOP 5):',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
                 ),
                 const SizedBox(height: 8),
 
@@ -386,10 +386,10 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isMe ? const Color(0xFFFBF4E4) : Colors.white,
+        color: isMe ? AppColors.creamSubtle : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isMe ? const Color(0xFFC89242) : AppColors.sageBorder,
+          color: isMe ? AppColors.goldMinang : AppColors.sageBorder,
           width: isMe ? 2 : 1,
         ),
       ),
@@ -401,7 +401,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: rank == 1
-                  ? const Color(0xFFE2B755)
+                  ? AppColors.goldSoft
                   : rank == 2
                       ? const Color(0xFFB0B7BD)
                       : rank == 3
@@ -412,7 +412,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
             child: Text(
               '#$rank',
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w900,
                 color: rank <= 3 ? Colors.white : AppColors.ink,
               ),
@@ -431,7 +431,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
-                          color: isMe ? const Color(0xFF8C5C1E) : AppColors.ink,
+                          color: isMe ? AppColors.warningDark : AppColors.ink,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -441,15 +441,15 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFC89242),
+                          color: AppColors.goldMinang,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text('Saya', style: TextStyle(fontSize: 8.5, color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text('Saya', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ],
                 ),
-                Text('$dest • $dist', style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+                Text('$dest • $dist', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
               ],
             ),
           ),
@@ -457,7 +457,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(score, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppColors.forest)),
-              Text('Tier $tier', style: const TextStyle(fontSize: 8.5, color: AppColors.muted)),
+              Text('Tier $tier', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
             ],
           ),
         ],
@@ -473,7 +473,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Row(
           children: [
-            Icon(Icons.notifications_active_rounded, color: Color(0xFFC89242), size: 28),
+            Icon(Icons.notifications_active_rounded, color: AppColors.goldMinang, size: 28),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -490,13 +490,13 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFBF4E4),
+                color: AppColors.creamSubtle,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFC89242)),
+                border: Border.all(color: AppColors.goldMinang),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.workspace_premium_rounded, color: Color(0xFFC89242), size: 28),
+                  Icon(Icons.workspace_premium_rounded, color: AppColors.goldMinang, size: 28),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -529,7 +529,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
               ),
               child: const Text(
                 'Kode Klaim Reward: REWARD-DISPAR-10SUMBAR-2026',
-                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
               ),
             ),
           ],
@@ -568,7 +568,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.workspace_premium_rounded, color: Color(0xFFC89242), size: 24),
+                    Icon(Icons.workspace_premium_rounded, color: AppColors.goldMinang, size: 24),
                     SizedBox(width: 8),
                     Text(
                       'SERTIFIKAT DIGITAL RESMI',
@@ -592,10 +592,10 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFC89242), width: 3),
+                      border: Border.all(color: AppColors.goldMinang, width: 3),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFC89242).withValues(alpha: 0.15),
+                          color: AppColors.goldMinang.withValues(alpha: 0.15),
                           blurRadius: 15,
                           offset: const Offset(0, 6),
                         ),
@@ -607,7 +607,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                         const Text(
                           'PEMERINTAH PROVINSI SUMATERA BARAT',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: AppColors.muted),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: AppColors.muted),
                         ),
                         const Text(
                           'DINAS PARIWISATA',
@@ -615,17 +615,17 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: AppColors.forest),
                         ),
                         const SizedBox(height: 8),
-                        Container(height: 2, width: 80, color: const Color(0xFFC89242)),
+                        Container(height: 2, width: 80, color: AppColors.goldMinang),
                         const SizedBox(height: 14),
                         const Text(
                           'PIAGAM PENGHARGAAN',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFFC89242), letterSpacing: 1),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.goldMinang, letterSpacing: 1),
                         ),
                         const Text(
                           'PENAKLUK 10 DESTINASI UNGGULAN RANAH MINANG',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.ink),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.ink),
                         ),
                         const SizedBox(height: 14),
                         const Text(
@@ -651,8 +651,8 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('No. Reg: 2026/DSP-CHL/0988', style: TextStyle(fontSize: 9, color: AppColors.muted)),
-                                const Text('Verifikasi: GPS Geofence Valid', style: TextStyle(fontSize: 9, color: AppColors.forest, fontWeight: FontWeight.bold)),
+                                const Text('No. Reg: 2026/DSP-CHL/0988', style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                                const Text('Verifikasi: GPS Geofence Valid', style: TextStyle(fontSize: 11, color: AppColors.forest, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -661,18 +661,18 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(color: AppColors.warmBorder),
                                   ),
-                                  child: const Text('Hologram Valid', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFFC89242))),
+                                  child: const Text('Hologram Valid', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.goldMinang)),
                                 ),
                               ],
                             ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                const Text('Kepala Dinas Pariwisata', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppColors.ink)),
+                                const Text('Kepala Dinas Pariwisata', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.ink)),
                                 const SizedBox(height: 25),
                                 Container(height: 1, width: 110, color: Colors.black45),
                                 const SizedBox(height: 2),
-                                const Text('Provinsi Sumatera Barat', style: TextStyle(fontSize: 8.5, color: AppColors.muted)),
+                                const Text('Provinsi Sumatera Barat', style: TextStyle(fontSize: 11, color: AppColors.muted)),
                               ],
                             ),
                           ],
@@ -743,10 +743,10 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                     Text(
                       'TANTANGAN RESMI DARI ADMIN DISPAR',
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.2,
-                        color: Color(0xFFC89242),
+                        color: AppColors.goldMinang,
                       ),
                     ),
                     SizedBox(height: 2),
@@ -778,7 +778,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppColors.forest, Color(0xFF142618)],
+                      colors: [AppColors.forest, AppColors.ink],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -805,13 +805,13 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                             ),
                             child: const Text(
                               'PASPOR DIGITAL WISATAWAN',
-                              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: AppColors.cream, letterSpacing: 1.2),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.cream, letterSpacing: 1.2),
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: _isChallengeCompleted ? const Color(0xFFC89242) : Colors.white24,
+                              color: _isChallengeCompleted ? AppColors.goldMinang : Colors.white24,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -834,7 +834,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                       const SizedBox(height: 4),
                       const Text(
                         'Selesaikan tantangan dari Admin dengan tiba di lokasi wisata dan melakukan scan check-in GPS. Penuhi 10/10 stempel untuk membuka Sertifikat Digital & Reward Resmi Dispar!',
-                        style: TextStyle(fontSize: 10.5, color: AppColors.sage, height: 1.3),
+                        style: TextStyle(fontSize: 11, color: AppColors.sage, height: 1.3),
                       ),
                       const SizedBox(height: 12),
                       // Progress bar
@@ -844,7 +844,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                           value: _unlockedCount / _badges.length,
                           backgroundColor: Colors.white24,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            _isChallengeCompleted ? const Color(0xFFE2B755) : AppColors.sage,
+                            _isChallengeCompleted ? AppColors.goldSoft : AppColors.sage,
                           ),
                           minHeight: 7,
                         ),
@@ -861,14 +861,14 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _openGeodeRankingModal,
-                        icon: const Icon(Icons.leaderboard_rounded, size: 16, color: Color(0xFFC89242)),
+                        icon: const Icon(Icons.leaderboard_rounded, size: 16, color: AppColors.goldMinang),
                         label: const Text(
                           'Geode Ranking',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFFC89242)),
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.goldMinang),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFC89242), width: 1.5),
-                          backgroundColor: const Color(0xFFFBF4E4),
+                          side: const BorderSide(color: AppColors.goldMinang, width: 1.5),
+                          backgroundColor: AppColors.creamSubtle,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -903,21 +903,21 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFBF4E4),
+                      color: AppColors.creamSubtle,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFC89242), width: 2),
+                      border: Border.all(color: AppColors.goldMinang, width: 2),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.military_tech_rounded, color: Color(0xFFC89242), size: 24),
+                            Icon(Icons.military_tech_rounded, color: AppColors.goldMinang, size: 24),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'TANTANGAN 10/10 TUNTAS: SERTIFIKAT TERBUKA!',
-                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF8C5C1E)),
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppColors.warningDark),
                               ),
                             ),
                           ],
@@ -936,7 +936,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                                 icon: const Icon(Icons.workspace_premium_rounded, size: 16),
                                 label: const Text('Buka Sertifikat Digital', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFC89242),
+                                  backgroundColor: AppColors.goldMinang,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 ),
@@ -962,7 +962,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
 
                 const Text(
                   'KOLEKSI 10 STEMPEL & LENCANA RESMI DISPAR',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: AppColors.muted),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: AppColors.muted),
                 ),
                 const SizedBox(height: 10),
 
@@ -1005,7 +1005,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                             height: 52,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: b.isUnlocked ? const Color(0xFFDFECE2) : const Color(0xFFF3EBDC),
+                              color: b.isUnlocked ? AppColors.sage : AppColors.creamSubtle,
                               border: Border.all(
                                 color: b.isUnlocked ? AppColors.terracotta : AppColors.muted,
                                 width: 2,
@@ -1022,7 +1022,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                             b.destinationTitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: b.isUnlocked ? AppColors.ink : AppColors.muted,
                             ),
@@ -1033,7 +1033,7 @@ class _DigitalPassportSheetState extends State<DigitalPassportSheet> {
                           Text(
                             b.isUnlocked ? (b.unlockDate ?? 'Terverifikasi') : '${(b.distanceMeters / 1000).toStringAsFixed(1)} km lagi',
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: b.isUnlocked ? AppColors.forest : AppColors.muted,
                             ),

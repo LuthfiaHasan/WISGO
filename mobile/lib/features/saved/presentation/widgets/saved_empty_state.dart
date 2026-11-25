@@ -49,7 +49,7 @@ class SavedEmptyState extends StatelessWidget {
             child: const Text(
               'DAFTAR TERSIMPAN KOSONG',
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.4,
                 color: AppColors.muted,
@@ -95,7 +95,7 @@ class SavedEmptyState extends StatelessWidget {
                 const Text(
                   'DATA YANG TERSIMPAN LURING DI PERANGKAT:',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.6,
                     color: AppColors.forest,

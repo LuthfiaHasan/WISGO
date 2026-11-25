@@ -10,7 +10,7 @@ class WisgoQrCodePainter extends CustomPainter {
   final Color lightColor;
 
   WisgoQrCodePainter({
-    this.darkColor = const Color(0xFF193D22),
+    this.darkColor = AppColors.forest,
     this.lightColor = Colors.white,
   });
 
@@ -185,7 +185,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: Column(
@@ -288,7 +288,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
               const Text(
                 'PILIHAN FOTO RESMI KATALOG DESTINASI',
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: AppColors.muted,
                   letterSpacing: 0.6,
@@ -345,7 +345,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 8.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -476,7 +476,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
           child: Container(
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
@@ -688,7 +688,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
           title: Row(
             children: [
               const Icon(Icons.download_done_rounded,
-                  color: Color(0xFF15803D), size: 24),
+                  color: AppColors.success, size: 24),
               const SizedBox(width: 8),
               Expanded(
                 child: Text('Unduh $modeName Berhasil!',
@@ -899,7 +899,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                              color: Color(0xFF16A34A), shape: BoxShape.circle),
+                              color: AppColors.success, shape: BoxShape.circle),
                         ),
                       ],
                     ],
@@ -1082,7 +1082,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                       icon: Icon(
                         _showQrCode ? Icons.qr_code_2_rounded : Icons.qr_code_scanner_rounded,
                         size: 15,
-                        color: _showQrCode ? const Color(0xFF15803D) : AppColors.muted,
+                        color: _showQrCode ? AppColors.success : AppColors.muted,
                       ),
                       label: Text(
                         _showQrCode ? 'QR Kode: Aktif' : 'QR Kode: Mati',
@@ -1091,13 +1091,13 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: _showQrCode ? const Color(0xFF15803D) : AppColors.muted,
+                          color: _showQrCode ? AppColors.success : AppColors.muted,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 7),
                         side: BorderSide(
-                          color: _showQrCode ? const Color(0xFF86EFAC) : AppColors.warmBorder,
+                          color: _showQrCode ? AppColors.successBorder : AppColors.warmBorder,
                         ),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
@@ -1129,12 +1129,12 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
           Container(
             decoration: BoxDecoration(
               color: _isTransparentSticker
-                  ? const Color(0xFF111827) // Kontras gelap agar stiker PNG transparan terbaca jelas
+                  ? AppColors.ink // Kontras gelap agar stiker PNG transparan terbaca jelas
                   : Colors.white,
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
                 color: _isTransparentSticker
-                    ? const Color(0xFF374151)
+                    ? AppColors.ink
                     : AppColors.warmBorder,
               ),
               boxShadow: [
@@ -1166,14 +1166,14 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.layers_rounded,
-                                size: 10, color: Color(0xFF34D399)),
+                                size: 10, color: AppColors.success),
                             SizedBox(width: 4),
                             Text(
                               'PNG Transparan',
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF34D399),
+                                color: AppColors.success,
                               ),
                             ),
                           ],
@@ -1193,12 +1193,12 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                           decoration: BoxDecoration(
                             color: _isTransparentSticker
                                 ? Colors.white.withValues(alpha: 0.08)
-                                : const Color(0xFFF9FAFB),
+                                : AppColors.creamSubtle,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _isTransparentSticker
                                   ? Colors.white12
-                                  : const Color(0xFFE5E7EB),
+                                  : AppColors.divider,
                             ),
                           ),
                           child: Row(
@@ -1212,11 +1212,11 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                     Text(
                                       'DESTINASI',
                                       style: TextStyle(
-                                        fontSize: 8.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 0.8,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFF9CA3AF)
+                                            ? AppColors.muted
                                             : AppColors.muted,
                                       ),
                                     ),
@@ -1238,10 +1238,10 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 9.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFFD1D5DB)
+                                            ? AppColors.warmBorder
                                             : AppColors.brush,
                                       ),
                                     ),
@@ -1253,7 +1253,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                 height: 32,
                                 color: _isTransparentSticker
                                     ? Colors.white24
-                                    : const Color(0xFFE5E7EB),
+                                    : AppColors.divider,
                                 margin: const EdgeInsets.symmetric(horizontal: 6),
                               ),
 
@@ -1266,11 +1266,11 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                     Text(
                                       'JEJAK SUMBAR',
                                       style: TextStyle(
-                                        fontSize: 8.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 0.8,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFF9CA3AF)
+                                            ? AppColors.muted
                                             : AppColors.muted,
                                       ),
                                     ),
@@ -1281,17 +1281,17 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w900,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFF34D399)
-                                            : const Color(0xFF15803D),
+                                            ? AppColors.success
+                                            : AppColors.success,
                                       ),
                                     ),
                                     Text(
                                       '${exp.visitedCount} / ${exp.totalDestinations} Destinasi',
                                       style: TextStyle(
-                                        fontSize: 9.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFFD1D5DB)
+                                            ? AppColors.warmBorder
                                             : AppColors.muted,
                                       ),
                                     ),
@@ -1303,7 +1303,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                 height: 32,
                                 color: _isTransparentSticker
                                     ? Colors.white24
-                                    : const Color(0xFFE5E7EB),
+                                    : AppColors.divider,
                                 margin: const EdgeInsets.symmetric(horizontal: 6),
                               ),
 
@@ -1316,11 +1316,11 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                     Text(
                                       'GELAR',
                                       style: TextStyle(
-                                        fontSize: 8.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 0.8,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFF9CA3AF)
+                                            ? AppColors.muted
                                             : AppColors.muted,
                                       ),
                                     ),
@@ -1333,17 +1333,17 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w900,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFFFBBF24)
-                                            : const Color(0xFFD97706),
+                                            ? AppColors.warning
+                                            : AppColors.warning,
                                       ),
                                     ),
                                     Text(
                                       exp.tripDate,
                                       style: TextStyle(
-                                        fontSize: 9.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                         color: _isTransparentSticker
-                                            ? const Color(0xFFD1D5DB)
+                                            ? AppColors.warmBorder
                                             : AppColors.muted,
                                       ),
                                     ),
@@ -1362,7 +1362,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                             border: Border.all(
                               color: _isTransparentSticker
                                   ? Colors.white.withValues(alpha: 0.25)
-                                  : const Color(0xFFE5E7EB),
+                                  : AppColors.divider,
                               width: 1.5,
                             ),
                             boxShadow: [
@@ -1384,7 +1384,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                     _selectedPhotoUrl,
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) => Container(
-                                      color: const Color(0xFF142417),
+                                      color: AppColors.forest,
                                       child: const Center(
                                         child: Icon(Icons.landscape_rounded,
                                             size: 48, color: Colors.white54),
@@ -1408,12 +1408,12 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           const Icon(Icons.verified_rounded,
-                                              size: 11, color: Color(0xFF34D399)),
+                                              size: 11, color: AppColors.success),
                                           const SizedBox(width: 4),
                                           Text(
                                             exp.badgeTitle,
                                             style: const TextStyle(
-                                              fontSize: 9.5,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w800,
                                               color: Colors.white,
                                             ),
@@ -1448,7 +1448,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                               Text(
                                                 'Ganti Foto',
                                                 style: TextStyle(
-                                                  fontSize: 9,
+                                                  fontSize: 11,
                                                   fontWeight: FontWeight.w800,
                                                   color: Colors.white,
                                                 ),
@@ -1473,7 +1473,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                           decoration: BoxDecoration(
                             color: _isTransparentSticker
                                 ? Colors.white.withValues(alpha: 0.08)
-                                : const Color(0xFF0D1B0F),
+                                : AppColors.forest,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _isTransparentSticker
@@ -1522,9 +1522,9 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                     Text(
                                       'Dijelajahi bersama WISGO',
                                       style: TextStyle(
-                                        fontSize: 10.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF86EFAC),
+                                        color: AppColors.successBorder,
                                       ),
                                     ),
                                   ],
@@ -1537,7 +1537,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                 CustomPaint(
                                   size: const Size(42, 42),
                                   painter: WisgoQrCodePainter(
-                                    darkColor: const Color(0xFF0D1B0F),
+                                    darkColor: AppColors.forest,
                                     lightColor: Colors.white,
                                   ),
                                 ),
@@ -1639,7 +1639,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                 const Text(
                   'BAGIKAN LANGSUNG KE MEDIA SOSIAL',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.6,
                     color: AppColors.muted,
@@ -1652,7 +1652,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                     _buildSocialShareButton(
                       label: 'IG Story',
                       icon: Icons.camera_alt_outlined,
-                      color: const Color(0xFFE1306C),
+                      color: AppColors.terracotta,
                       onTap: () => _shareToSocial('Instagram Story'),
                     ),
                     _buildSocialShareButton(
@@ -1664,7 +1664,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                     _buildSocialShareButton(
                       label: 'WhatsApp Status',
                       icon: Icons.chat_rounded,
-                      color: const Color(0xFF25D366),
+                      color: AppColors.success,
                       onTap: () => _shareToSocial('WhatsApp Status'),
                     ),
                     _buildSocialShareButton(
@@ -1710,7 +1710,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
             Text(
               label,
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
@@ -1772,7 +1772,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                               ),
                               const SizedBox(width: 4),
                               const Icon(Icons.verified_rounded,
-                                  size: 13, color: Color(0xFF0284C7)),
+                                  size: 13, color: AppColors.info),
                             ],
                           ),
                           Row(
@@ -1786,7 +1786,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 11,
                                     color: AppColors.muted,
                                   ),
                                 ),
@@ -1799,15 +1799,15 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
+                        color: AppColors.successBg,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         post.badgeTitle,
                         style: const TextStyle(
-                          fontSize: 9.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF15803D),
+                          color: AppColors.success,
                         ),
                       ),
                     ),
@@ -1835,7 +1835,7 @@ class _TravelShareCardSheetState extends State<TravelShareCardSheet>
                     Row(
                       children: [
                         const Icon(Icons.favorite_rounded,
-                            size: 18, color: Color(0xFFDC2626)),
+                            size: 18, color: AppColors.danger),
                         const SizedBox(width: 4),
                         Text(
                           '${post.likesCount} suka',

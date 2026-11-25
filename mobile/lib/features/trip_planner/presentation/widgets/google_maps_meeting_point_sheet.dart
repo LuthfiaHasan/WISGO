@@ -45,12 +45,12 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEA4335).withValues(alpha: 0.12),
+                    color: AppColors.danger.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.location_on_rounded,
-                    color: Color(0xFFEA4335),
+                    color: AppColors.danger,
                     size: 26,
                   ),
                 ),
@@ -62,10 +62,10 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                       const Text(
                         'TITIK KUMPUL GOOGLE MAPS',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.6,
-                          color: Color(0xFFEA4335),
+                          color: AppColors.danger,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -88,9 +88,9 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: AppColors.creamSubtle,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: AppColors.divider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +105,7 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                           trip.meetingPointAddress,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF374151),
+                            color: AppColors.ink,
                             height: 1.4,
                             fontWeight: FontWeight.w500,
                           ),
@@ -114,7 +114,7 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                  const Divider(height: 1, color: AppColors.divider),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -159,23 +159,23 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
+                color: AppColors.successBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBBF7D0)),
+                border: Border.all(color: AppColors.successBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.route_rounded, size: 18, color: Color(0xFF15803D)),
+                      Icon(Icons.route_rounded, size: 18, color: AppColors.success),
                       SizedBox(width: 8),
                       Text(
                         'Rute & Navigasi Trip Go',
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF166534),
+                          color: AppColors.forest,
                         ),
                       ),
                     ],
@@ -190,20 +190,20 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                             width: 10,
                             height: 10,
                             decoration: const BoxDecoration(
-                              color: Color(0xFFDC2626),
+                              color: AppColors.danger,
                               shape: BoxShape.circle,
                             ),
                           ),
                           Container(
                             width: 2,
                             height: 24,
-                            color: const Color(0xFF86EFAC),
+                            color: AppColors.successBorder,
                           ),
                           Container(
                             width: 10,
                             height: 10,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF15803D),
+                              color: AppColors.success,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -219,7 +219,7 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1F2937),
+                                color: AppColors.ink,
                               ),
                             ),
                             const SizedBox(height: 14),
@@ -228,7 +228,7 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF15803D),
+                                color: AppColors.success,
                               ),
                             ),
                           ],
@@ -237,7 +237,7 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const Divider(height: 1, color: Color(0xFFBBF7D0)),
+                  const Divider(height: 1, color: AppColors.successBorder),
                   const SizedBox(height: 8),
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -245,17 +245,17 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                       Text(
                         'Jarak: ~14.2 km • Estimasi: ~25 mnt',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF166534),
+                          color: AppColors.forest,
                         ),
                       ),
                       Text(
                         'Akses: Jalan Aspal Datar (Hiace/Bus OK)',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF15803D),
+                          color: AppColors.success,
                         ),
                       ),
                     ],
@@ -269,20 +269,20 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: AppColors.warningBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline_rounded, color: Color(0xFFB45309), size: 18),
+                  Icon(Icons.info_outline_rounded, color: AppColors.warningDark, size: 18),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Toleransi keterlambatan 15 menit. Penyelenggara akan stand-by mengenakan atribut resmi WISGO di area parkir utama.',
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Color(0xFF92400E),
+                        color: AppColors.warningDark,
                         fontWeight: FontWeight.w500,
                         height: 1.35,
                       ),
@@ -330,7 +330,7 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                       Clipboard.setData(ClipboardData(text: trip.googleMapsUrl));
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          backgroundColor: const Color(0xFFEA4335),
+                          backgroundColor: AppColors.danger,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           content: Row(
@@ -355,7 +355,7 @@ class GoogleMapsMeetingPointSheet extends StatelessWidget {
                       style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEA4335),
+                      backgroundColor: AppColors.danger,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

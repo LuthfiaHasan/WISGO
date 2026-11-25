@@ -100,7 +100,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                     Text(
                       'TRANSAKSI SISTEM RESMI WISGO',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.6,
                         color: AppColors.forest,
@@ -126,9 +126,9 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
+              color: AppColors.creamSubtle,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: AppColors.divider),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +152,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                       ),
                       child: Text(
                         'Destinasi Tunggal: ${widget.trip.singleDestination}',
-                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.forest),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.forest),
                       ),
                     ),
                   ],
@@ -252,16 +252,16 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
+              color: AppColors.creamSubtle,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: AppColors.divider),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Rincian Fasilitas Termasuk (Include):',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.success),
                 ),
                 const SizedBox(height: 4),
                 ...widget.trip.includes.map((inc) => Padding(
@@ -269,12 +269,12 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.check_circle_rounded, size: 13, color: Color(0xFF16A34A)),
+                      const Icon(Icons.check_circle_rounded, size: 13, color: AppColors.success),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           inc,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF374151)),
+                          style: const TextStyle(fontSize: 11, color: AppColors.ink),
                         ),
                       ),
                     ],
@@ -283,7 +283,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                 const SizedBox(height: 8),
                 const Text(
                   'Tidak Termasuk (Exclude):',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFFB91C1C)),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.danger),
                 ),
                 const SizedBox(height: 4),
                 ...widget.trip.excludes.map((exc) => Padding(
@@ -291,12 +291,12 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.cancel_rounded, size: 13, color: Color(0xFFDC2626)),
+                      const Icon(Icons.cancel_rounded, size: 13, color: AppColors.danger),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           exc,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                          style: const TextStyle(fontSize: 11, color: AppColors.muted),
                         ),
                       ),
                     ],
@@ -311,7 +311,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
+              color: AppColors.creamSubtle,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Column(
@@ -321,7 +321,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                 _buildFeeRow('Asuransi Keselamatan Rekreasi', 'Termasuk (Rp 0)'),
                 const SizedBox(height: 6),
                 _buildFeeRow('Proteksi Escrow Rekening Penampung', 'Gratis Resmi WISGO'),
-                const Divider(height: 16, color: Color(0xFFE5E7EB)),
+                const Divider(height: 16, color: AppColors.divider),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -338,14 +338,14 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: AppColors.successBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
+              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
             ),
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.account_balance_rounded, color: Color(0xFF15803D), size: 18),
+                Icon(Icons.account_balance_rounded, color: AppColors.success, size: 18),
                 SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -353,12 +353,12 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                     children: [
                       Text(
                         'Payment Gateway & Rekening Penampung Terpusat',
-                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.success),
                       ),
                       SizedBox(height: 2),
                       Text(
                         'Pembayaran disalurkan melalui Payment Gateway resmi ke Rekening Penampung WISGO (Escrow Admin). Dana baru diteruskan ke penyelenggara setelah trip selesai dan terkonfirmasi.',
-                        style: TextStyle(fontSize: 10.5, color: Color(0xFF166534), height: 1.35),
+                        style: TextStyle(fontSize: 11, color: AppColors.forest, height: 1.35),
                       ),
                     ],
                   ),
@@ -372,7 +372,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
+              color: AppColors.warningBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFFDE68A)),
             ),
@@ -394,9 +394,9 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                       child: Text(
                         'Saya memahami & menyetujui bahwa WISGO hanya sebagai penyedia platform digital. Seluruh proses dan aktivitas teknis selama pelaksanaan Trip Go menjadi tanggung jawab bersama antara pihak penyelenggara dan peserta.',
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF92400E),
+                          color: AppColors.warningDark,
                           height: 1.35,
                         ),
                       ),
@@ -445,7 +445,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
             width: 60,
             height: 60,
             decoration: const BoxDecoration(
-              color: Color(0xFF10B981),
+              color: AppColors.success,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.check_rounded, color: Colors.white, size: 38),
@@ -468,9 +468,9 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: AppColors.creamSubtle,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: AppColors.divider),
           ),
           child: Column(
             children: [
@@ -481,7 +481,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                   Text(_bookingCode, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.forest)),
                 ],
               ),
-              const Divider(height: 16, color: Color(0xFFE5E7EB)),
+              const Divider(height: 16, color: AppColors.divider),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -494,7 +494,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Total Terbayar:', style: TextStyle(fontSize: 11.5, color: AppColors.muted)),
-                  Text('Rp ${_formatRupiah(_totalAmount)} (LUNAS)', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF059669))),
+                  Text('Rp ${_formatRupiah(_totalAmount)} (LUNAS)', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.success)),
                 ],
               ),
               const SizedBox(height: 6),
@@ -558,16 +558,16 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+          color: isSelected ? AppColors.successBg : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF10B981) : const Color(0xFFE5E7EB),
+            color: isSelected ? AppColors.success : AppColors.divider,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: isSelected ? const Color(0xFF059669) : AppColors.muted),
+            Icon(icon, size: 22, color: isSelected ? AppColors.success : AppColors.muted),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -583,14 +583,14 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                   ),
                   Text(
                     desc,
-                    style: const TextStyle(fontSize: 10.5, color: AppColors.muted),
+                    style: const TextStyle(fontSize: 11, color: AppColors.muted),
                   ),
                 ],
               ),
             ),
             Icon(
               isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
-              color: isSelected ? const Color(0xFF10B981) : AppColors.muted,
+              color: isSelected ? AppColors.success : AppColors.muted,
               size: 20,
             ),
           ],
@@ -603,8 +603,8 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11.5, color: Color(0xFF4B5563))),
-        Text(value, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
+        Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.muted)),
+        Text(value, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.ink)),
       ],
     );
   }

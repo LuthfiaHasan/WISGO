@@ -112,7 +112,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                     const Text(
                       'PEMBAYARAN RESMI TERVERIFIKASI',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.4,
                         color: AppColors.brush,
@@ -176,7 +176,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                         SizedBox(width: 4),
                         Text(
                           'Rekening Escrow Wisgo Aman',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.forest),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                         ),
                       ],
                     ),
@@ -210,7 +210,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
               Text(
                 'Kode Transaksi: $_escrowCode',
                 style: const TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.muted,
                 ),
@@ -256,7 +256,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                     child: Text(
                       _selectedMethod == 'QRIS' ? 'QRIS NASIONAL' : 'BAYAR VIA $_selectedMethod',
                       style: const TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w900,
                         color: AppColors.cream,
                         letterSpacing: 1.1,
@@ -284,7 +284,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
               const Text(
                 'NMID: ID1020268894192 - POKDARWIS SUMBAR',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppColors.muted,
                 ),
@@ -294,7 +294,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                 'Mendukung BCA, Mandiri, BRI, BNI, BSI, GoPay, OVO, DANA, ShopeePay',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 11,
                   color: AppColors.muted,
                 ),
               ),
@@ -350,7 +350,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 11,
                   fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
                   color: isSel ? AppColors.cream : AppColors.ink,
                 ),
@@ -375,7 +375,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                 width: 64,
                 height: 64,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFDFECE2),
+                  color: AppColors.sage,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check_rounded, color: AppColors.forest, size: 36),
@@ -456,7 +456,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
               const Text(
                 'Tunjukkan kode QR ini ke mitra nagari saat tiba di lokasi untuk validasi kedatangan & pencairan dana escrow.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10, color: AppColors.muted, height: 1.3),
+                style: TextStyle(fontSize: 11, color: AppColors.muted, height: 1.3),
               ),
             ],
           ),
@@ -496,14 +496,14 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                         SizedBox(width: 4),
                         Text(
                           'STRUK RESMI PEMDA',
-                          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                         ),
                       ],
                     ),
                   ),
                   const Text(
                     '16 Nov 2026 • 14:15 WIB',
-                    style: TextStyle(fontSize: 10, color: AppColors.muted, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 11, color: AppColors.muted, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -539,8 +539,8 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(' x', style: const TextStyle(fontSize: 10.5, color: AppColors.muted)),
-                        Text('Rp ', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.forest)),
+                        Text(' x', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+                        Text('Rp ', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest)),
                       ],
                     ),
                   )),
@@ -562,7 +562,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                 ),
                 child: const Text(
                   'Terlindungi Rekening Escrow Nagari. Dijamin bebas pungutan liar di pintu gerbang.',
-                  style: TextStyle(fontSize: 9.5, color: AppColors.brush),
+                  style: TextStyle(fontSize: 11, color: AppColors.brush),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -579,7 +579,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
             icon: const Icon(Icons.print_rounded, size: 18),
             label: const Text('Cetak / Print Struk Resmi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF193D22),
+              backgroundColor: AppColors.forest,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -602,7 +602,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
               Expanded(
                 child: Text(
                   'Struk ini tersimpan di Profil Anda dan dapat dibuka kembali serta dicetak kapan saja.',
-                  style: TextStyle(fontSize: 10, color: AppColors.forest, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 11, color: AppColors.forest, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -635,7 +635,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
         return Container(
           decoration: const BoxDecoration(
             color: AppColors.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
@@ -696,20 +696,20 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                   children: [
                     const Text(
                       '=== STRUK RESMI TIKET NAGARI ===',
-                      style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
                     ),
                     const Text(
                       'DINAS PARIWISATA PROV. SUMATERA BARAT',
-                      style: TextStyle(fontSize: 9, color: AppColors.muted),
+                      style: TextStyle(fontSize: 11, color: AppColors.muted),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'No: ',
-                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                     Text(
                       'Destinasi: ',
-                      style: const TextStyle(fontSize: 9.5),
+                      style: const TextStyle(fontSize: 11),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -720,8 +720,8 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(' x', style: const TextStyle(fontSize: 9)),
-                              Text('Rp ', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                              Text(' x', style: const TextStyle(fontSize: 11)),
+                              Text('Rp ', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         )),
@@ -729,14 +729,14 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('TOTAL PEMBAYARAN:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        const Text('TOTAL PEMBAYARAN:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                         Text('Rp ', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.forest)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'LUNAS TERVERIFIKASI RESMI\nTunjukkan bukti pembayaran ini pada petugas loket resmi nagari',
-                      style: TextStyle(fontSize: 9, color: AppColors.brush, height: 1.3),
+                      style: TextStyle(fontSize: 11, color: AppColors.brush, height: 1.3),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -745,7 +745,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
               const SizedBox(height: 16),
               const Text(
                 'PILIH METODE PENCETAKAN:',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted),
               ),
               const SizedBox(height: 8),
               _buildPrintOptionTile(
@@ -816,7 +816,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.ink)),
-                  Text(subtitle, style: const TextStyle(fontSize: 9.5, color: AppColors.muted)),
+                  Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
                 ],
               ),
             ),
@@ -862,7 +862,7 @@ class _QrisPaymentSheetState extends State<QrisPaymentSheet> {
 class _QrisPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final black = Paint()..color = const Color(0xFF142618);
+    final black = Paint()..color = AppColors.ink;
 
     // Corner Finder Patterns
     _drawFinder(canvas, 10, 10, black);
@@ -895,7 +895,7 @@ class _QrisPainter extends CustomPainter {
     final fontPainter = TextPainter(
       text: const TextSpan(
         text: 'WISGO',
-        style: TextStyle(color: AppColors.forest, fontSize: 8, fontWeight: FontWeight.w900),
+        style: TextStyle(color: AppColors.forest, fontSize: 11, fontWeight: FontWeight.w900),
       ),
       textDirection: TextDirection.ltr,
     );

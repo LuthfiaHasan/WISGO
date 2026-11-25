@@ -139,7 +139,7 @@ class OpenTripCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 10.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.cream,
                                 ),
@@ -156,8 +156,8 @@ class OpenTripCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: isQuotaFull
-                            ? const Color(0xFFDC2626)
-                            : const Color(0xFF10B981).withValues(alpha: 0.95),
+                            ? AppColors.danger
+                            : AppColors.success.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
@@ -171,7 +171,7 @@ class OpenTripCard extends StatelessWidget {
                             ? 'Penuh'
                             : '${trip.quotaFilled}/${trip.quotaMax} (Sisa $availableQuota)',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
@@ -243,19 +243,19 @@ class OpenTripCard extends StatelessWidget {
                         '${trip.departureDate} • ${trip.departureTime}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.ink),
                       ),
                     ),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F1F8),
+                        color: AppColors.infoBg,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         trip.duration,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF1E5B82)),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.info),
                       ),
                     ),
                   ],
@@ -275,13 +275,13 @@ class OpenTripCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
+                      color: AppColors.dangerBg,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFFFCA5A5)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.pin_drop_rounded, size: 16, color: Color(0xFFDC2626)),
+                        const Icon(Icons.pin_drop_rounded, size: 16, color: AppColors.danger),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -299,9 +299,9 @@ class OpenTripCard extends StatelessWidget {
                         const Text(
                           'Peta Maps ↗',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFFDC2626),
+                            color: AppColors.danger,
                           ),
                         ),
                       ],
@@ -323,13 +323,13 @@ class OpenTripCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF86EFAC)),
+                      border: Border.all(color: AppColors.successBorder),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.verified_rounded, size: 16, color: Color(0xFF16A34A)),
+                        const Icon(Icons.verified_rounded, size: 16, color: AppColors.success),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Column(
@@ -342,21 +342,21 @@ class OpenTripCard extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF15803D),
+                                  color: AppColors.success,
                                 ),
                               ),
                               Text(
                                 '${trip.organizer.verificationBadge} • ★ ${trip.organizer.rating}',
                                 style: const TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF166534),
+                                  color: AppColors.forest,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.info_outline_rounded, size: 15, color: Color(0xFF16A34A)),
+                        const Icon(Icons.info_outline_rounded, size: 15, color: AppColors.success),
                       ],
                     ),
                   ),
@@ -390,7 +390,7 @@ class OpenTripCard extends StatelessWidget {
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.wb_cloudy_rounded, size: 13, color: Color(0xFF0284C7)),
+                              Icon(Icons.wb_cloudy_rounded, size: 13, color: AppColors.info),
                               SizedBox(width: 4),
                               Flexible(
                                 child: Text(
@@ -398,9 +398,9 @@ class OpenTripCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0369A1),
+                                    color: AppColors.info,
                                   ),
                                 ),
                               ),
@@ -428,14 +428,14 @@ class OpenTripCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: AppColors.successBorder,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                            border: Border.all(color: AppColors.successBorder),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.visibility_rounded, size: 13, color: Color(0xFF16A34A)),
+                              Icon(Icons.visibility_rounded, size: 13, color: AppColors.success),
                               SizedBox(width: 4),
                               Flexible(
                                 child: Text(
@@ -443,9 +443,9 @@ class OpenTripCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF15803D),
+                                    color: AppColors.success,
                                   ),
                                 ),
                               ),
@@ -474,14 +474,14 @@ class OpenTripCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
+                            color: AppColors.warningBg,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: const Color(0xFFFDE68A)),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.threesixty_rounded, size: 13, color: Color(0xFFD97706)),
+                              Icon(Icons.threesixty_rounded, size: 13, color: AppColors.warning),
                               SizedBox(width: 4),
                               Flexible(
                                 child: Text(
@@ -489,9 +489,9 @@ class OpenTripCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFFB45309),
+                                    color: AppColors.warningDark,
                                   ),
                                 ),
                               ),
@@ -508,27 +508,27 @@ class OpenTripCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
+                    color: AppColors.creamSubtle,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(color: AppColors.divider),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF16A34A)),
+                          const Icon(Icons.check_circle_rounded, size: 12, color: AppColors.success),
                           const SizedBox(width: 4),
                           const Text(
                             'Include: ',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.success),
                           ),
                           Expanded(
                             child: Text(
                               trip.includes.take(2).join(', ') + (trip.includes.length > 2 ? ', +${trip.includes.length - 2} lainnya' : ''),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 10, color: Color(0xFF4B5563)),
+                              style: const TextStyle(fontSize: 11, color: AppColors.muted),
                             ),
                           ),
                         ],
@@ -536,18 +536,18 @@ class OpenTripCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          const Icon(Icons.cancel_rounded, size: 12, color: Color(0xFFDC2626)),
+                          const Icon(Icons.cancel_rounded, size: 12, color: AppColors.danger),
                           const SizedBox(width: 4),
                           const Text(
                             'Exclude: ',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFB91C1C)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.danger),
                           ),
                           Expanded(
                             child: Text(
                               trip.excludes.take(2).join(', ') + (trip.excludes.length > 2 ? ', +${trip.excludes.length - 2} lainnya' : ''),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                              style: const TextStyle(fontSize: 11, color: AppColors.muted),
                             ),
                           ),
                         ],
@@ -556,7 +556,7 @@ class OpenTripCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                const Divider(height: 1, color: AppColors.creamSubtle),
                 const SizedBox(height: 10),
 
                 // Harga & Status Transaksi Sistem WISGO
@@ -569,7 +569,7 @@ class OpenTripCard extends StatelessWidget {
                         children: [
                           const Text(
                             'Transaksi Khusus Trip Go (Escrow):',
-                            style: TextStyle(fontSize: 10, color: AppColors.muted, fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 11, color: AppColors.muted, fontWeight: FontWeight.w600),
                           ),
                           Row(
                             children: [
@@ -604,7 +604,7 @@ class OpenTripCard extends StatelessWidget {
                           SizedBox(width: 4),
                           Text(
                             'Escrow',
-                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.forest),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                           ),
                         ],
                       ),

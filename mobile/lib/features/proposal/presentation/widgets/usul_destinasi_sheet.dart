@@ -120,7 +120,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
       height: screenHeight * 0.92,
       decoration: const BoxDecoration(
         color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -198,21 +198,21 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3D6),
+                    color: AppColors.warningBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.35)),
+                    border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
                   ),
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.info_outline_rounded, color: Color(0xFFB45309), size: 18),
+                      Icon(Icons.info_outline_rounded, color: AppColors.warningDark, size: 18),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Usulan destinasi hidden gem akan diverifikasi oleh Dinas Pariwisata Sumbar sebelum resmi tampil di katalog umum.',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF78350F),
+                            color: AppColors.warningDark,
                             height: 1.4,
                             fontWeight: FontWeight.w600,
                           ),
@@ -272,7 +272,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                               child: const Text(
                                 'Isi Contoh Narasi',
                                 style: TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.forest,
                                 ),
@@ -284,7 +284,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       const SizedBox(height: 3),
                       const Text(
                         'Tuliskan keunikan alam, legenda rakyat, atau sejarah nagari untuk panduan wisatawan.',
-                        style: TextStyle(fontSize: 10, color: AppColors.muted, height: 1.3),
+                        style: TextStyle(fontSize: 11, color: AppColors.muted, height: 1.3),
                       ),
                       const SizedBox(height: 6),
                       TextField(
@@ -337,7 +337,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       const SizedBox(height: 3),
                       const Text(
                         'Nomor pengelola resmi yang dapat dihubungi pengunjung untuk reservasi langsung.',
-                        style: TextStyle(fontSize: 10, color: AppColors.muted),
+                        style: TextStyle(fontSize: 11, color: AppColors.muted),
                       ),
                       const SizedBox(height: 6),
                       TextField(
@@ -363,23 +363,23 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
+                                color: AppColors.successBorder,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFF22C55E).withValues(alpha: 0.5),
+                                  color: AppColors.success.withValues(alpha: 0.5),
                                 ),
                               ),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.gps_fixed_rounded, size: 11, color: Color(0xFF15803D)),
+                                  Icon(Icons.gps_fixed_rounded, size: 11, color: AppColors.success),
                                   SizedBox(width: 4),
                                   Text(
                                     'Deteksi GPS Saat Ini',
                                     style: TextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFF15803D),
+                                      color: AppColors.success,
                                     ),
                                   ),
                                 ],
@@ -391,7 +391,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       const SizedBox(height: 3),
                       const Text(
                         'Format Latitude, Longitude untuk akurasi peta.',
-                        style: TextStyle(fontSize: 10, color: AppColors.muted),
+                        style: TextStyle(fontSize: 11, color: AppColors.muted),
                       ),
                       const SizedBox(height: 6),
                       TextField(
@@ -413,7 +413,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       const SizedBox(height: 3),
                       const Text(
                         'Unggah foto panorama alam untuk pengalaman tur interaktif wisatawan.',
-                        style: TextStyle(fontSize: 10, color: AppColors.muted),
+                        style: TextStyle(fontSize: 11, color: AppColors.muted),
                       ),
                       const SizedBox(height: 8),
                       GestureDetector(
@@ -424,11 +424,11 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                           decoration: BoxDecoration(
-                            color: _photo360Attached ? const Color(0xFFDCFCE7) : AppColors.cream,
+                            color: _photo360Attached ? AppColors.successBorder : AppColors.cream,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _photo360Attached
-                                  ? const Color(0xFF15803D)
+                                  ? AppColors.success
                                   : AppColors.sageBorder,
                               width: _photo360Attached ? 1.5 : 1,
                             ),
@@ -440,7 +440,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                                     ? Icons.check_circle_rounded
                                     : Icons.add_photo_alternate_rounded,
                                 color: _photo360Attached
-                                    ? const Color(0xFF15803D)
+                                    ? AppColors.success
                                     : AppColors.forest,
                                 size: 30,
                               ),
@@ -453,7 +453,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   color: _photo360Attached
-                                      ? const Color(0xFF15803D)
+                                      ? AppColors.success
                                       : AppColors.forest,
                                 ),
                               ),
@@ -462,7 +462,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                                 _photo360Attached
                                     ? 'Format Equirectangular 2:1 siap untuk render virtual'
                                     : 'Mendukung format JPG/PNG resolusi tinggi (rasio 2:1)',
-                                style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                                style: const TextStyle(fontSize: 11, color: AppColors.muted),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -571,7 +571,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                         child: const Text(
                           'Data tarif digunakan sebagai panduan transparansi harga bagi pengunjung.',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.forest,
                           ),
@@ -623,7 +623,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                 const Center(
                   child: Text(
                     'Destinasi baru akan resmi dipublikasikan setelah divalidasi oleh Tim Dispar.',
-                    style: TextStyle(fontSize: 10.5, color: AppColors.muted),
+                    style: TextStyle(fontSize: 11, color: AppColors.muted),
                     textAlign: TextAlign.center,
                   ),
                 ),
