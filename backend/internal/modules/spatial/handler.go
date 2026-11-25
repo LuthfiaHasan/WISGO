@@ -28,6 +28,7 @@ func NewHandler(service Service, rateLimiter *middleware.TokenBucketRateLimiter)
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// Publik / Wisatawan
 	rg.POST("/spatial/shunlu", h.PostShunluSearch)
+	rg.POST("/spatial/along-route", h.PostShunluSearch)
 	rg.GET("/destinations/:id/micro-map", h.GetDestinationMicroMap)
 	rg.POST("/spatial/audio-trigger-check", h.PostCheckAudioGPSTrigger)
 	rg.GET("/spatial/hazards", h.GetLiveHazardAlerts)

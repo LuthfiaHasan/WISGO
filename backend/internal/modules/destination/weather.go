@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -12,21 +13,46 @@ import (
 	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
 
-type openMeteoResponse struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Elevation float64 `json:"elevation"`
-	Current   struct {
-		Time             string  `json:"time"`
-		Temperature2m    float64 `json:"temperature_2m"`
-		RelativeHumidity int     `json:"relative_humidity_2m"`
-		WeatherCode      int     `json:"weather_code"`
-		WindSpeed10m     float64 `json:"wind_speed_10m"`
+const defaultWeatherAPIKey = "c7bf87c35fa6413784872827262511"
+
+type weatherAPIResponse struct {
+	Location struct {
+		Name      string  `json:"name"`
+		Region    string  `json:"region"`
+		Country   string  `json:"country"`
+		Lat       float64 `json:"lat"`
+		Lon       float64 `json:"lon"`
+		Localtime string  `json:"localtime"`
+	} `json:"location"`
+	Current struct {
+		LastUpdated string  `json:"last_updated"`
+		TempC       float64 `json:"temp_c"`
+		FeelslikeC  float64 `json:"feelslike_c"`
+		Humidity    int     `json:"humidity"`
+		WindKph     float64 `json:"wind_kph"`
+		UV          float64 `json:"uv"`
+		Condition   struct {
+			Text string `json:"text"`
+			Icon string `json:"icon"`
+			Code int    `json:"code"`
+		} `json:"condition"`
 	} `json:"current"`
-	Hourly struct {
-		Time                     []string `json:"time"`
-		PrecipitationProbability []int    `json:"precipitation_probability"`
-	} `json:"hourly"`
+	Forecast struct {
+		Forecastday []struct {
+			Day struct {
+				DailyChanceOfRain int `json:"daily_chance_of_rain"`
+			} `json:"day"`
+			Hour []struct {
+				Time         string  `json:"time"`
+				TempC        float64 `json:"temp_c"`
+				ChanceOfRain int     `json:"chance_of_rain"`
+				Condition    struct {
+					Text string `json:"text"`
+					Code int    `json:"code"`
+				} `json:"condition"`
+			} `json:"hour"`
+		} `json:"forecastday"`
+	} `json:"forecast"`
 }
 
 type weatherCacheItem struct {
@@ -37,11 +63,18 @@ type weatherCacheItem struct {
 var (
 	weatherCacheMu sync.RWMutex
 	weatherCache   = make(map[string]weatherCacheItem)
-	// Timeout untuk pemanggilan Open-Meteo API agar non-blocking & responsif
-	openMeteoClient = &http.Client{Timeout: 3 * time.Second}
+	// Timeout untuk pemanggilan WeatherAPI agar non-blocking & responsif
+	weatherHTTPClient = &http.Client{Timeout: 3 * time.Second}
 )
 
 const weatherCacheTTL = 10 * time.Minute
+
+func getWeatherAPIKey() string {
+	if key := strings.TrimSpace(os.Getenv("WEATHER_API_KEY")); key != "" {
+		return key
+	}
+	return defaultWeatherAPIKey
+}
 
 // GetCoordsForCity memetakan koordinat acuan kota/kabupaten di Sumatera Barat
 func GetCoordsForCity(cityRegency string) (float64, float64) {
@@ -79,43 +112,42 @@ func GetCoordsForCity(cityRegency string) (float64, float64) {
 	}
 }
 
-// MapWMOCodeToCondition menerjemahkan WMO Weather Interpretation Codes dari Open-Meteo
-func MapWMOCodeToCondition(code int) (condition string, weatherStatus string, alertNote string) {
+// MapWeatherAPICodeToCondition menerjemahkan kode cuaca dari WeatherAPI.com ke Bahasa Indonesia & tingkat peringatan
+func MapWeatherAPICodeToCondition(code int) (condition string, weatherStatus string, alertNote string) {
 	switch code {
-	case 0:
+	case 1000:
 		return "Cerah", "Aman", "Langit cerah, visibilitas sangat baik untuk berwisata."
-	case 1:
+	case 1003:
 		return "Cerah Berawan", "Aman", "Kondisi cuaca baik dan kondusif untuk perjalanan."
-	case 2:
+	case 1006:
 		return "Berawan", "Aman", "Berawan sejuk, jalanan kering dan nyaman dilalui."
-	case 3:
+	case 1009:
 		return "Mendung Tebal", "Waspada", "Awan mendung tebal, siapkan payung atau jas hujan."
-	case 45, 48:
+	case 1030, 1135, 1147:
 		return "Berkabut Tebal", "Waspada", "Kabut mengurangi jarak pandang, nyalakan lampu kabut dan kurangi kecepatan."
-	case 51, 53, 55:
+	case 1063, 1150, 1153, 1168, 1171:
 		return "Gerimis", "Waspada", "Jalanan mulai basah, berhati-hati terhadap tikungan licin."
-	case 56, 57:
-		return "Gerimis Dingin", "Waspada", "Suhu udara dingin dan aspal basah."
-	case 61:
+	case 1180, 1183, 1240:
 		return "Hujan Ringan", "Waspada Hujan", "Hujan intensitas ringan, hindari memacu kendaraan kencang."
-	case 63:
+	case 1186, 1189, 1243:
 		return "Hujan Sedang", "Waspada Hujan", "Hujan sedang merata, waspada genangan air dan jalanan licin."
-	case 65:
+	case 1192, 1195, 1246:
 		return "Hujan Lebat", "Siaga Cuaca Ekstrem", "Hujan lebat, waspada potensi longsor tebing dan luapan air hulu."
-	case 80, 81:
-		return "Hujan Guyur Lokal", "Waspada Hujan", "Hujan lebat sesaat, berteduhlah di rest area terdekat."
-	case 82:
-		return "Hujan Sangat Lebat", "Awas Tutup Total", "Curah hujan ekstrem, tunda perjalanan melewati lereng rawan longsor."
-	case 95:
+	case 1087, 1273:
 		return "Hujan Badai Petir", "Siaga Cuaca Ekstrem", "Terjadi petir dan angin kencang, jauhi pohon besar dan tebing terjal."
-	case 96, 99:
+	case 1276, 1279, 1282:
 		return "Badai Petir Ekstrem", "Awas Tutup Total", "Bahaya badai ekstrem dan petir intens, segera cari posko evakuasi aman."
 	default:
 		return "Cerah Berawan", "Aman", "Kondisi cuaca normal."
 	}
 }
 
-// GetRealtimeWeather mengambil data cuaca langsung dari Open-Meteo Live API
+// MapWMOCodeToCondition dipertahankan untuk kompatibilitas kode WMO
+func MapWMOCodeToCondition(code int) (condition string, weatherStatus string, alertNote string) {
+	return MapWeatherAPICodeToCondition(code)
+}
+
+// GetRealtimeWeather mengambil data cuaca langsung dari WeatherAPI.com Live API
 // Dilengkapi cache memori 10 menit dan fallback lokal jika offline/gagal.
 func GetRealtimeWeather(lat, lng float64, cityRegency string) *models.WeatherInfo {
 	if lat == 0 && lng == 0 {
@@ -131,26 +163,26 @@ func GetRealtimeWeather(lat, lng float64, cityRegency string) *models.WeatherInf
 		return cached.info
 	}
 
-	// Panggil Open-Meteo Live API
+	apiKey := getWeatherAPIKey()
 	apiURL := fmt.Sprintf(
-		"https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=precipitation_probability&timezone=Asia%%2FJakarta",
-		lat, lng,
+		"https://api.weatherapi.com/v1/forecast.json?key=%s&q=%.4f,%.4f&days=1&aqi=no&alerts=no",
+		apiKey, lat, lng,
 	)
 
-	resp, err := openMeteoClient.Get(apiURL)
+	resp, err := weatherHTTPClient.Get(apiURL)
 	if err == nil && resp.StatusCode == http.StatusOK {
 		defer resp.Body.Close()
-		var omResp openMeteoResponse
-		if jsonErr := json.NewDecoder(resp.Body).Decode(&omResp); jsonErr == nil {
-			cond, wStatus, alert := MapWMOCodeToCondition(omResp.Current.WeatherCode)
-			temp := int(math.Round(omResp.Current.Temperature2m))
-			wind := int(math.Round(omResp.Current.WindSpeed10m))
+		var wResp weatherAPIResponse
+		if jsonErr := json.NewDecoder(resp.Body).Decode(&wResp); jsonErr == nil {
+			cond, wStatus, alert := MapWeatherAPICodeToCondition(wResp.Current.Condition.Code)
+			temp := int(math.Round(wResp.Current.TempC))
+			wind := int(math.Round(wResp.Current.WindKph))
 			rainProb := 20
-			if len(omResp.Hourly.PrecipitationProbability) > 0 {
-				rainProb = omResp.Hourly.PrecipitationProbability[0]
+			if len(wResp.Forecast.Forecastday) > 0 {
+				rainProb = wResp.Forecast.Forecastday[0].Day.DailyChanceOfRain
 			}
 
-			forecastStr := fmt.Sprintf("Suhu aktual %.1f°C dengan kondisi %s. Kecepatan angin %d km/j.", omResp.Current.Temperature2m, cond, wind)
+			forecastStr := fmt.Sprintf("Suhu aktual %.1f°C dengan kondisi %s. Kecepatan angin %d km/j.", wResp.Current.TempC, cond, wind)
 			nowStr := time.Now().Format("15:04 WIB, 02 Jan 2006")
 
 			info := &models.WeatherInfo{
@@ -158,12 +190,12 @@ func GetRealtimeWeather(lat, lng float64, cityRegency string) *models.WeatherInf
 				TemperatureC:    temp,
 				Condition:       cond,
 				WeatherStatus:   wStatus,
-				HumidityPercent: omResp.Current.RelativeHumidity,
+				HumidityPercent: wResp.Current.Humidity,
 				WindSpeedKmh:    wind,
 				RainProbability: rainProb,
 				Forecast:        forecastStr,
 				AlertNote:       alert,
-				Source:          "Open-Meteo Live API",
+				Source:          "WeatherAPI Live API",
 				LastUpdated:     nowStr,
 			}
 
@@ -178,7 +210,7 @@ func GetRealtimeWeather(lat, lng float64, cityRegency string) *models.WeatherInf
 		}
 	}
 
-	// Fallback ke profil cuaca regional jika koneksi offline / Open-Meteo timeout
+	// Fallback ke profil cuaca regional jika koneksi offline / WeatherAPI timeout
 	return GetRegionalFallbackWeather(cityRegency)
 }
 

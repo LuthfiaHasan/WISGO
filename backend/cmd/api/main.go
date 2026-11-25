@@ -72,25 +72,45 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	destHandler.RegisterRoutes(v1)
 
 	// Modul D2: Tur Imersif 360° Aerial-to-Ground & CMS Studio 4-Pin (Pilar 1)
-	scenesRepo := scenes360.NewRepository()
+	var scenesRepo scenes360.Repository
+	if db != nil && database.IsConnected() {
+		scenesRepo = scenes360.NewPostgresRepository(db)
+	} else {
+		scenesRepo = scenes360.NewRepository()
+	}
 	scenesService := scenes360.NewService(scenesRepo, destRepo)
 	scenesHandler := scenes360.NewHandler(scenesService, cache)
 	scenesHandler.RegisterRoutes(v1)
 
 	// Modul D3: Engine Along-the-Route "Shunlu", Peta Mikro, Audio GPS <=15m, Radar Bencana & SOS (Pilar 1, 2, 7)
-	spatialRepo := spatial.NewRepository()
+	var spatialRepo spatial.Repository
+	if db != nil && database.IsConnected() {
+		spatialRepo = spatial.NewPostgresRepository(db)
+	} else {
+		spatialRepo = spatial.NewRepository()
+	}
 	spatialService := spatial.NewService(spatialRepo, destRepo)
 	spatialHandler := spatial.NewHandler(spatialService, rateLimiter)
 	spatialHandler.RegisterRoutes(v1)
 
 	// Modul D4: Scanner Plang Smart QR, Lapor Pungli Anonim, & Pusat Komando Satgas Saber Pungli (Pilar 3)
-	pungliRepo := pungli.NewRepository()
+	var pungliRepo pungli.Repository
+	if db != nil && database.IsConnected() {
+		pungliRepo = pungli.NewPostgresRepository(db)
+	} else {
+		pungliRepo = pungli.NewRepository()
+	}
 	pungliService := pungli.NewService(pungliRepo, destRepo, scenesRepo, spatialRepo)
 	pungliHandler := pungli.NewHandler(pungliService, rateLimiter)
 	pungliHandler.RegisterRoutes(v1)
 
 	// Modul D5: Gaode Behavior-Based Ranking, Kamus Saku Audio Minang, & Kalender Budaya Hari Pakan (Pilar 1 & 2)
-	cultureRepo := culture_ranking.NewRepository()
+	var cultureRepo culture_ranking.Repository
+	if db != nil && database.IsConnected() {
+		cultureRepo = culture_ranking.NewPostgresRepository(db)
+	} else {
+		cultureRepo = culture_ranking.NewRepository()
+	}
 	cultureService := culture_ranking.NewService(cultureRepo)
 	cultureHandler := culture_ranking.NewHandler(cultureService)
 	cultureHandler.RegisterRoutes(v1)

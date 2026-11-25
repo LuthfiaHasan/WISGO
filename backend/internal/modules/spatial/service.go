@@ -135,6 +135,30 @@ func (s *service) CheckAudioTrigger(req AudioTriggerCheckRequest) (*AudioTrigger
 func (s *service) GetLiveHazards(severityFilter, corridorFilter string, hasGPS bool, userLat, userLng float64) (*LiveHazardsResponse, error) {
 	hazards := s.repo.ListHazardAlerts(severityFilter, corridorFilter)
 
+	// Sinkronisasi Cuaca Real-Time WeatherAPI pada 4 Koridor Jalur Ekstrem (Poin 7 & AC-07)
+	for i := range hazards {
+		if w := destination.GetRealtimeWeather(hazards[i].Latitude, hazards[i].Longitude, hazards[i].CityRegency); w != nil {
+			// Jika belum ada override eksplisit dari Admin Dispar, perbarui weather_status dari WeatherAPI
+			if !strings.Contains(strings.ToLower(hazards[i].TriggeredByAdmin), "admin") && !strings.Contains(strings.ToLower(hazards[i].TriggeredByAdmin), "panel") {
+				hazards[i].WeatherStatus = fmt.Sprintf("%s (%d°C • Angin %d km/j)", w.Condition, w.TemperatureC, w.WindSpeedKmh)
+				switch w.WeatherStatus {
+				case "Awas Tutup Total":
+					if hazards[i].Severity == "Normal" || hazards[i].Severity == "Waspada" {
+						hazards[i].Severity = "Siaga"
+					}
+				case "Siaga Cuaca Ekstrem":
+					if hazards[i].Severity == "Normal" {
+						hazards[i].Severity = "Siaga"
+					}
+				case "Waspada Hujan", "Waspada":
+					if hazards[i].Severity == "Normal" {
+						hazards[i].Severity = "Waspada"
+					}
+				}
+			}
+		}
+	}
+
 	var intersectingBanner *models.HazardAlert
 	if hasGPS {
 		for i := range hazards {

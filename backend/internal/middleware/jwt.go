@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -24,6 +26,51 @@ var validTokenRoles = map[string]string{
 	TokenVendor:      "vendor",
 }
 
+// ResolveTokenRole memvalidasi token preset pengujian maupun token sesi dinamis hasil login OTP/Google BE-2
+func ResolveTokenRole(token string) (role string, userID string, valid bool) {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "", "", false
+	}
+
+	// 1. Cek preset token standar
+	if r, ok := validTokenRoles[token]; ok {
+		return r, "usr-preset", true
+	}
+
+	// 2. Cek token dinamis yang diterbitkan oleh modul auth BE-2 (format: jwt-wisgo-[role-]<userID>-<timestamp>)
+	if strings.HasPrefix(token, "jwt-wisgo-") {
+		rest := strings.TrimPrefix(token, "jwt-wisgo-")
+		switch {
+		case strings.HasPrefix(rest, "vendor-"):
+			return "vendor", strings.TrimPrefix(rest, "vendor-"), true
+		case strings.HasPrefix(rest, "admin-"):
+			return "admin_dispar", strings.TrimPrefix(rest, "admin-"), true
+		case strings.HasPrefix(rest, "pokdarwis-"):
+			return "pokdarwis", strings.TrimPrefix(rest, "pokdarwis-"), true
+		default:
+			return "tourist", rest, true
+		}
+	}
+
+	// 3. Cek format JWT 3-segmen standar (header.payload.signature) dengan signature rancakin_sig_ atau wisgo
+	parts := strings.Split(token, ".")
+	if len(parts) == 3 && (strings.HasPrefix(parts[2], "rancakin_sig_") || strings.HasPrefix(parts[2], "wisgo_sig_")) {
+		if payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1]); err == nil {
+			var claims map[string]interface{}
+			if err := json.Unmarshal(payloadBytes, &claims); err == nil {
+				r, _ := claims["role"].(string)
+				sub, _ := claims["sub"].(string)
+				if r != "" {
+					return r, sub, true
+				}
+			}
+		}
+	}
+
+	return "", "", false
+}
+
 // RequireRoles memvalidasi Authorization Bearer JWT dan memeriksa peran (RBAC) pada Gin Framework
 func RequireRoles(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -37,7 +84,7 @@ func RequireRoles(allowedRoles ...string) gin.HandlerFunc {
 		}
 
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-		role, exists := validTokenRoles[token]
+		role, userID, exists := ResolveTokenRole(token)
 		if !exists {
 			common.Error(c, http.StatusUnauthorized, "Token JWT tidak valid atau tidak dikenali oleh server WISGO.", gin.H{
 				"code": "UNAUTHORIZED_INVALID_TOKEN",
@@ -65,6 +112,9 @@ func RequireRoles(allowedRoles ...string) gin.HandlerFunc {
 		}
 
 		c.Set("user_role", role)
+		if userID != "" {
+			c.Set("user_id", userID)
+		}
 		c.Next()
 	}
 }

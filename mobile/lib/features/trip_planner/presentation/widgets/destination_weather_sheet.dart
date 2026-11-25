@@ -29,7 +29,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
   }
 
   void _loadLiveWeather() async {
-    final live = await DestinationWeather.fetchLiveFromOpenMeteo(
+    final live = await DestinationWeather.fetchLiveFromWeatherApi(
       destinationName: widget.destinationName,
     );
     if (!mounted) return;
@@ -41,7 +41,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
 
   void _handleRefreshWeather() async {
     setState(() => _isRefreshing = true);
-    final live = await DestinationWeather.fetchLiveFromOpenMeteo(
+    final live = await DestinationWeather.fetchLiveFromWeatherApi(
       destinationName: widget.destinationName,
     );
     if (!mounted) return;
@@ -64,7 +64,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Data cuaca ${_weather.destinationName} berhasil diperbarui via Open-Meteo!',
+                'Data cuaca ${_weather.destinationName} berhasil diperbarui via WeatherAPI!',
                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
               ),
             ),
@@ -205,7 +205,7 @@ class _DestinationWeatherSheetState extends State<DestinationWeatherSheet> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Live Open-Meteo • ${_lastUpdatedTime.hour.toString().padLeft(2, '0')}:${_lastUpdatedTime.minute.toString().padLeft(2, '0')} WIB',
+                                    'Live WeatherAPI • ${_lastUpdatedTime.hour.toString().padLeft(2, '0')}:${_lastUpdatedTime.minute.toString().padLeft(2, '0')} WIB',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 11,

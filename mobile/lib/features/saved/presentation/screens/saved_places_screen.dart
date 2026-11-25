@@ -10820,7 +10820,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
   }
 
   void _loadLiveWeather() async {
-    final live = await DestinationWeather.fetchLiveFromOpenMeteo(
+    final live = await DestinationWeather.fetchLiveFromWeatherApi(
       destinationName: widget.place.title,
     );
     if (!mounted) return;
@@ -11202,7 +11202,7 @@ class _DestinationDetailSheetState extends State<_DestinationDetailSheet> {
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
-                                    'Live Open-Meteo • Angin ${_weather.windSpeedKmh} km/j • Hujan ${_weather.rainProbability}%',
+                                    'Live WeatherAPI • Angin ${_weather.windSpeedKmh} km/j • Hujan ${_weather.rainProbability}%',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
