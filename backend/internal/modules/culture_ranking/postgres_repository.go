@@ -231,3 +231,39 @@ func (r *postgresRepository) DeleteCulturalEvent(id string) error {
 func (r *postgresRepository) FindCulturalEventByID(id string) (*models.CulturalEvent, bool) {
 	return r.fallback.FindCulturalEventByID(id)
 }
+
+func (r *postgresRepository) UpsertMinangPhrase(phrase models.MinangPhrase) models.MinangPhrase {
+	saved := r.fallback.UpsertMinangPhrase(phrase)
+	_, _ = r.db.Exec(`
+		INSERT INTO minang_phrases (
+			id, category, indonesian_text, minang_text, phonetic_guide,
+			audio_url, dialect_note, usage_context_tip, politeness_level
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (id) DO UPDATE SET
+			category = EXCLUDED.category,
+			indonesian_text = EXCLUDED.indonesian_text,
+			minang_text = EXCLUDED.minang_text,
+			phonetic_guide = EXCLUDED.phonetic_guide,
+			audio_url = EXCLUDED.audio_url;
+	`, saved.ID, saved.Category, saved.IndonesianText, saved.MinangText, saved.PhoneticGuide,
+		saved.AudioURL, saved.DialectNote, saved.UsageContextTip, saved.PolitenessLevel)
+	return saved
+}
+
+func (r *postgresRepository) DeleteMinangPhrase(id string) error {
+	_, _ = r.db.Exec(`DELETE FROM minang_phrases WHERE LOWER(id) = LOWER($1);`, strings.TrimSpace(id))
+	return r.fallback.DeleteMinangPhrase(id)
+}
+
+func (r *postgresRepository) RecalculateGaodeRankings() []models.GaodeBehaviorRanking {
+	list := r.fallback.RecalculateGaodeRankings()
+	for _, g := range list {
+		_, _ = r.db.Exec(`
+			UPDATE gaode_behavior_rankings
+			SET rank_position = $1, gaode_authenticity_score = $2, updated_at = NOW()
+			WHERE LOWER(destination_id) = LOWER($3);
+		`, g.RankPosition, g.GaodeAuthenticityScore, g.DestinationID)
+	}
+	return r.ListGaodeRankings("")
+}
+

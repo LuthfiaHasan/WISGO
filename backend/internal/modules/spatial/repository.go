@@ -23,6 +23,9 @@ type Repository interface {
 	RecordNavigationTelemetry(input NavigationTelemetryInput) (*models.GaodeBehaviorRanking, error)
 	ListEmergencyContacts(corridorFilter string) []models.EmergencyContact
 	FindNearestEmergencyContact(lat, lng float64) *models.EmergencyContact
+	UpdateSOSSignalStatus(idOrCode, status, sarUnit string) (*models.SOSSignal, error)
+	UpsertEmergencyContact(contact models.EmergencyContact) models.EmergencyContact
+	DeleteEmergencyContact(id string) error
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -349,3 +352,55 @@ func (r *inMemoryRepository) RecordNavigationTelemetry(input NavigationTelemetry
 
 	return metric, nil
 }
+
+func (r *inMemoryRepository) UpdateSOSSignalStatus(idOrCode, status, sarUnit string) (*models.SOSSignal, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	target := strings.ToLower(strings.TrimSpace(idOrCode))
+	for i, s := range r.sosSignals {
+		if strings.ToLower(s.ID) == target || strings.ToLower(s.SOSCode) == target {
+			if status != "" {
+				s.Status = status
+			}
+			if sarUnit != "" {
+				s.NearestRescuePost = sarUnit
+			}
+			r.sosSignals[i] = s
+			return &s, nil
+		}
+	}
+	return nil, errors.New("SOS_SIGNAL_NOT_FOUND")
+}
+
+func (r *inMemoryRepository) UpsertEmergencyContact(contact models.EmergencyContact) models.EmergencyContact {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if contact.ID == "" {
+		contact.ID = fmt.Sprintf("emg-%03d", len(r.emergencyContacts)+1)
+	}
+	contact.IsActive = true
+	for i, existing := range r.emergencyContacts {
+		if strings.EqualFold(existing.ID, contact.ID) {
+			r.emergencyContacts[i] = contact
+			return contact
+		}
+	}
+	r.emergencyContacts = append(r.emergencyContacts, contact)
+	return contact
+}
+
+func (r *inMemoryRepository) DeleteEmergencyContact(id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i, existing := range r.emergencyContacts {
+		if strings.EqualFold(existing.ID, id) {
+			r.emergencyContacts = append(r.emergencyContacts[:i], r.emergencyContacts[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("CONTACT_NOT_FOUND")
+}
+

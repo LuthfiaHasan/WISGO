@@ -33,7 +33,35 @@ var validTokenUserIDs = map[string]string{
 	TokenVendor:      "user-vendor-01",
 }
 
-// ResolveTokenRole memvalidasi token preset pengujian maupun token sesi dinamis hasil login OTP/Google BE-2
+func decodeBase64Segment(seg string) ([]byte, error) {
+	if b, err := base64.RawURLEncoding.DecodeString(seg); err == nil {
+		return b, nil
+	}
+	if b, err := base64.URLEncoding.DecodeString(seg); err == nil {
+		return b, nil
+	}
+	if b, err := base64.RawStdEncoding.DecodeString(seg); err == nil {
+		return b, nil
+	}
+	return base64.StdEncoding.DecodeString(seg)
+}
+
+func normalizeRole(r string) string {
+	switch strings.ToLower(strings.TrimSpace(r)) {
+	case "admin_utama", "admin_dispar", "admin", "superadmin":
+		return "admin_dispar"
+	case "pokdarwis":
+		return "pokdarwis"
+	case "vendor", "mitra":
+		return "vendor"
+	case "tourist", "wisatawan", "user":
+		return "tourist"
+	default:
+		return r
+	}
+}
+
+// ResolveTokenRole memvalidasi token preset pengujian, token Web Admin FS-1 (admin_utama), maupun token sesi dinamis OTP/Google BE-2
 func ResolveTokenRole(token string) (role string, userID string, valid bool) {
 	token = strings.TrimSpace(token)
 	if token == "" {
@@ -60,16 +88,18 @@ func ResolveTokenRole(token string) (role string, userID string, valid bool) {
 		}
 	}
 
-	// 3. Cek format JWT 3-segmen standar (header.payload.signature) dengan signature rancakin_sig_ atau wisgo
+	// 3. Cek format JWT 3-segmen standar (header.payload.signature) termasuk token Web Admin FS-1 (.wisgo-komando-sig-2026)
 	parts := strings.Split(token, ".")
-	if len(parts) == 3 && (strings.HasPrefix(parts[2], "rancakin_sig_") || strings.HasPrefix(parts[2], "wisgo_sig_")) {
-		if payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1]); err == nil {
+	if len(parts) == 3 && (strings.HasPrefix(parts[2], "rancakin_sig_") ||
+		strings.HasPrefix(parts[2], "wisgo_sig_") ||
+		strings.HasPrefix(parts[2], "wisgo-komando-sig")) {
+		if payloadBytes, err := decodeBase64Segment(parts[1]); err == nil {
 			var claims map[string]interface{}
 			if err := json.Unmarshal(payloadBytes, &claims); err == nil {
 				r, _ := claims["role"].(string)
 				sub, _ := claims["sub"].(string)
 				if r != "" {
-					return r, sub, true
+					return normalizeRole(r), sub, true
 				}
 			}
 		}
@@ -102,7 +132,7 @@ func RequireRoles(allowedRoles ...string) gin.HandlerFunc {
 
 		allowed := false
 		for _, allowedRole := range allowedRoles {
-			if role == allowedRole {
+			if role == normalizeRole(allowedRole) {
 				allowed = true
 				break
 			}

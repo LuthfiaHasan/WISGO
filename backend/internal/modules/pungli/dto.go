@@ -18,7 +18,10 @@ type CreatePungliReportRequest struct {
 	DestinationID    string  `json:"destination_id"`
 	ReporterName     string  `json:"reporter_name"`
 	IncidentCategory string  `json:"incident_category"` // parkir_liar | tiket_di_atas_perda | paksaan_pemandu | fasilitas_rusak
+	IncidentType     string  `json:"incident_type,omitempty"`
 	ChargedAmountIDR float64 `json:"charged_amount_idr"`
+	OfficialPriceIDR float64 `json:"official_perda_price_idr,omitempty"`
+	OverchargeIDR    float64 `json:"overcharge_amount_idr,omitempty"`
 	PhotoEvidence    string  `json:"photo_evidence"`
 	PhotoBase64      string  `json:"photo_base64,omitempty"`
 	Latitude         float64 `json:"latitude"`
@@ -36,8 +39,9 @@ type CreatePungliReportResponse struct {
 
 // UpdatePungliStatusRequest payload pembaruan status laporan oleh Satgas Saber Pungli FS-1
 type UpdatePungliStatusRequest struct {
-	Status      string `json:"status"` // Masuk | Diverifikasi | Ditindaklanjuti | Selesai
-	SatgasNotes string `json:"satgas_notes"`
+	Status           string `json:"status"` // Masuk | Diverifikasi | Ditindaklanjuti | Selesai
+	SatgasNotes      string `json:"satgas_notes"`
+	AdminActionNotes string `json:"admin_action_notes,omitempty"`
 }
 
 // UpdatePungliStatusResponse respon pembaruan status laporan di Pusat Komando

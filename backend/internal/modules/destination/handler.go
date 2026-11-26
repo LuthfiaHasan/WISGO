@@ -32,6 +32,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/destinations/categories", h.GetCategories)
 	rg.GET("/destinations", h.GetDestinations)
 	rg.GET("/destinations/detail", h.GetDestinationDetail)
+	rg.GET("/destinations/offline-bundle", h.GetOfflineBundle)
 	rg.GET("/destinations/:id", h.GetDestinationByID)
 	rg.GET("/destinations/:id/tariffs", h.GetDestinationTariffs)
 	rg.GET("/destinations/:id/offline-bundle", h.GetOfflineBundle)
@@ -80,6 +81,13 @@ func (h *Handler) GetDestinations(c *gin.Context) {
 	if qCity == "" {
 		qCity = c.Query("kabupaten_kota")
 	}
+	if qCity == "" {
+		qCity = c.Query("city")
+	}
+	qCrowd := c.Query("crowd_level")
+	if qCrowd == "" {
+		qCrowd = c.Query("crowd")
+	}
 	hasGPS, lat, lng := parseGPS(c)
 
 	catID := c.Query("category_id")
@@ -87,7 +95,7 @@ func (h *Handler) GetDestinations(c *gin.Context) {
 		CategoryID:  catID,
 		Category:    c.Query("category"),
 		CityRegency: qCity,
-		CrowdLevel:  c.Query("crowd_level"),
+		CrowdLevel:  qCrowd,
 		Signal:      c.Query("signal"),
 		SearchQuery: c.Query("q"),
 		HasUserGPS:  hasGPS,
@@ -154,9 +162,15 @@ func (h *Handler) GetDestinationTariffs(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// GetOfflineBundle menangani GET /api/v1/destinations/:id/offline-bundle
+// GetOfflineBundle menangani GET /api/v1/destinations/:id/offline-bundle & GET /api/v1/destinations/offline-bundle
 func (h *Handler) GetOfflineBundle(c *gin.Context) {
-	id := c.Param("id")
+	id := strings.TrimSpace(c.Param("id"))
+	if id == "" {
+		id = strings.TrimSpace(c.Query("id"))
+	}
+	if id == "" {
+		id = "dest-001"
+	}
 	res, err := h.service.GetOfflineBundle(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
