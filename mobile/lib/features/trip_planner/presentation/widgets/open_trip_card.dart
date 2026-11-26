@@ -654,7 +654,7 @@ class _OpenTripCardState extends State<OpenTripCard> {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Pengajuan sedang ditinjau Admin WISGO (e-KTP, Wajah & Lisensi). Setelah disetujui, trip tayang ke publik & Anda bisa mengatur Rencana & Persiapan.',
+                                  'Langkah 4: Pengajuan sedang ditinjau Admin WISGO (Data Diri, KTP, Lisensi/Pengalaman). Setelah disetujui, trip tayang ke publik & Anda bisa masuk Langkah 5 (Atur Rencana).',
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     color: AppColors.warningDark,

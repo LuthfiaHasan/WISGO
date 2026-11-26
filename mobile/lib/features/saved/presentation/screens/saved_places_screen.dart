@@ -3238,22 +3238,27 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             children: [
                               _buildOrganizerStepDot(
                                 '1',
-                                'Buat Trip',
+                                'Data Diri',
                                 myOrganizerTrips.isNotEmpty,
                               ),
                               _buildOrganizerStepDot(
                                 '2',
-                                'Syarat & KTP',
+                                'Upload KTP',
                                 myOrganizerTrips.isNotEmpty,
                               ),
                               _buildOrganizerStepDot(
                                 '3',
-                                'ACC Admin',
-                                hasApprovedOrganizerTrip,
+                                'Lisensi /\nPengalaman',
+                                myOrganizerTrips.isNotEmpty,
                               ),
                               _buildOrganizerStepDot(
                                 '4',
-                                'Atur Rencana',
+                                'Verifikasi\nAdmin',
+                                hasApprovedOrganizerTrip,
+                              ),
+                              _buildOrganizerStepDot(
+                                '5',
+                                'Atur\nRencana',
                                 hasApprovedOrganizerTrip,
                               ),
                             ],
@@ -3322,7 +3327,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                             SizedBox(height: 6),
                             Text(
-                              'Semua wisatawan bisa menjadi penyelenggara! Klik tombol di atas, lengkapi data + upload e-KTP & Verifikasi Wajah. Setelah disetujui Admin WISGO, Anda resmi menjadi Penyelenggara dan bisa mengatur Rencana & Persiapan peserta.',
+                              'Semua wisatawan bisa menjadi penyelenggara! Lengkapi 1) Data Diri (Nama, No. Telp, Instagram), 2) Upload KTP, 3) Upload Lisensi (wajib jalur hard, tempat umum cukup pengalaman), 4) Verifikasi Admin, lalu 5) Atur Rencana & Persiapan peserta.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 12,
