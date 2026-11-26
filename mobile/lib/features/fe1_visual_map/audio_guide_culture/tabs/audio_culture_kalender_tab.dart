@@ -44,8 +44,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                         Text(
                           'Agenda & Event',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.goldMinang,
                           ),
                         ),
@@ -59,8 +59,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
               const Text(
                 'Kalender Event & Festival Budaya',
                 style: TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.ink,
                   letterSpacing: -0.2,
                 ),
@@ -83,7 +83,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                   icon: const Icon(Icons.calendar_today_rounded, size: 16),
                   label: const Text(
                     'Buka Kalender Event',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.goldMinang,
@@ -108,8 +108,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
               child: Text(
                 'AGENDA FESTIVAL TAHUNAN RESMI',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
                   color: AppColors.goldMinang,
                 ),
@@ -124,8 +124,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
               child: Text(
                 '${festivals.length} Festival',
                 style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.goldMinang,
                 ),
               ),
@@ -182,8 +182,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                             child: Text(
                               ev['badge'] as String,
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                                 color: badgeColor,
                               ),
                             ),
@@ -208,8 +208,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                                       Text(
                                         'Pengingat Aktif',
                                         style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
                                           color: AppColors.success,
                                         ),
                                       ),
@@ -222,12 +222,16 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                                 children: [
                                   const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.muted),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    ev['date'] as String,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.forest,
+                                  Flexible(
+                                    child: Text(
+                                      ev['date'] as String,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.forest,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -241,7 +245,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                         ev['title'] as String,
                         style: const TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                         ),
                       ),
@@ -254,7 +258,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                             child: Text(
                               ev['location'] as String,
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.muted,
                               ),
@@ -266,7 +270,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                       Text(
                         ev['desc'] as String,
                         style: const TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 12,
                           color: AppColors.muted,
                           height: 1.35,
                         ),
@@ -288,7 +292,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                                 'GPS: ${ev["gpsCoordinate"]}',
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.forest,
                                 ),
@@ -297,8 +301,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                             const Text(
                               'Lihat Detail & Rute',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.ink,
                               ),
                             ),
@@ -322,8 +326,8 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
         const Text(
           'PASAR TRADISIONAL & HARI PAKAN NAGARI',
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             letterSpacing: 1.1,
             color: AppColors.info,
           ),
@@ -350,7 +354,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                         'Cultural & Market Day Calendar',
                       ),
                       style: const TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: AppColors.ink,
                       ),
@@ -401,7 +405,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                         child: Text(
                           evt.badge,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: AppColors.forest,
                           ),
@@ -409,7 +413,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                       ),
                       Text(
                         evt.cityRegency,
-                        style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        style: const TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ],
                   ),
@@ -417,7 +421,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                   Text(
                     evt.title,
                     style: const TextStyle(
-                      fontSize: 15.5,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.ink,
                       letterSpacing: -0.2,
@@ -456,7 +460,7 @@ extension _AudioCultureKalenderTab on _AudioCultureScreenState {
                   const SizedBox(height: 10),
                   Text(
                     evt.description,
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.ink, height: 1.4),
+                    style: const TextStyle(fontSize: 13, color: AppColors.ink, height: 1.4),
                   ),
                 ],
               ),

@@ -75,7 +75,7 @@ Future<void> showMountainCompassModal({
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 12,
                               color: AppColors.muted,
                             ),
                           ),
@@ -130,7 +130,7 @@ Future<void> showMountainCompassModal({
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.danger,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -141,7 +141,7 @@ Future<void> showMountainCompassModal({
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.muted,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -152,7 +152,7 @@ Future<void> showMountainCompassModal({
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.muted,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -163,7 +163,7 @@ Future<void> showMountainCompassModal({
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.muted,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -287,7 +287,7 @@ Future<void> showMountainCompassModal({
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 13.5,
+                                        fontSize: 14,
                                         color: AppColors.ink,
                                       ),
                                     ),
@@ -305,7 +305,7 @@ Future<void> showMountainCompassModal({
                                     child: Text(
                                       '${mtn.elevationMdpl} mdpl',
                                       style: const TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.ink,
                                         fontFeatures: [
@@ -320,7 +320,7 @@ Future<void> showMountainCompassModal({
                               Text(
                                 mtn.regency,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   color: AppColors.muted,
                                 ),
                               ),
@@ -328,7 +328,7 @@ Future<void> showMountainCompassModal({
                               Text(
                                 mtn.description,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   color: AppColors.ink,
                                 ),
                               ),
@@ -342,7 +342,7 @@ Future<void> showMountainCompassModal({
                             Text(
                               'Bearing: ${mtn.defaultBearingDeg.toStringAsFixed(0)}°',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: isAligned
                                     ? AppColors.forest
@@ -356,7 +356,7 @@ Future<void> showMountainCompassModal({
                               const Text(
                                 '🎯 SEJAJAR',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.forest,
                                 ),

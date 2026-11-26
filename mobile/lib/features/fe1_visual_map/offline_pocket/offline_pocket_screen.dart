@@ -66,7 +66,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
         SnackBar(
           backgroundColor: AppColors.forest,
           duration: const Duration(seconds: 2),
-          content: Text('Mengunduh paket data offline ${bundle['name']}...'),
+          content: Text('Mengunduh paket data offline ${bundle['name']}…'),
         ),
       );
       await _repository.getOfflineBundle(bundle['id'] as String);
@@ -147,7 +147,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                           ? 'Simulasi Mode Pesawat (100% Luring Aktif)'
                           : 'Mode Zero-Signal (Area Blank Spot)',
                         style: TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: _isAirplaneModeSimulated ? AppColors.terracotta : AppColors.ink,
                         ),
@@ -160,7 +160,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                   _isAirplaneModeSimulated
                       ? 'Koneksi internet dinonaktifkan. Aplikasi membaca data offline dari cache perangkat secara mulus.'
                       : 'Tetap berfungsi 100% tanpa internet di kawasan Blank Spot (Lembah Harau, Lubuk Nyarai, & Silokek).',
-                  style: const TextStyle(fontSize: 12.5, color: AppColors.ink, height: 1.4),
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink, height: 1.4),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -184,7 +184,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                             backgroundColor: val ? AppColors.terracotta : AppColors.forest,
                             content: Text(
                               val
-                                ? 'Mode Pesawat Aktif: Menguji keterbacaan data luring...'
+                                ? 'Mode Pesawat Aktif: Menguji keterbacaan data luring…'
                                 : 'Kembali ke mode daring normal.',
                             ),
                           ),
@@ -224,7 +224,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                       ),
                       Text(
                         '${_totalDownloadedMb.toStringAsFixed(1)} MB / 25.0 MB dialokasikan',
-                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppColors.ink),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.ink),
                       ),
                     ],
                   ),
@@ -297,7 +297,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                         ),
                         child: Text(
                           '${b['sizeMb']} MB',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.forest),
                         ),
                       ),
                     ],
@@ -310,7 +310,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Sinkronisasi: ${b['syncedAt']}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -323,7 +323,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                         OutlinedButton.icon(
                           onPressed: () => _openOfflineDestination(b['id'] as String),
                           icon: const Icon(Icons.open_in_new, size: 14),
-                          label: const Text('Buka Offline', style: TextStyle(fontSize: 11.5)),
+                          label: const Text('Buka Offline', style: TextStyle(fontSize: 12)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.forest,
                             side: const BorderSide(color: AppColors.forest),
@@ -341,7 +341,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
                         label: Text(
                           isDownloaded ? 'Hapus Cache' : 'Unduh Paket',
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 12,
                             color: isDownloaded ? Colors.red.shade600 : AppColors.forest,
                           ),
                         ),
@@ -356,7 +356,7 @@ class _OfflinePocketScreenState extends State<OfflinePocketScreen> {
 
           // 4. TOMBOL UNDUH SEMUA BUNDEL (52PX)
           PillButton(
-            text: _isDownloadingAll ? 'Mengunduh Semua...' : 'Unduh Semua Bundel Area Blank Spot',
+            text: _isDownloadingAll ? 'Mengunduh Semua…' : 'Unduh Semua Bundel Area Blank Spot',
             icon: const Icon(
               Icons.download_for_offline_outlined,
               color: Colors.white,

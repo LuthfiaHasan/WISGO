@@ -467,6 +467,7 @@ class SumbarRealMapWidget extends StatefulWidget {
     this.compactNavigationTitle,
     this.onLaunchGoogleMapsRoute,
     this.onOpenGoogleMapsHub,
+    this.onInteractionChanged,
   });
 
   final double height;
@@ -478,6 +479,7 @@ class SumbarRealMapWidget extends StatefulWidget {
   final String? compactNavigationTitle;
   final ValueChanged<SumbarMapDestination>? onLaunchGoogleMapsRoute;
   final VoidCallback? onOpenGoogleMapsHub;
+  final ValueChanged<bool>? onInteractionChanged;
 
   @override
   State<SumbarRealMapWidget> createState() => _SumbarRealMapWidgetState();
@@ -488,6 +490,16 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
   SumbarMapLayer _activeLayer = SumbarMapLayer.jalan;
   String? _selectedId;
   double _currentZoom = 8.4;
+  int _activePointers = 0;
+
+  void _handlePointerDelta(int delta) {
+    final prevActive = _activePointers > 0;
+    _activePointers = (_activePointers + delta).clamp(0, 10);
+    final nextActive = _activePointers > 0;
+    if (prevActive != nextActive) {
+      widget.onInteractionChanged?.call(nextActive);
+    }
+  }
 
   static const LatLng _sumbarCenter = LatLng(-0.62, 100.43);
 
@@ -595,18 +607,30 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
         borderRadius: BorderRadius.circular(22.8),
         child: Stack(
           children: [
-            // 1. REAL INTERACTIVE FLUTTER MAP (Ringan: tanpa garis rute / OSRM tracking)
-            FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: selectedDest?.position ?? _sumbarCenter,
-                initialZoom: selectedDest != null ? 11.5 : 8.4,
-                minZoom: 6.5,
-                maxZoom: 18.0,
-                onPositionChanged: (pos, _) {
-                  _currentZoom = pos.zoom;
-                },
-              ),
+            // 1. REAL INTERACTIVE FLUTTER MAP (Support pinch-to-zoom 2 jari, drag, double-tap, scroll wheel)
+            Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: (_) => _handlePointerDelta(1),
+              onPointerUp: (_) => _handlePointerDelta(-1),
+              onPointerCancel: (_) => _handlePointerDelta(-1),
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: selectedDest?.position ?? _sumbarCenter,
+                  initialZoom: selectedDest != null ? 11.5 : 8.4,
+                  minZoom: 6.5,
+                  maxZoom: 18.0,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.drag |
+                        InteractiveFlag.pinchZoom |
+                        InteractiveFlag.pinchMove |
+                        InteractiveFlag.doubleTapZoom |
+                        InteractiveFlag.scrollWheelZoom,
+                  ),
+                  onPositionChanged: (pos, _) {
+                    _currentZoom = pos.zoom;
+                  },
+                ),
               children: [
                 TileLayer(
                   urlTemplate: _activeLayer.tileUrl,
@@ -730,8 +754,8 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
                                         color: AppColors.ink,
                                       ),
                                     ),
@@ -746,6 +770,7 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                   ],
                 ),
               ],
+            ),
             ),
 
             // 2. TOP RIGHT: Minimalist Map Layer Switcher (Jalan / Satelit / Medan)
@@ -787,8 +812,8 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                           child: Text(
                             layer.label,
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: 12,
+                              fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                               color: active ? Colors.white : AppColors.muted,
                             ),
                           ),
@@ -899,7 +924,7 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.ink,
                                   ),
                                 ),
@@ -909,7 +934,7 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.muted,
                                     fontFeatures: [FontFeature.tabularFigures()],
@@ -934,8 +959,8 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                                   child: Text(
                                     AppLocale.tr('Detail', 'Detail'),
                                     style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
                                       color: AppColors.forest,
                                     ),
                                   ),
@@ -967,8 +992,8 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                                     Text(
                                       AppLocale.tr('Rute', 'Route'),
                                       style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -1015,15 +1040,19 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                               size: 14,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              AppLocale.tr(
-                                'Ketuk pin destinasi untuk arahkan ke Google Maps',
-                                'Tap a pin to navigate via Google Maps',
-                              ),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.ink,
+                            Flexible(
+                              child: Text(
+                                AppLocale.tr(
+                                  'Ketuk pin untuk rute Google Maps',
+                                  'Tap a pin for Google Maps route',
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.ink,
+                                ),
                               ),
                             ),
                           ],

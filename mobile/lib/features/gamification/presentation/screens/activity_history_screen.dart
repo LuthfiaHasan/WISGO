@@ -131,8 +131,8 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
             Text(
               AppLocale.tr('Riwayat Aktivitas & Perjalanan', 'Activity & Journey History'),
               style: const TextStyle(
-                fontSize: 15.5,
-                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
                 color: AppColors.ink,
                 letterSpacing: -0.2,
               ),
@@ -140,7 +140,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
             Text(
               AppLocale.tr('Semua rekam jejak check-in & perolehan XP', 'All check-in logs & XP earned'),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppColors.ink.withValues(alpha: 0.65),
               ),
@@ -202,15 +202,15 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                                 Text(
                                   service.currentGrade.title,
                                   style: const TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),
                                 ),
                                 Text(
                                   'Pangkat Petualang Aktif',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     color: Colors.white.withValues(alpha: 0.7),
                                   ),
                                 ),
@@ -227,8 +227,8 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                           child: Text(
                             '+${service.currentXp} XP Total',
                             style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.warningDark,
                             ),
                           ),
@@ -274,7 +274,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                   },
                   style: const TextStyle(fontSize: 13, color: AppColors.ink),
                   decoration: InputDecoration(
-                    hintText: 'Cari destinasi, nagari, atau catatan...',
+                    hintText: 'Cari destinasi, nagari, atau catatan…',
                     hintStyle: const TextStyle(fontSize: 12, color: AppColors.muted),
                     prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -321,15 +321,15 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                   Text(
                     AppLocale.tr('Linimasa Aktivitas Terverifikasi', 'Verified Activity Timeline'),
                     style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
                   ),
                   Text(
                     '${filtered.length} Aktivitas',
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: AppColors.muted,
                     ),
@@ -377,7 +377,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                           'Coba ganti filter kategori atau kata kunci pencarian Anda.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: AppColors.muted,
                           ),
                         ),
@@ -416,7 +416,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                 value,
                 style: const TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
@@ -426,7 +426,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
@@ -473,8 +473,8 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 color: isSelected ? Colors.white : AppColors.ink,
               ),
             ),
