@@ -10000,107 +10000,305 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  /// Bottom Navigation Bar Flat & Bersih (Tanpa Notch Menonjol / Tanpa Garis Home Palsu)
+  /// Mobile Navigation Bar dengan lekukan cekung (Curved Notch) & floating circle icon + shadow berlapis
   Widget _buildClean4ButtonBottomNavigationBar() {
-    final safeIndex = _activeTabIndex.clamp(0, _navItems.length - 1);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        border: const Border(
-          top: BorderSide(color: AppColors.warmBorder, width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
         child: SizedBox(
-          height: 64,
-          child: Row(
-            children: List.generate(_navItems.length, (idx) {
-              final isSelected = idx == safeIndex;
-              final item = _navItems[idx];
+          height: 78,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final totalWidth = constraints.maxWidth;
+              const double horizontalInset = 12.0;
+              final usableWidth =
+                  (totalWidth - (horizontalInset * 2)).clamp(1.0, totalWidth);
+              final safeIndex = _activeTabIndex.clamp(0, _navItems.length - 1);
+              final itemWidth = usableWidth / _navItems.length;
+              final targetCenterX =
+                  horizontalInset + (itemWidth * safeIndex) + (itemWidth / 2);
 
-              return Expanded(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: InkWell(
-                    onTap: () {
-                      if (idx == 3) {
-                        _runWithAuthGuard(
-                          title: 'Masuk untuk Check-In GPS',
-                          description:
-                              'Masuk ke akun WISGO untuk mencatat stempel kunjungan, XP petualang, dan Challenge 10 Destinasi.',
-                          onAllowed: _openQrScannerModal,
-                        );
-                        return;
-                      }
-                      setState(() => _activeTabIndex = idx);
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOutCubic,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.sage
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Icon(
-                            (isSelected
-                                ? item['activeIcon']
-                                : item['icon']) as IconData,
-                            size: 21,
-                            color: isSelected
-                                ? AppColors.forest
-                                : AppColors.muted,
+              return TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: targetCenterX),
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                builder: (context, animatedCenterX, _) {
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // 1. Curved Bar Surface with Smooth Concave Notch & Layered Shadow
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _CurvedNotchBarPainter(
+                            notchCenterX: animatedCenterX,
                           ),
                         ),
-                        const SizedBox(height: 3),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              AppLocale.isEn
-                                  ? (item['labelEn'] as String)
-                                  : (item['label'] as String),
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                                color: isSelected
-                                    ? AppColors.forest
-                                    : AppColors.muted,
+                      ),
+
+                      // 2. Floating Active Circle Icon inside the Notch
+                      Positioned(
+                        top: -6,
+                        left: animatedCenterX - 24,
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.bgCard,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.forest,
+                              width: 3.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.forest.withValues(alpha: 0.28),
+                                blurRadius: 16,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 6),
                               ),
+                              BoxShadow(
+                                color: AppColors.ink.withValues(alpha: 0.14),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: AppColors.sage.withValues(alpha: 0.72),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              _navItems[safeIndex]['activeIcon'] as IconData,
+                              size: 20,
+                              color: AppColors.forest,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                      ),
+
+                      // 3. 5 Navigation Columns
+                      Positioned.fill(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            horizontalInset,
+                            14,
+                            horizontalInset,
+                            13,
+                          ),
+                          child: Row(
+                            children: List.generate(_navItems.length, (idx) {
+                              final isSelected = idx == safeIndex;
+                              final item = _navItems[idx];
+
+                              return Expanded(
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () {
+                                      if (idx == 3) {
+                                        _runWithAuthGuard(
+                                          title: 'Masuk untuk Check-In GPS',
+                                          description:
+                                              'Masuk ke akun WISGO untuk mencatat stempel kunjungan, XP petualang, dan Challenge 10 Destinasi.',
+                                          onAllowed: _openQrScannerModal,
+                                        );
+                                        return;
+                                      }
+                                      setState(() => _activeTabIndex = idx);
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        AnimatedOpacity(
+                                          duration: const Duration(
+                                            milliseconds: 180,
+                                          ),
+                                          opacity: isSelected ? 0.0 : 1.0,
+                                          child: Icon(
+                                            item['icon'] as IconData,
+                                            size: 20,
+                                            color: AppColors.muted,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 2,
+                                          ),
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              AppLocale.isEn
+                                                  ? (item['labelEn'] as String)
+                                                  : (item['label'] as String),
+                                              maxLines: 1,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.w800
+                                                    : FontWeight.w600,
+                                                color: isSelected
+                                                    ? AppColors.forest
+                                                    : AppColors.muted,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+
+                      // 4. Bottom Home Indicator Pill
+                      Positioned(
+                        bottom: 5,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            width: 112,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AppColors.forest.withValues(alpha: 0.35),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               );
-            }),
+            },
           ),
         ),
       ),
     );
+  }
+}
+
+/// CustomPainter untuk menggambar Mobile Navigation Bar dengan lekukan cekung (Notch)
+/// di posisi tab yang sedang aktif beserta bayangan (shadow) berlapis yang halus.
+class _CurvedNotchBarPainter extends CustomPainter {
+  final double notchCenterX;
+
+  const _CurvedNotchBarPainter({
+    required this.notchCenterX,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    const double topY = 14.0;
+    const double cornerRadius = 18.0;
+    const double minTopCorner = 8.0;
+    const double maxNotchHalfWidth = 35.0;
+    const double notchDepth = 47.0;
+
+    // Pastikan pusat lekukan selalu tepat di tengah lingkaran aktif (termasuk Tab 0 & Tab 4)
+    final double cx = notchCenterX.clamp(
+      minTopCorner + 24.0,
+      w - minTopCorner - 24.0,
+    );
+    final double maxLeftHalf =
+        (cx - minTopCorner).clamp(24.0, maxNotchHalfWidth);
+    final double maxRightHalf =
+        ((w - minTopCorner) - cx).clamp(24.0, maxNotchHalfWidth);
+    final double notchHalfWidth =
+        maxLeftHalf < maxRightHalf ? maxLeftHalf : maxRightHalf;
+
+    final double nStart = cx - notchHalfWidth;
+    final double nEnd = cx + notchHalfWidth;
+    final double leftTopRadius = nStart < cornerRadius ? nStart : cornerRadius;
+    final double rightTopRadius =
+        (w - nEnd) < cornerRadius ? (w - nEnd) : cornerRadius;
+    final double ctrlOuter = notchHalfWidth * 0.70;
+    final double ctrlInner = notchHalfWidth * 0.68;
+
+    final path = Path()
+      ..moveTo(0, topY + leftTopRadius)
+      ..quadraticBezierTo(0, topY, leftTopRadius, topY)
+      ..lineTo(nStart, topY)
+      ..cubicTo(
+        cx - ctrlOuter,
+        topY,
+        cx - ctrlInner,
+        notchDepth,
+        cx,
+        notchDepth,
+      )
+      ..cubicTo(
+        cx + ctrlInner,
+        notchDepth,
+        cx + ctrlOuter,
+        topY,
+        nEnd,
+        topY,
+      )
+      ..lineTo(w - rightTopRadius, topY)
+      ..quadraticBezierTo(w, topY, w, topY + rightTopRadius)
+      ..lineTo(w, h - cornerRadius)
+      ..quadraticBezierTo(w, h, w - cornerRadius, h)
+      ..lineTo(cornerRadius, h)
+      ..quadraticBezierTo(0, h, 0, h - cornerRadius)
+      ..close();
+
+    // 1. Ambient Soft Shadow (terlihat jelas & halus di Web maupun Mobile)
+    final ambientShadowPaint = Paint()
+      ..color = AppColors.forest.withValues(alpha: 0.16)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14.0);
+    canvas.save();
+    canvas.translate(0, 6);
+    canvas.drawPath(path, ambientShadowPaint);
+    canvas.restore();
+
+    // 2. Focused Elevation Shadow
+    final keyShadowPaint = Paint()
+      ..color = AppColors.ink.withValues(alpha: 0.10)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6.0);
+    canvas.save();
+    canvas.translate(0, 2);
+    canvas.drawPath(path, keyShadowPaint);
+    canvas.restore();
+
+    // 3. Material Elevation Drop Shadow
+    canvas.drawShadow(
+      path,
+      AppColors.forest.withValues(alpha: 0.22),
+      14.0,
+      false,
+    );
+
+    // White Fill
+    final fillPaint = Paint()
+      ..color = AppColors.bgCard
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+
+    // Subtle Border
+    final borderPaint = Paint()
+      ..color = AppColors.sageBorder
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CurvedNotchBarPainter oldDelegate) {
+    return oldDelegate.notchCenterX != notchCenterX;
   }
 }
 
