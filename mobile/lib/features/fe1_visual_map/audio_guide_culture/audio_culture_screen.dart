@@ -249,7 +249,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                   ),
                   Text(
                     'Lafal: ${phrase.phoneticGuide} (${phrase.dialectNote})',
-                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
                   ),
                 ],
               ),
@@ -449,7 +449,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                         'Authentic Minang Phrase Guide',
                       ),
                       style: const TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: AppColors.ink,
                       ),
@@ -481,8 +481,8 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
             onChanged: (val) => setState(() => _searchQuery = val),
             decoration: InputDecoration(
               hintText: AppLocale.tr(
-                'Cari kata Minang, Indonesia, atau English...',
-                'Search Minang, Indonesian, or English phrases...',
+                'Cari kata Minang, Indonesia, atau English…',
+                'Search Minang, Indonesian, or English phrases…',
               ),
               hintStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
               prefixIcon: const Icon(Icons.search, color: AppColors.forest),
@@ -532,7 +532,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                   'Cultural & Market Phrases',
                 ),
                 style: const TextStyle(
-                  fontSize: 15.5,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.ink,
                 ),
@@ -594,7 +594,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                       child: Text(
                         phrase.category,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: AppColors.forest,
                         ),
@@ -609,7 +609,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                       child: Text(
                         phrase.politenessLevel,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: AppColors.goldMinang,
                         ),
@@ -630,7 +630,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                           Text(
                             phrase.minangText,
                             style: const TextStyle(
-                              fontSize: 16.5,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.ink,
                               letterSpacing: -0.2,
@@ -705,8 +705,8 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                       child: const Text(
                         'ID',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.forest,
                         ),
                       ),
@@ -716,7 +716,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                       child: Text(
                         '"${phrase.indonesianText}"',
                         style: const TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
                         ),
@@ -742,8 +742,8 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                         child: const Text(
                           'EN',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.info,
                           ),
                         ),
@@ -753,7 +753,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                         child: Text(
                           '"${phrase.englishText}"',
                           style: const TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppColors.info,
                           ),
@@ -770,7 +770,7 @@ class _AudioCultureScreenState extends State<AudioCultureScreen>
                     Expanded(
                       child: Text(
                         phrase.usageContextTip,
-                        style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
+                        style: const TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ),
                   ],

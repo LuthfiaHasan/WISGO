@@ -170,13 +170,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     color: AppColors.ink,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12.5,
+                    fontSize: 13,
                   ),
                 ),
                 SizedBox(height: 2),
                 Text(
                   'Cek 5 Indikator Medan & sinyal Blank Spot di detail destinasi sebelum bepergian.',
-                  style: TextStyle(color: AppColors.ink, fontSize: 11.5),
+                  style: TextStyle(color: AppColors.ink, fontSize: 12),
                 ),
               ],
             ),
@@ -194,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _loadDestinations();
       },
       decoration: InputDecoration(
-        hintText: 'Cari Lembah Harau, Bukittinggi, Lubuk Nyarai...',
+        hintText: 'Cari Lembah Harau, Bukittinggi, Lubuk Nyarai…',
         hintStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
         prefixIcon: const Icon(Icons.search, color: AppColors.forest),
         suffixIcon: _searchQuery.isNotEmpty
@@ -239,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
               labelStyle: TextStyle(
                 color: isSelected ? Colors.white : AppColors.ink,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 12.5,
+                fontSize: 13,
               ),
               onSelected: (_) {
                 setState(() => _selectedCategory = cat);
@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             dest.category,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -373,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             '360° Ready',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -414,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 13,
                       color: AppColors.ink,
                       height: 1.4,
                     ),
@@ -482,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMiniStat(String label, String value) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
         const SizedBox(height: 2),
         Text(
           value,
@@ -516,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text(
             'Coba ubah kata kunci pencarian atau ganti filter kategori.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.5, color: AppColors.muted),
+            style: TextStyle(fontSize: 13, color: AppColors.muted),
           ),
           const SizedBox(height: 16),
           OutlinedButton(

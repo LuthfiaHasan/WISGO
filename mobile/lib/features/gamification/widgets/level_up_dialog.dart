@@ -151,8 +151,8 @@ class LevelUpDialog extends StatelessWidget {
                         Text(
                           'LEVEL UP! TINGKAT PETUALANG NAIK',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 1.1,
                             color: AppColors.goldSoft,
                           ),
@@ -168,7 +168,7 @@ class LevelUpDialog extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       color: Colors.white,
                       letterSpacing: -0.4,
                     ),
@@ -210,8 +210,8 @@ class LevelUpDialog extends StatelessWidget {
                             const Text(
                               'TINGKAT SEBELUMNYA',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.muted,
                                 letterSpacing: 0.8,
                               ),
@@ -238,8 +238,8 @@ class LevelUpDialog extends StatelessWidget {
                             const Text(
                               'TINGKAT SAAT INI',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.warning,
                                 letterSpacing: 0.8,
                               ),
@@ -248,8 +248,8 @@ class LevelUpDialog extends StatelessWidget {
                             Text(
                               newGrade.name,
                               style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                                 color: newGrade.primaryColor,
                               ),
                             ),
@@ -292,8 +292,8 @@ class LevelUpDialog extends StatelessWidget {
                               const Text(
                                 'Akses & Hak Istimewa Terbuka:',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.success,
                                 ),
                               ),
@@ -301,7 +301,7 @@ class LevelUpDialog extends StatelessWidget {
                               Text(
                                 newGrade.perks,
                                 style: const TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.forest,
                                   height: 1.3,
@@ -320,7 +320,7 @@ class LevelUpDialog extends StatelessWidget {
                     child: Text(
                       'Akumulasi XP Anda kini: $totalXp XP',
                       style: const TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.muted,
                       ),
@@ -363,7 +363,7 @@ class LevelUpDialog extends StatelessWidget {
                             'Lihat Profil',
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(

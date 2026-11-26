@@ -251,8 +251,8 @@ class _VirtualTour360GalleryScreenState
                 Text(
                   AppLocale.tr('Pilih Destinasi Tur 360°', 'Choose 360° Tour'),
                   style: const TextStyle(
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                     letterSpacing: -0.3,
                   ),
@@ -284,7 +284,7 @@ class _VirtualTour360GalleryScreenState
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink.withValues(alpha: 0.62),
                         ),
@@ -313,16 +313,16 @@ class _VirtualTour360GalleryScreenState
                     controller: _searchController,
                     onChanged: (v) => setState(() => _query = v),
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: 14,
                       color: AppColors.ink,
                     ),
                     decoration: InputDecoration(
                       hintText: AppLocale.tr(
-                        'Cari tempat wisata 360° (Harau, Mandeh, Sianok...)',
-                        'Search 360° spots (Harau, Mandeh, Sianok...)',
+                        'Cari tempat wisata 360° (Harau, Mandeh, Sianok…)',
+                        'Search 360° spots (Harau, Mandeh, Sianok…)',
                       ),
                       hintStyle: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 13,
                         color: AppColors.ink.withValues(alpha: 0.42),
                       ),
                       prefixIcon: Icon(
@@ -452,7 +452,7 @@ class _VirtualTour360GalleryScreenState
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w700,
                                       color: AppColors.ink,
                                     ),
                                   ),
@@ -606,7 +606,7 @@ class _VirtualTour360GalleryScreenState
                                     '360° · $sceneCount Views',
                                   ),
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -619,7 +619,7 @@ class _VirtualTour360GalleryScreenState
                         child: Text(
                           dest.distanceKm,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -648,7 +648,7 @@ class _VirtualTour360GalleryScreenState
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
                               height: 1.2,
                               letterSpacing: -0.2,
@@ -669,7 +669,7 @@ class _VirtualTour360GalleryScreenState
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 11.5,
+                                    fontSize: 12,
                                     color: Colors.white70,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -692,7 +692,7 @@ class _VirtualTour360GalleryScreenState
                           Text(
                             AppLocale.tr('Lihat 360°', 'Explore 360°'),
                             style: const TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),

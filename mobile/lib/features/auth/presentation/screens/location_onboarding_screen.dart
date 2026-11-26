@@ -3,7 +3,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../saved/presentation/screens/saved_places_screen.dart';
 import '../../services/auth_session.dart';
 import '../widgets/animated_3d_route_scene.dart';
-import 'login_screen.dart';
 
 class LocationOnboardingScreen extends StatefulWidget {
   const LocationOnboardingScreen({super.key});
@@ -18,29 +17,22 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
   double _spinBoost = 0.0;
   bool _isButtonPressed = false;
 
-  void _skipToBeranda() {
+  /// Setelah izin lokasi diberikan, langsung masuk ke Beranda (Mode Jelajah)
+  void _goToBeranda() {
     AuthSession.instance.setGuestMode();
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: const Duration(milliseconds: 420),
         pageBuilder: (_, __, ___) => const SavedPlacesScreen(isGuest: true),
         transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return FadeTransition(opacity: curved, child: child);
         },
       ),
       (route) => false,
-    );
-  }
-
-  void _skipToLogin() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
-        pageBuilder: (_, __, ___) => const LoginScreen(),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
     );
   }
 
@@ -57,7 +49,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
         _isLockingGps = false;
         _spinBoost = 0.0;
       });
-      _skipToLogin();
+      _goToBeranda();
     });
   }
 
@@ -158,7 +150,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 30,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w800,
                                 color: AppColors.forest,
                                 height: 1.20,
                                 letterSpacing: -0.4,
@@ -200,7 +192,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                                       backgroundColor: AppColors.forest,
                                       foregroundColor: AppColors.cream,
                                       elevation: 3,
-                                      shadowColor: Colors.black.withValues(alpha: 0.35),
+                                      shadowColor: AppColors.ink.withValues(alpha: 0.35),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(28),
                                         side: BorderSide(
@@ -224,7 +216,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                                               SizedBox(width: 10),
                                               Flexible(
                                                 child: Text(
-                                                  'Menyesuaikan Titik Lokasi Sumatera Barat...',
+                                                  'Menyesuaikan Titik Lokasi Sumatera Barat…',
                                                   overflow: TextOverflow.ellipsis,
                                                   style: TextStyle(
                                                     fontSize: 14,
@@ -248,21 +240,6 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            TextButton(
-                              onPressed: _skipToBeranda,
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                              ),
-                              child: const Text(
-                                'Lewati untuk Sekarang',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ],
@@ -270,52 +247,6 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                   ),
                 );
               },
-            ),
-          ),
-
-          // 4. Fixed Top Bar: Tombol Lewati di Kanan Atas (FLOATING DI LAPISAN TERATAS AGAR BISA DI-KLIK)
-          Positioned(
-            top: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  child: InkWell(
-                    onTap: _skipToBeranda,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppColors.sageBorder.withValues(alpha: 0.9),
-                          width: 1.0,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Text(
-                        'Lewati',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.forest,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
         ],

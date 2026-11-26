@@ -658,22 +658,22 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 11.5, color: AppColors.muted),
+      hintStyle: const TextStyle(fontSize: 12, color: AppColors.muted),
       filled: true,
-      fillColor: AppColors.cream,
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.sageBorder),
+        borderSide: const BorderSide(color: AppColors.warmBorder, width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.sageBorder),
+        borderSide: const BorderSide(color: AppColors.warmBorder, width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.forest, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.forest, width: 1.6),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     );
   }
 }

@@ -96,8 +96,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               child: Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.ink,
                 ),
               ),
@@ -125,7 +125,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             ),
             child: const Text(
               'Mengerti',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -157,7 +157,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     child: const Text(
                       'Lewati dulu',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.muted,
                       ),
@@ -177,8 +177,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         Text(
                           'LANGKAH TERAKHIR',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 1.0,
                             color: AppColors.brush,
                           ),
@@ -188,7 +188,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           'Lengkapi Profil',
                           style: TextStyle(
                             fontSize: 21,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                             letterSpacing: -0.4,
                           ),
@@ -241,7 +241,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         widget.phoneNumber,
                         style: const TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
@@ -250,7 +250,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     const Text(
                       'WA Terverifikasi',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.success,
                       ),
@@ -299,7 +299,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         const Text(
                           'Opsional',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.muted,
                           ),
@@ -339,7 +339,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         const Text(
                           'Opsional',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.muted,
                           ),
@@ -417,8 +417,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   child: const Text(
                     'Simpan & Mulai Jelajah',
                     style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -453,13 +453,13 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       keyboardType: keyboardType,
       onChanged: onChanged,
       style: const TextStyle(
-        fontSize: 13.5,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.ink,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(fontSize: 12.5, color: AppColors.muted),
+        hintStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
         prefixIcon: Icon(icon, size: 18, color: AppColors.forest),
         filled: true,
         fillColor: AppColors.cream.withValues(alpha: 0.45),
