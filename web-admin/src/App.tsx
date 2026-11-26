@@ -160,7 +160,13 @@ export const App: React.FC = () => {
     const res = await saveDestinationWithBridge(updated, destinations);
     setDestinations(res.updatedList);
     setSelectedTariffDestId(updated.id);
-    showToast(message, 'success');
+    if (res.syncedRemote) setBackendOnline(true);
+    showToast(
+      res.syncedRemote
+        ? `${message} (Tersinkron ke Backend Go)`
+        : `${message} (Tersimpan lokal — backend offline)`,
+      'success'
+    );
   };
 
   const handleDeleteDestination = async (target: Destination, message: string) => {
@@ -169,7 +175,12 @@ export const App: React.FC = () => {
     if (selectedTariffDestId === target.id && res.updatedList[0]) {
       setSelectedTariffDestId(res.updatedList[0].id);
     }
-    showToast(message, 'info');
+    showToast(
+      res.syncedRemote
+        ? `${message} (Dihapus dari Backend Go)`
+        : `${message} (Dihapus lokal — backend offline)`,
+      'info'
+    );
   };
 
   const handleSavePartner = async (partner: Partner) => {

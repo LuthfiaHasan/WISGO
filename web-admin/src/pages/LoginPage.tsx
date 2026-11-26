@@ -13,7 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
-import { loginAdminJWT, saveAdminSession } from '../services/api';
+import { loginAdminGoogle, loginAdminJWT } from '../services/api';
 
 interface LoginPageProps {
   onLoginSuccess: (session: AdminAuthResponse) => void;
@@ -67,7 +67,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const session = await loginAdminJWT({
         email: targetEmail,
         password: targetPass,
-        role: 'admin_utama',
+        role: 'admin_dispar',
       });
       onLoginSuccess(session);
     } catch (err) {
@@ -83,22 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setSubmitting(true);
     setFormError('');
     try {
-      const googleSession: AdminAuthResponse = {
-        token: `jwt-google-oauth-admin-${Date.now()}`,
-        expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
-        user: {
-          id: 'usr-admin-google-01',
-          phone_number: '6281166002026',
-          full_name: 'Administrator Wisata (Google Verified)',
-          role: 'admin_utama',
-          jenis_input: 'web_admin',
-          email: 'admin.wisgo@sumbarprov.go.id',
-          agency:
-            'Pusat Komando Terpadu WISGO (Google SSO • Dispar Sumbar)',
-          created_at: new Date().toISOString(),
-        },
-      };
-      saveAdminSession(googleSession);
+      const googleSession = await loginAdminGoogle();
       onLoginSuccess(googleSession);
     } catch {
       setFormError('Gagal mengotentikasi akun Google.');
@@ -130,7 +115,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const session = await loginAdminJWT({
         email,
         password,
-        role: 'admin_utama',
+        role: 'admin_dispar',
       });
       onLoginSuccess(session);
     } catch (err) {
