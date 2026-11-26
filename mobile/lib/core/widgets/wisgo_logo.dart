@@ -33,7 +33,7 @@ class WisgoLogo extends StatelessWidget {
           color: color,
           colorBlendMode: color != null ? BlendMode.srcIn : null,
           fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
+          filterQuality: FilterQuality.medium,
           isAntiAlias: true,
         ),
       ),

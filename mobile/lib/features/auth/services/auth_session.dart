@@ -11,6 +11,8 @@ class AuthSession extends ChangeNotifier {
 
   AuthSession._internal();
 
+  static const String defaultAvatarAsset = 'assets/images/avatar_default.png';
+
   bool _isGuest = true;
   String _userName = 'Wisatawan WISGO';
   String _userPhone = '';
@@ -19,6 +21,7 @@ class AuthSession extends ChangeNotifier {
   String _userOrigin = 'Padang, Sumatera Barat';
   String _emergencyContactName = '';
   String _emergencyContactPhone = '';
+  String _avatarMode = 'default_3d';
   bool _isProfileComplete = false;
 
   bool get isGuest => _isGuest && !ApiConfig.isAuthenticated;
@@ -29,6 +32,8 @@ class AuthSession extends ChangeNotifier {
   String get userOrigin => isGuest ? 'Ranah Minang' : _userOrigin;
   String get emergencyContactName => isGuest ? '' : _emergencyContactName;
   String get emergencyContactPhone => isGuest ? '' : _emergencyContactPhone;
+  String get avatarMode => _avatarMode;
+  bool get usesDefault3DAvatar => _avatarMode == 'default_3d';
   bool get isProfileComplete => _isProfileComplete;
 
   /// Persentase kelengkapan profil (5 field Opsi 2: Nama, WA, Kota Asal, Email, Kontak Darurat)
@@ -111,6 +116,7 @@ class AuthSession extends ChangeNotifier {
     String? origin,
     String? emergencyContactName,
     String? emergencyContactPhone,
+    String? avatarMode,
     bool? isProfileComplete,
   }) {
     if (name != null && name.trim().isNotEmpty) _userName = name.trim();
@@ -123,6 +129,9 @@ class AuthSession extends ChangeNotifier {
     }
     if (emergencyContactPhone != null) {
       _emergencyContactPhone = emergencyContactPhone.trim();
+    }
+    if (avatarMode != null && avatarMode.trim().isNotEmpty) {
+      _avatarMode = avatarMode.trim();
     }
     if (isProfileComplete != null) {
       _isProfileComplete = isProfileComplete;

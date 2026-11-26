@@ -25,6 +25,8 @@ void main() {
       expect(find.text('Lewati'), findsNothing);
       expect(find.text('Kirim Kode OTP 4 Digit'), findsOneWidget);
       expect(find.text('812-7578-953'), findsOneWidget);
+      expect(find.text('Lanjutkan dengan Google'), findsOneWidget);
+      expect(find.text('Lanjutkan dengan Apple'), findsOneWidget);
     });
 
     testWidgets('OtpVerificationScreen displays devOtpCode banner and allows autofill', (tester) async {
