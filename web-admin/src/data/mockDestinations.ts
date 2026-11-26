@@ -199,13 +199,13 @@ export function normalizePartnerCategory(raw?: string | null): CanonicalPartnerC
 
 export function calculateAdventurerLevel(totalXp: number): {
   level: 1 | 2 | 3 | 4 | 5;
-  name: 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer';
+  name: 'Pemula' | 'Penjelajah' | 'Petualang' | 'Perintis' | 'Pengelana';
 } {
-  if (totalXp >= 2000) return { level: 5, name: 'Wanderer' };
-  if (totalXp >= 1200) return { level: 4, name: 'Trailblazer' };
-  if (totalXp >= 700) return { level: 3, name: 'Adventurer' };
-  if (totalXp >= 300) return { level: 2, name: 'Explorer' };
-  return { level: 1, name: 'Beginner' };
+  if (totalXp >= 2000) return { level: 5, name: 'Pengelana' };
+  if (totalXp >= 1200) return { level: 4, name: 'Perintis' };
+  if (totalXp >= 700) return { level: 3, name: 'Petualang' };
+  if (totalXp >= 300) return { level: 2, name: 'Penjelajah' };
+  return { level: 1, name: 'Pemula' };
 }
 
 export function getCategorySvgPath(category?: string | null): string {

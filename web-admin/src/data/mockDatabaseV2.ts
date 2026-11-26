@@ -1633,6 +1633,26 @@ export const SEED_NEW_TOURS: NewTour[] = [
     submitter_phone: '6281299887766',
     created_at: '2026-11-23T11:30:00Z',
   },
+  {
+    id: 'nt-003',
+    user_id: 'usr-tourist-04',
+    name: 'Air Terjun Sarasah Murai',
+    category_id: 'cat-hidden-gem',
+    category: 'Hidden Gem',
+    city_regency: 'Kab. Lima Puluh Kota',
+    description: 'Air terjun alami di lembah Harau dengan cahaya matahari pagi menembus tebing, sangat bagus untuk fotografi alam.',
+    latitude: -0.0987,
+    longitude: 100.6815,
+    tips_menjaga: 'Gunakan sandal gunung anti-selip karena batu lumut licin dan jangan memetik anggrek hutan di sekitar tebing.',
+    facilities: ['Area Parkir', 'Gazebo / Pondok', 'Spot Foto Alami'],
+    estimated_price: 'Rp 15.000 / orang',
+    photo_url: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=900&q=80',
+    is_sensitive: true,
+    status: 'pending',
+    submitter_name: 'Siti Rahma',
+    submitter_phone: '6282177665544',
+    created_at: '2026-11-24T08:45:00Z',
+  },
 ];
 
 // ============================================================================
@@ -1647,7 +1667,7 @@ export const SEED_CHALLENGES: Challenge[] = [
     category: 'Alam & Geopark',
     description: 'Lakukan check-in GPS (<500m) atau scan Plang Smart QR pada 10 destinasi resmi pilihan Dispar Sumbar untuk membuka E-Sertifikat Gubernur.',
     target_destination_count: 10,
-    reward_title: '500 XP + E-Sertifikat Gubernur & Lencana Wanderer',
+    reward_title: '500 XP + E-Sertifikat Gubernur & Lencana Pengelana',
     reward_type: 'Sertifikat & XP',
     reward_points: 500,
     duration_days: 90,
@@ -1710,7 +1730,7 @@ export const SEED_USER_CHALLENGE_REWARDS: UserChallengeReward[] = [
     target_destination_count: 10,
     status: 'SIAP_KLAIM',
     jenis_reward: 'Sertifikat & XP',
-    reward: '500 XP + E-Sertifikat Gubernur & Lencana Wanderer',
+    reward: '500 XP + E-Sertifikat Gubernur & Lencana Pengelana',
     certificate_code: 'WG-CERT-2026-08492',
     certificate_url: 'https://wisgo.sumbarprov.go.id/certs/WG-CERT-2026-08492.pdf',
     completed_at: '2026-11-23T16:00:00Z',
@@ -2324,14 +2344,14 @@ export const SEED_WEATHER_MONITORING: WeatherMonitoringItem[] = [
 ];
 
 // ============================================================================
-// 27. 5 LEVEL PETUALANG (Exact FE-2 gamification_model.dart — Typo Gaode Fixed)
+// 27. 5 LEVEL & LENCANA PETUALANG (Bahasa Indonesia — Ambang XP Resmi WISGO)
 // ============================================================================
 export const SEED_ADVENTURER_LEVELS: AdventurerLevelConfig[] = [
-  { level: 1, name: 'Beginner', title: 'Level 1 – Beginner', min_trips: 1, min_checkpoints: 1, min_xp: 0, max_xp: 300, badge_icon: 'Compass', badge_color: '#64748B', perk_description: 'Akses Peta Wisata & Check-in GPS Pertama' },
-  { level: 2, name: 'Explorer', title: 'Level 2 – Explorer', min_trips: 3, min_checkpoints: 5, min_xp: 300, max_xp: 700, badge_icon: 'MapPin', badge_color: '#2563EB', perk_description: 'Stempel Paspor Digital & Diskon Tiket Nagari 5%' },
-  { level: 3, name: 'Adventurer', title: 'Level 3 – Adventurer', min_trips: 6, min_checkpoints: 12, min_xp: 700, max_xp: 1200, badge_icon: 'Mountain', badge_color: '#16A34A', perk_description: 'Kamus Budaya Audio & Lencana Khusus Geotourist' },
-  { level: 4, name: 'Trailblazer', title: 'Level 4 – Trailblazer', min_trips: 12, min_checkpoints: 25, min_xp: 1200, max_xp: 2000, badge_icon: 'Flame', badge_color: '#D97706', perk_description: 'Tier Platinum Gaode Ranking & Rekomendasi Khusus Dispar' },
-  { level: 5, name: 'Wanderer', title: 'Level 5 – Wanderer', min_trips: 20, min_checkpoints: 40, min_xp: 2000, max_xp: 3000, badge_icon: 'Award', badge_color: '#8B5CF6', perk_description: 'Apresiasi Pemprov Sumbar, Paspor Emas & Peringkat Elit' },
+  { level: 1, name: 'Pemula', title: 'Level 1 – Pemula', min_trips: 1, min_checkpoints: 1, min_xp: 0, max_xp: 300, badge_icon: 'Compass', badge_color: '#64748B', perk_description: 'Akses Peta Wisata & Check-in GPS Pertama' },
+  { level: 2, name: 'Penjelajah', title: 'Level 2 – Penjelajah', min_trips: 3, min_checkpoints: 5, min_xp: 300, max_xp: 700, badge_icon: 'MapPin', badge_color: '#2563EB', perk_description: 'Stempel Paspor Digital & Diskon Tiket Nagari 5%' },
+  { level: 3, name: 'Petualang', title: 'Level 3 – Petualang', min_trips: 6, min_checkpoints: 12, min_xp: 700, max_xp: 1200, badge_icon: 'Mountain', badge_color: '#16A34A', perk_description: 'Kamus Budaya Audio & Lencana Khusus Wisatawan Geopark' },
+  { level: 4, name: 'Perintis', title: 'Level 4 – Perintis', min_trips: 12, min_checkpoints: 25, min_xp: 1200, max_xp: 2000, badge_icon: 'Flame', badge_color: '#D97706', perk_description: 'Peringkat Utama Gaode Ranking & Rekomendasi Khusus Dispar' },
+  { level: 5, name: 'Pengelana', title: 'Level 5 – Pengelana', min_trips: 20, min_checkpoints: 40, min_xp: 2000, max_xp: 3000, badge_icon: 'Award', badge_color: '#8B5CF6', perk_description: 'Apresiasi Pemprov Sumbar, Paspor Emas & Peringkat Elit' },
 ];
 
 // ============================================================================
@@ -2347,7 +2367,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     google_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
     is_google_auth: true,
     current_level: 3,
-    level_name: 'Adventurer',
+    level_name: 'Petualang',
     visited_count: 6,
     total_trips: 8,
     total_checkpoints: 16,
@@ -2368,7 +2388,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     google_avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
     is_google_auth: true,
     current_level: 2,
-    level_name: 'Explorer',
+    level_name: 'Penjelajah',
     visited_count: 4,
     total_trips: 4,
     total_checkpoints: 9,
@@ -2388,7 +2408,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     google_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
     is_google_auth: true,
     current_level: 5,
-    level_name: 'Wanderer',
+    level_name: 'Pengelana',
     visited_count: 14,
     total_trips: 21,
     total_checkpoints: 42,
@@ -2396,7 +2416,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     last_active_at: '2026-11-24T08:30:00Z',
     experience_history: [
       { id: 'jh-6', date: '2026-11-12', destination_id: 'dest-004', destination_name: 'Jam Gadang & Ngarai Sianok', city_regency: 'Kota Bukittinggi', checkpoint_name: 'Pelataran Jam Gadang', source: 'TRIP_GO', stamp_number: 1, xp_earned: 150, badge_title: 'Duta Wisata Serumpun', notes: 'Membawa rombongan 12 wisatawan asal Kuala Lumpur.', status: 'verified' },
-      { id: 'jh-7', date: '2026-11-15', destination_id: 'dest-002', destination_name: 'Istano Basa Pagaruyung', city_regency: 'Kab. Tanah Datar', checkpoint_name: 'Gerbang Anjungan Istano', source: 'TICKET_SCAN', stamp_number: 3, xp_earned: 150, badge_title: 'Wanderer Ranah Minang', notes: 'Menuntaskan 10/10 stempel Paspor Digital Minang.', status: 'verified' },
+      { id: 'jh-7', date: '2026-11-15', destination_id: 'dest-002', destination_name: 'Istano Basa Pagaruyung', city_regency: 'Kab. Tanah Datar', checkpoint_name: 'Gerbang Anjungan Istano', source: 'TICKET_SCAN', stamp_number: 3, xp_earned: 150, badge_title: 'Pengelana Ranah Minang', notes: 'Menuntaskan 10/10 stempel Paspor Digital Minang.', status: 'verified' },
     ],
   },
 ];
@@ -2418,7 +2438,7 @@ export const SEED_POSTING_TEMPLATES: PostingShareTemplate[] = [
   {
     id: 'tmpl-002',
     template_name: 'Jejak WISGO — Kartu Penuh (Full Card Feed Komunitas)',
-    watermark_text: 'WISGO Certified Explorer • Dinas Pariwisata Sumbar',
+    watermark_text: 'WISGO Penjelajah Tersertifikasi • Dinas Pariwisata Sumbar',
     qr_download_url: 'https://wisgo.sumbarprov.go.id/download',
     qr_image_url: 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://wisgo.sumbarprov.go.id/download',
     background_banner_url: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1000&q=80',

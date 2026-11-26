@@ -679,10 +679,10 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
             <div>
               <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
                 <Award className="w-5 h-5 text-[#F59E0B]" />
-                <span>5 Tingkatan Level Petualang (Sinkron AdventurerGrade Mobile)</span>
+                <span>5 Tingkatan Level &amp; Lencana Petualang WISGO</span>
               </h2>
               <p className="text-xs text-[#4A5248] mt-0.5">
-                Ambang XP resmi: Beginner (0–299), Explorer (300–699), Adventurer (700–1199), Trailblazer (1200–1999), Wanderer (2000+ XP).
+                Ambang XP resmi: Pemula (0–299), Penjelajah (300–699), Petualang (700–1199), Perintis (1200–1999), Pengelana (2000+ XP).
               </p>
             </div>
 
@@ -1096,7 +1096,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                           Lv.{previewUser?.current_level ?? 3}
                         </div>
                         <div className="text-[9px] uppercase text-white/75">
-                          {previewUser?.level_name ?? 'Adventurer'}
+                          {previewUser?.level_name ?? 'Petualang'}
                         </div>
                       </div>
                       <div>
@@ -1144,7 +1144,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                     />
                     <div className="relative z-10 space-y-1">
                       <span className="px-2 py-0.5 rounded text-[9px] font-black bg-[#F59E0B] text-black inline-block">
-                        LEVEL {previewUser?.current_level ?? 3} · {(previewUser?.level_name || 'Adventurer').toUpperCase()}
+                        LEVEL {previewUser?.current_level ?? 3} · {(previewUser?.level_name || 'Petualang').toUpperCase()}
                       </span>
                       <h3 className="text-base font-black leading-tight text-white">
                         {previewUser?.full_name} menjelajahi{' '}

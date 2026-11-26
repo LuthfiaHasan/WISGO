@@ -28,6 +28,9 @@ import {
   CloudSun,
   Building2,
   UserCheck,
+  Link2,
+  ExternalLink,
+  LocateFixed,
 } from 'lucide-react';
 import {
   CrowdLevel,
@@ -72,6 +75,29 @@ type SortColumn = 'name' | 'city_regency' | 'distance' | 'price';
 type SortDirection = 'ascending' | 'descending';
 type EditorTabKey = 'A' | 'B' | 'C';
 
+const PADANG_CENTER_LAT = -0.9471;
+const PADANG_CENTER_LNG = 100.4172;
+
+// Rumus identik dengan backend/internal/modules/destination/repository.go (faktor jalan berliku Sumbar 1.32x, kecepatan rata-rata 38 km/jam)
+function estimateFromPadang(lat: number, lng: number): { distance_km: number; travel_time_min: number } {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return { distance_km: 0, travel_time_min: 10 };
+  }
+  const earthRadiusKm = 6371.0;
+  const dLat = ((lat - PADANG_CENTER_LAT) * Math.PI) / 180.0;
+  const dLng = ((lng - PADANG_CENTER_LNG) * Math.PI) / 180.0;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((PADANG_CENTER_LAT * Math.PI) / 180.0) *
+      Math.cos((lat * Math.PI) / 180.0) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance_km = Math.round(earthRadiusKm * c * 1.32 * 10) / 10;
+  const travel_time_min = Math.max(10, Math.round((distance_km / 38.0) * 60));
+  return { distance_km, travel_time_min };
+}
+
 const collator = new Intl.Collator('id', {
   numeric: true,
   sensitivity: 'base',
@@ -108,6 +134,9 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   const [editingDest, setEditingDest] = useState<Destination | null>(null);
   const [isNewDest, setIsNewDest] = useState<boolean>(false);
   const [editorTab, setEditorTab] = useState<EditorTabKey>('A');
+  const [mapsPasteInput, setMapsPasteInput] = useState<string>('');
+  const [mapsPasteStatus, setMapsPasteStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [locatingGps, setLocatingGps] = useState<boolean>(false);
   const [viewingDest, setViewingDest] = useState<Destination | null>(null);
   const [deletingDest, setDeletingDest] = useState<Destination | null>(null);
 
@@ -278,10 +307,128 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
     );
   };
 
+  const parseCoordinatesFromText = (raw: string): { lat: number; lng: number } | null => {
+    const text = raw.trim();
+    if (!text) return null;
+
+    // 1. Format Google Maps !3d<lat>!4d<lng> (paling presisi untuk pin lokasi)
+    const bangMatch = text.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+    if (bangMatch) {
+      const lat = Number(bangMatch[1]);
+      const lng = Number(bangMatch[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) return { lat, lng };
+    }
+
+    // 2. Format Google Maps /@<lat>,<lng>
+    const atMatch = text.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+    if (atMatch) {
+      const lat = Number(atMatch[1]);
+      const lng = Number(atMatch[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) return { lat, lng };
+    }
+
+    // 3. Format query ?q=lat,lng atau ll=lat,lng
+    const queryMatch = text.match(/[?&](?:q|ll|query)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+    if (queryMatch) {
+      const lat = Number(queryMatch[1]);
+      const lng = Number(queryMatch[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) return { lat, lng };
+    }
+
+    // 4. Format koordinat langsung: "-0.3056, 100.3692" atau "-0.3056 100.3692"
+    const directMatch = text.match(/^(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)$/);
+    if (directMatch) {
+      const lat = Number(directMatch[1]);
+      const lng = Number(directMatch[2]);
+      if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) return { lat, lng };
+    }
+
+    return null;
+  };
+
+  const handleApplyMapsPaste = () => {
+    if (!editingDest) return;
+    const parsed = parseCoordinatesFromText(mapsPasteInput);
+    if (!parsed) {
+      setMapsPasteStatus({
+        type: 'error',
+        text: 'Format tidak dikenali. Tempel URL Google Maps (yang memuat @lat,lng) atau koordinat seperti -0.3056, 100.3692.',
+      });
+      return;
+    }
+    const lat = Number(parsed.lat.toFixed(6));
+    const lng = Number(parsed.lng.toFixed(6));
+    const est = estimateFromPadang(lat, lng);
+    setEditingDest({
+      ...editingDest,
+      latitude: lat,
+      longitude: lng,
+      distance_km: est.distance_km,
+      travel_time_min: est.travel_time_min,
+    });
+    setMapsPasteStatus({
+      type: 'success',
+      text: `Koordinat berhasil diekstrak: ${lat}, ${lng} (±${est.distance_km} km / ${est.travel_time_min} mnt dari Padang)`,
+    });
+  };
+
+  const handleUseCurrentGps = () => {
+    if (!editingDest) return;
+    if (!navigator.geolocation) {
+      setMapsPasteStatus({
+        type: 'error',
+        text: 'Browser tidak mendukung Geolocation GPS.',
+      });
+      return;
+    }
+    setLocatingGps(true);
+    setMapsPasteStatus(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        const est = estimateFromPadang(lat, lng);
+        setEditingDest((prev) =>
+          prev
+            ? {
+                ...prev,
+                latitude: lat,
+                longitude: lng,
+                distance_km: est.distance_km,
+                travel_time_min: est.travel_time_min,
+              }
+            : prev
+        );
+        setMapsPasteStatus({
+          type: 'success',
+          text: `Koordinat GPS perangkat diambil: ${lat}, ${lng} (±${est.distance_km} km / ${est.travel_time_min} mnt dari Padang)`,
+        });
+        setLocatingGps(false);
+      },
+      () => {
+        setMapsPasteStatus({
+          type: 'error',
+          text: 'Gagal mengambil lokasi perangkat. Pastikan izin lokasi browser aktif.',
+        });
+        setLocatingGps(false);
+      },
+      { enableHighAccuracy: true, timeout: 6000 }
+    );
+  };
+
   const handleOpenNewModal = () => {
-    const newId = `dest-${String(destinations.length + 1).padStart(3, '0')}`;
+    const maxNum = destinations.reduce((max, d) => {
+      const m = /^dest-(\d+)$/i.exec(d.id);
+      return m ? Math.max(max, Number(m[1])) : max;
+    }, 0);
+    const newId = `dest-${String(maxNum + 1).padStart(3, '0')}`;
     setIsNewDest(true);
     setEditorTab('A');
+    setMapsPasteInput('');
+    setMapsPasteStatus(null);
+    const defaultLat = -0.3056;
+    const defaultLng = 100.3692;
+    const defaultEst = estimateFromPadang(defaultLat, defaultLng);
     setEditingDest({
       id: newId,
       slug: '',
@@ -290,14 +437,14 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
       category: 'Alam & Geopark',
       city_regency: 'Kota Bukittinggi',
       description: '',
-      latitude: -0.3056,
-      longitude: 100.3692,
+      latitude: defaultLat,
+      longitude: defaultLng,
       elevation_m: 930,
       cover_image:
         'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80',
       crowd_level: 'Sepi',
-      distance_km: 45,
-      travel_time_min: 75,
+      distance_km: defaultEst.distance_km,
+      travel_time_min: defaultEst.travel_time_min,
       estimated_cost: 15000,
       ticket_price_summary: 'Rp 15.000 / orang',
       is_hidden_gem: false,
@@ -347,6 +494,8 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
   const handleOpenEditModal = (dest: Destination) => {
     setIsNewDest(false);
     setEditorTab('A');
+    setMapsPasteInput('');
+    setMapsPasteStatus(null);
     const normalizedCat = normalizeDestinationCategory(dest.category);
     const rules = dest.tips && dest.tips.length > 0 ? dest.tips : dest.aturan_destinasi || [];
     setEditingDest({
@@ -828,6 +977,11 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                             <div className="flex flex-wrap items-center gap-1.5">
                               {renderWeatherBadge(dest)}
                             </div>
+                            {dest.contributors && dest.contributors.length > 0 && (
+                              <div className="text-[10px] font-bold text-[#234B24] bg-[#E4E9DA]/80 border border-[#CFD8BE] rounded-lg px-2 py-0.5 inline-block">
+                                Diusulkan oleh: {dest.contributors.map((c) => c.name).join(', ')}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </th>
@@ -1191,12 +1345,19 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                       <input
                         id="dest-lat"
                         type="number"
-                        step="0.0001"
+                        step="any"
                         required
                         value={editingDest.latitude}
-                        onChange={(e) =>
-                          setEditingDest({ ...editingDest, latitude: Number(e.target.value) })
-                        }
+                        onChange={(e) => {
+                          const lat = Number(e.target.value);
+                          const est = estimateFromPadang(lat, editingDest.longitude);
+                          setEditingDest({
+                            ...editingDest,
+                            latitude: lat,
+                            distance_km: est.distance_km,
+                            travel_time_min: est.travel_time_min,
+                          });
+                        }}
                         className="min-h-[48px] px-4 py-2.5 rounded-2xl bg-white border border-[#767676] text-sm font-mono"
                       />
                     </div>
@@ -1208,14 +1369,120 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                       <input
                         id="dest-lng"
                         type="number"
-                        step="0.0001"
+                        step="any"
                         required
                         value={editingDest.longitude}
-                        onChange={(e) =>
-                          setEditingDest({ ...editingDest, longitude: Number(e.target.value) })
-                        }
+                        onChange={(e) => {
+                          const lng = Number(e.target.value);
+                          const est = estimateFromPadang(editingDest.latitude, lng);
+                          setEditingDest({
+                            ...editingDest,
+                            longitude: lng,
+                            distance_km: est.distance_km,
+                            travel_time_min: est.travel_time_min,
+                          });
+                        }}
                         className="min-h-[48px] px-4 py-2.5 rounded-2xl bg-white border border-[#767676] text-sm font-mono"
                       />
+                    </div>
+
+                    {/* Helper Paste Link Google Maps / GPS + Pratinjau Pin Peta */}
+                    <div className="sm:col-span-3 p-4 rounded-2xl bg-white border border-[#CFD8BE] space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-extrabold text-[#234B24] inline-flex items-center gap-1.5">
+                          <Link2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          Ambil Koordinat Otomatis dari Link Google Maps / GPS
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleUseCurrentGps}
+                            disabled={locatingGps}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#E4E9DA] text-[#234B24] hover:bg-[#d7e0c8] disabled:opacity-60 transition"
+                          >
+                            <LocateFixed className="w-3.5 h-3.5" aria-hidden="true" />
+                            {locatingGps ? 'Mencari GPS...' : 'Lokasi Saya'}
+                          </button>
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${editingDest.latitude},${editingDest.longitude}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F6F3EC] text-[#1B1F1A] border border-[#CFD8BE] hover:bg-[#ece6d9] transition"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                            Cek di Google Maps
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={mapsPasteInput}
+                          onChange={(e) => {
+                            setMapsPasteInput(e.target.value);
+                            if (mapsPasteStatus) setMapsPasteStatus(null);
+                          }}
+                          onPaste={(e) => {
+                            const pasted = e.clipboardData.getData('text');
+                            const parsed = parseCoordinatesFromText(pasted);
+                            if (parsed) {
+                              e.preventDefault();
+                              const lat = Number(parsed.lat.toFixed(6));
+                              const lng = Number(parsed.lng.toFixed(6));
+                              const est = estimateFromPadang(lat, lng);
+                              setMapsPasteInput(pasted);
+                              setEditingDest({
+                                ...editingDest,
+                                latitude: lat,
+                                longitude: lng,
+                                distance_km: est.distance_km,
+                                travel_time_min: est.travel_time_min,
+                              });
+                              setMapsPasteStatus({
+                                type: 'success',
+                                text: `Koordinat otomatis terisi: ${lat}, ${lng} (±${est.distance_km} km / ${est.travel_time_min} mnt dari Padang)`,
+                              });
+                            }
+                          }}
+                          placeholder="Tempel link Google Maps (contoh: .../@-0.3056,100.3692,17z) atau -0.3056, 100.3692"
+                          className="flex-1 min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyMapsPaste}
+                          className="min-h-[42px] px-4 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1b3a1c] transition shrink-0"
+                        >
+                          Ekstrak Koordinat
+                        </button>
+                      </div>
+
+                      {mapsPasteStatus && (
+                        <p
+                          className={`text-xs font-semibold ${
+                            mapsPasteStatus.type === 'success' ? 'text-[#1E9E5A]' : 'text-red-600'
+                          }`}
+                        >
+                          {mapsPasteStatus.text}
+                        </p>
+                      )}
+
+                      {Number.isFinite(editingDest.latitude) && Number.isFinite(editingDest.longitude) && (
+                        <div className="rounded-xl overflow-hidden border border-[#CFD8BE] bg-[#F6F3EC]">
+                          <iframe
+                            title="Pratinjau Lokasi Destinasi"
+                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${
+                              editingDest.longitude - 0.015
+                            }%2C${editingDest.latitude - 0.01}%2C${
+                              editingDest.longitude + 0.015
+                            }%2C${editingDest.latitude + 0.01}&layer=mapnik&marker=${
+                              editingDest.latitude
+                            }%2C${editingDest.longitude}`}
+                            className="w-full h-40 border-0"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1227,10 +1494,12 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                       <div className="flex flex-col gap-1">
                         <label htmlFor="stat-distance" className="text-xs font-bold text-[#1B1F1A]">
                           1. Estimasi Jarak (km)
+                          <span className="block text-[10px] font-medium text-[#5A6657]">Auto GPS · patokan Padang</span>
                         </label>
                         <input
                           id="stat-distance"
                           type="number"
+                          step="0.1"
                           min={0}
                           value={editingDest.distance_km}
                           onChange={(e) =>
@@ -1243,6 +1512,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                       <div className="flex flex-col gap-1">
                         <label htmlFor="stat-duration" className="text-xs font-bold text-[#1B1F1A]">
                           2. Waktu Tempuh (menit)
+                          <span className="block text-[10px] font-medium text-[#5A6657]">Auto GPS · bisa diubah</span>
                         </label>
                         <input
                           id="stat-duration"
@@ -1826,6 +2096,44 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
 
             <div className="p-6 lg:p-8 space-y-5">
               <p className="text-sm text-[#1B1F1A] leading-relaxed">{viewingDest.description}</p>
+
+              {/* Kredit Kontributor Komunitas ("Diusulkan oleh") */}
+              {viewingDest.contributors && viewingDest.contributors.length > 0 && (
+                <div className="p-4 rounded-2xl bg-[#E4E9DA]/70 border border-[#234B24]/20 space-y-2.5">
+                  <div className="text-xs font-extrabold text-[#234B24] flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#F26B4B]" />
+                    <span>Kontributor Komunitas (Diusulkan Oleh)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingDest.contributors.map((c) => (
+                      <span
+                        key={`${c.submission_id}-${c.name}`}
+                        className="px-3 py-1 rounded-full bg-white border border-[#234B24]/20 text-xs font-bold text-[#1B1F1A]"
+                      >
+                        {c.name}{' '}
+                        <span className="text-[#234B24] font-extrabold">({c.role})</span>
+                      </span>
+                    ))}
+                  </div>
+                  {viewingDest.gallery_images && viewingDest.gallery_images.length > 0 && (
+                    <div className="pt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A5248] block mb-1.5">
+                        Galeri Tambahan dari Kontributor ({viewingDest.gallery_images.length} Foto)
+                      </span>
+                      <div className="flex gap-2 overflow-x-auto">
+                        {viewingDest.gallery_images.map((imgUrl, idx) => (
+                          <img
+                            key={idx}
+                            src={imgUrl}
+                            alt={`Galeri kontributor ${idx + 1}`}
+                            className="w-24 h-16 rounded-xl object-cover border border-[#CFD8BE] shrink-0"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Cuaca Open-Meteo Live */}
               {viewingDest.weather && (
