@@ -67,7 +67,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // In Guest Mode:
-      expect(find.text('MODE PENJELAJAH • TAMU (GUEST)'), findsOneWidget);
+      expect(find.text('MODE TAMU'), findsOneWidget);
       expect(find.text('Akun Tamu'), findsOneWidget);
       expect(find.text('Masuk untuk Fitur Penuh'), findsOneWidget);
       expect(find.text('Masuk dengan Nomor WhatsApp'), findsOneWidget);
@@ -85,7 +85,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Profile View should instantly react without page reload!
-      expect(find.text('AKUN WISATAWAN • TERVERIFIKASI WHATSAPP'), findsOneWidget);
+      expect(find.text('AKUN WISGO'), findsOneWidget);
       expect(find.text('Profil Saya'), findsOneWidget);
       expect(find.text('Bujang Ranah Minang'), findsOneWidget);
       expect(find.text('OTP WhatsApp Terverifikasi'), findsOneWidget);
@@ -108,7 +108,7 @@ void main() {
         find.byType(ListView).last,
         const Offset(0, 300),
       );
-      expect(find.text('MODE PENJELAJAH • TAMU (GUEST)'), findsOneWidget);
+      expect(find.text('MODE TAMU'), findsOneWidget);
       expect(find.text('Akun Tamu'), findsOneWidget);
       expect(find.text('Masuk untuk Fitur Penuh'), findsOneWidget);
     });
