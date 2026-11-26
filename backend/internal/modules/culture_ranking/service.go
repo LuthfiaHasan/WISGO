@@ -18,6 +18,9 @@ type Service interface {
 	UpdateEvent(id string, req CreateCulturalEventRequest) (*models.CulturalEvent, error)
 	DeleteEvent(id string) error
 	GetEventByID(id string) (*models.CulturalEvent, error)
+	UpsertPhrase(phrase models.MinangPhrase) models.MinangPhrase
+	DeletePhrase(id string) error
+	RecalculateGaode() *GaodeRankingsResponse
 }
 
 type service struct {
@@ -199,3 +202,23 @@ func (s *service) GetEventByID(id string) (*models.CulturalEvent, error) {
 	}
 	return ev, nil
 }
+
+func (s *service) UpsertPhrase(phrase models.MinangPhrase) models.MinangPhrase {
+	return s.repo.UpsertMinangPhrase(phrase)
+}
+
+func (s *service) DeletePhrase(id string) error {
+	return s.repo.DeleteMinangPhrase(id)
+}
+
+func (s *service) RecalculateGaode() *GaodeRankingsResponse {
+	rankings := s.repo.RecalculateGaodeRankings()
+	return &GaodeRankingsResponse{
+		Status:         "ok",
+		Algorithm:      "Gaode Behavior-Based Ranking v3.0 (Recalculated)",
+		AntiFakePolicy: "Ulasan teks atau rating bintang tanpa telemetri kedatangan GPS fisik (>15 menit dwell time) diabaikan 100%.",
+		Total:          len(rankings),
+		Rankings:       rankings,
+	}
+}
+
