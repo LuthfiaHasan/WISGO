@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
 
 // Handler menangani endpoint HTTP Gin untuk Gaode Ranking, Kamus Minang, dan Kalender Budaya
@@ -25,15 +26,21 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/destinations/rankings/gaode", h.GetGaodeBehaviorRankings)
 	rg.GET("/rankings/gaode", h.GetGaodeBehaviorRankings)
+	rg.GET("/culture/rankings", h.GetGaodeBehaviorRankings)
+	rg.POST("/rankings/gaode/recalculate", h.RecalculateGaodeRankings)
 	rg.GET("/culture/minang-phrases", h.GetMinangAudioPhrases)
 	rg.GET("/culture/audio-phrases", h.GetMinangAudioPhrases)
+	rg.GET("/culture/phrases", h.GetMinangAudioPhrases)
 	rg.GET("/culture/events", h.GetCulturalEventsCalendar)
 
 	// Input Event oleh Vendor (Aktor Vendor dengan pilihan login 'input event' atau Wisatawan/Publik)
 	rg.POST("/culture/events", h.CreateCulturalEventVendor)
 
-	// CRUD Event oleh Admin Dispar (Use Case: CRUD event - RBAC: admin_dispar, pokdarwis)
+	// CRUD Event & Kamus Minang oleh Admin Dispar (RBAC: admin_dispar, admin_utama, pokdarwis)
 	adminAuth := middleware.RequireRoles("admin_dispar", "pokdarwis")
+	rg.POST("/culture/minang-phrases", adminAuth, h.UpsertMinangPhraseAdmin)
+	rg.PUT("/culture/minang-phrases/:id", adminAuth, h.UpsertMinangPhraseAdmin)
+	rg.DELETE("/culture/minang-phrases/:id", adminAuth, h.DeleteMinangPhraseAdmin)
 	rg.GET("/admin/culture/events", adminAuth, h.GetCulturalEventsCalendar)
 	rg.POST("/admin/culture/events", adminAuth, h.CreateCulturalEventAdmin)
 	rg.PUT("/admin/culture/events/:id", adminAuth, h.UpdateCulturalEventAdmin)
@@ -178,6 +185,36 @@ func (h *Handler) DeleteCulturalEventAdmin(c *gin.Context) {
 		"status":  "success",
 		"message": "Event budaya berhasil dihapus dari sistem.",
 	})
+}
+
+// RecalculateGaodeRankings POST /api/v1/rankings/gaode/recalculate
+func (h *Handler) RecalculateGaodeRankings(c *gin.Context) {
+	resp := h.service.RecalculateGaode()
+	c.JSON(http.StatusOK, resp)
+}
+
+// UpsertMinangPhraseAdmin POST & PUT /api/v1/culture/minang-phrases
+func (h *Handler) UpsertMinangPhraseAdmin(c *gin.Context) {
+	var input models.MinangPhrase
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Payload JSON tidak valid."})
+		return
+	}
+	if idParam := strings.TrimSpace(c.Param("id")); idParam != "" {
+		input.ID = idParam
+	}
+	saved := h.service.UpsertPhrase(input)
+	c.JSON(http.StatusOK, gin.H{"status": "success", "phrase": saved})
+}
+
+// DeleteMinangPhraseAdmin DELETE /api/v1/culture/minang-phrases/:id
+func (h *Handler) DeleteMinangPhraseAdmin(c *gin.Context) {
+	id := c.Param("id")
+	if err := h.service.DeletePhrase(id); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "Frasa kamus tidak ditemukan."})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "deleted", "id": id})
 }
 
 func parseGPS(c *gin.Context) (bool, float64, float64) {

@@ -26,18 +26,23 @@ func NewHandler(service Service, rateLimiter *middleware.TokenBucketRateLimiter)
 
 // RegisterRoutes mendaftarkan seluruh route pungli ke router group
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	// Publik / Wisatawan
+	// Publik / Wisatawan (beserta alias Mobile api_service.dart & Web Admin api.ts)
 	rg.GET("/qr/:qrCode", h.GetSmartQRResolution)
+	rg.GET("/pungli/verify-qr/:qrCode", h.GetSmartQRResolution)
 	rg.POST("/pungli/report", h.rateLimiter.Protect("pungli_report"), h.PostReportPungli)
+	rg.POST("/reports/pungli", h.rateLimiter.Protect("pungli_report"), h.PostReportPungli)
 
 	// Admin Command Center Satgas Saber Pungli (Kontrak Langsung & Admin Prefix)
 	authSatgas := middleware.RequireRoles("admin_dispar", "pokdarwis")
 	authAdminOnly := middleware.RequireRoles("admin_dispar")
 
-	// Rute Langsung Sesuai API_Contract_BE1_BE2.md
+	// Rute Langsung Sesuai API_Contract_BE1_BE2.md & Web Admin api.ts
 	rg.GET("/pungli/reports", authSatgas, h.GetPungliReportsAdmin)
+	rg.GET("/reports/pungli", authSatgas, h.GetPungliReportsAdmin)
 	rg.PATCH("/pungli/reports/:id/status", authAdminOnly, h.UpdatePungliStatusAdmin)
 	rg.PUT("/pungli/reports/:id/status", authAdminOnly, h.UpdatePungliStatusAdmin)
+	rg.PATCH("/reports/pungli/:id/status", authSatgas, h.UpdatePungliStatusAdmin)
+	rg.PUT("/reports/pungli/:id/status", authSatgas, h.UpdatePungliStatusAdmin)
 
 	// Admin Prefix
 	admin := rg.Group("/admin/pungli")
@@ -94,6 +99,12 @@ func (h *Handler) PostReportPungli(c *gin.Context) {
 		}
 	} else {
 		_ = c.ShouldBindJSON(&req)
+		if req.IncidentCategory == "" && req.IncidentType != "" {
+			req.IncidentCategory = req.IncidentType
+		}
+		if req.ChargedAmountIDR <= 0 && (req.OfficialPriceIDR > 0 || req.OverchargeIDR > 0) {
+			req.ChargedAmountIDR = req.OfficialPriceIDR + req.OverchargeIDR
+		}
 		if req.PhotoBase64 != "" {
 			uploadFormat = "base64"
 			if req.PhotoEvidence == "" {
@@ -138,6 +149,9 @@ func (h *Handler) UpdatePungliStatusAdmin(c *gin.Context) {
 		return
 	}
 
+	if req.SatgasNotes == "" && req.AdminActionNotes != "" {
+		req.SatgasNotes = req.AdminActionNotes
+	}
 	resp, err := h.service.UpdateReportStatus(idOrTicket, req)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{

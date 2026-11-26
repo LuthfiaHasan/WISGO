@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 )
 
 // Handler menangani endpoint HTTP Gin untuk modul spasial
@@ -26,13 +27,17 @@ func NewHandler(service Service, rateLimiter *middleware.TokenBucketRateLimiter)
 
 // RegisterRoutes mendaftarkan seluruh route spatial ke router group
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	// Publik / Wisatawan
+	// Publik / Wisatawan (+ Alias Mobile api_service.dart & Web Admin api.ts)
+	rg.GET("/spatial/shunlu", h.GetShunluSearch)
 	rg.POST("/spatial/shunlu", h.PostShunluSearch)
 	rg.POST("/spatial/along-route", h.PostShunluSearch)
 	rg.GET("/destinations/:id/micro-map", h.GetDestinationMicroMap)
+	rg.GET("/spatial/micro-map/:id", h.GetDestinationMicroMap)
 	rg.POST("/spatial/audio-trigger-check", h.PostCheckAudioGPSTrigger)
+	rg.POST("/spatial/audio-guide", h.PostCheckAudioGPSTrigger)
 	rg.GET("/spatial/hazards", h.GetLiveHazardAlerts)
 	rg.GET("/hazards/active", h.GetLiveHazardAlerts)
+	rg.GET("/hazards/alerts", h.GetLiveHazardAlerts)
 	rg.GET("/spatial/nearby", h.GetNearbyDestinations)
 	rg.GET("/spatial/emergency-contacts", h.GetEmergencyContacts)
 	rg.POST("/routes/optimize-tsp", h.PostOptimizeTSP)
@@ -40,15 +45,43 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// Rate-limited endpoints (Anti-Spam Token Bucket)
 	rg.POST("/spatial/sos", h.rateLimiter.Protect("sos_emergency"), h.PostSOSEmergencySignal)
 	rg.POST("/hazards/sos", h.rateLimiter.Protect("sos_emergency"), h.PostSOSEmergencySignal)
+	rg.POST("/sos/signal", h.rateLimiter.Protect("sos_emergency"), h.PostSOSEmergencySignal)
 	rg.POST("/spatial/navigation-telemetry", h.rateLimiter.Protect("nav_telemetry"), h.PostNavigationTelemetry)
 
-	// Admin Command Center: Proteksi RBAC JWT (admin_dispar, pokdarwis)
+	// Admin Command Center & Web Admin FS-1: Proteksi RBAC JWT (admin_dispar, admin_utama, pokdarwis)
+	adminAuth := middleware.RequireRoles("admin_dispar", "pokdarwis")
+	rg.PUT("/hazards/:id", adminAuth, h.PutUpdateHazardWebAdmin)
+	rg.PUT("/sos/tickets/:id/status", adminAuth, h.PutUpdateSOSTicketStatus)
+	rg.POST("/spatial/emergency-contacts", adminAuth, h.UpsertEmergencyContactAdmin)
+	rg.PUT("/spatial/emergency-contacts/:id", adminAuth, h.UpsertEmergencyContactAdmin)
+	rg.DELETE("/spatial/emergency-contacts/:id", adminAuth, h.DeleteEmergencyContactAdmin)
+
 	admin := rg.Group("/admin")
-	admin.Use(middleware.RequireRoles("admin_dispar", "pokdarwis"))
+	admin.Use(adminAuth)
 	{
 		admin.POST("/hazards/trigger", h.PostTriggerHazardAdmin)
 		admin.GET("/sos", h.GetSOSSignalsAdmin)
+		admin.PUT("/sos/:id/status", h.PutUpdateSOSTicketStatus)
+		admin.POST("/emergency-contacts", h.UpsertEmergencyContactAdmin)
+		admin.PUT("/emergency-contacts/:id", h.UpsertEmergencyContactAdmin)
+		admin.DELETE("/emergency-contacts/:id", h.DeleteEmergencyContactAdmin)
 	}
+}
+
+// GetShunluSearch GET /api/v1/spatial/shunlu (Kompatibilitas Mobile ApiService.searchShunlu)
+func (h *Handler) GetShunluSearch(c *gin.Context) {
+	_, lat, lng := parseGPS(c)
+	req := ShunluSearchRequest{
+		OriginLat: lat,
+		OriginLng: lng,
+		Category:  c.Query("category"),
+	}
+	resp, err := h.service.SearchShunlu(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // PostShunluSearch POST /api/v1/spatial/shunlu
@@ -264,6 +297,65 @@ func (h *Handler) GetEmergencyContacts(c *gin.Context) {
 	corridor := c.Query("corridor")
 	resp := h.service.GetEmergencyContacts(corridor)
 	c.JSON(http.StatusOK, resp)
+}
+
+// PutUpdateHazardWebAdmin PUT /api/v1/hazards/:id (Web Admin api.ts)
+func (h *Handler) PutUpdateHazardWebAdmin(c *gin.Context) {
+	id := c.Param("id")
+	var input TriggerHazardInput
+	_ = c.ShouldBindJSON(&input)
+	if input.CorridorCode == "" {
+		input.CorridorCode = id
+	}
+	if input.Severity == "" {
+		input.Severity = "Waspada"
+	}
+	updated, err := h.service.TriggerHazard(input)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "hazard_updated", "hazard_alert": updated})
+}
+
+// PutUpdateSOSTicketStatus PUT /api/v1/sos/tickets/:id/status (Web Admin api.ts)
+func (h *Handler) PutUpdateSOSTicketStatus(c *gin.Context) {
+	id := c.Param("id")
+	var body struct {
+		Status          string `json:"status"`
+		SARUnitAssigned string `json:"sar_unit_assigned"`
+	}
+	_ = c.ShouldBindJSON(&body)
+	updated, err := h.service.UpdateSOSTicketStatus(id, body.Status, body.SARUnitAssigned)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "sos_signal": updated})
+}
+
+// UpsertEmergencyContactAdmin POST/PUT /api/v1/spatial/emergency-contacts
+func (h *Handler) UpsertEmergencyContactAdmin(c *gin.Context) {
+	var input models.EmergencyContact
+	if err := c.ShouldBindJSON(&input); err != nil || strings.TrimSpace(input.AgencyName) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Field 'agency_name' dan 'phone_number' wajib diisi."})
+		return
+	}
+	if idParam := strings.TrimSpace(c.Param("id")); idParam != "" {
+		input.ID = idParam
+	}
+	saved := h.service.UpsertEmergencyContact(input)
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "contact": saved})
+}
+
+// DeleteEmergencyContactAdmin DELETE /api/v1/spatial/emergency-contacts/:id
+func (h *Handler) DeleteEmergencyContactAdmin(c *gin.Context) {
+	id := c.Param("id")
+	if err := h.service.DeleteEmergencyContact(id); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "Kontak darurat tidak ditemukan."})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "deleted", "id": id})
 }
 
 func parseGPS(c *gin.Context) (bool, float64, float64) {

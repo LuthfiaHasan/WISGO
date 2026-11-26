@@ -23,6 +23,9 @@ type Repository interface {
 	UpdateCulturalEvent(id string, event models.CulturalEvent) (*models.CulturalEvent, error)
 	DeleteCulturalEvent(id string) error
 	FindCulturalEventByID(id string) (*models.CulturalEvent, bool)
+	UpsertMinangPhrase(phrase models.MinangPhrase) models.MinangPhrase
+	DeleteMinangPhrase(id string) error
+	RecalculateGaodeRankings() []models.GaodeBehaviorRanking
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -208,3 +211,66 @@ func (r *inMemoryRepository) FindCulturalEventByID(id string) (*models.CulturalE
 	}
 	return nil, false
 }
+
+func (r *inMemoryRepository) UpsertMinangPhrase(phrase models.MinangPhrase) models.MinangPhrase {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if phrase.ID == "" {
+		phrase.ID = fmt.Sprintf("phr-%03d", len(r.minangPhrases)+1)
+	}
+	if phrase.IndonesianText == "" && phrase.IndonesianMeaning != "" {
+		phrase.IndonesianText = phrase.IndonesianMeaning
+	}
+	if phrase.MinangText == "" && phrase.MinangPhraseText != "" {
+		phrase.MinangText = phrase.MinangPhraseText
+	}
+	if phrase.AudioURL == "" && phrase.VoiceText != "" {
+		phrase.AudioURL = phrase.VoiceText
+	}
+	for i, existing := range r.minangPhrases {
+		if strings.EqualFold(existing.ID, phrase.ID) {
+			r.minangPhrases[i] = phrase
+			return phrase
+		}
+	}
+	r.minangPhrases = append(r.minangPhrases, phrase)
+	return phrase
+}
+
+func (r *inMemoryRepository) DeleteMinangPhrase(id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i, existing := range r.minangPhrases {
+		if strings.EqualFold(existing.ID, id) {
+			r.minangPhrases = append(r.minangPhrases[:i], r.minangPhrases[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("PHRASE_NOT_FOUND")
+}
+
+func (r *inMemoryRepository) RecalculateGaodeRankings() []models.GaodeBehaviorRanking {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := range r.gaodeRankings {
+		r.gaodeRankings[i].GaodeAuthenticityScore = ComputeGaodeScore(
+			r.gaodeRankings[i].ActiveNavCount30d,
+			r.gaodeRankings[i].AvgDwellTimeMin,
+			r.gaodeRankings[i].ReturnVisitRatePct,
+		)
+		r.gaodeRankings[i].UpdatedAt = time.Now()
+	}
+	sort.Slice(r.gaodeRankings, func(i, j int) bool {
+		return r.gaodeRankings[i].GaodeAuthenticityScore > r.gaodeRankings[j].GaodeAuthenticityScore
+	})
+	for i := range r.gaodeRankings {
+		r.gaodeRankings[i].RankPosition = i + 1
+	}
+	res := make([]models.GaodeBehaviorRanking, len(r.gaodeRankings))
+	copy(res, r.gaodeRankings)
+	return res
+}
+
