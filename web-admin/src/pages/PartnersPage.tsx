@@ -43,7 +43,7 @@ interface PartnersPageProps {
   onSavePartner: (partner: Partner) => Promise<void> | void;
   onDeletePartner: (partnerId: string) => Promise<void> | void;
   onTripsChanged?: () => void;
-  onNavigateToStudio360?: (destId: string, tab?: 'panorama' | 'denah') => void;
+  onNavigateToStudio360?: (destId: string, tab?: 'panorama') => void;
   initialSelectedPartnerId?: string;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
 }
@@ -326,7 +326,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             UMKM &amp; Trip Go
           </h1>
           <p className="text-xs text-[#4A5248] mt-0.5">
-            5 kategori mitra UMKM Direct P2P WhatsApp (0% komisi), integrasi Denah 2D, dan manajemen Trip Go Escrow.
+            5 kategori mitra UMKM Direct P2P WhatsApp (0% komisi) dan manajemen Trip Go Escrow.
           </p>
         </div>
 
@@ -334,7 +334,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-2 shadow-xs transition duration-200 shrink-0"
+            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-2 shadow-sm transition duration-200 shrink-0"
           >
             <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
             <span>Tambah Mitra UMKM</span>
@@ -345,13 +345,13 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
       {/* 2 Sub-Tabs Navigasi (Direktori Mitra UMKM & Trip Go) */}
       <nav
         aria-label="Sub-tab UMKM dan Trip Go"
-        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-sm"
       >
         <button
           type="button"
           onClick={() => setActiveSubTab('partners_directory')}
           className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeSubTab === 'partners_directory'
-              ? 'bg-[#234B24] text-white shadow-xs'
+              ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
@@ -371,7 +371,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
           type="button"
           onClick={() => setActiveSubTab('trip_go')}
           className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeSubTab === 'trip_go'
-              ? 'bg-[#234B24] text-white shadow-xs'
+              ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
@@ -405,8 +405,8 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
             </div>
           </div>
 
-          {/* 4 Kartu KPI */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {/* 3 Kartu KPI */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
               <span className="text-xs font-bold text-[#4A5248]">Mitra Terverifikasi</span>
               <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#234B24]">
@@ -424,16 +424,6 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
               </div>
               <p className="text-[11px] text-[#1E9E5A] mt-1 font-bold">
                 Konversi Langsung ke wa.me Mitra
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-[0_2px_12px_rgba(35,75,36,0.05)] flex flex-col justify-between">
-              <span className="text-xs font-bold text-[#1D4ED8]">Tautan Denah Kawasan 2D</span>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#1D4ED8]">
-                {totalLinkedDenah} Mitra
-              </div>
-              <p className="text-[11px] text-[#4A5248] mt-1">
-                Titik UMKM aktif di Denah 2D
               </p>
             </div>
 
@@ -523,9 +513,6 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                       Tarif Resmi
                     </th>
                     <th scope="col" className="py-3.5 px-4">
-                      Denah Kawasan 2D
-                    </th>
-                    <th scope="col" className="py-3.5 px-4">
                       Leads WA P2P
                     </th>
                     <th scope="col" className="py-3.5 px-4 text-right">
@@ -602,44 +589,6 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                           </td>
 
                           <td className="py-3.5 px-4 whitespace-nowrap">
-                            {linkedDenah ? (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onNavigateToStudio360?.(
-                                    linkedDenah.destination_id || partner.destination_id || 'dest-001',
-                                    'denah'
-                                  )
-                                }
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#1D4ED8] transition"
-                                title="Buka di Editor Denah Kawasan 2D"
-                              >
-                                <img
-                                  src="/assets/synced/denah_umkm.svg"
-                                  alt=""
-                                  className="w-3.5 h-3.5"
-                                />
-                                <span>
-                                  Denah 2D ({Math.round(linkedDenah.x)}%, {Math.round(linkedDenah.y)}%)
-                                </span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onNavigateToStudio360?.(
-                                    partner.destination_id || destinations[0]?.id || 'dest-001',
-                                    'denah'
-                                  )
-                                }
-                                className="text-[10px] font-bold text-[#4A5248] hover:text-[#234B24] underline decoration-dotted"
-                              >
-                                + Tempatkan di Denah 2D
-                              </button>
-                            )}
-                          </td>
-
-                          <td className="py-3.5 px-4 whitespace-nowrap">
                             <div className="font-extrabold text-[#1E9E5A] font-mono">
                               {(partner.wa_click_count || 0).toLocaleString('id-ID')} Klik
                             </div>
@@ -653,7 +602,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleTestWaP2P(partner)}
-                                className="min-h-[36px] px-2.5 py-1 rounded-xl bg-[#1E9E5A] hover:bg-[#166534] text-white text-[11px] font-bold inline-flex items-center gap-1 shadow-xs transition"
+                                className="min-h-[36px] px-2.5 py-1 rounded-xl bg-[#1E9E5A] hover:bg-[#166534] text-white text-[11px] font-bold inline-flex items-center gap-1 shadow-sm transition"
                                 title="Uji Pesan WhatsApp Langsung (wa.me)"
                               >
                                 <MessageCircle className="w-3.5 h-3.5" />
@@ -665,7 +614,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                                   setSelectedPartner(partner);
                                   setActiveDetailTab('profile');
                                 }}
-                                className="min-h-[36px] px-3 py-1 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1 shadow-xs transition"
+                                className="min-h-[36px] px-3 py-1 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1 shadow-sm transition"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 <span>Detail</span>
@@ -714,13 +663,13 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
           <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 lg:p-7 shadow-2xl border border-[#234B24]/10 max-h-[92vh] overflow-y-auto flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-[#234B24]/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#234B24] text-white flex items-center justify-center shadow-xs">
+                  <div className="w-10 h-10 rounded-xl bg-[#234B24] text-white flex items-center justify-center shadow-sm">
                     <Store className="w-5 h-5" />
                   </div>
                   <div>
@@ -747,7 +696,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                   type="button"
                   onClick={() => setActiveDetailTab('profile')}
                   className={`py-2 rounded-lg transition ${activeDetailTab === 'profile'
-                      ? 'bg-white text-[#234B24] shadow-xs'
+                      ? 'bg-white text-[#234B24] shadow-sm'
                       : 'text-[#4A5248] hover:text-[#1B1F1A]'
                     }`}
                 >
@@ -757,22 +706,11 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                   type="button"
                   onClick={() => setActiveDetailTab('wa_p2p')}
                   className={`py-2 rounded-lg transition ${activeDetailTab === 'wa_p2p'
-                      ? 'bg-white text-[#234B24] shadow-xs'
+                      ? 'bg-white text-[#234B24] shadow-sm'
                       : 'text-[#4A5248] hover:text-[#1B1F1A]'
                     }`}
                 >
                   Uji WA P2P &amp; Pembayaran
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailTab('denah')}
-                  className={`py-2 rounded-lg transition flex items-center justify-center gap-1.5 ${activeDetailTab === 'denah'
-                      ? 'bg-white text-[#1D4ED8] shadow-xs font-extrabold'
-                      : 'text-[#4A5248] hover:text-[#1B1F1A]'
-                    }`}
-                >
-                  <Map className="w-3.5 h-3.5" />
-                  <span>Denah Kawasan 2D</span>
                 </button>
               </div>
 
@@ -880,7 +818,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                       <button
                         type="button"
                         onClick={() => handleTestWaP2P(selectedPartner)}
-                        className="min-h-[42px] px-4 py-2 rounded-xl bg-[#1E9E5A] hover:bg-[#166534] text-white text-xs font-extrabold inline-flex items-center justify-center gap-2 shadow-xs transition shrink-0"
+                        className="min-h-[42px] px-4 py-2 rounded-xl bg-[#1E9E5A] hover:bg-[#166534] text-white text-xs font-extrabold inline-flex items-center justify-center gap-2 shadow-sm transition shrink-0"
                       >
                         <MessageCircle className="w-4 h-4" />
                         <span>Uji Pesan WA P2P (wa.me)</span>
@@ -914,65 +852,6 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                 </div>
               )}
 
-              {/* TAB C: INTEGRASI DENAH KAWASAN 2D */}
-              {activeDetailTab === 'denah' && (() => {
-                const linkedPoint = findLinkedDenahPoint(selectedPartner);
-                const destObj = destinations.find(
-                  (d) => d.id === (linkedPoint?.destination_id || selectedPartner.destination_id)
-                );
-                return (
-                  <div className="mt-5 space-y-4">
-                    <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-3 text-xs">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          <img
-                            src="/assets/synced/denah_umkm.svg"
-                            alt="Titik UMKM Denah 2D"
-                            className="w-9 h-9"
-                          />
-                          <div>
-                            <h4 className="font-extrabold text-[#1D4ED8]">
-                              {linkedPoint
-                                ? `Terpasang di Denah Kawasan 2D (${linkedPoint.title})`
-                                : 'Belum Terhubung ke Titik Denah Kawasan 2D'}
-                            </h4>
-                            <p className="text-[11px] text-[#4A5248] mt-0.5">
-                              Destinasi Terkait:{' '}
-                              <strong>{destObj?.name || selectedPartner.destination_name || 'Belum dipilih'}</strong>
-                            </p>
-                          </div>
-                        </div>
-                        {linkedPoint && (
-                          <span className="px-2.5 py-1 rounded-lg bg-white border border-blue-200 font-mono text-[10px] font-bold text-[#1D4ED8]">
-                            X: {Math.round(linkedPoint.x)}% · Y: {Math.round(linkedPoint.y)}%
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-[11px] text-[#4A5248] leading-relaxed">
-                        Sesuai arsitektur WISGO terbaru (FE-1 &amp; FE-2), Panorama 360° tampil bersih tanpa pin melayang. Lokasi kios/lapak mitra UMKM ditampilkan pada <strong>Denah Kawasan 2D Interaktif</strong> agar mudah ditemukan wisatawan.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const targetDestId =
-                            linkedPoint?.destination_id ||
-                            selectedPartner.destination_id ||
-                            destinations[0]?.id ||
-                            'dest-001';
-                          setSelectedPartner(null);
-                          onNavigateToStudio360?.(targetDestId, 'denah');
-                        }}
-                        className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition"
-                      >
-                        <Map className="w-4 h-4 text-[#F26B4B]" />
-                        <span>Buka Editor Denah Kawasan 2D</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#234B24]/10 flex items-center justify-between gap-2">
@@ -1007,7 +886,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
           <div className="bg-white rounded-[28px] w-full max-w-2xl shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
             <div className="p-5 bg-[#234B24] text-[#F6F3EC] flex items-center justify-between">
@@ -1236,7 +1115,7 @@ export const PartnersPage: React.FC<PartnersPageProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="min-h-[42px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold inline-flex items-center gap-2 shadow-xs"
+                  className="min-h-[42px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold inline-flex items-center gap-2 shadow-sm"
                 >
                   <Save className="w-4 h-4 text-[#F26B4B]" />
                   <span>{editingPartner ? 'Simpan Perubahan' : 'Daftarkan Mitra'}</span>

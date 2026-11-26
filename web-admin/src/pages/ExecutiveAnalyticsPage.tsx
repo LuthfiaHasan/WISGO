@@ -968,7 +968,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           <button
             type="button"
             onClick={handleExportCSV}
-            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white hover:bg-[#F6F3EC] text-[#234B24] text-xs font-bold flex items-center gap-2 border border-[#234B24]/15 transition shadow-2xs"
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white hover:bg-[#F6F3EC] text-[#234B24] text-xs font-bold flex items-center gap-2 border border-[#234B24]/15 transition shadow-sm"
           >
             <Download className="w-3.5 h-3.5 text-[#234B24]" aria-hidden="true" />
             <span>Export CSV</span>
@@ -976,7 +976,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           <button
             type="button"
             onClick={handlePrintOfficialReport}
-            className="min-h-[40px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-xs transition duration-200"
+            className="min-h-[40px] px-4 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold flex items-center gap-2 shadow-sm transition duration-200"
           >
             <Printer className="w-3.5 h-3.5 text-[#A7F3D0]" aria-hidden="true" />
             <span>Cetak PDF</span>
@@ -1057,8 +1057,8 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               onClick={() => setSelectedSegment(seg)}
               className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition ${selectedSegment === seg
                   ? seg === 'group'
-                    ? 'bg-[#F26B4B] text-white shadow-2xs'
-                    : 'bg-[#234B24] text-white shadow-2xs'
+                    ? 'bg-[#F26B4B] text-white shadow-sm'
+                    : 'bg-[#234B24] text-white shadow-sm'
                   : 'text-[#4A5248] hover:text-[#1B1F1A]'
                 }`}
             >
@@ -1148,13 +1148,13 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       {/* 3. SUB-TAB NAVIGASI */}
       <nav
         aria-label="Tab Analitik Eksekutif"
-        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs no-print"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-sm no-print"
       >
         <button
           type="button"
           onClick={() => setActiveTab('heatmap_prediction')}
           className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === 'heatmap_prediction'
-              ? 'bg-[#234B24] text-white shadow-xs'
+              ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
@@ -1166,7 +1166,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           type="button"
           onClick={() => setActiveTab('partner_performance')}
           className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === 'partner_performance'
-              ? 'bg-[#234B24] text-white shadow-xs'
+              ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
@@ -1178,7 +1178,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           type="button"
           onClick={() => setActiveTab('incident_recap')}
           className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === 'incident_recap'
-              ? 'bg-[#234B24] text-white shadow-xs'
+              ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
@@ -1190,7 +1190,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           type="button"
           onClick={() => setActiveTab('export_report')}
           className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === 'export_report'
-              ? 'bg-[#234B24] text-white shadow-xs'
+              ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
@@ -1202,7 +1202,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           type="button"
           onClick={() => setActiveTab('system_benchmark')}
           className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ml-auto ${activeTab === 'system_benchmark'
-              ? 'bg-[#234B24] text-white shadow-xs'
+              ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
@@ -2055,7 +2055,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="min-h-[46px] w-full px-5 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-[#234B24] border border-[#CFD8BE] text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition"
+                  className="min-h-[46px] w-full px-5 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-[#234B24] border border-[#CFD8BE] text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition"
                 >
                   <Download className="w-4 h-4 text-[#234B24]" />
                   <span>Unduh Berkas CSV (Excel)</span>

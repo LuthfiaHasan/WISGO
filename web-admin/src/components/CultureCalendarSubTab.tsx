@@ -572,6 +572,60 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold">Jam Pelaksanaan</label>
+                  <input
+                    type="text"
+                    value={editingEvent.time || ''}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, time: e.target.value })
+                    }
+                    placeholder="Contoh: 08:00 – 22:00 WIB"
+                    className="min-h-[42px] px-3.5 py-2 rounded-xl bg-white border border-[#767676] text-xs"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold">Venue / Lokasi Spesifik</label>
+                  <input
+                    type="text"
+                    value={editingEvent.venue || ''}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, venue: e.target.value })
+                    }
+                    placeholder="Contoh: Area Terbuka Tebing Granit Lembah Harau"
+                    className="min-h-[42px] px-3.5 py-2 rounded-xl bg-white border border-[#767676] text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold">Latitude GPS Festival</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editingEvent.latitude}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, latitude: Number(e.target.value) })
+                    }
+                    className="min-h-[42px] px-3.5 py-2 rounded-xl bg-white border border-[#767676] text-xs font-mono"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold">Longitude GPS Festival</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editingEvent.longitude}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, longitude: Number(e.target.value) })
+                    }
+                    className="min-h-[42px] px-3.5 py-2 rounded-xl bg-white border border-[#767676] text-xs font-mono"
+                  />
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold">Etika Adat Wisatawan</label>
                 <input
@@ -580,6 +634,19 @@ export const CultureCalendarSubTab: React.FC<CultureCalendarSubTabProps> = ({
                   onChange={(e) =>
                     setEditingEvent({ ...editingEvent, cultural_etiquette: e.target.value })
                   }
+                  className="min-h-[42px] px-3.5 py-2 rounded-xl bg-white border border-[#767676] text-xs"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold">Tips Berkunjung &amp; Perlengkapan</label>
+                <input
+                  type="text"
+                  value={editingEvent.tips || ''}
+                  onChange={(e) =>
+                    setEditingEvent({ ...editingEvent, tips: e.target.value })
+                  }
+                  placeholder="Contoh: Gunakan pakaian sopan, bawa payung ringan & uang tunai untuk kuliner nagari."
                   className="min-h-[42px] px-3.5 py-2 rounded-xl bg-white border border-[#767676] text-xs"
                 />
               </div>

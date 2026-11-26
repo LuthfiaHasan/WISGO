@@ -229,7 +229,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
               Satu pintu kurasi dari form Usul Destinasi Mobile
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-sm">
             <Clock className="w-5 h-5" />
           </div>
         </div>
@@ -244,7 +244,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
               Otomatis masuk Direktori Utama + Kredit Kontributor
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#0D9488] text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-[#0D9488] text-white flex items-center justify-center shadow-sm">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
@@ -303,7 +303,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                 <button
                   type="button"
                   onClick={() => openMergeModal(group)}
-                  className="min-h-[38px] px-4 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 shadow-xs shrink-0 transition"
+                  className="min-h-[38px] px-4 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 shadow-sm shrink-0 transition"
                 >
                   <GitMerge className="w-3.5 h-3.5 text-[#F26B4B]" />
                   <span>Gabungkan &amp; Pilih Terbaik</span>
@@ -571,7 +571,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
           <div className="bg-white rounded-[28px] w-full max-w-3xl shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
             <div className="p-5 bg-[#234B24] text-[#F6F3EC] flex items-center justify-between shrink-0">
@@ -793,7 +793,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
           <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10 shrink-0">
