@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
+/// Peran pengguna aktif pada fitur Trip Go (Wisatawan/Peserta vs Penyelenggara/Host)
+enum TripGoRole {
+  participant,
+  organizer,
+}
+
+/// Status verifikasi admin untuk pengajuan Open Trip baru oleh penyelenggara
+enum TripVerificationStatus {
+  pendingAdmin,
+  approved,
+}
+
 /// Model Penyelenggara Terverifikasi (Item 2 Spesifikasi Trip Go)
 class VerifiedOrganizer {
   final String id;
@@ -330,6 +342,11 @@ class OpenTripItem {
   final String communicationChannel;
   final String whatsappGroupLink;
 
+  // ROLE & VERIFICATION LIFECYCLE STATE
+  TripVerificationStatus verificationStatus;
+  final bool isCreatedByCurrentUser;
+  bool isCurrentUserJoined;
+
   OpenTripItem({
     required this.id,
     this.userId = 'usr-host-01',
@@ -367,6 +384,9 @@ class OpenTripItem {
     this.communicationChannel =
         'Forum Diskusi & Chat Komunikasi Smart Trip Planner (In-App)',
     this.whatsappGroupLink = '',
+    this.verificationStatus = TripVerificationStatus.approved,
+    this.isCreatedByCurrentUser = false,
+    this.isCurrentUserJoined = false,
   })  : destinationDescription = destinationDescription ??
             'Kawasan cagar alam Lembah Harau dengan formasi tebing batuan vertikal 100-300 meter, akses jalan aspal datar yang mudah dijangkau, serta kolam alami air terjun Sarasah Bunta yang sejuk.',
         includes = includes ??

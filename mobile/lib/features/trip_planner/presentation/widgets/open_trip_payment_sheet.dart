@@ -40,6 +40,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
       setState(() {
         _isProcessing = false;
         _isPaid = true;
+        widget.trip.isCurrentUserJoined = true;
         widget.trip.quotaFilled = (widget.trip.quotaFilled + _participantCount).clamp(0, widget.trip.quotaMax);
       });
     });
@@ -531,7 +532,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
         const SizedBox(height: 18),
 
         ElevatedButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, true),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.forest,
             foregroundColor: Colors.white,

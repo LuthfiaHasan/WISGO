@@ -53,6 +53,10 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       TextEditingController(text: 'HPI-SB-2024-0412 (Pemandu Berlisensi)');
   final TextEditingController _hostPhoneController =
       TextEditingController(text: '0812-7578-953');
+  final TextEditingController _hostSocialController =
+      TextEditingController(text: '@rahmathidayat_guide (Instagram)');
+  final TextEditingController _hostExperienceController =
+      TextEditingController(text: '4+ Tahun Pengalaman Pemandu Wisata Sumbar');
 
   DateTime _departureDate = DateTime(2026, 12, 12);
   TimeOfDay _departureTime = const TimeOfDay(hour: 6, minute: 30);
@@ -378,6 +382,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
     _hostNameController.dispose();
     _hostLicenseController.dispose();
     _hostPhoneController.dispose();
+    _hostSocialController.dispose();
+    _hostExperienceController.dispose();
     super.dispose();
   }
 
@@ -420,6 +426,18 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       return;
     }
 
+    if (!_hasUploadedKtp || !_hasVerifiedFace) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.terracotta,
+          content: Text(
+            'Wajib selesaikan Upload e-KTP dan Verifikasi Wajah (Liveness) sebelum mengajukan Open Trip.',
+          ),
+        ),
+      );
+      return;
+    }
+
     final price = int.tryParse(_priceController.text.replaceAll(RegExp(r'\D'), '')) ?? 100000;
     final quota = int.tryParse(_quotaMaxController.text.replaceAll(RegExp(r'\D'), '')) ?? 8;
 
@@ -444,13 +462,22 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       pricePerPerson: price,
       quotaMax: quota,
       quotaFilled: 1, // Host sebagai peserta pertama
+      verificationStatus: TripVerificationStatus.pendingAdmin,
+      isCreatedByCurrentUser: true,
       organizer: VerifiedOrganizer(
         id: 'ORG-USER',
         name: _hostNameController.text.trim(),
+        isVerified: false,
         licenseNumber: _hostLicenseController.text.trim(),
-        ktpStatus: 'Terverifikasi e-KTP & KYC WISGO',
+        ktpStatus: 'Menunggu Verifikasi Admin WISGO',
         phone: _hostPhoneController.text.trim(),
-        organizationName: 'Penyelenggara Terdaftar WISGO',
+        socialMedia: _hostSocialController.text.trim().isEmpty
+            ? '@wisgo_host'
+            : _hostSocialController.text.trim(),
+        experienceYears: _hostExperienceController.text.trim().isEmpty
+            ? 'Pemandu Lokal Sumatera Barat'
+            : _hostExperienceController.text.trim(),
+        organizationName: 'Penyelenggara Trip Go WISGO',
       ),
       offlineRules: const [
         OfflineTripRule(
@@ -920,20 +947,30 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               const SizedBox(height: 14),
 
               // Penyelenggara & Verifikasi
-              _buildFieldLabel('PENYELENGGARA TERVERIFIKASI'),
+              _buildFieldLabel('DATA PENYELENGGARA (5 INFO PUBLIK)'),
               TextField(
                 controller: _hostNameController,
                 decoration: _inputDecoration('Nama Lengkap Penyelenggara / Guide'),
               ),
               const SizedBox(height: 6),
               TextField(
-                controller: _hostLicenseController,
-                decoration: _inputDecoration('Nomor Lisensi Pemandu HPI / Pokdarwis'),
+                controller: _hostPhoneController,
+                decoration: _inputDecoration('Nomor HP Aktif'),
               ),
               const SizedBox(height: 6),
               TextField(
-                controller: _hostPhoneController,
-                decoration: _inputDecoration('Nomor HP Penyelenggara'),
+                controller: _hostSocialController,
+                decoration: _inputDecoration('Akun Media Sosial (Instagram / TikTok)'),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _hostLicenseController,
+                decoration: _inputDecoration('Lisensi Pemandu (Wajib untuk Jalur Hard)'),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _hostExperienceController,
+                decoration: _inputDecoration('Pengalaman Penyelenggara (Cth: 3 Tahun Guide)'),
               ),
               const SizedBox(height: 12),
 
@@ -1060,7 +1097,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: const Text(
-                  'Publikasikan Trip Go ke Sistem WISGO',
+                  'Ajukan Verifikasi Admin & Buat Trip Go',
                   style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
                 ),
               ),

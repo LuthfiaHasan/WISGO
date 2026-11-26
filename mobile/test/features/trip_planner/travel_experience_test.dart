@@ -132,7 +132,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TripPlannerDetailSheet(trip: trip),
+            body: TripPlannerDetailSheet(trip: trip, isOrganizerMode: true),
           ),
         ),
       );
