@@ -20,9 +20,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Masuk ke Akun WISGO'), findsOneWidget);
+      expect(find.text('Masuk ke Akun WISGO'), findsNothing);
+      expect(find.text('Kembali'), findsOneWidget);
+      expect(find.text('Lewati'), findsNothing);
       expect(find.text('Kirim Kode OTP 4 Digit'), findsOneWidget);
-      expect(find.text('Jelajah Langsung sebagai Tamu'), findsOneWidget);
       expect(find.text('812-7578-953'), findsOneWidget);
     });
 

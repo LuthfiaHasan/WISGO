@@ -250,7 +250,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
+                          color: AppColors.ink.withValues(alpha: 0.08),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -268,7 +268,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         Text(
                           'Kembali',
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.forest,
                             letterSpacing: 0.2,
@@ -308,7 +308,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             offset: const Offset(0, 10),
                           ),
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: AppColors.ink.withValues(alpha: 0.06),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -342,7 +342,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   Text(
                                     'Pesan WhatsApp Terkirim',
                                     style: TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.forest,
                                     ),
@@ -359,7 +359,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 28,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               color: AppColors.forest,
                               letterSpacing: -0.4,
                               height: 1.20,
@@ -386,7 +386,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                 widget.phoneNumber,
                                 style: const TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.forest,
                                 ),
                               ),
@@ -446,7 +446,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                           ]
                                         : [
                                             BoxShadow(
-                                              color: Colors.black
+                                              color: AppColors.ink
                                                   .withValues(alpha: 0.04),
                                               blurRadius: 6,
                                               offset: const Offset(0, 2),
@@ -525,7 +525,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     child: const Text(
                                       'Kirim Ulang Kode WhatsApp',
                                       style: TextStyle(
-                                        fontSize: 12.5,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.forest,
                                         decoration: TextDecoration.underline,
@@ -561,7 +561,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     foregroundColor: Colors.white,
                                     elevation: _isComplete ? 3 : 0,
                                     shadowColor:
-                                        Colors.black.withValues(alpha: 0.35),
+                                        AppColors.ink.withValues(alpha: 0.35),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(28),
                                       side: BorderSide(
@@ -613,7 +613,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               child: Material(
                 elevation: 8,
                 borderRadius: BorderRadius.circular(18),
-                shadowColor: Colors.black.withValues(alpha: 0.25),
+                shadowColor: AppColors.ink.withValues(alpha: 0.25),
                 color: AppColors.forest,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -651,7 +651,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               'WhatsApp • Resmi WISGO',
                               style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: 11,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -661,7 +661,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -685,8 +685,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         child: const Text(
                           'Gunakan Kode',
                           style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),

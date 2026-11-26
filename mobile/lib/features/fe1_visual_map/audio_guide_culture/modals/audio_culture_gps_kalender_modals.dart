@@ -54,7 +54,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                             'Navigasi Langsung ke GPS',
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.ink,
                             ),
                           ),
@@ -63,7 +63,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: AppColors.muted,
                             ),
@@ -95,13 +95,13 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                       children: [
                         const Text(
                           'Titik Koordinat GPS:',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.muted),
                         ),
                         Text(
                           ev['gpsCoordinate'] as String,
                           style: const TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             fontFamily: 'monospace',
                             color: AppColors.forest,
                           ),
@@ -114,14 +114,14 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                       children: [
                         const Text(
                           'Target Acara:',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.muted),
                         ),
                         Expanded(
                           child: Text(
                             ev['title'] as String,
                             textAlign: TextAlign.right,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.ink),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
                           ),
                         ),
                       ],
@@ -146,7 +146,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                   icon: const Icon(Icons.map_rounded, size: 18),
                   label: const Text(
                     'Buka Peta WisGo (Jelajah Interaktif)',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.forest,
@@ -236,8 +236,8 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                 Text(
                                   'WARISAN & PERAYAAN NAGARI',
                                   style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
                                     letterSpacing: 1.1,
                                     color: AppColors.goldMinang,
                                   ),
@@ -249,7 +249,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 17,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.ink,
                                   ),
                                 ),
@@ -321,8 +321,8 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                           child: Text(
                                             ev['badge'] as String,
                                             style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w800,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
                                               color: badgeColor,
                                             ),
                                           ),
@@ -347,8 +347,8 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                                     Text(
                                                       'Pengingat Aktif',
                                                       style: TextStyle(
-                                                        fontSize: 11,
-                                                        fontWeight: FontWeight.w800,
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w700,
                                                         color: AppColors.success,
                                                       ),
                                                     ),
@@ -364,7 +364,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                                 Text(
                                                   ev['date'] as String,
                                                   style: const TextStyle(
-                                                    fontSize: 11,
+                                                    fontSize: 12,
                                                     fontWeight: FontWeight.w700,
                                                     color: AppColors.forest,
                                                   ),
@@ -379,8 +379,8 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                     Text(
                                       ev['title'] as String,
                                       style: const TextStyle(
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
                                         color: AppColors.ink,
                                       ),
                                     ),
@@ -393,7 +393,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                           child: Text(
                                             ev['location'] as String,
                                             style: const TextStyle(
-                                              fontSize: 11,
+                                              fontSize: 12,
                                               fontWeight: FontWeight.w600,
                                               color: AppColors.muted,
                                             ),
@@ -405,7 +405,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                     Text(
                                       ev['desc'] as String,
                                       style: const TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         color: AppColors.muted,
                                         height: 1.35,
                                       ),
@@ -427,7 +427,7 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                               'GPS: ${ev["gpsCoordinate"]}',
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
-                                                fontSize: 11,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.forest,
                                               ),
@@ -436,8 +436,8 @@ extension _AudioCultureGpsKalenderModals on _AudioCultureScreenState {
                                           const Text(
                                             'Lihat Detail & Rute',
                                             style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w800,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
                                               color: AppColors.ink,
                                             ),
                                           ),

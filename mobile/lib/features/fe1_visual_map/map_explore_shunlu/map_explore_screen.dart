@@ -174,7 +174,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                           child: Text(
                             '🛣️ Koridor Shunlu',
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: !_isMicroMapMode ? Colors.white : AppColors.ink,
                             ),
@@ -198,7 +198,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                           child: Text(
                             '🚶 Peta Mikro Kawasan',
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: _isMicroMapMode ? Colors.white : AppColors.ink,
                             ),
@@ -231,7 +231,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                           ? '📍 Radius ${_userDistanceToSpotMeters.toStringAsFixed(0)}m: Narasi Audio ${_isGeofenceAudioPlaying ? 'Diputar 🔊' : 'Dijeda ⏸️'}'
                           : 'Radar Geofence GPS (≤15m): Deteksi narasi audio otomatis',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: _isGeofenceActive ? AppColors.warning : AppColors.ink,
                       ),
@@ -264,7 +264,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                     },
                     child: Text(
                       _isGeofenceActive ? 'Matikan' : 'Simulasi GPS ≤15m',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -415,8 +415,8 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                 Text(
                                   layer.label,
                                   style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
                                     color: active ? Colors.white : AppColors.ink,
                                   ),
                                 ),
@@ -460,7 +460,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                 : 'Koridor: Padang → Padang Panjang → Bukittinggi → Harau',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 11.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                             maxLines: 1,
@@ -521,7 +521,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                   _selectedPoi!['detour'] as String,
                                   style: const TextStyle(
                                     color: AppColors.success,
-                                    fontSize: 11.5,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -566,7 +566,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                       ? 'Titik & Fasilitas Kawasan Harau'
                       : 'Pencarian Searah Rute (Shunlu Algorithm)',
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppColors.ink,
                   ),
@@ -699,7 +699,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                 Text(
                                   poi['route'] as String,
                                   style: const TextStyle(
-                                    fontSize: 11.5,
+                                    fontSize: 12,
                                     color: AppColors.muted,
                                   ),
                                 ),
@@ -721,7 +721,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                       child: Text(
                                         poi['detour'] as String,
                                         style: const TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.success,
                                           fontFeatures: [
@@ -744,7 +744,7 @@ class _MapExploreShunluScreenState extends State<MapExploreShunluScreen> {
                                         child: const Text(
                                           '🎧 Audio GPS',
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.pinAudioEmas,
                                           ),

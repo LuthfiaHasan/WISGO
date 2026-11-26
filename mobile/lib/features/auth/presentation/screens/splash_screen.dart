@@ -21,6 +21,23 @@ class OnboardingSlideData {
   });
 }
 
+/// Physics custom bergaya *Lenis smooth inertia* (damped spring lembut) khusus untuk Splash PageView.
+class _LenisSmoothPagePhysics extends PageScrollPhysics {
+  const _LenisSmoothPagePhysics({super.parent});
+
+  @override
+  _LenisSmoothPagePhysics applyTo(ScrollPhysics? ancestor) {
+    return _LenisSmoothPagePhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  SpringDescription get spring => const SpringDescription(
+        mass: 1.0,
+        stiffness: 85.0,
+        damping: 18.0,
+      );
+}
+
 /// Screen 1: Splash Screen & Onboarding Visual Showcase
 /// - Menggunakan 3 foto lanskap otentik Sumatera Barat HD 1080x1920
 /// - Gradiasi bawah menggunakan warna IVORY (AppColors.cream #FAF3E6), bukan hitam
@@ -111,8 +128,8 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted || _userInteracted) return;
       if (_currentPage < _slides.length - 1) {
         _pageController.nextPage(
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeInOutCubic,
+          duration: const Duration(milliseconds: 720),
+          curve: Curves.easeOutExpo,
         );
         _startAutoSlide();
       } else {
@@ -132,8 +149,8 @@ class _SplashScreenState extends State<SplashScreen>
     _onUserInteraction();
     if (_currentPage < _slides.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOutCubic,
+        duration: const Duration(milliseconds: 680),
+        curve: Curves.easeOutExpo,
       );
     } else {
       _goToOnboarding();
@@ -197,129 +214,155 @@ class _SplashScreenState extends State<SplashScreen>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 1. Full-bleed Scenic Photography Backgrounds with Ken Burns Animated Zoom & Moving Logo per Slide
-            PageView.builder(
-              controller: _pageController,
-              itemCount: _slides.length,
-              physics: const BouncingScrollPhysics(),
-              onPageChanged: (index) {
-                setState(() => _currentPage = index);
-              },
-              itemBuilder: (context, index) {
-                final slide = _slides[index];
+            // 1. Seamless Real-Time Cross-Fade Background Stack (0 kebocoran & 0 garis belah saat di-slide manual)
+            AnimatedBuilder(
+              animation: Listenable.merge([
+                _pageController,
+                _bgScaleAnimation,
+              ]),
+              builder: (context, _) {
+                final double page = (_pageController.hasClients &&
+                        _pageController.position.haveDimensions)
+                    ? (_pageController.page ?? _currentPage.toDouble())
+                    : _currentPage.toDouble();
+
                 return Stack(
                   fit: StackFit.expand,
-                  children: [
-                    // Animated Ken Burns slow zoom
-                    AnimatedBuilder(
-                      animation: _bgScaleAnimation,
-                      builder: (context, child) {
-                        final isCurrent = _currentPage == index;
-                        return Transform.scale(
-                          scale: isCurrent ? _bgScaleAnimation.value : 1.0,
+                  children: List.generate(_slides.length, (index) {
+                    final distance = (page - index).abs();
+                    final opacity = (1.0 - distance).clamp(0.0, 1.0);
+                    if (opacity <= 0.001) {
+                      return const SizedBox.shrink();
+                    }
+                    final isCurrent = _currentPage == index;
+                    final scale =
+                        (isCurrent ? _bgScaleAnimation.value : 1.03) +
+                            (distance * 0.03);
+                    return Opacity(
+                      opacity: opacity,
+                      child: ClipRect(
+                        child: Transform.scale(
+                          scale: scale,
                           alignment: Alignment.center,
-                          child: child,
-                        );
-                      },
-                      child: Image.asset(
-                        slide.imageAsset,
-                        fit: BoxFit.cover,
-                        alignment: Alignment.center,
-                      ),
-                    ),
-
-                    // Gradiasi warna ivory lembut di bagian atas layar
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 180,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              AppColors.cream.withValues(alpha: 0.32),
-                              AppColors.cream.withValues(alpha: 0.10),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 0.45, 1.0],
+                          child: Image.asset(
+                            _slides[index].imageAsset,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.center,
+                            filterQuality: FilterQuality.high,
+                            gaplessPlayback: true,
                           ),
                         ),
                       ),
-                    ),
-
-                    // Gradiasi IVORY di bagian bawah layar (BUKAN BLACK!)
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 480,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              AppColors.cream.withValues(alpha: 0.50),
-                              AppColors.cream.withValues(alpha: 0.90),
-                              AppColors.cream,
-                            ],
-                            stops: const [0.0, 0.28, 0.65, 1.0],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Logo Resmi WISGO (Floating di atas slide - Bergerak bersama perpindahan slide!)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 14),
-                          child: Center(
-                            child: AnimatedBuilder(
-                              animation: _logoFloatAnimation,
-                              builder: (context, child) {
-                                return Transform.translate(
-                                  offset: Offset(0, _logoFloatAnimation.value),
-                                  child: child,
-                                );
-                              },
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Soft contour drop shadow directly behind logo strokes
-                                  ImageFiltered(
-                                    imageFilter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                                    child: Image.asset(
-                                      'assets/images/logo_primary.png',
-                                      width: 135,
-                                      color: Colors.black.withValues(alpha: 0.30),
-                                      colorBlendMode: BlendMode.srcIn,
-                                    ),
-                                  ),
-                                  // Logo Asli dengan warna hijau asli
-                                  const WisgoLogo(
-                                    width: 135,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  }),
                 );
               },
             ),
 
-            // 2. Fixed Top Bar: Tombol Lewati di Kanan Atas -> Langsung Masuk sebagai Tamu Tanpa Login
+            // 2. Gradiasi Ivory Atas & Bawah Tetap Utuh (Tidak pernah terbelah saat swipe)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 170,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.cream.withValues(alpha: 0.34),
+                        AppColors.cream.withValues(alpha: 0.10),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 460,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        AppColors.cream.withValues(alpha: 0.48),
+                        AppColors.cream.withValues(alpha: 0.90),
+                        AppColors.cream,
+                      ],
+                      stops: const [0.0, 0.30, 0.66, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Invisible Fullscreen PageView untuk Gestur Geser Manual Halus ala Lenis
+            PageView.builder(
+              controller: _pageController,
+              itemCount: _slides.length,
+              physics: const _LenisSmoothPagePhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+              },
+              itemBuilder: (context, index) => const SizedBox.expand(),
+            ),
+
+            // 4. Logo Resmi WISGO Terpusat Utuh (Melayang halus tanpa terpotong ganda saat swipe)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: Center(
+                      child: AnimatedBuilder(
+                        animation: _logoFloatAnimation,
+                        builder: (context, child) {
+                          return Transform.translate(
+                            offset: Offset(0, _logoFloatAnimation.value),
+                            child: child,
+                          );
+                        },
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            ImageFiltered(
+                              imageFilter:
+                                  ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                              child: Image.asset(
+                                'assets/images/logo_primary.png',
+                                width: 135,
+                                color: AppColors.ink.withValues(alpha: 0.30),
+                                colorBlendMode: BlendMode.srcIn,
+                              ),
+                            ),
+                            const WisgoLogo(
+                              width: 135,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 5. Fixed Top Bar: Tombol Lewati di Kanan Atas -> Langsung Masuk sebagai Tamu Tanpa Login
             Positioned(
               top: 0,
               right: 0,
@@ -343,7 +386,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
+                              color: AppColors.ink.withValues(alpha: 0.08),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -352,7 +395,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: const Text(
                           'Lewati',
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.forest,
                             letterSpacing: 0.2,
@@ -365,7 +408,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // 3. Bottom Content: Indicator, Title, Subtitle, CTA Button di atas Gradiasi IVORY
+            // 6. Bottom Content: Real-time scrubbed Indicator, Title, Subtitle & CTA Button mengikuti geseran slider
             Positioned(
               left: 0,
               right: 0,
@@ -377,103 +420,116 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Dots Indicator (Warna Hijau Forest Khas WisGo & Sage)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_slides.length, (idx) {
-                          final isActive = _currentPage == idx;
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOutCubic,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: isActive ? 26 : 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? AppColors.forest
-                                  : AppColors.sageBorder,
-                              borderRadius: BorderRadius.circular(4),
-                              boxShadow: isActive
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.forest.withValues(alpha: 0.25),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 1),
+                      // Real-Time Scrubbed Dots Indicator + Horizontal Glide Title & Subtitle
+                      AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, _) {
+                          final double page = (_pageController.hasClients &&
+                                  _pageController.position.haveDimensions)
+                              ? (_pageController.page ?? _currentPage.toDouble())
+                              : _currentPage.toDouble();
+
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Dots Indicator mengikuti progres geseran jari secara real-time
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(_slides.length, (idx) {
+                                  final proximity =
+                                      (1.0 - (page - idx).abs()).clamp(0.0, 1.0);
+                                  final dotWidth =
+                                      ui.lerpDouble(7.0, 26.0, proximity)!;
+                                  final dotColor = Color.lerp(
+                                    AppColors.sageBorder,
+                                    AppColors.forest,
+                                    proximity,
+                                  )!;
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    width: dotWidth,
+                                    height: 7,
+                                    decoration: BoxDecoration(
+                                      color: dotColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                      boxShadow: proximity > 0.5
+                                          ? [
+                                              BoxShadow(
+                                                color: AppColors.forest
+                                                    .withValues(
+                                                  alpha: 0.25 * proximity,
+                                                ),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 1),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                  );
+                                }),
+                              ),
+                              const SizedBox(height: 22),
+
+                              // Title & Subtitle meluncur horizontal + cross-fade sinkron dengan slider (tanpa pop-up & adaptif segala skala font)
+                              IgnorePointer(
+                                child: Stack(
+                                  alignment: Alignment.topCenter,
+                                  clipBehavior: Clip.none,
+                                  children:
+                                      List.generate(_slides.length, (idx) {
+                                    final delta = idx - page;
+                                    final dist = delta.abs();
+                                    if (dist >= 1.0) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final opacity =
+                                        (1.0 - (dist * 1.45)).clamp(0.0, 1.0);
+                                    return Opacity(
+                                      opacity: opacity,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Transform.translate(
+                                            offset: Offset(delta * 52.0, 0),
+                                            child: Text(
+                                              _slides[idx].title,
+                                              textAlign: TextAlign.center,
+                                              style: const TextStyle(
+                                                fontSize: 30,
+                                                fontWeight: FontWeight.w800,
+                                                color: AppColors.forest,
+                                                height: 1.20,
+                                                letterSpacing: -0.4,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Transform.translate(
+                                            offset: Offset(delta * 74.0, 0),
+                                            child: Text(
+                                              _slides[idx].subtitle,
+                                              textAlign: TextAlign.center,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                                color: AppColors.muted,
+                                                height: 1.45,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ]
-                                  : null,
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 22),
-
-                      // Animated Title (Slide-up + Fade) dalam warna Hijau Forest di atas Ivory
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 360),
-                        transitionBuilder: (child, animation) {
-                          final curved = CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOutCubic,
-                          );
-                          return FadeTransition(
-                            opacity: curved,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.0, 0.25),
-                                end: Offset.zero,
-                              ).animate(curved),
-                              child: child,
-                            ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ],
                           );
                         },
-                        child: Text(
-                          _slides[_currentPage].title,
-                          key: ValueKey<int>(_currentPage),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.forest,
-                            height: 1.20,
-                            letterSpacing: -0.4,
-                          ),
-                        ),
                       ),
-                      const SizedBox(height: 10),
-
-                      // Animated Subtitle (Slide-up + Fade)
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 360),
-                        transitionBuilder: (child, animation) {
-                          final curved = CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOutCubic,
-                          );
-                          return FadeTransition(
-                            opacity: curved,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.0, 0.20),
-                                end: Offset.zero,
-                              ).animate(curved),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Text(
-                          _slides[_currentPage].subtitle,
-                          key: ValueKey<String>('sub_$_currentPage'),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.muted,
-                            height: 1.45,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 26),
+                      const SizedBox(height: 20),
 
                       // Primary Action Button (HIJAU RESMI WISGO: AppColors.forest #193D22)
                       GestureDetector(
@@ -493,7 +549,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 backgroundColor: AppColors.forest,
                                 foregroundColor: AppColors.cream,
                                 elevation: 3,
-                                shadowColor: Colors.black.withValues(alpha: 0.35),
+                                shadowColor: AppColors.ink.withValues(alpha: 0.35),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(28),
                                   side: BorderSide(

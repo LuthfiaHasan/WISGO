@@ -109,8 +109,8 @@ class _MorseSosModalState extends State<MorseSosModal> {
                         Text(
                           'SENTER MORSE SOS (100% OFFLINE)',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             color: accentColor,
                             letterSpacing: 0.5,
                           ),
@@ -162,7 +162,7 @@ class _MorseSosModalState extends State<MorseSosModal> {
                     'S  O  S',
                     style: TextStyle(
                       fontSize: 48,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       color: textColor,
                       letterSpacing: 8,
                     ),

@@ -64,8 +64,8 @@ Future<void> showActivityDetailModal({
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                           ),
                         ),
@@ -75,7 +75,7 @@ Future<void> showActivityDetailModal({
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppColors.ink.withValues(alpha: 0.65),
                           ),
@@ -198,7 +198,7 @@ class _ActivityModalRow extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.muted,
             ),
@@ -208,7 +208,7 @@ class _ActivityModalRow extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.ink,
               fontFeatures: const [FontFeature.tabularFigures()],
