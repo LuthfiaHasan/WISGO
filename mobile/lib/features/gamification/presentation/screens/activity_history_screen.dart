@@ -3,6 +3,8 @@ import '../../../../core/localization/app_locale.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/gamification_model.dart';
 import '../../services/gamification_service.dart';
+import '../modals/activity_detail_modal.dart';
+import '../widgets/activity_timeline_card.dart';
 
 /// Halaman Riwayat Perjalanan & Aktivitas Lengkap
 /// Menampilkan seluruh rekam jejak check-in, mitigasi jalur rawan, penaklukan tantangan,
@@ -79,202 +81,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   }
 
   void _showActivityDetailModal(BuildContext context, CheckInActivity act) {
-    showModalBottomSheet(
+    showActivityDetailModal(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Drag Handle
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 4.5,
-                  decoration: BoxDecoration(
-                    color: AppColors.warmBorder,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Title Header
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: act.iconColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: act.iconColor.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Icon(act.icon, color: act.iconColor, size: 24),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          act.destinationTitle,
-                          style: const TextStyle(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          act.region,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink.withValues(alpha: 0.65),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF86EFAC)),
-                    ),
-                    child: Text(
-                      '+${act.xpEarned} XP',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF15803D),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 18),
-              const Divider(color: AppColors.warmBorder, height: 1),
-              const SizedBox(height: 16),
-
-              // Rincian Detail Box
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.cream.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.warmBorder),
-                ),
-                child: Column(
-                  children: [
-                    _buildModalRow(
-                      icon: Icons.calendar_today_rounded,
-                      label: 'Waktu Aktivitas',
-                      value: _formatTimestamp(act.timestamp),
-                    ),
-                    const Divider(height: 16, color: AppColors.warmBorder),
-                    _buildModalRow(
-                      icon: Icons.verified_rounded,
-                      label: 'Status Verifikasi',
-                      value: 'GPS Terverifikasi (<500m)',
-                      valueColor: const Color(0xFF15803D),
-                    ),
-                    const Divider(height: 16, color: AppColors.warmBorder),
-                    _buildModalRow(
-                      icon: Icons.military_tech_rounded,
-                      label: 'Hadiah Diperoleh',
-                      value: '+${act.xpEarned} XP & +${act.pointsEarned} GP',
-                      valueColor: const Color(0xFFB45309),
-                    ),
-                    const Divider(height: 16, color: AppColors.warmBorder),
-                    _buildModalRow(
-                      icon: Icons.flag_rounded,
-                      label: 'Catatan Misi',
-                      value: act.note,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Action button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.forest,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Tutup Rincian',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildModalRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    Color? valueColor,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: AppColors.forest),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 110,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.muted,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: valueColor ?? AppColors.ink,
-            ),
-          ),
-        ),
-      ],
+      activity: act,
+      formattedTimestamp: _formatTimestamp(act.timestamp),
     );
   }
 
@@ -296,10 +106,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFC8D6C9)),
+                border: Border.all(color: AppColors.sageBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: AppColors.ink.withValues(alpha: 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -309,7 +119,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                 child: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 16,
-                  color: Color(0xFF1B382B),
+                  color: AppColors.forest,
                 ),
               ),
             ),
@@ -330,7 +140,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
             Text(
               AppLocale.tr('Semua rekam jejak check-in & perolehan XP', 'All check-in logs & XP earned'),
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: AppColors.ink.withValues(alpha: 0.65),
               ),
@@ -353,7 +163,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF193D22), Color(0xFF265233)],
+                    colors: [AppColors.forest, AppColors.brush],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -381,7 +191,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                               ),
                               child: const Icon(
                                 Icons.workspace_premium_rounded,
-                                color: Color(0xFFFDE68A),
+                                color: AppColors.warningBg,
                                 size: 20,
                               ),
                             ),
@@ -400,7 +210,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                                 Text(
                                   'Pangkat Petualang Aktif',
                                   style: TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 11,
                                     color: Colors.white.withValues(alpha: 0.7),
                                   ),
                                 ),
@@ -411,7 +221,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
+                            color: AppColors.warningBg,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -419,7 +229,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFFB45309),
+                              color: AppColors.warningDark,
                             ),
                           ),
                         ),
@@ -616,7 +426,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
@@ -675,129 +485,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   }
 
   Widget _buildTimelineCard(BuildContext context, CheckInActivity act) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.warmBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () => _showActivityDetailModal(context, act),
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon Box
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: act.iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: act.iconColor.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Icon(act.icon, color: act.iconColor, size: 22),
-              ),
-              const SizedBox(width: 12),
-
-              // Content Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      act.destinationTitle,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Text(
-                          act.region,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink.withValues(alpha: 0.7),
-                          ),
-                        ),
-                        Text(
-                          ' • ${_formatTimestamp(act.timestamp)}',
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            color: AppColors.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.cream.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        act.note,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // XP Badge & Arrow
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(color: const Color(0xFF86EFAC)),
-                    ),
-                    child: Text(
-                      '+${act.xpEarned} XP',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF15803D),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 12,
-                    color: AppColors.muted,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ActivityTimelineCard(
+      activity: act,
+      formattedTimestamp: _formatTimestamp(act.timestamp),
+      onTap: () => _showActivityDetailModal(context, act),
     );
   }
 }

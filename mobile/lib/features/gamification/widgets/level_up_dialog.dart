@@ -50,7 +50,7 @@ class LevelUpDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
+              color: AppColors.ink.withValues(alpha: 0.25),
               blurRadius: 30,
               offset: const Offset(0, 10),
             ),
@@ -65,7 +65,7 @@ class LevelUpDialog extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.forest, Color(0xFF142618)],
+                  colors: [AppColors.forest, AppColors.ink],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -82,9 +82,9 @@ class LevelUpDialog extends StatelessWidget {
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFE5C07B).withValues(alpha: 0.2),
+                          color: AppColors.goldSoft.withValues(alpha: 0.2),
                           border: Border.all(
-                            color: const Color(0xFFE5C07B).withValues(alpha: 0.6),
+                            color: AppColors.goldSoft.withValues(alpha: 0.6),
                             width: 2,
                           ),
                         ),
@@ -119,13 +119,13 @@ class LevelUpDialog extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
-                            color: Color(0xFFE5C07B),
+                            color: AppColors.goldSoft,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.auto_awesome_rounded,
                             size: 14,
-                            color: Color(0xFF142618),
+                            color: AppColors.ink,
                           ),
                         ),
                       ),
@@ -137,24 +137,24 @@ class LevelUpDialog extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE5C07B).withValues(alpha: 0.2),
+                      color: AppColors.goldSoft.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFFE5C07B).withValues(alpha: 0.5),
+                        color: AppColors.goldSoft.withValues(alpha: 0.5),
                       ),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.bolt_rounded, size: 14, color: Color(0xFFE5C07B)),
+                        Icon(Icons.bolt_rounded, size: 14, color: AppColors.goldSoft),
                         SizedBox(width: 4),
                         Text(
                           'LEVEL UP! TINGKAT PETUALANG NAIK',
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.1,
-                            color: Color(0xFFE5C07B),
+                            color: AppColors.goldSoft,
                           ),
                         ),
                       ],
@@ -179,7 +179,7 @@ class LevelUpDialog extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFFDFECE2),
+                      color: AppColors.sage,
                       height: 1.3,
                     ),
                   ),
@@ -210,7 +210,7 @@ class LevelUpDialog extends StatelessWidget {
                             const Text(
                               'TINGKAT SEBELUMNYA',
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.muted,
                                 letterSpacing: 0.8,
@@ -238,9 +238,9 @@ class LevelUpDialog extends StatelessWidget {
                             const Text(
                               'TINGKAT SAAT INI',
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFFD97706),
+                                color: AppColors.warning,
                                 letterSpacing: 0.8,
                               ),
                             ),
@@ -265,9 +265,9 @@ class LevelUpDialog extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.successBg,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                      border: Border.all(color: AppColors.successBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,13 +275,13 @@ class LevelUpDialog extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+                            color: AppColors.success.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.card_giftcard_rounded,
                             size: 16,
-                            color: Color(0xFF16A34A),
+                            color: AppColors.success,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -294,7 +294,7 @@ class LevelUpDialog extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF15803D),
+                                  color: AppColors.success,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -303,7 +303,7 @@ class LevelUpDialog extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF166534),
+                                  color: AppColors.forest,
                                   height: 1.3,
                                 ),
                               ),

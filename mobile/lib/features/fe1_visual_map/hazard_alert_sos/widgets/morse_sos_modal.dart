@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Modal Darurat 100% Offline: Senter Visual Pola Morse SOS (· · · — — — · · ·)
 /// - Berfungsi penuh tanpa jaringan internet / sinyal seluler
@@ -77,9 +78,9 @@ class _MorseSosModalState extends State<MorseSosModal> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = _isLightOn ? Colors.white : const Color(0xFF0D0D0D);
-    final textColor = _isLightOn ? Colors.black : Colors.white;
-    final accentColor = _isLightOn ? const Color(0xFFD32F2F) : Colors.redAccent;
+    final bgColor = _isLightOn ? Colors.white : AppColors.ink;
+    final textColor = _isLightOn ? AppColors.ink : Colors.white;
+    final accentColor = _isLightOn ? AppColors.danger : Colors.redAccent;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -211,7 +212,7 @@ class _MorseSosModalState extends State<MorseSosModal> {
                 height: 52,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD32F2F),
+                    backgroundColor: AppColors.danger,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),

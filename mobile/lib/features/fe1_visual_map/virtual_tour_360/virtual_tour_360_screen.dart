@@ -119,14 +119,14 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
             loadingBuilder: (context, child, progress) {
               if (progress == null) return child;
               return Container(
-                color: const Color(0xFF102218),
+                color: AppColors.ink,
                 alignment: Alignment.center,
                 child: const SizedBox(
                   width: 28,
                   height: 28,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.4,
-                    color: Color(0xFF6EE7B7),
+                    color: AppColors.successBorder,
                   ),
                 ),
               );
@@ -178,13 +178,13 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.black54,
+              color: AppColors.muted,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               isLeft ? 'LEFT EYE' : 'RIGHT EYE',
               style: const TextStyle(
-                fontSize: 9,
+                fontSize: 11,
                 color: Colors.white70,
                 fontWeight: FontWeight.bold,
               ),
@@ -273,26 +273,30 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     Color iconColor = Colors.white,
     bool highlighted = false,
   }) {
-    final btn = GestureDetector(
-      onTap: onTap,
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: highlighted
-                  ? AppColors.green800.withValues(alpha: 0.82)
-                  : Colors.black.withValues(alpha: 0.34),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.26),
-                width: 1,
+    final btn = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: highlighted
+                    ? AppColors.forest.withValues(alpha: 0.82)
+                    : AppColors.ink.withValues(alpha: 0.34),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.26),
+                  width: 1,
+                ),
               ),
+              alignment: Alignment.center,
+              child: Icon(icon, color: iconColor, size: 19),
             ),
-            alignment: Alignment.center,
-            child: Icon(icon, color: iconColor, size: 19),
           ),
         ),
       ),
@@ -332,7 +336,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.34),
+                          color: AppColors.ink.withValues(alpha: 0.34),
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.22),
@@ -374,7 +378,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Colors.white70,
-                                      fontSize: 10.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -393,7 +397,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                   tooltip: _isVrMode
                       ? AppLocale.tr('Keluar Mode VR', 'Exit VR Mode')
                       : AppLocale.tr('Mode VR', 'VR Mode'),
-                  iconColor: _isVrMode ? const Color(0xFFF5B041) : Colors.white,
+                  iconColor: _isVrMode ? AppColors.goldSoft : Colors.white,
                   highlighted: _isVrMode,
                   onTap: () => setState(() => _isVrMode = !_isVrMode),
                 ),
@@ -404,7 +408,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                       : Icons.screen_lock_rotation_rounded,
                   tooltip: AppLocale.tr('Sensor Gyroscope', 'Gyroscope Sensor'),
                   iconColor:
-                      _isGyroEnabled ? const Color(0xFF6EE7B7) : Colors.white60,
+                      _isGyroEnabled ? AppColors.successBorder : Colors.white60,
                   onTap: () =>
                       setState(() => _isGyroEnabled = !_isGyroEnabled),
                 ),
@@ -421,7 +425,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                     child: Container(
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.34),
+                        color: AppColors.ink.withValues(alpha: 0.34),
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.22),
@@ -475,7 +479,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                       vertical: 9,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.42),
+                      color: AppColors.ink.withValues(alpha: 0.42),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.22),
@@ -486,7 +490,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                       children: [
                         const Icon(
                           Icons.touch_app_rounded,
-                          color: Color(0xFF6EE7B7),
+                          color: AppColors.successBorder,
                           size: 16,
                         ),
                         const SizedBox(width: 7),
@@ -523,7 +527,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
       valueListenable: AppLocale.notifier,
       builder: (context, _, __) {
         return Scaffold(
-          backgroundColor: AppColors.ink900,
+          backgroundColor: AppColors.ink,
           body: _isVrMode
               ? Stack(
                   fit: StackFit.expand,
@@ -533,7 +537,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                         Expanded(child: _buildVrEyeView(isLeft: true)),
                         Container(
                           width: 4,
-                          color: Colors.black,
+                          color: AppColors.ink,
                           child: const Center(
                             child: Icon(
                               Icons.circle,
@@ -572,7 +576,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withValues(alpha: 0.52),
+                                AppColors.ink.withValues(alpha: 0.52),
                                 Colors.transparent,
                               ],
                             ),
@@ -592,7 +596,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: [
-                                Colors.black.withValues(alpha: 0.48),
+                                AppColors.ink.withValues(alpha: 0.48),
                                 Colors.transparent,
                               ],
                             ),
@@ -629,31 +633,35 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.green800.withValues(alpha: 0.92)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 14),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 11.5,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.forest.withValues(alpha: 0.92)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 14),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11.5,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

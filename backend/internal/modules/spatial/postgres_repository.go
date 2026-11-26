@@ -244,3 +244,52 @@ func (r *postgresRepository) ListEmergencyContacts(corridorFilter string) []mode
 func (r *postgresRepository) FindNearestEmergencyContact(lat, lng float64) *models.EmergencyContact {
 	return r.fallback.FindNearestEmergencyContact(lat, lng)
 }
+
+func (r *postgresRepository) UpdateSOSSignalStatus(idOrCode, status, sarUnit string) (*models.SOSSignal, error) {
+	updated, err := r.fallback.UpdateSOSSignalStatus(idOrCode, status, sarUnit)
+	if err == nil && updated != nil {
+		_, _ = r.db.Exec(`
+			UPDATE sos_signals
+			SET status = $1, nearest_rescue_post = $2
+			WHERE LOWER(id) = LOWER($3) OR LOWER(sos_code) = LOWER($3);
+		`, updated.Status, updated.NearestRescuePost, idOrCode)
+	}
+	return updated, err
+}
+
+func (r *postgresRepository) UpsertEmergencyContact(contact models.EmergencyContact) models.EmergencyContact {
+	saved := r.fallback.UpsertEmergencyContact(contact)
+	_, err := r.db.Exec(`
+		INSERT INTO emergency_contacts (
+			id, corridor_code, agency_type, agency_name, phone_number, whatsapp_number, city, is_active
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+		ON CONFLICT (id) DO UPDATE SET
+			agency_type = EXCLUDED.agency_type,
+			agency_name = EXCLUDED.agency_name,
+			phone_number = EXCLUDED.phone_number,
+			whatsapp_number = EXCLUDED.whatsapp_number,
+			city = EXCLUDED.city,
+			is_active = TRUE;
+	`, saved.ID, saved.CorridorCode, saved.AgencyType, saved.AgencyName, saved.PhoneNumber, saved.WhatsAppNumber, saved.City)
+	if err != nil {
+		_, _ = r.db.Exec(`
+			INSERT INTO emergency_contacts (
+				id, agency_name, agency_type, phone_number, whatsapp_number, city_regency, created_by_admin_id, is_active
+			) VALUES ($1, $2, $3, $4, $5, $6, 'usr-001', TRUE)
+			ON CONFLICT (id) DO UPDATE SET
+				agency_type = EXCLUDED.agency_type,
+				agency_name = EXCLUDED.agency_name,
+				phone_number = EXCLUDED.phone_number,
+				whatsapp_number = EXCLUDED.whatsapp_number,
+				city_regency = EXCLUDED.city_regency,
+				is_active = TRUE;
+		`, saved.ID, saved.AgencyName, saved.AgencyType, saved.PhoneNumber, saved.WhatsAppNumber, saved.City)
+	}
+	return saved
+}
+
+func (r *postgresRepository) DeleteEmergencyContact(id string) error {
+	_, _ = r.db.Exec(`DELETE FROM emergency_contacts WHERE LOWER(id) = LOWER($1);`, id)
+	return r.fallback.DeleteEmergencyContact(id)
+}
+

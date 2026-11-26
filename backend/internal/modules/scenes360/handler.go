@@ -29,6 +29,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// Publik: Kanvas Penjelajah 360° Aerial-to-Ground & Hotspots
 	rg.GET("/destinations/:id/scenes-360", h.GetDestinationScenes360)
 	rg.GET("/scenes-360/:sceneId/hotspots", h.GetSceneHotspots)
+	rg.GET("/scenes-360/detail/:sceneId", h.GetSceneHotspots)
+	rg.GET("/scenes-360/:sceneId", h.GetDestinationScenes360ByParam)
 
 	// Admin CMS: Proteksi RBAC JWT (admin_dispar & pokdarwis)
 	adminAuth := middleware.RequireRoles("admin_dispar", "pokdarwis")
@@ -65,6 +67,17 @@ func (h *Handler) GetDestinationScenes360(c *gin.Context) {
 		}
 		return resp, http.StatusOK, nil
 	})
+}
+
+// GetDestinationScenes360ByParam GET /api/v1/scenes-360/:sceneId (Kompatibilitas Mobile ApiService.getScenes360)
+func (h *Handler) GetDestinationScenes360ByParam(c *gin.Context) {
+	idOrSlug := c.Param("sceneId")
+	resp, err := h.service.GetScenesByDestination(idOrSlug)
+	if err == nil {
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	h.GetSceneHotspots(c)
 }
 
 // CreateScene360CMS POST /api/v1/admin/scenes-360

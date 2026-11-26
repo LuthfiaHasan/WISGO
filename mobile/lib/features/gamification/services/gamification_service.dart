@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../models/gamification_model.dart';
 
 /// Service Gamifikasi WISGO terpusat (ChangeNotifier Singleton):
@@ -159,7 +160,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Lencana Beginner',
         subtitle: 'Level 1 – Awal Penjelajahan',
         icon: Icons.hiking_rounded,
-        color: const Color(0xFF64748B),
+        color: AppColors.muted,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 45)),
         xpReward: 100,
@@ -171,7 +172,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Lencana Explorer',
         subtitle: 'Level 2 – Penjelajah Aktif',
         icon: Icons.explore_rounded,
-        color: const Color(0xFF2563EB),
+        color: AppColors.pinNavigasiBiru,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 30)),
         xpReward: 200,
@@ -183,7 +184,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Lencana Adventurer',
         subtitle: 'Level 3 – Penakluk Medan',
         icon: Icons.terrain_rounded,
-        color: const Color(0xFF16A34A),
+        color: AppColors.success,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 14)),
         xpReward: 300,
@@ -195,7 +196,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Lencana Trailblazer',
         subtitle: 'Level 4 – Perintis Rute',
         icon: Icons.stars_rounded,
-        color: const Color(0xFFD97706),
+        color: AppColors.warning,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 2)),
         xpReward: 400,
@@ -207,7 +208,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Lencana Wanderer',
         subtitle: 'Level 5 – Mahaguru Penjelajah',
         icon: Icons.workspace_premium_rounded,
-        color: const Color(0xFF8B5CF6),
+        color: AppColors.goldMinang,
         isUnlocked: false,
         xpReward: 500,
         category: 'grade',
@@ -220,7 +221,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Puncak Singgalang',
         subtitle: 'Telaga Dewi & Hutan Lumut',
         icon: Icons.emoji_events_rounded,
-        color: const Color(0xFFE2B755),
+        color: AppColors.goldSoft,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 7)),
         xpReward: 250,
@@ -232,7 +233,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Penakluk Kelok 9',
         subtitle: 'Mahakarya Jembatan Lembah',
         icon: Icons.military_tech_rounded,
-        color: const Color(0xFF0284C7),
+        color: AppColors.info,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 4)),
         xpReward: 200,
@@ -244,7 +245,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Nagari Pariangan',
         subtitle: 'Nagari Tertua Minangkabau',
         icon: Icons.account_balance_rounded,
-        color: const Color(0xFF059669),
+        color: AppColors.success,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 3)),
         xpReward: 150,
@@ -256,7 +257,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Randang Otentik',
         subtitle: 'Kuliner Legenda Dunia',
         icon: Icons.restaurant_rounded,
-        color: const Color(0xFFDC2626),
+        color: AppColors.danger,
         isUnlocked: true,
         unlockedAt: DateTime.now().subtract(const Duration(days: 1)),
         xpReward: 100,
@@ -268,7 +269,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Rimba Harau',
         subtitle: 'Tebing Granit 500m',
         icon: Icons.lock_outline_rounded,
-        color: const Color(0xFF64748B),
+        color: AppColors.muted,
         isUnlocked: false,
         xpReward: 200,
         category: 'destination',
@@ -279,7 +280,7 @@ class GamificationService extends ChangeNotifier {
         title: 'Master Marapi',
         subtitle: 'Kawah & Cadas Bersejarah',
         icon: Icons.lock_outline_rounded,
-        color: const Color(0xFF64748B),
+        color: AppColors.muted,
         isUnlocked: false,
         xpReward: 300,
         category: 'destination',
@@ -297,7 +298,7 @@ class GamificationService extends ChangeNotifier {
         pointsEarned: 100,
         note: 'Check-in GPS Terverifikasi (<500m) • Progres Tantangan 4/10',
         icon: Icons.pin_drop_rounded,
-        iconColor: const Color(0xFF16A34A),
+        iconColor: AppColors.success,
       ),
       CheckInActivity(
         id: 'act-2',
@@ -308,7 +309,7 @@ class GamificationService extends ChangeNotifier {
         pointsEarned: 150,
         note: 'Jalur Rawan Berhasil Dilewati dengan Aman • Audio Guide Aktif',
         icon: Icons.hiking_rounded,
-        iconColor: const Color(0xFF2563EB),
+        iconColor: AppColors.pinNavigasiBiru,
       ),
       CheckInActivity(
         id: 'act-3',
@@ -319,7 +320,7 @@ class GamificationService extends ChangeNotifier {
         pointsEarned: 200,
         note: 'Membuka Lencana Resmi Penakluk Kelok 9',
         icon: Icons.military_tech_rounded,
-        iconColor: const Color(0xFFD97706),
+        iconColor: AppColors.warning,
       ),
       CheckInActivity(
         id: 'act-4',
@@ -330,7 +331,7 @@ class GamificationService extends ChangeNotifier {
         pointsEarned: 100,
         note: 'Check-in di Desa Wisata Tertua • Pemandu Adat Terhubung',
         icon: Icons.storefront_rounded,
-        iconColor: const Color(0xFF9333EA),
+        iconColor: AppColors.goldMinang,
       ),
     ];
   }
@@ -401,7 +402,7 @@ class GamificationService extends ChangeNotifier {
       pointsEarned: pointBonus,
       note: 'Check-in GPS Terverifikasi (<500m) • Progres Tantangan ${_challenges.first.currentCheckpoints}/${_challenges.first.targetCheckpoints}',
       icon: Icons.pin_drop_rounded,
-      iconColor: const Color(0xFF16A34A),
+      iconColor: AppColors.success,
     );
     _activityHistory.insert(0, newActivity);
 
@@ -453,7 +454,7 @@ class GamificationService extends ChangeNotifier {
         pointsEarned: xp ~/ 2,
         note: reason,
         icon: Icons.stars_rounded,
-        iconColor: const Color(0xFFD97706),
+        iconColor: AppColors.warning,
       ),
     );
 

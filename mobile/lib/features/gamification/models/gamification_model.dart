@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// 5 Tingkatan (Grade) Petualang WISGO:
 /// Level 1 – Beginner: 0–299 XP (awal / 1 perjalanan atau check-in pertama)
@@ -38,8 +39,8 @@ class AdventurerGrade {
     minXp: 0,
     maxXp: 300,
     icon: Icons.hiking_rounded,
-    primaryColor: Color(0xFF64748B),
-    accentColor: Color(0xFF94A3B8),
+    primaryColor: AppColors.muted,
+    accentColor: AppColors.muted,
     description: 'Langkah awal penjelajahan di Ranah Minang.',
     perks: 'Akses Peta Wisata & Check-in GPS Pertama',
   );
@@ -51,8 +52,8 @@ class AdventurerGrade {
     minXp: 300,
     maxXp: 700,
     icon: Icons.explore_rounded,
-    primaryColor: Color(0xFF2563EB),
-    accentColor: Color(0xFF60A5FA),
+    primaryColor: AppColors.pinNavigasiBiru,
+    accentColor: AppColors.infoBorder,
     description: 'Menjelajah berbagai destinasi nagari dan rute budaya.',
     perks: 'Stempel Paspor Digital & Diskon Tiket Nagari 5%',
   );
@@ -64,8 +65,8 @@ class AdventurerGrade {
     minXp: 700,
     maxXp: 1200,
     icon: Icons.terrain_rounded,
-    primaryColor: Color(0xFF16A34A),
-    accentColor: Color(0xFF4ADE80),
+    primaryColor: AppColors.success,
+    accentColor: AppColors.success,
     description: 'Menaklukkan jalur alam, air terjun, dan lembah ikonik.',
     perks: 'Audio Guide Budaya Offline & Lencana Khusus Geotourist',
   );
@@ -77,8 +78,8 @@ class AdventurerGrade {
     minXp: 1200,
     maxXp: 2000,
     icon: Icons.stars_rounded,
-    primaryColor: Color(0xFFD97706),
-    accentColor: Color(0xFFFBBF24),
+    primaryColor: AppColors.warning,
+    accentColor: AppColors.warning,
     description: 'Perintis rute terpencil & penjelajah aktif Sumatera Barat.',
     perks: 'Tier Platinum Geode Ranking & Rekomendasi Khusus Dispar',
   );
@@ -90,8 +91,8 @@ class AdventurerGrade {
     minXp: 2000,
     maxXp: 3000,
     icon: Icons.workspace_premium_rounded,
-    primaryColor: Color(0xFF8B5CF6),
-    accentColor: Color(0xFFA78BFA),
+    primaryColor: AppColors.goldMinang,
+    accentColor: AppColors.goldSoft,
     description: 'Puncak Penjelajah Agung Ranah Minang sejati.',
     perks: 'Apresiasi Pemprov Sumbar, Paspor Emas & Peringkat Elit',
   );
@@ -238,7 +239,7 @@ class CheckInActivity {
     required this.pointsEarned,
     required this.note,
     this.icon = Icons.pin_drop_rounded,
-    this.iconColor = const Color(0xFF16A34A),
+    this.iconColor = AppColors.success,
   });
 }
 

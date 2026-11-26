@@ -22,6 +22,9 @@ type Service interface {
 	GetNearbyDestinations(lat, lng float64, radiusKm float64, category string) []models.Destination
 	OptimizeTSP(req OptimizeTSPRequest) (*OptimizeTSPResponse, error)
 	GetEmergencyContacts(corridor string) *EmergencyContactsResponse
+	UpdateSOSTicketStatus(idOrCode, status, sarUnit string) (*models.SOSSignal, error)
+	UpsertEmergencyContact(contact models.EmergencyContact) models.EmergencyContact
+	DeleteEmergencyContact(id string) error
 }
 
 type service struct {
@@ -229,6 +232,18 @@ func (s *service) GetEmergencyContacts(corridor string) *EmergencyContactsRespon
 		Contacts:      list,
 		EmergencyCall: &callProtocol,
 	}
+}
+
+func (s *service) UpdateSOSTicketStatus(idOrCode, status, sarUnit string) (*models.SOSSignal, error) {
+	return s.repo.UpdateSOSSignalStatus(idOrCode, status, sarUnit)
+}
+
+func (s *service) UpsertEmergencyContact(contact models.EmergencyContact) models.EmergencyContact {
+	return s.repo.UpsertEmergencyContact(contact)
+}
+
+func (s *service) DeleteEmergencyContact(id string) error {
+	return s.repo.DeleteEmergencyContact(id)
 }
 
 func (s *service) RecordTelemetry(input NavigationTelemetryInput) (*models.GaodeBehaviorRanking, error) {
