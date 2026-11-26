@@ -608,49 +608,62 @@ const List<SumbarMapDestination> kSumbarMapDestinations = [
   ),
 ];
 
-/// Kategori filter cepat untuk Tab Peta Wisata Sumbar
+/// Kategori filter cepat + legenda ikon pin 3D untuk Tab Peta Wisata Sumbar
 enum SumbarMapCategory {
-  semua('Semua', 'All', Icons.explore_rounded),
-  pantai('Pantai & Bahari', 'Beach & Sea', Icons.sailing_rounded),
-  gunung('Gunung & Alam', 'Mountain & Nature', Icons.terrain_rounded),
-  airTerjun('Air Terjun', 'Waterfalls', Icons.water_drop_rounded),
-  budaya('Budaya', 'Culture', Icons.account_balance_rounded);
+  semua('Semua', 'All', Icons.explore_rounded, 'assets/images/cat_peta.png'),
+  pantai('Pantai', 'Beach', Icons.sailing_rounded, 'assets/images/pin_pantai.png'),
+  gunung('Gunung', 'Mountain', Icons.terrain_rounded, 'assets/images/pin_gunung.png'),
+  airTerjun('Air Terjun', 'Waterfall', Icons.water_drop_rounded, 'assets/images/pin_airterjun.png'),
+  budaya('Budaya', 'Culture', Icons.account_balance_rounded, 'assets/images/pin_budaya.png'),
+  religi('Religi', 'Religious', Icons.mosque_rounded, 'assets/images/pin_religi.png');
 
-  const SumbarMapCategory(this.labelId, this.labelEn, this.icon);
+  const SumbarMapCategory(this.labelId, this.labelEn, this.icon, this.pinAsset);
   final String labelId;
   final String labelEn;
   final IconData icon;
+  final String pinAsset;
 
   String get label => AppLocale.isEn ? labelEn : labelId;
 
   bool matches(SumbarMapDestination dest) {
     if (this == SumbarMapCategory.semua) return true;
     final cat = dest.category.toLowerCase();
+    final name = dest.name.toLowerCase();
+    final combined = '$cat $name';
     switch (this) {
       case SumbarMapCategory.semua:
         return true;
       case SumbarMapCategory.pantai:
-        return cat.contains('pantai') || cat.contains('bahari') || cat.contains('danau');
+        return combined.contains('pantai') ||
+            combined.contains('bahari') ||
+            combined.contains('pulau') ||
+            combined.contains('mandeh');
       case SumbarMapCategory.gunung:
-        return cat.contains('gunung') ||
-            cat.contains('puncak') ||
-            cat.contains('hutan') ||
-            cat.contains('lembah') ||
-            cat.contains('alam') ||
-            cat.contains('geopark') ||
-            cat.contains('hidden');
+        return combined.contains('gunung') ||
+            combined.contains('puncak') ||
+            combined.contains('hutan') ||
+            combined.contains('lembah') ||
+            combined.contains('alam') ||
+            combined.contains('geopark') ||
+            combined.contains('hidden');
       case SumbarMapCategory.airTerjun:
-        return cat.contains('air terjun') ||
-            cat.contains('sarasah') ||
-            cat.contains('lubuk');
+        return combined.contains('air terjun') ||
+            combined.contains('sarasah') ||
+            combined.contains('lubuk') ||
+            combined.contains('danau');
       case SumbarMapCategory.budaya:
-        return cat.contains('budaya') ||
-            cat.contains('adat') ||
-            cat.contains('sejarah') ||
-            cat.contains('ikon') ||
-            cat.contains('religi') ||
-            cat.contains('masjid') ||
-            cat.contains('museum');
+        if (combined.contains('masjid') || combined.contains('religi')) {
+          return false;
+        }
+        return combined.contains('budaya') ||
+            combined.contains('adat') ||
+            combined.contains('sejarah') ||
+            combined.contains('ikon') ||
+            combined.contains('museum');
+      case SumbarMapCategory.religi:
+        return combined.contains('masjid') ||
+            combined.contains('religi') ||
+            combined.contains('surau');
     }
   }
 }

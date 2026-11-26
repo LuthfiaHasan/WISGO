@@ -4925,76 +4925,102 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     : null,
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
                 children: [
-                  // 0. FILTER KATEGORI HORIZONTAL (Di luar kanvas peta agar peta tetap lega)
-                  SizedBox(
-                    height: 38,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      itemCount: SumbarMapCategory.values.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, idx) {
-                        final cat = SumbarMapCategory.values[idx];
-                        final active = _selectedPetaCategory == cat;
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: () {
-                              final nextList = filterSumbarMapDestinations(cat);
-                              setState(() {
-                                _selectedPetaCategory = cat;
-                                if (_selectedPetaDestinationId != null &&
-                                    !nextList.any(
-                                      (d) => d.id == _selectedPetaDestinationId,
-                                    )) {
-                                  _selectedPetaDestinationId = null;
-                                }
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: active ? AppColors.forest : AppColors.bgCard,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: active
-                                      ? AppColors.forest
-                                      : AppColors.warmBorder,
+                  // 0. FILTER & LEGENDA PIN 3D PETA (Grid 3x2 Statis, Tanpa Slider)
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    itemCount: SumbarMapCategory.values.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      mainAxisExtent: 38,
+                    ),
+                    itemBuilder: (context, idx) {
+                      final cat = SumbarMapCategory.values[idx];
+                      final active = _selectedPetaCategory == cat;
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(999),
+                              onTap: () {
+                                final nextList = filterSumbarMapDestinations(cat);
+                                setState(() {
+                                  _selectedPetaCategory = cat;
+                                  if (_selectedPetaDestinationId != null &&
+                                      !nextList.any(
+                                        (d) => d.id == _selectedPetaDestinationId,
+                                      )) {
+                                    _selectedPetaDestinationId = null;
+                                  }
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    cat.icon,
-                                    size: 14,
-                                    color: active ? Colors.white : AppColors.forest,
+                                decoration: BoxDecoration(
+                                  color: active
+                                      ? AppColors.sage.withValues(alpha: 0.88)
+                                      : Colors.white.withValues(alpha: 0.65),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: active
+                                        ? AppColors.brush.withValues(alpha: 0.45)
+                                        : AppColors.warmBorder.withValues(alpha: 0.85),
+                                    width: active ? 1.2 : 1.0,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    cat.label,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: active ? Colors.white : AppColors.ink,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      cat.pinAsset,
+                                      width: 19,
+                                      height: 19,
+                                      fit: BoxFit.contain,
+                                      filterQuality: FilterQuality.medium,
+                                      errorBuilder: (_, __, ___) => Icon(
+                                        cat.icon,
+                                        size: 14,
+                                        color: AppColors.forest,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text(
+                                        cat.label,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: active
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          color: active
+                                              ? AppColors.forest
+                                              : AppColors.ink,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 12),
-
                   // 1. REAL INTERACTIVE SUMBAR MAP (Clean & Ringan)
                   SumbarRealMapWidget(
                     height: 330,
