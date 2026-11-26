@@ -155,7 +155,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   final ScrollController _petaScrollController = ScrollController();
   bool _petaMapInteracting = false;
 
-  // Navigation Items (5 Tabs: Beranda, Trip Go, Peta, Check-In, Profil)
+  // Navigation Items (5 Tabs: Beranda, Trip Go, Check-In, Peta, Profil)
   static const List<Map<String, dynamic>> _navItems = [
     {
       'label': 'Beranda',
@@ -170,16 +170,16 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       'activeIcon': Icons.groups_rounded,
     },
     {
-      'label': 'Peta',
-      'labelEn': 'Map',
-      'icon': Icons.map_outlined,
-      'activeIcon': Icons.map_rounded,
-    },
-    {
       'label': 'Check-In',
       'labelEn': 'Check-In',
       'icon': Icons.qr_code_scanner_rounded,
       'activeIcon': Icons.qr_code_scanner_rounded,
+    },
+    {
+      'label': 'Peta',
+      'labelEn': 'Map',
+      'icon': Icons.map_outlined,
+      'activeIcon': Icons.map_rounded,
     },
     {
       'label': 'Profil',
@@ -484,7 +484,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
   void _openPlaceBarometer(int baroIndex) {
     setState(() {
-      _activeTabIndex = 2; // Buka Peta Interaktif
+      _activeTabIndex = 3; // Buka Peta Interaktif
     });
   }
 
@@ -506,14 +506,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     onRetry: () => setState(() => _isOfflineMode = false),
                   ),
 
-                // Active Main View (5 Tabs: Beranda, Open Trip, Peta, Kamus Minang, Profil)
+                // Active Main View (5 Tabs: Beranda, Trip Go, Check-In, Peta, Profil)
                 Expanded(
                   child: IndexedStack(
                     index: _activeTabIndex.clamp(0, _navItems.length - 1),
                     children: [
                       _buildExploreView(),
                       _buildOpenTripView(),
-                      _buildPetaView(),
                       AudioCultureScreen(
                         embedded: true,
                         remindedFestivalIds: _remindedFestivalIds,
@@ -521,6 +520,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         onNavigateToGps: _navigateToGpsLocation,
                         festivals: _budayaFestivals,
                       ),
+                      _buildPetaView(),
                       _buildProfileView(),
                     ],
                   ),
@@ -1216,7 +1216,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         'icon': Icons.map_rounded,
         'iconColor': AppColors.pinNavigasiBiru,
         'bgColor': AppColors.infoBg,
-        'onTap': () => setState(() => _activeTabIndex = 2),
+        'onTap': () => setState(() => _activeTabIndex = 3),
       },
       {
         'label': AppLocale.tr('Shunlu', 'Shunlu'),
@@ -10000,18 +10000,18 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  /// Mobile Navigation Bar dengan lekukan cekung (Curved Notch) & floating circle icon + shadow berlapis
+  /// Mobile Navigation Bar dengan lekukan cekung (Curved Notch) ultra-smooth & shadow berlapis
   Widget _buildClean4ButtonBottomNavigationBar() {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
         child: SizedBox(
-          height: 78,
+          height: 82,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final totalWidth = constraints.maxWidth;
-              const double horizontalInset = 12.0;
+              const double horizontalInset = 10.0;
               final usableWidth =
                   (totalWidth - (horizontalInset * 2)).clamp(1.0, totalWidth);
               final safeIndex = _activeTabIndex.clamp(0, _navItems.length - 1);
@@ -10021,8 +10021,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
               return TweenAnimationBuilder<double>(
                 tween: Tween<double>(end: targetCenterX),
-                duration: const Duration(milliseconds: 280),
-                curve: Curves.easeOutCubic,
+                duration: const Duration(milliseconds: 340),
+                curve: Curves.easeOutQuart,
                 builder: (context, animatedCenterX, _) {
                   return Stack(
                     clipBehavior: Clip.none,
@@ -10036,13 +10036,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         ),
                       ),
 
-                      // 2. Floating Active Circle Icon inside the Notch
+                      // 2. Floating Active Circle Icon inside the Notch (Smooth AnimatedSwitcher)
                       Positioned(
-                        top: -6,
-                        left: animatedCenterX - 24,
+                        top: -8,
+                        left: animatedCenterX - 25,
                         child: Container(
-                          width: 48,
-                          height: 48,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
                             color: AppColors.bgCard,
                             shape: BoxShape.circle,
@@ -10052,13 +10052,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.forest.withValues(alpha: 0.28),
-                                blurRadius: 16,
+                                color: AppColors.forest.withValues(alpha: 0.24),
+                                blurRadius: 18,
                                 spreadRadius: 1,
                                 offset: const Offset(0, 6),
                               ),
                               BoxShadow(
-                                color: AppColors.ink.withValues(alpha: 0.14),
+                                color: AppColors.ink.withValues(alpha: 0.12),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
@@ -10066,30 +10066,45 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Container(
-                            width: 30,
-                            height: 30,
+                            width: 32,
+                            height: 32,
                             decoration: BoxDecoration(
-                              color: AppColors.sage.withValues(alpha: 0.72),
+                              color: AppColors.sage.withValues(alpha: 0.78),
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
-                            child: Icon(
-                              _navItems[safeIndex]['activeIcon'] as IconData,
-                              size: 20,
-                              color: AppColors.forest,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              transitionBuilder: (child, anim) =>
+                                  ScaleTransition(
+                                scale: CurvedAnimation(
+                                  parent: anim,
+                                  curve: Curves.easeOutBack,
+                                ),
+                                child: FadeTransition(
+                                  opacity: anim,
+                                  child: child,
+                                ),
+                              ),
+                              child: Icon(
+                                _navItems[safeIndex]['activeIcon'] as IconData,
+                                key: ValueKey<int>(safeIndex),
+                                size: 20,
+                                color: AppColors.forest,
+                              ),
                             ),
                           ),
                         ),
                       ),
 
-                      // 3. 5 Navigation Columns
+                      // 3. 5 Navigation Columns (Beranda, Trip Go, Check-In, Peta, Profil)
                       Positioned.fill(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(
                             horizontalInset,
-                            14,
+                            16,
                             horizontalInset,
-                            13,
+                            14,
                           ),
                           child: Row(
                             children: List.generate(_navItems.length, (idx) {
@@ -10102,7 +10117,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
                                     onTap: () {
-                                      if (idx == 3) {
+                                      if (idx == 2) {
                                         _runWithAuthGuard(
                                           title: 'Masuk untuk Check-In GPS',
                                           description:
@@ -10118,27 +10133,28 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       children: [
                                         AnimatedOpacity(
                                           duration: const Duration(
-                                            milliseconds: 180,
+                                            milliseconds: 220,
                                           ),
+                                          curve: Curves.easeOutCubic,
                                           opacity: isSelected ? 0.0 : 1.0,
                                           child: Icon(
                                             item['icon'] as IconData,
-                                            size: 20,
+                                            size: 21,
                                             color: AppColors.muted,
                                           ),
                                         ),
-                                        const SizedBox(height: 3),
+                                        const SizedBox(height: 4),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 2,
                                           ),
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
-                                            child: Text(
-                                              AppLocale.isEn
-                                                  ? (item['labelEn'] as String)
-                                                  : (item['label'] as String),
-                                              maxLines: 1,
+                                            child: AnimatedDefaultTextStyle(
+                                              duration: const Duration(
+                                                milliseconds: 220,
+                                              ),
+                                              curve: Curves.easeOutCubic,
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: isSelected
@@ -10147,6 +10163,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                                 color: isSelected
                                                     ? AppColors.forest
                                                     : AppColors.muted,
+                                                letterSpacing:
+                                                    isSelected ? -0.1 : 0.0,
+                                              ),
+                                              child: Text(
+                                                AppLocale.isEn
+                                                    ? (item['labelEn']
+                                                        as String)
+                                                    : (item['label'] as String),
+                                                maxLines: 1,
                                               ),
                                             ),
                                           ),
@@ -10168,10 +10193,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         right: 0,
                         child: Center(
                           child: Container(
-                            width: 112,
+                            width: 108,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: AppColors.forest.withValues(alpha: 0.35),
+                              color: AppColors.forest.withValues(alpha: 0.28),
                               borderRadius: BorderRadius.circular(99),
                             ),
                           ),
@@ -10190,7 +10215,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 }
 
 /// CustomPainter untuk menggambar Mobile Navigation Bar dengan lekukan cekung (Notch)
-/// di posisi tab yang sedang aktif beserta bayangan (shadow) berlapis yang halus.
+/// yang mengalir lembut (smooth cubic Bezier) beserta bayangan (shadow) berlapis.
 class _CurvedNotchBarPainter extends CustomPainter {
   final double notchCenterX;
 
@@ -10203,20 +10228,20 @@ class _CurvedNotchBarPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
     const double topY = 14.0;
-    const double cornerRadius = 18.0;
+    const double cornerRadius = 20.0;
     const double minTopCorner = 8.0;
-    const double maxNotchHalfWidth = 35.0;
+    const double maxNotchHalfWidth = 40.0;
     const double notchDepth = 47.0;
 
     // Pastikan pusat lekukan selalu tepat di tengah lingkaran aktif (termasuk Tab 0 & Tab 4)
     final double cx = notchCenterX.clamp(
-      minTopCorner + 24.0,
-      w - minTopCorner - 24.0,
+      minTopCorner + 26.0,
+      w - minTopCorner - 26.0,
     );
     final double maxLeftHalf =
-        (cx - minTopCorner).clamp(24.0, maxNotchHalfWidth);
+        (cx - minTopCorner).clamp(26.0, maxNotchHalfWidth);
     final double maxRightHalf =
-        ((w - minTopCorner) - cx).clamp(24.0, maxNotchHalfWidth);
+        ((w - minTopCorner) - cx).clamp(26.0, maxNotchHalfWidth);
     final double notchHalfWidth =
         maxLeftHalf < maxRightHalf ? maxLeftHalf : maxRightHalf;
 
@@ -10225,8 +10250,9 @@ class _CurvedNotchBarPainter extends CustomPainter {
     final double leftTopRadius = nStart < cornerRadius ? nStart : cornerRadius;
     final double rightTopRadius =
         (w - nEnd) < cornerRadius ? (w - nEnd) : cornerRadius;
-    final double ctrlOuter = notchHalfWidth * 0.70;
-    final double ctrlInner = notchHalfWidth * 0.68;
+    // Proporsi control point Bezier yang lebih landai & organik agar tidak ada sudut tajam
+    final double ctrlOuter = notchHalfWidth * 0.62;
+    final double ctrlInner = notchHalfWidth * 0.56;
 
     final path = Path()
       ..moveTo(0, topY + leftTopRadius)
@@ -10259,15 +10285,15 @@ class _CurvedNotchBarPainter extends CustomPainter {
     // 1. Ambient Soft Shadow (terlihat jelas & halus di Web maupun Mobile)
     final ambientShadowPaint = Paint()
       ..color = AppColors.forest.withValues(alpha: 0.16)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14.0);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16.0);
     canvas.save();
-    canvas.translate(0, 6);
+    canvas.translate(0, 7);
     canvas.drawPath(path, ambientShadowPaint);
     canvas.restore();
 
     // 2. Focused Elevation Shadow
     final keyShadowPaint = Paint()
-      ..color = AppColors.ink.withValues(alpha: 0.10)
+      ..color = AppColors.ink.withValues(alpha: 0.09)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6.0);
     canvas.save();
     canvas.translate(0, 2);
@@ -10277,7 +10303,7 @@ class _CurvedNotchBarPainter extends CustomPainter {
     // 3. Material Elevation Drop Shadow
     canvas.drawShadow(
       path,
-      AppColors.forest.withValues(alpha: 0.22),
+      AppColors.forest.withValues(alpha: 0.20),
       14.0,
       false,
     );
@@ -10290,9 +10316,9 @@ class _CurvedNotchBarPainter extends CustomPainter {
 
     // Subtle Border
     final borderPaint = Paint()
-      ..color = AppColors.sageBorder
+      ..color = AppColors.sageBorder.withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 1.0;
     canvas.drawPath(path, borderPaint);
   }
 
