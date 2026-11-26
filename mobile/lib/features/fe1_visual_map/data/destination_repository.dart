@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../map_explore_shunlu/widgets/sumbar_real_map_widget.dart';
 import '../models/destination_model.dart';
 
 /// Repository Destinasi Wisata Sumatera Barat (FE-1)
@@ -34,9 +35,11 @@ class DestinationRepository {
                 : <dynamic>[]);
 
         if (list.isNotEmpty) {
-          return list
+          final parsed = list
               .map((item) => DestinationModel.fromJson(item as Map<String, dynamic>))
               .toList();
+          SumbarMapRegistry.instance.syncFromDestinationModels(parsed);
+          return parsed;
         }
       }
     } catch (_) {

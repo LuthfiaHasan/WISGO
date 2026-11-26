@@ -1,9 +1,11 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/app_locale.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../models/destination_model.dart';
 
 /// Gaya peta real (tanpa perlu API Key berbayar)
 enum SumbarMapLayer {
@@ -41,6 +43,213 @@ enum SumbarMapLayer {
   }
 }
 
+/// Gaya visual pin peta (ikon 3D custom + ikon fallback + warna) yang dihasilkan otomatis dari kategori
+class SumbarPinStyle {
+  const SumbarPinStyle({
+    required this.icon,
+    required this.color,
+    required this.normalizedGroup,
+    required this.pinAsset,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String normalizedGroup;
+  final String pinAsset;
+}
+
+/// Auto-mapper terpusat: Kategori / Category ID / Nama Destinasi -> Ikon 3D & Warna Pin Peta.
+/// Digunakan untuk memetakan data destinasi lokal maupun destinasi baru dari Backend/Web Admin
+/// secara otomatis tanpa perlu upload ikon manual satu per satu.
+SumbarPinStyle resolveSumbarPinStyle({
+  required String category,
+  String name = '',
+  String categoryId = '',
+}) {
+  final text = '${category.toLowerCase()} ${categoryId.toLowerCase()} ${name.toLowerCase()}';
+
+  // 1. Religi / Masjid / Surau
+  if (text.contains('masjid') ||
+      text.contains('religi') ||
+      text.contains('surau') ||
+      text.contains('cat-religi')) {
+    return const SumbarPinStyle(
+      icon: Icons.mosque_rounded,
+      color: AppColors.goldMinang,
+      normalizedGroup: 'Religi',
+      pinAsset: 'assets/images/pin_religi.png',
+    );
+  }
+
+  // 2. Air Terjun / Sarasah / Lubuk
+  if (text.contains('air terjun') ||
+      text.contains('sarasah') ||
+      text.contains('lubuk') ||
+      text.contains('waterfall')) {
+    return const SumbarPinStyle(
+      icon: Icons.water_drop_rounded,
+      color: AppColors.info,
+      normalizedGroup: 'Air Terjun',
+      pinAsset: 'assets/images/pin_airterjun.png',
+    );
+  }
+
+  // 3. Pulau / Bahari / Pelayaran / Mandeh
+  if (text.contains('pulau') ||
+      text.contains('mandeh') ||
+      text.contains('bahari') ||
+      text.contains('island') ||
+      text.contains('sailing')) {
+    return const SumbarPinStyle(
+      icon: Icons.sailing_rounded,
+      color: AppColors.goldMinang,
+      normalizedGroup: 'Pantai & Bahari',
+      pinAsset: 'assets/images/pin_pantai.png',
+    );
+  }
+
+  // 4. Pantai / Taplau / Pesisir
+  if (text.contains('pantai') ||
+      text.contains('taplau') ||
+      text.contains('beach') ||
+      text.contains('pesisir')) {
+    return const SumbarPinStyle(
+      icon: Icons.beach_access_rounded,
+      color: AppColors.info,
+      normalizedGroup: 'Pantai & Bahari',
+      pinAsset: 'assets/images/pin_pantai.png',
+    );
+  }
+
+  // 5. Danau / Telaga / Sungai
+  if (text.contains('danau') ||
+      text.contains('telaga') ||
+      text.contains('lake') ||
+      text.contains('sungai')) {
+    return const SumbarPinStyle(
+      icon: Icons.water_rounded,
+      color: AppColors.info,
+      normalizedGroup: 'Danau & Alam',
+      pinAsset: 'assets/images/pin_airterjun.png',
+    );
+  }
+
+  // 6. Museum / Galeri
+  if (text.contains('museum') || text.contains('galeri')) {
+    return const SumbarPinStyle(
+      icon: Icons.museum_rounded,
+      color: AppColors.warningDark,
+      normalizedGroup: 'Sejarah & Budaya',
+      pinAsset: 'assets/images/pin_budaya.png',
+    );
+  }
+
+  // 7. Ikon Kota / Jam Gadang / Monumen
+  if (text.contains('jam gadang') ||
+      text.contains('ikon') ||
+      text.contains('monumen')) {
+    return const SumbarPinStyle(
+      icon: Icons.location_city_rounded,
+      color: AppColors.terracotta,
+      normalizedGroup: 'Ikon & Budaya',
+      pinAsset: 'assets/images/pin_budaya.png',
+    );
+  }
+
+  // 8. Budaya / Sejarah / Nagari Adat / Istano / Rumah Gadang
+  if (text.contains('budaya') ||
+      text.contains('sejarah') ||
+      text.contains('adat') ||
+      text.contains('nagari') ||
+      text.contains('istano') ||
+      text.contains('pagaruyung') ||
+      text.contains('cat-budaya')) {
+    return const SumbarPinStyle(
+      icon: Icons.account_balance_rounded,
+      color: AppColors.warningDark,
+      normalizedGroup: 'Sejarah & Budaya',
+      pinAsset: 'assets/images/pin_budaya.png',
+    );
+  }
+
+  // 9. Kuliner / Rumah Makan / Kafe
+  if (text.contains('kuliner') ||
+      text.contains('restoran') ||
+      text.contains('makan') ||
+      text.contains('kopi') ||
+      text.contains('cat-kuliner')) {
+    return const SumbarPinStyle(
+      icon: Icons.restaurant_rounded,
+      color: AppColors.terracotta,
+      normalizedGroup: 'Kuliner',
+      pinAsset: 'assets/images/pin_kuliner.png',
+    );
+  }
+
+  // 10. Hutan / Pinus / Taman / Rimba
+  if (text.contains('hutan') ||
+      text.contains('pinus') ||
+      text.contains('taman') ||
+      text.contains('rimba')) {
+    return const SumbarPinStyle(
+      icon: Icons.forest_rounded,
+      color: AppColors.brush,
+      normalizedGroup: 'Gunung & Alam',
+      pinAsset: 'assets/images/pin_gunung.png',
+    );
+  }
+
+  // 11. Gunung / Puncak / Lembah / Ngarai / Geopark / Alam / Hidden Gem
+  if (text.contains('gunung') ||
+      text.contains('puncak') ||
+      text.contains('lembah') ||
+      text.contains('ngarai') ||
+      text.contains('bukit') ||
+      text.contains('geopark') ||
+      text.contains('alam') ||
+      text.contains('hidden') ||
+      text.contains('cat-alam') ||
+      text.contains('cat-hidden')) {
+    return const SumbarPinStyle(
+      icon: Icons.terrain_rounded,
+      color: AppColors.forest,
+      normalizedGroup: 'Gunung & Alam',
+      pinAsset: 'assets/images/pin_gunung.png',
+    );
+  }
+
+  // Fallback default WISGO
+  return const SumbarPinStyle(
+    icon: Icons.place_rounded,
+    color: AppColors.forest,
+    normalizedGroup: 'Wisata Sumbar',
+    pinAsset: 'assets/images/pin_gunung.png',
+  );
+}
+
+double _haversineKm(LatLng a, LatLng b) {
+  const double earthRadiusKm = 6371.0;
+  final dLat = (b.latitude - a.latitude) * math.pi / 180.0;
+  final dLon = (b.longitude - a.longitude) * math.pi / 180.0;
+  final lat1 = a.latitude * math.pi / 180.0;
+  final lat2 = b.latitude * math.pi / 180.0;
+  final h = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(lat1) *
+          math.cos(lat2) *
+          math.sin(dLon / 2) *
+          math.sin(dLon / 2);
+  return 2 * earthRadiusKm * math.asin(math.sqrt(h.clamp(0.0, 1.0)));
+}
+
+String _estimateDurationLabelFromKm(double km) {
+  // Estimasi rata-rata jalur jalan Sumatera Barat (~42 km/jam)
+  final minutes = (km / 42.0 * 60.0).round().clamp(5, 600);
+  if (minutes < 60) return '$minutes mnt';
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  return m == 0 ? '$h jam' : '$h jam $m mnt';
+}
+
 class SumbarMapDestination {
   const SumbarMapDestination({
     required this.id,
@@ -53,6 +262,7 @@ class SumbarMapDestination {
     required this.routeFromPadang,
     required this.color,
     required this.icon,
+    this.pinAsset,
   });
 
   final String id;
@@ -65,6 +275,61 @@ class SumbarMapDestination {
   final List<LatLng> routeFromPadang;
   final Color color;
   final IconData icon;
+  final String? pinAsset;
+
+  /// Mengembalikan aset pin 3D otomatis (baik untuk data lokal maupun API/Admin)
+  String get resolvedPinAsset =>
+      pinAsset ?? resolveSumbarPinStyle(category: category, name: name).pinAsset;
+
+  /// Membuat pin peta otomatis dari `DestinationModel` (hasil fetch API / Web Admin)
+  factory SumbarMapDestination.fromDestinationModel(DestinationModel model) {
+    final pos = LatLng(model.latitude, model.longitude);
+    final pin = resolveSumbarPinStyle(
+      category: model.category,
+      name: model.name,
+      categoryId: model.categoryId,
+    );
+    final computedKm = _haversineKm(kPadangUserPosition, pos);
+    final distText = (model.distanceKm.trim().isNotEmpty &&
+            model.distanceKm.trim() != '0 km')
+        ? model.distanceKm.trim()
+        : '${computedKm.toStringAsFixed(computedKm < 10 ? 1 : 0)} km';
+    final durText = (model.travelTime.trim().isNotEmpty &&
+            model.travelTime.trim() != '0 mnt')
+        ? model.travelTime.trim()
+        : _estimateDurationLabelFromKm(computedKm);
+
+    return SumbarMapDestination(
+      id: model.id,
+      name: model.name,
+      region: model.cityRegency.trim().isEmpty
+          ? 'Sumatera Barat'
+          : model.cityRegency.trim(),
+      category: model.category.trim().isEmpty
+          ? pin.normalizedGroup
+          : model.category.trim(),
+      distanceLabel: distText,
+      durationLabel: durText,
+      position: pos,
+      routeFromPadang: [kPadangUserPosition, pos],
+      color: pin.color,
+      icon: pin.icon,
+      pinAsset: pin.pinAsset,
+    );
+  }
+
+  /// Membuat pin peta otomatis langsung dari payload JSON Backend/Admin
+  /// (mengembalikan `null` bila koordinat GPS kosong/tidak valid)
+  static SumbarMapDestination? fromApiJson(Map<String, dynamic> json) {
+    final lat = (json['latitude'] as num?)?.toDouble();
+    final lng = (json['longitude'] as num?)?.toDouble();
+    if (lat == null || lng == null || (lat == 0.0 && lng == 0.0)) {
+      return null;
+    }
+    return SumbarMapDestination.fromDestinationModel(
+      DestinationModel.fromJson(json),
+    );
+  }
 }
 
 /// Lokasi GPS pengguna saat ini (Pusat Kota Padang)
@@ -370,23 +635,92 @@ enum SumbarMapCategory {
         return cat.contains('gunung') ||
             cat.contains('puncak') ||
             cat.contains('hutan') ||
-            cat.contains('lembah');
+            cat.contains('lembah') ||
+            cat.contains('alam') ||
+            cat.contains('geopark') ||
+            cat.contains('hidden');
       case SumbarMapCategory.airTerjun:
-        return cat.contains('air terjun');
+        return cat.contains('air terjun') ||
+            cat.contains('sarasah') ||
+            cat.contains('lubuk');
       case SumbarMapCategory.budaya:
         return cat.contains('budaya') ||
             cat.contains('adat') ||
             cat.contains('sejarah') ||
-            cat.contains('ikon');
+            cat.contains('ikon') ||
+            cat.contains('religi') ||
+            cat.contains('masjid') ||
+            cat.contains('museum');
     }
   }
 }
 
-/// Mengembalikan daftar destinasi peta yang sesuai dengan filter kategori aktif
+/// Registry dinamis pin peta WISGO (menggabungkan 16 destinasi lokal unggulan
+/// dengan destinasi baru yang disinkronkan dari Backend API / Web Admin secara
+/// otomatis tanpa duplikasi).
+class SumbarMapRegistry extends ChangeNotifier {
+  SumbarMapRegistry._();
+  static final SumbarMapRegistry instance = SumbarMapRegistry._();
+
+  final List<SumbarMapDestination> _dynamicDestinations = [];
+
+  List<SumbarMapDestination> get allDestinations =>
+      List.unmodifiable([...kSumbarMapDestinations, ..._dynamicDestinations]);
+
+  /// Sinkronisasi daftar destinasi dari respons JSON Backend/Web Admin.
+  /// Setiap destinasi baru otomatis mendapat ikon & warna pin sesuai kategorinya.
+  int syncFromApiJsonList(List<dynamic> items) {
+    int added = 0;
+    for (final raw in items) {
+      if (raw is! Map<String, dynamic>) continue;
+      final mapped = SumbarMapDestination.fromApiJson(raw);
+      if (mapped == null) continue;
+      if (_upsertIfUnique(mapped)) added++;
+    }
+    if (added > 0) notifyListeners();
+    return added;
+  }
+
+  /// Sinkronisasi daftar `DestinationModel` ke peta secara otomatis.
+  int syncFromDestinationModels(Iterable<DestinationModel> models) {
+    int added = 0;
+    for (final model in models) {
+      if (model.latitude == 0.0 && model.longitude == 0.0) continue;
+      final mapped = SumbarMapDestination.fromDestinationModel(model);
+      if (_upsertIfUnique(mapped)) added++;
+    }
+    if (added > 0) notifyListeners();
+    return added;
+  }
+
+  void clearDynamicDestinations() {
+    if (_dynamicDestinations.isEmpty) return;
+    _dynamicDestinations.clear();
+    notifyListeners();
+  }
+
+  bool _upsertIfUnique(SumbarMapDestination candidate) {
+    final normName = candidate.name.trim().toLowerCase();
+    final existingAll = [...kSumbarMapDestinations, ..._dynamicDestinations];
+    final isDuplicate = existingAll.any((d) {
+      if (d.id.isNotEmpty && d.id == candidate.id) return true;
+      if (d.name.trim().toLowerCase() == normName) return true;
+      // Cek kedekatan GPS (< 100 meter) agar pin tidak menumpuk di titik sama
+      return _haversineKm(d.position, candidate.position) < 0.1;
+    });
+    if (isDuplicate) return false;
+    _dynamicDestinations.add(candidate);
+    return true;
+  }
+}
+
+/// Mengembalikan daftar destinasi peta (lokal + API/Admin) yang sesuai filter kategori aktif
 List<SumbarMapDestination> filterSumbarMapDestinations(
-  SumbarMapCategory category,
-) {
-  return kSumbarMapDestinations.where(category.matches).toList();
+  SumbarMapCategory category, {
+  List<SumbarMapDestination>? source,
+}) {
+  final list = source ?? SumbarMapRegistry.instance.allDestinations;
+  return list.where(category.matches).toList();
 }
 
 /// Helper terpusat untuk membuka rute destinasi di Google Maps secara ringan & stabil
@@ -516,12 +850,25 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
   }
 
   List<SumbarMapDestination> get _visibleDestinations =>
-      widget.destinations ?? kSumbarMapDestinations;
+      widget.destinations ?? SumbarMapRegistry.instance.allDestinations;
+
+  void _onRegistryUpdated() {
+    if (mounted && widget.destinations == null) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedId = widget.selectedDestinationId;
+    SumbarMapRegistry.instance.addListener(_onRegistryUpdated);
+  }
+
+  @override
+  void dispose() {
+    SumbarMapRegistry.instance.removeListener(_onRegistryUpdated);
+    super.dispose();
   }
 
   @override
@@ -677,13 +1024,15 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                       ),
                     ),
 
-                    // Marker Destinasi Asli Sumbar (tersaring sesuai kategori aktif)
+                    // Marker Destinasi Asli Sumbar (Pin 3D Clay Auto-Mapping, ujung pin tepat di titik GPS)
                     ..._visibleDestinations.map((dest) {
                       final isSelected = dest.id == _selectedId;
+                      final pinSize = isSelected ? 46.0 : 34.0;
                       return Marker(
                         point: dest.position,
-                        width: isSelected ? 148 : 44,
-                        height: isSelected ? 74 : 44,
+                        width: isSelected ? 156 : 42,
+                        height: isSelected ? 78 : 42,
+                        alignment: Alignment.bottomCenter,
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -697,54 +1046,25 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                             },
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  width: isSelected ? 44 : 34,
-                                  height: isSelected ? 44 : 34,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? AppColors.terracotta
-                                        : dest.color,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: isSelected ? 3 : 2,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.ink.withValues(
-                                          alpha: isSelected ? 0.32 : 0.22,
-                                        ),
-                                        blurRadius: isSelected ? 8 : 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    dest.icon,
-                                    color: Colors.white,
-                                    size: isSelected ? 20 : 15,
-                                  ),
-                                ),
                                 if (isSelected) ...[
-                                  const SizedBox(height: 3),
                                   Container(
+                                    margin: const EdgeInsets.only(bottom: 3),
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
+                                      horizontal: 9,
+                                      vertical: 3,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withValues(alpha: 0.96),
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
-                                        color: AppColors.terracotta.withValues(alpha: 0.35),
+                                        color: AppColors.forest.withValues(alpha: 0.25),
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.ink.withValues(alpha: 0.14),
-                                          blurRadius: 6,
+                                          color: AppColors.ink.withValues(alpha: 0.16),
+                                          blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
                                       ],
@@ -754,13 +1074,55 @@ class _SumbarRealMapWidgetState extends State<SumbarRealMapWidget> {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11.5,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.ink,
                                       ),
                                     ),
                                   ),
                                 ],
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  curve: Curves.easeOutBack,
+                                  width: pinSize,
+                                  height: pinSize,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.ink.withValues(
+                                          alpha: isSelected ? 0.28 : 0.16,
+                                        ),
+                                        blurRadius: isSelected ? 10 : 5,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Image.asset(
+                                    dest.resolvedPinAsset,
+                                    width: pinSize,
+                                    height: pinSize,
+                                    fit: BoxFit.contain,
+                                    filterQuality: FilterQuality.medium,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.terracotta
+                                            : dest.color,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        dest.icon,
+                                        color: Colors.white,
+                                        size: isSelected ? 19 : 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

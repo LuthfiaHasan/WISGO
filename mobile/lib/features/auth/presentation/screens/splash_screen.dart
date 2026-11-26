@@ -122,14 +122,27 @@ class _SplashScreenState extends State<SplashScreen>
     _startAutoSlide();
   }
 
+  bool _didPrecache = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didPrecache) {
+      _didPrecache = true;
+      for (final slide in _slides) {
+        precacheImage(AssetImage(slide.imageAsset), context);
+      }
+    }
+  }
+
   void _startAutoSlide() {
     _autoSlideTimer?.cancel();
     _autoSlideTimer = Timer(const Duration(milliseconds: 3500), () {
       if (!mounted || _userInteracted) return;
       if (_currentPage < _slides.length - 1) {
         _pageController.nextPage(
-          duration: const Duration(milliseconds: 720),
-          curve: Curves.easeOutExpo,
+          duration: const Duration(milliseconds: 620),
+          curve: Curves.easeInOutCubic,
         );
         _startAutoSlide();
       } else {
@@ -238,18 +251,20 @@ class _SplashScreenState extends State<SplashScreen>
                     final scale =
                         (isCurrent ? _bgScaleAnimation.value : 1.03) +
                             (distance * 0.03);
-                    return Opacity(
-                      opacity: opacity,
-                      child: ClipRect(
-                        child: Transform.scale(
-                          scale: scale,
-                          alignment: Alignment.center,
-                          child: Image.asset(
-                            _slides[index].imageAsset,
-                            fit: BoxFit.cover,
+                    return RepaintBoundary(
+                      child: Opacity(
+                        opacity: opacity,
+                        child: ClipRect(
+                          child: Transform.scale(
+                            scale: scale,
                             alignment: Alignment.center,
-                            filterQuality: FilterQuality.high,
-                            gaplessPlayback: true,
+                            child: Image.asset(
+                              _slides[index].imageAsset,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.center,
+                              filterQuality: FilterQuality.medium,
+                              gaplessPlayback: true,
+                            ),
                           ),
                         ),
                       ),
@@ -337,23 +352,8 @@ class _SplashScreenState extends State<SplashScreen>
                             child: child,
                           );
                         },
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            ImageFiltered(
-                              imageFilter:
-                                  ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                              child: Image.asset(
-                                'assets/images/logo_primary.png',
-                                width: 135,
-                                color: AppColors.ink.withValues(alpha: 0.30),
-                                colorBlendMode: BlendMode.srcIn,
-                              ),
-                            ),
-                            const WisgoLogo(
-                              width: 135,
-                            ),
-                          ],
+                        child: const WisgoLogo(
+                          width: 135,
                         ),
                       ),
                     ),
