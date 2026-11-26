@@ -138,7 +138,7 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
               className="w-full h-full object-cover"
             />
             {isPanorama && (
-              <div className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-black/75 text-white text-[10px] font-bold backdrop-blur-xs flex items-center gap-1.5">
+              <div className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-black/75 text-white text-[10px] font-bold backdrop-blur-sm flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-[#A7F3D0]" />
                 <span>Tekstur Panorama 360° Aktif</span>
               </div>
@@ -190,7 +190,7 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isProcessing}
-                className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-white hover:bg-gray-100 text-[#234B24] border border-[#CFD8BE] text-xs font-bold flex items-center gap-1.5 shadow-xs transition"
+                className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-white hover:bg-gray-100 text-[#234B24] border border-[#CFD8BE] text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Ganti File</span>
@@ -219,7 +219,7 @@ export const ImageDropzone: React.FC<ImageDropzoneProps> = ({
               : 'border-[#CFD8BE] bg-[#F6F3EC]/70 hover:bg-[#E4E9DA]/40 hover:border-[#234B24]'
             }`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-[#234B24] text-[#F6F3EC] flex items-center justify-center shadow-sm">
             {isProcessing ? (
               <RefreshCw className="w-6 h-6 animate-spin" />
             ) : (

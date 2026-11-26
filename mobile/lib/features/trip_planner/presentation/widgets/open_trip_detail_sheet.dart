@@ -5,6 +5,7 @@ import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
 import 'open_trip_offline_rules_sheet.dart';
+import 'trip_go_agreement_dialog.dart';
 import 'trip_group_chat_sheet.dart';
 import 'verified_organizer_sheet.dart';
 
@@ -152,6 +153,13 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
       );
       return;
     }
+
+    // Pop-up Persetujuan Syarat & Ketentuan Trip Go sebelum bergabung (Poin 4)
+    final agreed = await showTripGoJoinAgreementDialog(
+      context,
+      tripTitle: _currentTrip.title,
+    );
+    if (!agreed || !mounted) return;
 
     setState(() => _isJoining = true);
     try {
@@ -933,7 +941,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 },
                                 icon: const Icon(Icons.forum_rounded, size: 16),
                                 label: const Text(
-                                  'Grup Chat Trip',
+                                  'Chat',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(

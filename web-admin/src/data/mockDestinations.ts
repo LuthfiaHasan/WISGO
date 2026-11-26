@@ -12,7 +12,6 @@ import {
   EmergencyAgencyType,
   EmergencyContact,
   GaodeBehaviorRanking,
-  GroupRoomPreview,
   HazardAlert,
   HazardSeverity,
   MasterDestinationCategory,
@@ -199,13 +198,13 @@ export function normalizePartnerCategory(raw?: string | null): CanonicalPartnerC
 
 export function calculateAdventurerLevel(totalXp: number): {
   level: 1 | 2 | 3 | 4 | 5;
-  name: 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer';
+  name: 'Pemula' | 'Penjelajah' | 'Petualang' | 'Perintis' | 'Pengelana';
 } {
-  if (totalXp >= 2000) return { level: 5, name: 'Wanderer' };
-  if (totalXp >= 1200) return { level: 4, name: 'Trailblazer' };
-  if (totalXp >= 700) return { level: 3, name: 'Adventurer' };
-  if (totalXp >= 300) return { level: 2, name: 'Explorer' };
-  return { level: 1, name: 'Beginner' };
+  if (totalXp >= 2000) return { level: 5, name: 'Pengelana' };
+  if (totalXp >= 1200) return { level: 4, name: 'Perintis' };
+  if (totalXp >= 700) return { level: 3, name: 'Petualang' };
+  if (totalXp >= 300) return { level: 2, name: 'Penjelajah' };
+  return { level: 1, name: 'Pemula' };
 }
 
 export function getCategorySvgPath(category?: string | null): string {
@@ -351,62 +350,7 @@ export const INITIAL_SYSTEM_NOTIFICATIONS: Notifikasi[] = SEED_NOTIFIKASI;
 export const INITIAL_NEW_TOURS: NewTour[] = SEED_NEW_TOURS;
 
 // ============================================================================
-// 4. GROUP ROOMS PUBLIK (/join — Kode Undangan Baku WISGO)
-// ============================================================================
-export const INITIAL_GROUP_ROOMS: Record<string, GroupRoomPreview> = {
-  'WISGO-MINANG-88': {
-    group_code: 'WISGO-MINANG-88',
-    group_name: 'Trip Go Keluarga Serumpun Ranah Minang',
-    leader_name: 'Azman bin Razak (KL Tour)',
-    trip_dates: '28 – 30 November 2026',
-    member_count: 10,
-    destinations_summary: [
-      'Jam Gadang & Ngarai Sianok',
-      'Istano Basa Pagaruyung',
-      'Lembah Harau & Sarasah Bunta',
-    ],
-    voting_items: [
-      { id: 'v-m1', title: 'Makan Siang Nasi Kapau Los Lambuang', category: 'Kuliner', votes_count: 8, is_winner: true },
-      { id: 'v-m2', title: 'Sewa Baju Adat Bundo Kanduang di Istano', category: 'Budaya & Nagari', votes_count: 7, is_winner: true },
-      { id: 'v-m3', title: 'Sore Santai Kawa Daun Nagari Harau', category: 'Alam & Geopark', votes_count: 5 },
-    ],
-  },
-  'WISGO-HARAU-07': {
-    group_code: 'WISGO-HARAU-07',
-    group_name: 'Eksplorasi Geopark Harau & Sarasah Bunta',
-    leader_name: 'Uda Hendra (Pokdarwis Harau)',
-    trip_dates: '05 – 06 Desember 2026',
-    member_count: 8,
-    destinations_summary: [
-      'Lembah Harau & Sarasah Bunta',
-      'Kelok 9 & Echo Point',
-      'Nagari Tuo Pariangan',
-    ],
-    voting_items: [
-      { id: 'v-h1', title: 'Trekking Sarasah Murai Pagi Hari', category: 'Hidden Gem', votes_count: 6, is_winner: true },
-      { id: 'v-h2', title: 'Makan Siang Gulai Itiak Lado Mudo', category: 'Kuliner', votes_count: 7, is_winner: true },
-    ],
-  },
-  'WISGO-MANDEH-12': {
-    group_code: 'WISGO-MANDEH-12',
-    group_name: 'Island Hopping & Snorkeling Teluk Mandeh',
-    leader_name: 'Kapten Roni (Asosiasi Boat Mandeh)',
-    trip_dates: '12 Desember 2026',
-    member_count: 12,
-    destinations_summary: [
-      'Kawasan Wisata Bahari Mandeh',
-      'Pulau Sironjong Ketek',
-      'Sungai Gemuruh & Pulau Kapo-Kapo',
-    ],
-    voting_items: [
-      { id: 'v-md1', title: 'Snorkeling Terumbu Karang Pulau Sironjong', category: 'Alam & Geopark', votes_count: 10, is_winner: true },
-      { id: 'v-md2', title: 'Ikan Bakar Segar di Pulau Kapo-Kapo', category: 'Kuliner', votes_count: 9, is_winner: true },
-    ],
-  },
-};
-
-// ============================================================================
-// 5. TELEMETRI BENCHMARK SISTEM (Komplet Nol Undefined)
+// 4. TELEMETRI BENCHMARK SISTEM (Komplet Nol Undefined)
 // ============================================================================
 export const INITIAL_SYSTEM_BENCHMARK: SystemBenchmarkMetrics = {
   server_uptime_pct: 99.98,

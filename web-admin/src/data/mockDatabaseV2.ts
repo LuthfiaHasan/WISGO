@@ -1633,6 +1633,26 @@ export const SEED_NEW_TOURS: NewTour[] = [
     submitter_phone: '6281299887766',
     created_at: '2026-11-23T11:30:00Z',
   },
+  {
+    id: 'nt-003',
+    user_id: 'usr-tourist-04',
+    name: 'Air Terjun Sarasah Murai',
+    category_id: 'cat-hidden-gem',
+    category: 'Hidden Gem',
+    city_regency: 'Kab. Lima Puluh Kota',
+    description: 'Air terjun alami di lembah Harau dengan cahaya matahari pagi menembus tebing, sangat bagus untuk fotografi alam.',
+    latitude: -0.0987,
+    longitude: 100.6815,
+    tips_menjaga: 'Gunakan sandal gunung anti-selip karena batu lumut licin dan jangan memetik anggrek hutan di sekitar tebing.',
+    facilities: ['Area Parkir', 'Gazebo / Pondok', 'Spot Foto Alami'],
+    estimated_price: 'Rp 15.000 / orang',
+    photo_url: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=900&q=80',
+    is_sensitive: true,
+    status: 'pending',
+    submitter_name: 'Siti Rahma',
+    submitter_phone: '6282177665544',
+    created_at: '2026-11-24T08:45:00Z',
+  },
 ];
 
 // ============================================================================
@@ -1647,7 +1667,7 @@ export const SEED_CHALLENGES: Challenge[] = [
     category: 'Alam & Geopark',
     description: 'Lakukan check-in GPS (<500m) atau scan Plang Smart QR pada 10 destinasi resmi pilihan Dispar Sumbar untuk membuka E-Sertifikat Gubernur.',
     target_destination_count: 10,
-    reward_title: '500 XP + E-Sertifikat Gubernur & Lencana Wanderer',
+    reward_title: '500 XP + E-Sertifikat Gubernur & Lencana Pengelana',
     reward_type: 'Sertifikat & XP',
     reward_points: 500,
     duration_days: 90,
@@ -1710,9 +1730,9 @@ export const SEED_USER_CHALLENGE_REWARDS: UserChallengeReward[] = [
     target_destination_count: 10,
     status: 'SIAP_KLAIM',
     jenis_reward: 'Sertifikat & XP',
-    reward: '500 XP + E-Sertifikat Gubernur & Lencana Wanderer',
-    certificate_code: 'WG-CERT-2026-08492',
-    certificate_url: 'https://wisgo.sumbarprov.go.id/certs/WG-CERT-2026-08492.pdf',
+    reward: '500 XP + E-Sertifikat Gubernur & Lencana Pengelana',
+    certificate_code: 'WISGO-GUB-SB-08492',
+    certificate_url: 'https://wisgo.sumbarprov.go.id/certs/WISGO-GUB-SB-08492.pdf',
     completed_at: '2026-11-23T16:00:00Z',
   },
   {
@@ -1743,10 +1763,10 @@ export const SEED_USER_CHALLENGE_REWARDS: UserChallengeReward[] = [
     status: 'HADIAH_TERKIRIM',
     jenis_reward: 'Voucher',
     reward: '300 XP + Voucher Tenun Nagari & Lencana Pariangan',
-    certificate_code: 'WG-CERT-2026-08311',
-    certificate_url: 'https://wisgo.sumbarprov.go.id/certs/WG-CERT-2026-08311.pdf',
+    certificate_code: null,
+    certificate_url: null,
     completed_at: '2026-11-20T14:00:00Z',
-    reward_notes: 'E-Sertifikat & kode voucher tenun sudah diterbitkan otomatis ke akun Jejak WISGO.',
+    reward_notes: 'Kode Voucher: VCR-TENUN-8311 · Lencana Pariangan otomatis terbuka di aplikasi.',
   },
 ];
 
@@ -2324,14 +2344,14 @@ export const SEED_WEATHER_MONITORING: WeatherMonitoringItem[] = [
 ];
 
 // ============================================================================
-// 27. 5 LEVEL PETUALANG (Exact FE-2 gamification_model.dart — Typo Gaode Fixed)
+// 27. 5 LEVEL & LENCANA PETUALANG (Bahasa Indonesia — Ambang XP Resmi WISGO)
 // ============================================================================
 export const SEED_ADVENTURER_LEVELS: AdventurerLevelConfig[] = [
-  { level: 1, name: 'Beginner', title: 'Level 1 – Beginner', min_trips: 1, min_checkpoints: 1, min_xp: 0, max_xp: 300, badge_icon: 'Compass', badge_color: '#64748B', perk_description: 'Akses Peta Wisata & Check-in GPS Pertama' },
-  { level: 2, name: 'Explorer', title: 'Level 2 – Explorer', min_trips: 3, min_checkpoints: 5, min_xp: 300, max_xp: 700, badge_icon: 'MapPin', badge_color: '#2563EB', perk_description: 'Stempel Paspor Digital & Diskon Tiket Nagari 5%' },
-  { level: 3, name: 'Adventurer', title: 'Level 3 – Adventurer', min_trips: 6, min_checkpoints: 12, min_xp: 700, max_xp: 1200, badge_icon: 'Mountain', badge_color: '#16A34A', perk_description: 'Kamus Budaya Audio & Lencana Khusus Geotourist' },
-  { level: 4, name: 'Trailblazer', title: 'Level 4 – Trailblazer', min_trips: 12, min_checkpoints: 25, min_xp: 1200, max_xp: 2000, badge_icon: 'Flame', badge_color: '#D97706', perk_description: 'Tier Platinum Gaode Ranking & Rekomendasi Khusus Dispar' },
-  { level: 5, name: 'Wanderer', title: 'Level 5 – Wanderer', min_trips: 20, min_checkpoints: 40, min_xp: 2000, max_xp: 3000, badge_icon: 'Award', badge_color: '#8B5CF6', perk_description: 'Apresiasi Pemprov Sumbar, Paspor Emas & Peringkat Elit' },
+  { level: 1, name: 'Pemula', title: 'Level 1 – Pemula', min_trips: 1, min_checkpoints: 1, min_xp: 0, max_xp: 300, badge_icon: 'Compass', badge_color: '#64748B', perk_description: 'Akses Peta Wisata & Check-in GPS Pertama' },
+  { level: 2, name: 'Penjelajah', title: 'Level 2 – Penjelajah', min_trips: 3, min_checkpoints: 5, min_xp: 300, max_xp: 700, badge_icon: 'MapPin', badge_color: '#2563EB', perk_description: 'Stempel Paspor Digital & Diskon Tiket Nagari 5%' },
+  { level: 3, name: 'Petualang', title: 'Level 3 – Petualang', min_trips: 6, min_checkpoints: 12, min_xp: 700, max_xp: 1200, badge_icon: 'Mountain', badge_color: '#16A34A', perk_description: 'Kamus Budaya Audio & Lencana Khusus Wisatawan Geopark' },
+  { level: 4, name: 'Perintis', title: 'Level 4 – Perintis', min_trips: 12, min_checkpoints: 25, min_xp: 1200, max_xp: 2000, badge_icon: 'Flame', badge_color: '#D97706', perk_description: 'Peringkat Utama Gaode Ranking & Rekomendasi Khusus Dispar' },
+  { level: 5, name: 'Pengelana', title: 'Level 5 – Pengelana', min_trips: 20, min_checkpoints: 40, min_xp: 2000, max_xp: 3000, badge_icon: 'Award', badge_color: '#8B5CF6', perk_description: 'Apresiasi Pemprov Sumbar, Paspor Emas & Peringkat Elit' },
 ];
 
 // ============================================================================
@@ -2347,7 +2367,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     google_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
     is_google_auth: true,
     current_level: 3,
-    level_name: 'Adventurer',
+    level_name: 'Petualang',
     visited_count: 6,
     total_trips: 8,
     total_checkpoints: 16,
@@ -2368,7 +2388,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     google_avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
     is_google_auth: true,
     current_level: 2,
-    level_name: 'Explorer',
+    level_name: 'Penjelajah',
     visited_count: 4,
     total_trips: 4,
     total_checkpoints: 9,
@@ -2388,7 +2408,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     google_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
     is_google_auth: true,
     current_level: 5,
-    level_name: 'Wanderer',
+    level_name: 'Pengelana',
     visited_count: 14,
     total_trips: 21,
     total_checkpoints: 42,
@@ -2396,7 +2416,7 @@ export const SEED_USER_PROFILES: UserProfileExperience[] = [
     last_active_at: '2026-11-24T08:30:00Z',
     experience_history: [
       { id: 'jh-6', date: '2026-11-12', destination_id: 'dest-004', destination_name: 'Jam Gadang & Ngarai Sianok', city_regency: 'Kota Bukittinggi', checkpoint_name: 'Pelataran Jam Gadang', source: 'TRIP_GO', stamp_number: 1, xp_earned: 150, badge_title: 'Duta Wisata Serumpun', notes: 'Membawa rombongan 12 wisatawan asal Kuala Lumpur.', status: 'verified' },
-      { id: 'jh-7', date: '2026-11-15', destination_id: 'dest-002', destination_name: 'Istano Basa Pagaruyung', city_regency: 'Kab. Tanah Datar', checkpoint_name: 'Gerbang Anjungan Istano', source: 'TICKET_SCAN', stamp_number: 3, xp_earned: 150, badge_title: 'Wanderer Ranah Minang', notes: 'Menuntaskan 10/10 stempel Paspor Digital Minang.', status: 'verified' },
+      { id: 'jh-7', date: '2026-11-15', destination_id: 'dest-002', destination_name: 'Istano Basa Pagaruyung', city_regency: 'Kab. Tanah Datar', checkpoint_name: 'Gerbang Anjungan Istano', source: 'TICKET_SCAN', stamp_number: 3, xp_earned: 150, badge_title: 'Pengelana Ranah Minang', notes: 'Menuntaskan 10/10 stempel Paspor Digital Minang.', status: 'verified' },
     ],
   },
 ];
@@ -2418,7 +2438,7 @@ export const SEED_POSTING_TEMPLATES: PostingShareTemplate[] = [
   {
     id: 'tmpl-002',
     template_name: 'Jejak WISGO — Kartu Penuh (Full Card Feed Komunitas)',
-    watermark_text: 'WISGO Certified Explorer • Dinas Pariwisata Sumbar',
+    watermark_text: 'WISGO Penjelajah Tersertifikasi • Dinas Pariwisata Sumbar',
     qr_download_url: 'https://wisgo.sumbarprov.go.id/download',
     qr_image_url: 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://wisgo.sumbarprov.go.id/download',
     background_banner_url: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1000&q=80',
@@ -2455,4 +2475,146 @@ export const SEED_REGENCY_HEATMAP: RegencyHeatmapData[] = [
   { id: 'reg-17', name: 'Kab. Dharmasraya', code: 'DHR', crowd_status: 'Sepi', visitor_count_week: 2500, domestic_pct: 97, foreign_myr_pct: 3, top_destination: 'Candi Padang Roco', wa_leads_count: 210 },
   { id: 'reg-18', name: 'Kab. Solok Selatan', code: 'SLS', crowd_status: 'Sepi', visitor_count_week: 3100, domestic_pct: 94, foreign_myr_pct: 6, top_destination: 'Saribu Rumah Gadang', wa_leads_count: 380 },
   { id: 'reg-19', name: 'Kab. Kepulauan Mentawai', code: 'MTW', crowd_status: 'Sepi', visitor_count_week: 1900, domestic_pct: 35, foreign_myr_pct: 65, top_destination: 'Siberut & Pulau Sipora', wa_leads_count: 490 },
+];
+
+// ============================================================================
+// 31. BERITA WISATA & BENCANA SUMBAR (Sinkron FE-1 hazard_sos_screen.dart)
+// ============================================================================
+export const SEED_SOS_NEWS: import('../types/contract').SosNewsItem[] = [
+  {
+    id: 'news-marapi-01',
+    category: 'Bencana & Vulkanologi',
+    severity: 'WASPADA',
+    title: 'Status Aktivitas Gunung Marapi Level II — Radius Aman Wisatawan 3 km',
+    region: 'Kab. Agam & Tanah Datar',
+    summary:
+      'Wisatawan di sekitar Bukittinggi, Nagari Tuo Pariangan, dan kaki Gunung Marapi diimbau mematuhi radius aman 3 km dari kawah serta membawa masker saat hujan abu ringan.',
+    advice:
+      'Destinasi Jam Gadang, Ngarai Sianok, dan Istano Basa Pagaruyung tetap aman dikunjungi.',
+    source: 'PVMBG & BPBD Sumbar',
+    is_published: true,
+    published_at: '2026-11-26T08:00:00Z',
+  },
+  {
+    id: 'news-bmkg-mandeh-02',
+    category: 'Cuaca & Bahari',
+    severity: 'INFO WISATA',
+    title: 'Prakiraan BMKG: Gelombang Perairan Padang–Mandeh Kondusif Pagi hingga Siang',
+    region: 'Padang & Pesisir Selatan',
+    summary:
+      'Kondisi perairan Teluk Mandeh dan Pulau Pasumpahan cerah berawan dengan tinggi gelombang 0,5–1,2 m. Pelayaran perahu wisata diimbau kembali sebelum pukul 16.30 WIB.',
+    advice:
+      'Selalu gunakan jaket pelampung resmi dari pengelola dermaga sebelum menyeberang.',
+    source: 'BMKG Stasiun Maritim Teluk Bayur',
+    is_published: true,
+    published_at: '2026-11-26T07:00:00Z',
+  },
+  {
+    id: 'news-harau-debit-03',
+    category: 'Akses Wisata',
+    severity: 'SIAGA HUJAN',
+    title: 'Antisipasi Debit Air Terjun Lembah Harau & Lubuk Hitam Saat Hujan Sore',
+    region: 'Lima Puluh Kota & Bungus Padang',
+    summary:
+      'Pengunjung air terjun diminta segera menjauh dari aliran sungai apabila air mulai keruh atau terdengar gemuruh di bagian hulu.',
+    advice:
+      'Waktu kunjungan paling aman adalah pukul 08.00–14.30 WIB saat cuaca relatif cerah.',
+    source: 'Dinas Pariwisata Provinsi Sumbar',
+    is_published: true,
+    published_at: '2026-11-26T05:30:00Z',
+  },
+];
+
+// ============================================================================
+// 32. POI SEARAH RUTE (SHUNLU) (Sinkron FE-1 map_explore_pois_data.dart)
+// ============================================================================
+export const SEED_SHUNLU_POIS: import('../types/contract').ShunluPoiItem[] = [
+  {
+    id: 'poi-rm-1',
+    category: 'RM Padang',
+    name: 'RM Simpang Raya Bukittinggi',
+    detour: 'Detour: +4 menit (350 m)',
+    route: 'Searah koridor Padang → Lembah Harau',
+    latitude: -0.3055,
+    longitude: 100.3695,
+    address: 'Jl. Sudirman No. 8, Bukittinggi',
+    is_active: true,
+  },
+  {
+    id: 'poi-rm-2',
+    category: 'RM Padang',
+    name: 'Rumah Makan Pak Dt. Padang Panjang',
+    detour: 'Detour: +1 menit (80 m)',
+    route: 'Jalur Lintas Padang - Bukittinggi',
+    latitude: -0.4635,
+    longitude: 100.3988,
+    address: 'Jl. Sutan Syahrir No. 45, Padang Panjang',
+    is_active: true,
+  },
+  {
+    id: 'poi-spbu-1',
+    category: 'SPBU',
+    name: 'SPBU Pertamina 14.271.536 Padang Panjang',
+    detour: 'Detour: +2 menit (120 m)',
+    route: 'Tepat di sisi kiri jalur utama Lintas Tengah',
+    latitude: -0.458,
+    longitude: 100.402,
+    address: 'Jl. Raya Padang - Bukittinggi Km 6',
+    is_active: true,
+  },
+  {
+    id: 'poi-spbu-2',
+    category: 'SPBU',
+    name: 'SPBU Koto Baru Lembah Harau',
+    detour: 'Detour: +3 menit (200 m)',
+    route: 'Pintu masuk kawasan lembah',
+    latitude: -0.118,
+    longitude: 100.655,
+    address: 'Jl. Raya Harau Km 2',
+    is_active: true,
+  },
+  {
+    id: 'poi-masjid-1',
+    category: 'Masjid',
+    name: 'Masjid Raya Syekh Ahmad Khatib Al-Minangkabawi',
+    detour: 'Detour: +5 menit (600 m)',
+    route: 'Parkir luas & fasilitas wudu ramah rombongan',
+    latitude: -0.925,
+    longitude: 100.362,
+    address: 'Kec. Padang Utara, Kota Padang',
+    is_active: true,
+  },
+  {
+    id: 'poi-masjid-2',
+    category: 'Masjid',
+    name: 'Masjid Asasi Sigando Padang Panjang (Tertua)',
+    detour: 'Detour: +2 menit (150 m)',
+    route: 'Bangunan bersejarah kayu surau Minang',
+    latitude: -0.47,
+    longitude: 100.41,
+    address: 'Nagari Gunuang, Padang Panjang',
+    is_active: true,
+  },
+  {
+    id: 'poi-atm-1',
+    category: 'ATM & Bengkel',
+    name: 'ATM Center Bank Nagari & Bengkel Siaga Kelok 9',
+    detour: 'Detour: +3 menit (250 m)',
+    route: 'Sebelum tanjakan jembatan layang Kelok 9',
+    latitude: -0.075,
+    longitude: 100.702,
+    address: 'Jalur Lintas Riau - Sumbar Km 32',
+    is_active: true,
+  },
+  {
+    id: 'poi-atm-2',
+    category: 'ATM & Bengkel',
+    name: 'Posko Siaga Mobil & Motor Koto Baru',
+    detour: 'Detour: +2 menit (110 m)',
+    route: 'Rest area pasar Koto Baru',
+    latitude: -0.38,
+    longitude: 100.385,
+    address: 'Jl. Raya Bukittinggi - Padang',
+    is_active: true,
+  },
 ];

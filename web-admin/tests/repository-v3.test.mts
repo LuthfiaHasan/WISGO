@@ -30,8 +30,8 @@ const repoMod = await import('../src/services/dbRepository.ts');
 const destMod = await import('../src/data/mockDestinations.ts');
 const dbSeedMod = await import('../src/data/mockDatabaseV2.ts');
 
-test('1. V3 migration wipes legacy keys and seeds clean v3.0.0 data without Blank Spot', () => {
-  assert.equal(store.get('wisgo_v2_db_version'), '3.0.0');
+test('1. V3 migration wipes legacy keys and seeds clean v3.2.0 data without Blank Spot', () => {
+  assert.equal(store.get('wisgo_v2_db_version'), '3.2.0');
   assert.equal(store.get('wisgo_dispar_destinations_v2'), undefined);
   assert.equal(store.get('wisgo_checklist_challenges'), undefined);
   assert.equal(store.get('wisgo_tourist_ugc_submissions'), undefined);
@@ -148,12 +148,12 @@ test('7. Emergency contacts (6 real Sumbar), Hazard alerts (4 corridors), Pungli
   assert.ok(afterBroadcast.length >= 5, 'Broadcasting weather must persist into HazardAlertsRepo');
 });
 
-test('8. Adventurer level calculation matches FE-2 thresholds and Jejak WISGO drops sports km metric', () => {
-  assert.deepEqual(destMod.calculateAdventurerLevel(0), { level: 1, name: 'Beginner' });
-  assert.deepEqual(destMod.calculateAdventurerLevel(300), { level: 2, name: 'Explorer' });
-  assert.deepEqual(destMod.calculateAdventurerLevel(700), { level: 3, name: 'Adventurer' });
-  assert.deepEqual(destMod.calculateAdventurerLevel(1200), { level: 4, name: 'Trailblazer' });
-  assert.deepEqual(destMod.calculateAdventurerLevel(2000), { level: 5, name: 'Wanderer' });
+test('8. Adventurer level calculation uses Indonesian badge names and Jejak WISGO drops sports km metric', () => {
+  assert.deepEqual(destMod.calculateAdventurerLevel(0), { level: 1, name: 'Pemula' });
+  assert.deepEqual(destMod.calculateAdventurerLevel(300), { level: 2, name: 'Penjelajah' });
+  assert.deepEqual(destMod.calculateAdventurerLevel(700), { level: 3, name: 'Petualang' });
+  assert.deepEqual(destMod.calculateAdventurerLevel(1200), { level: 4, name: 'Perintis' });
+  assert.deepEqual(destMod.calculateAdventurerLevel(2000), { level: 5, name: 'Pengelana' });
 
   const profiles = repoMod.UserProfilesRepo.getAll();
   assert.ok(profiles.length > 0);
@@ -168,18 +168,109 @@ test('8. Adventurer level calculation matches FE-2 thresholds and Jejak WISGO dr
   }
 });
 
-test('9. Heatmap codes unique (PPJ & PDP), Group Rooms valid, and System Benchmark complete', () => {
+test('9. Heatmap codes unique (PPJ & PDP), SOS News & Shunlu POIs valid, and System Benchmark complete', () => {
   const codes = dbSeedMod.SEED_REGENCY_HEATMAP.map((r: { code: string }) => r.code);
   assert.equal(new Set(codes).size, codes.length, 'Regency heatmap codes must be unique');
   assert.ok(codes.includes('PPJ') && codes.includes('PDP'));
 
-  assert.ok(destMod.INITIAL_GROUP_ROOMS['WISGO-MINANG-88'], 'WISGO-MINANG-88 room must exist');
-  assert.ok(destMod.INITIAL_GROUP_ROOMS['WISGO-HARAU-07'], 'WISGO-HARAU-07 room must exist');
-  assert.ok(destMod.INITIAL_GROUP_ROOMS['WISGO-MANDEH-12'], 'WISGO-MANDEH-12 room must exist');
+  const sosNews = repoMod.SosNewsRepo.getAll();
+  assert.ok(sosNews.length >= 3, 'Should seed 3 official Sumbar SOS news items');
+  assert.ok(sosNews.some((n: { title: string }) => n.title.includes('Marapi')));
+
+  const shunluPois = repoMod.ShunluPoisRepo.getAll();
+  assert.ok(shunluPois.length >= 8, 'Should seed 8 Shunlu corridor POIs');
+  assert.ok(shunluPois.some((p: { category: string }) => p.category === 'RM Padang'));
 
   const bm = destMod.INITIAL_SYSTEM_BENCHMARK;
   assert.equal(typeof bm.go_engine_latency_ms, 'number');
   assert.equal(typeof bm.postgres_spatial_query_ms, 'number');
   assert.equal(typeof bm.requests_per_second, 'number');
   assert.ok(Array.isArray(bm.benchmark_history) && bm.benchmark_history.length > 0);
+});
+
+test('10. NewTourRepo detects duplicate submissions and merges best data + best photo with contributor credits', () => {
+  const dupGroups = repoMod.NewTourRepo.findDuplicateGroups();
+  assert.ok(dupGroups.length >= 1, 'Should detect duplicate Sarasah Murai submissions (nt-001 & nt-003)');
+  const sarasahGroup = dupGroups.find((g: Array<{ id: string }>) =>
+    g.some((item) => item.id === 'nt-001') && g.some((item) => item.id === 'nt-003')
+  );
+  assert.ok(sarasahGroup && sarasahGroup.length === 2, 'Sarasah Murai duplicate group must contain nt-001 & nt-003');
+
+  const merged = repoMod.NewTourRepo.mergeAndApproveToDestination({
+    submissions: sarasahGroup,
+    primaryDataSubmissionId: 'nt-001',
+    coverPhotoSubmissionId: 'nt-003',
+  });
+
+  assert.equal(merged.name, 'Sarasah Murai Tersembunyi');
+  assert.ok(merged.cover_image.includes('1432405972618'), 'Cover photo must come from nt-003');
+  assert.ok(merged.gallery_images && merged.gallery_images.length === 1, 'Other submitter photo must be preserved in gallery_images');
+  assert.equal(merged.contributors?.length, 2, 'Both contributors must be credited');
+  assert.equal(merged.contributors?.[0]?.name, 'Rian Pratama');
+  assert.equal(merged.contributors?.[0]?.role, 'Kontributor Data & Tips');
+  assert.equal(merged.contributors?.[1]?.name, 'Siti Rahma');
+  assert.equal(merged.contributors?.[1]?.role, 'Kontributor Foto');
+
+  const afterTours = repoMod.NewTourRepo.getAll();
+  const nt1 = afterTours.find((t: { id: string }) => t.id === 'nt-001');
+  const nt3 = afterTours.find((t: { id: string }) => t.id === 'nt-003');
+  assert.equal(nt1?.status, 'approved');
+  assert.equal(nt3?.status, 'approved');
+  assert.equal(nt1?.merged_into_destination_id, merged.id);
+  assert.equal(nt3?.merged_into_destination_id, merged.id);
+});
+
+test('11. DestinationsRepo.syncFromBackend merges Go payloads cleanly and strips legacy cellular_signal', () => {
+  const synced = repoMod.DestinationsRepo.syncFromBackend([
+    {
+      id: 'dest-001',
+      slug: 'lembah-harau',
+      name: 'Lembah Harau (Backend Live)',
+      category_id: 'cat-alam-geopark',
+      category: 'Alam & Geopark',
+      city_regency: 'Kab. Lima Puluh Kota',
+      description: 'Data langsung dari server Go Gin + PostgreSQL.',
+      latitude: -0.1023,
+      longitude: 100.6728,
+      cover_image: 'https://example.com/harau.jpg',
+      crowd_level: 'Sedang',
+      distance_km: 138,
+      travel_time_min: 195,
+      estimated_cost: 20000,
+      qr_placard_code: 'WISGO-HRU-001',
+      medan_indicator: {
+        id: 'med-dest-001',
+        destination_id: 'dest-001',
+        vehicle_access: 'Mobil OK',
+        trekking_level: 'Mudah (Datar)',
+        cellular_signal: '4G Kuat',
+        facilities: 'Toilet, Musala & Parkir Lengkap',
+        guide_need: 'Mandiri',
+      } as unknown as import('../src/types/contract.ts').IndikatorMedan,
+      tariffs: [
+        {
+          id: 'trf-be-1',
+          destination_id: 'dest-001',
+          category: 'Tiket Masuk',
+          item_name: 'Tiket Masuk Perda Live',
+          price: 20000,
+          unit: 'per orang',
+          regulation_ref: 'Perda 50 Kota 2026',
+        },
+      ],
+    },
+  ]);
+
+  assert.equal(synced.length, 1);
+  assert.equal(synced[0].name, 'Lembah Harau (Backend Live)');
+  assert.equal(synced[0].tariffs?.[0]?.price, 20000);
+  assert.equal(
+    (synced[0].medan_indicator as Record<string, unknown> | undefined)?.cellular_signal,
+    undefined,
+    'syncFromBackend must strip legacy cellular_signal from Go payload'
+  );
+  assert.ok(
+    (synced[0].denah_points?.length || 0) > 0,
+    'syncFromBackend must preserve local Denah 2D points'
+  );
 });

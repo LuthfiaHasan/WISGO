@@ -1,13 +1,9 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   Camera,
-  CheckCircle2,
   Compass,
-  Crosshair,
   Edit3,
-  ExternalLink,
   Layers,
-  Map,
   Maximize2,
   Minimize2,
   Plus,
@@ -18,20 +14,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import {
-  DenahPoint,
-  DenahPointCategory,
-  Destination,
-  PanoramaScene,
-  Partner,
-} from '../types/contract';
-import {
-  deleteDestinationDenahPoint,
-  deleteDestinationScene,
-  saveDestinationDenahPoint,
-  saveDestinationScene,
-} from '../services/api';
-import { DENAH_POINT_CATEGORIES, getDenahSvgPath } from '../data/mockDestinations';
+import { Destination, PanoramaScene, Partner } from '../types/contract';
+import { deleteDestinationScene, saveDestinationScene } from '../services/api';
 import { ImageDropzone } from '../components/ImageDropzone';
 
 interface Studio360PageProps {
@@ -40,59 +24,20 @@ interface Studio360PageProps {
   onUpdateDestinations: (updated: Destination[]) => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   initialDestId?: string;
-  initialTab?: 'panorama' | 'denah';
+  initialTab?: 'panorama';
   onNavigateToPartner?: (partnerId?: string) => void;
 }
 
 const FALLBACK_PANORAMA = '/assets/synced/panorama_sumbar_default.jpg';
 
-const DENAH_META: Record<
-  DenahPointCategory,
-  { label: string; color: string; bg: string; border: string }
-> = {
-  PARKIR: {
-    label: 'Area Parkir',
-    color: '#1D4ED8',
-    bg: '#EFF6FF',
-    border: '#93C5FD',
-  },
-  UMKM: {
-    label: 'Mitra UMKM',
-    color: '#C2410C',
-    bg: '#FFF7ED',
-    border: '#FDBA74',
-  },
-  TOILET: {
-    label: 'Toilet Umum',
-    color: '#0F766E',
-    bg: '#F0FDFA',
-    border: '#99F6E4',
-  },
-  MUSHOLLA: {
-    label: 'Musholla / Surau',
-    color: '#166534',
-    bg: '#F0FDF4',
-    border: '#86EFAC',
-  },
-  LOKET: {
-    label: 'Loket Resmi Perda',
-    color: '#6D28D9',
-    bg: '#F5F3FF',
-    border: '#C4B5FD',
-  },
-};
-
 export const Studio360Page: React.FC<Studio360PageProps> = ({
   destinations,
-  partners = [],
   onUpdateDestinations,
   showToast,
   initialDestId,
-  initialTab = 'panorama',
-  onNavigateToPartner,
 }) => {
   const destSelectId = useId();
-  const [activeTab, setActiveTab] = useState<'panorama' | 'denah'>(initialTab);
+  const activeTab = 'panorama' as const;
   const [selectedDestId, setSelectedDestId] = useState<string>(
     initialDestId || destinations[0]?.id || 'dest-001'
   );
@@ -101,17 +46,12 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
     if (initialDestId) setSelectedDestId(initialDestId);
   }, [initialDestId]);
 
-  useEffect(() => {
-    if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
-
   const selectedDestination = useMemo(
     () => destinations.find((d) => d.id === selectedDestId) || destinations[0],
     [destinations, selectedDestId]
   );
 
   const currentScenes: PanoramaScene[] = selectedDestination?.scenes_360 || [];
-  const currentDenahPoints: DenahPoint[] = selectedDestination?.denah_points || [];
 
   const [selectedSceneId, setSelectedSceneId] = useState<string>(currentScenes[0]?.id || '');
 
@@ -306,105 +246,15 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
     showToast(`Scene "${scene.title}" berhasil dihapus.`, 'info');
   };
 
-  // ============================================================================
-  // STATE TAB 2: EDITOR DENAH KAWASAN 2D (PARKIR, UMKM, TOILET, MUSHOLLA, LOKET)
-  // ============================================================================
-  const [denahFilter, setDenahFilter] = useState<'ALL' | DenahPointCategory>('ALL');
-  const [selectedDenahPoint, setSelectedDenahPoint] = useState<DenahPoint | null>(null);
-  const [isPlacingDenah, setIsPlacingDenah] = useState(false);
-
-  const [isDenahModalOpen, setIsDenahModalOpen] = useState(false);
-  const [editingDenah, setEditingDenah] = useState<DenahPoint | null>(null);
-  const [denahCategory, setDenahCategory] = useState<DenahPointCategory>('UMKM');
-  const [denahTitle, setDenahTitle] = useState('');
-  const [denahDesc, setDenahDesc] = useState('');
-  const [denahX, setDenahX] = useState(50);
-  const [denahY, setDenahY] = useState(50);
-  const [denahPartnerId, setDenahPartnerId] = useState('');
-
-  const filteredDenahPoints = useMemo(
-    () =>
-      denahFilter === 'ALL'
-        ? currentDenahPoints
-        : currentDenahPoints.filter((p) => p.category === denahFilter),
-    [currentDenahPoints, denahFilter]
-  );
-
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isPlacingDenah) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const xPct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    const yPct = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-    setEditingDenah(null);
-    setDenahCategory('UMKM');
-    setDenahTitle('');
-    setDenahDesc('');
-    setDenahX(Math.max(4, Math.min(96, xPct)));
-    setDenahY(Math.max(4, Math.min(96, yPct)));
-    setDenahPartnerId('');
-    setIsPlacingDenah(false);
-    setIsDenahModalOpen(true);
-    showToast(`Koordinat Denah 2D dipilih: X ${xPct}%, Y ${yPct}%.`, 'info');
-  };
-
-  const handleOpenEditDenah = (pt: DenahPoint) => {
-    setEditingDenah(pt);
-    setDenahCategory(pt.category);
-    setDenahTitle(pt.title);
-    setDenahDesc(pt.description);
-    setDenahX(pt.x);
-    setDenahY(pt.y);
-    setDenahPartnerId(pt.partner_id || '');
-    setIsDenahModalOpen(true);
-  };
-
-  const handleSaveDenahSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDestination || !denahTitle.trim()) {
-      showToast('Nama titik fasilitas Denah 2D wajib diisi.', 'warning');
-      return;
-    }
-
-    const nextPoint: DenahPoint = {
-      id: editingDenah ? editingDenah.id : `dnh-${Date.now().toString(36)}`,
-      destination_id: selectedDestination.id,
-      category: denahCategory,
-      title: denahTitle.trim(),
-      description: denahDesc.trim() || `${DENAH_META[denahCategory].label} resmi kawasan.`,
-      x: Number(denahX),
-      y: Number(denahY),
-      partner_id: denahCategory === 'UMKM' && denahPartnerId ? denahPartnerId : undefined,
-    };
-
-    const updated = await saveDestinationDenahPoint(selectedDestination.id, nextPoint);
-    onUpdateDestinations(updated);
-    setSelectedDenahPoint(nextPoint);
-    setIsDenahModalOpen(false);
-    showToast(
-      editingDenah
-        ? `Titik Denah 2D "${nextPoint.title}" diperbarui.`
-        : `Titik Denah 2D "${nextPoint.title}" (${nextPoint.category}) ditambahkan.`,
-      'success'
-    );
-  };
-
-  const handleDeleteDenah = async (pt: DenahPoint) => {
-    if (!window.confirm(`Hapus titik "${pt.title}" dari Denah Kawasan 2D?`)) return;
-    const updated = await deleteDestinationDenahPoint(pt.id);
-    onUpdateDestinations(updated);
-    if (selectedDenahPoint?.id === pt.id) setSelectedDenahPoint(null);
-    showToast(`Titik Denah 2D "${pt.title}" dihapus.`, 'info');
-  };
-
   return (
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">
-            Panorama 360° &amp; Editor Denah Kawasan 2D
+            Studio Panorama 360° (Bersih Tanpa Pin)
           </h1>
           <p className="text-xs text-[#4A5248] mt-0.5">
-            Tab 1: Pure Panorama 360° bersih (Aerial &amp; Ground) · Tab 2: Denah Fasilitas 2D (Parkir, UMKM, Toilet, Musholla, Loket).
+            Kelola foto panorama equirectangular 360° (Aerial &amp; Ground) untuk seluruh destinasi wisata Sumatera Barat.
           </p>
         </div>
 
@@ -415,64 +265,22 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
           <select
             id={destSelectId}
             value={selectedDestId}
-            onChange={(e) => {
-              setSelectedDestId(e.target.value);
-              setSelectedDenahPoint(null);
-            }}
-            className="h-10 px-3 py-1.5 rounded-xl bg-white border border-[#234B24]/15 text-xs font-bold text-[#1B1F1A] shadow-2xs"
+            onChange={(e) => setSelectedDestId(e.target.value)}
+            className="h-10 px-3 py-1.5 rounded-xl bg-white border border-[#234B24]/15 text-xs font-bold text-[#1B1F1A] shadow-sm"
           >
             {destinations.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.name} ({d.scenes_360?.length || 0} Scene · {d.denah_points?.length || 0} Denah)
+                {d.name} ({d.scenes_360?.length || 0} Scene 360°)
               </option>
             ))}
           </select>
         </div>
       </header>
 
-      {/* 2-Tab Switcher */}
-      <nav
-        aria-label="Mode Studio Panorama & Denah"
-        className="flex gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs w-fit"
-      >
-        <button
-          type="button"
-          onClick={() => setActiveTab('panorama')}
-          className={`h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 transition ${
-            activeTab === 'panorama'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:bg-[#234B24]/5'
-          }`}
-        >
-          <Camera className="w-3.5 h-3.5" />
-          <span>Panorama 360° (Pure View)</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20">
-            {currentScenes.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('denah')}
-          className={`h-9 px-4 rounded-lg text-xs font-bold flex items-center gap-2 transition ${
-            activeTab === 'denah'
-              ? 'bg-[#234B24] text-white shadow-xs'
-              : 'text-[#4A5248] hover:bg-[#234B24]/5'
-          }`}
-        >
-          <Map className="w-3.5 h-3.5" />
-          <span>Editor Denah Kawasan 2D</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20">
-            {currentDenahPoints.length}
-          </span>
-        </button>
-      </nav>
-
       {/* ==================================================================== */}
-      {/* TAB 1: PURE PANORAMA 360°                                            */}
+      {/* PURE PANORAMA 360° (BERSIH TANPA PIN)                                */}
       {/* ==================================================================== */}
-      {activeTab === 'panorama' && (
-        <div className="space-y-5">
+      <div className="space-y-5">
           {/* Scene Switcher Bar */}
           <div className="bg-white p-3.5 rounded-2xl border border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -579,7 +387,7 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
                   Pure Panorama 360° · {activeScene?.scene_type === 'ground' ? 'Sudut Dekat (Ground)' : 'Panorama Luas (Aerial)'}
                 </div>
                 <div className="text-sm font-extrabold">
-                  {activeScene?.title || `${selectedDestination?.name} — Panorama Bawaan`}
+                  {activeScene?.title || `${selectedDestination?.name} � Panorama Bawaan`}
                 </div>
               </div>
 
@@ -650,270 +458,13 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* TAB 2: EDITOR DENAH KAWASAN 2D                                       */}
-      {/* ==================================================================== */}
-      {activeTab === 'denah' && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Interactive 2D Map Board */}
-          <div className="xl:col-span-8 space-y-4">
-            <div className="bg-white p-4 rounded-2xl border border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setDenahFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${
-                    denahFilter === 'ALL'
-                      ? 'bg-[#234B24] text-white border-[#234B24]'
-                      : 'bg-[#F6F3EC] text-[#4A5248] border-[#CFD8BE]'
-                  }`}
-                >
-                  Semua ({currentDenahPoints.length})
-                </button>
-                {DENAH_POINT_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setDenahFilter(cat)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border inline-flex items-center gap-1.5 ${
-                      denahFilter === cat
-                        ? 'bg-[#234B24] text-white border-[#234B24]'
-                        : 'bg-[#F6F3EC] text-[#4A5248] border-[#CFD8BE]'
-                    }`}
-                  >
-                    <img src={getDenahSvgPath(cat)} alt="" className="w-4 h-4" />
-                    <span>{cat}</span>
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsPlacingDenah((v) => !v)}
-                className={`min-h-[38px] px-4 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition ${
-                  isPlacingDenah
-                    ? 'bg-[#F26B4B] text-white animate-pulse'
-                    : 'bg-[#234B24] hover:bg-[#1B3B1C] text-white'
-                }`}
-              >
-                <Crosshair className="w-3.5 h-3.5" />
-                <span>
-                  {isPlacingDenah
-                    ? 'Klik Pada Denah Untuk Menaruh Titik...'
-                    : 'Tambah Titik di Denah 2D'}
-                </span>
-              </button>
-            </div>
-
-            <div
-              onClick={handleMapClick}
-              className={`relative h-[460px] rounded-3xl overflow-hidden border-2 shadow-lg select-none ${
-                isPlacingDenah
-                  ? 'border-[#F26B4B] cursor-crosshair'
-                  : 'border-[#234B24]/20'
-              }`}
-              style={{
-                backgroundColor: '#E8EFE2',
-                backgroundImage:
-                  'linear-gradient(to right, rgba(35,75,36,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(35,75,36,0.08) 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
-              }}
-            >
-              {/* Soft destination visual backdrop */}
-              {selectedDestination?.cover_image && (
-                <img
-                  src={selectedDestination.cover_image}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
-                />
-              )}
-
-              {/* Map Compass & Legend */}
-              <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-xs px-3.5 py-2 rounded-2xl border border-[#CFD8BE] shadow-xs pointer-events-none">
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#234B24]">
-                  Denah Kawasan 2D (Koordinat 0–100%)
-                </div>
-                <div className="text-xs font-extrabold text-[#1B1F1A]">
-                  {selectedDestination?.name}
-                </div>
-              </div>
-
-              {/* Placed Denah Markers */}
-              {filteredDenahPoints.map((pt) => {
-                const isSelected = selectedDenahPoint?.id === pt.id;
-                const meta = DENAH_META[pt.category];
-                return (
-                  <button
-                    key={pt.id}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedDenahPoint(pt);
-                    }}
-                    style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 group flex flex-col items-center transition-transform ${
-                      isSelected ? 'scale-110 z-20' : 'hover:scale-105 z-10'
-                    }`}
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center border-2 ${
-                        isSelected ? 'ring-4 ring-[#F26B4B]/40' : ''
-                      }`}
-                      style={{ borderColor: meta.color }}
-                    >
-                      <img src={getDenahSvgPath(pt.category)} alt={pt.category} className="w-6 h-6" />
-                    </div>
-                    <span className="mt-1 px-2 py-0.5 rounded-lg bg-[#1B1F1A]/85 text-white text-[10px] font-bold whitespace-nowrap shadow-xs">
-                      {pt.title.length > 22 ? `${pt.title.slice(0, 20)}..` : pt.title}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right Panel: Selected Point & Full List */}
-          <div className="xl:col-span-4 space-y-4">
-            {selectedDenahPoint && (
-              <div className="bg-white p-5 rounded-3xl border-2 border-[#234B24]/25 shadow-sm space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <img
-                      src={getDenahSvgPath(selectedDenahPoint.category)}
-                      alt=""
-                      className="w-9 h-9 shrink-0"
-                    />
-                    <div>
-                      <span
-                        className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase"
-                        style={{
-                          backgroundColor: DENAH_META[selectedDenahPoint.category].bg,
-                          color: DENAH_META[selectedDenahPoint.category].color,
-                        }}
-                      >
-                        {selectedDenahPoint.category}
-                      </span>
-                      <h3 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
-                        {selectedDenahPoint.title}
-                      </h3>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDenahPoint(null)}
-                    className="p-1 text-[#767676] hover:text-[#1B1F1A]"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <p className="text-xs text-[#4A5248]">{selectedDenahPoint.description}</p>
-                <div className="text-[11px] font-mono text-[#234B24] bg-[#F6F3EC] px-3 py-1.5 rounded-xl">
-                  Posisi Denah: X = {selectedDenahPoint.x}% · Y = {selectedDenahPoint.y}%
-                </div>
-
-                {selectedDenahPoint.partner_id && onNavigateToPartner && (
-                  <button
-                    type="button"
-                    onClick={() => onNavigateToPartner(selectedDenahPoint.partner_id)}
-                    className="w-full py-2 px-3 rounded-xl bg-[#F26B4B]/15 text-[#D95637] hover:bg-[#F26B4B] hover:text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 transition"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Buka Profil Mitra UMKM Terhubung</span>
-                  </button>
-                )}
-
-                <div className="flex items-center gap-2 pt-2 border-t border-[#E4E9DA]">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditDenah(selectedDenahPoint)}
-                    className="flex-1 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold inline-flex items-center justify-center gap-1"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" /> Edit Titik
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDenah(selectedDenahPoint)}
-                    className="py-2 px-3 rounded-xl bg-red-50 text-red-700 text-xs font-bold inline-flex items-center gap-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Hapus
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#234B24]">
-                  Daftar Titik Denah 2D ({filteredDenahPoints.length})
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingDenah(null);
-                    setDenahCategory('PARKIR');
-                    setDenahTitle('');
-                    setDenahDesc('');
-                    setDenahX(50);
-                    setDenahY(50);
-                    setDenahPartnerId('');
-                    setIsDenahModalOpen(true);
-                  }}
-                  className="text-xs font-bold text-[#234B24] hover:underline inline-flex items-center gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Manual
-                </button>
-              </div>
-
-              {filteredDenahPoints.length === 0 ? (
-                <p className="text-xs text-[#767676] text-center py-6">
-                  Belum ada titik fasilitas di denah kawasan ini.
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
-                  {filteredDenahPoints.map((pt) => (
-                    <div
-                      key={pt.id}
-                      onClick={() => setSelectedDenahPoint(pt)}
-                      className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between gap-2 transition ${
-                        selectedDenahPoint?.id === pt.id
-                          ? 'bg-[#E4E9DA]/60 border-[#234B24]'
-                          : 'bg-[#F6F3EC]/60 border-[#CFD8BE] hover:bg-[#F6F3EC]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <img src={getDenahSvgPath(pt.category)} alt="" className="w-7 h-7 shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-xs font-extrabold text-[#1B1F1A] truncate">
-                            {pt.title}
-                          </div>
-                          <div className="text-[10px] text-[#4A5248]">
-                            {pt.category} · ({pt.x}%, {pt.y}%)
-                          </div>
-                        </div>
-                      </div>
-                      <CheckCircle2
-                        className={`w-4 h-4 shrink-0 ${
-                          selectedDenahPoint?.id === pt.id ? 'text-[#234B24]' : 'text-transparent'
-                        }`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL TAMBAH/EDIT SCENE 360° */}
       {isSceneModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
           <form
             onSubmit={handleSaveSceneSubmit}
@@ -1004,135 +555,6 @@ export const Studio360Page: React.FC<Studio360PageProps> = ({
         </div>
       )}
 
-      {/* MODAL TAMBAH/EDIT TITIK DENAH 2D */}
-      {isDenahModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-        >
-          <form
-            onSubmit={handleSaveDenahSubmit}
-            className="bg-white rounded-[28px] w-full max-w-lg p-6 shadow-2xl border border-[#234B24]/15 space-y-4"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-[#E4E9DA]">
-              <h3 className="text-base font-extrabold text-[#1B1F1A]">
-                {editingDenah ? 'Edit Titik Denah 2D' : 'Tambah Titik Denah Kawasan 2D'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsDenahModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold mb-1">Kategori Denah *</label>
-                <select
-                  value={denahCategory}
-                  onChange={(e) => setDenahCategory(e.target.value as DenahPointCategory)}
-                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
-                >
-                  {DENAH_POINT_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat} — {DENAH_META[cat].label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold mb-1">X (%)</label>
-                  <input
-                    type="number"
-                    min={2}
-                    max={98}
-                    value={denahX}
-                    onChange={(e) => setDenahX(Number(e.target.value))}
-                    className="w-full min-h-[42px] px-2.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold mb-1">Y (%)</label>
-                  <input
-                    type="number"
-                    min={2}
-                    max={98}
-                    value={denahY}
-                    onChange={(e) => setDenahY(Number(e.target.value))}
-                    className="w-full min-h-[42px] px-2.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-mono"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold mb-1">Nama Titik Fasilitas / UMKM *</label>
-              <input
-                type="text"
-                required
-                value={denahTitle}
-                onChange={(e) => setDenahTitle(e.target.value)}
-                placeholder="Contoh: Loket Retribusi Resmi / Kedai Kawa Mak Etek"
-                className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
-              />
-            </div>
-
-            {denahCategory === 'UMKM' && partners.length > 0 && (
-              <div>
-                <label className="block text-xs font-bold mb-1">
-                  Hubungkan ke Mitra UMKM Resmi (Opsional)
-                </label>
-                <select
-                  value={denahPartnerId}
-                  onChange={(e) => {
-                    setDenahPartnerId(e.target.value);
-                    const matched = partners.find((p) => p.id === e.target.value);
-                    if (matched && !denahTitle) setDenahTitle(matched.name);
-                  }}
-                  className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold"
-                >
-                  <option value="">-- Tidak dihubungkan --</option>
-                  {partners.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.category})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-bold mb-1">Deskripsi Singkat</label>
-              <textarea
-                rows={2}
-                value={denahDesc}
-                onChange={(e) => setDenahDesc(e.target.value)}
-                className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
-              />
-            </div>
-
-            <div className="pt-3 border-t border-[#E4E9DA] flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsDenahModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248]"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold"
-              >
-                Simpan Titik Denah 2D
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 };

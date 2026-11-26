@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../models/open_trip_model.dart';
 
-/// Modal Mekanisme Verifikasi Penyelenggara (Item 6 Open Trip)
+/// Modal Profil Penyelenggara / Pemandu Trip Go (Poin 12 Revisi Trip Go)
+/// Menampilkan 5 informasi publik penyelenggara:
+/// 1. Nama
+/// 2. Nomor HP
+/// 3. Akun Media Sosial
+/// 4. Lisensi / Sertifikasi (Wajib untuk jalur berat / hard)
+/// 5. Pengalaman Penyelenggara
+/// (Upload KTP & Verifikasi Wajah dipindahkan khusus ke form pembuatan trip penyelenggara)
 class VerifiedOrganizerSheet extends StatelessWidget {
   final VerifiedOrganizer organizer;
 
@@ -15,244 +23,202 @@ class VerifiedOrganizerSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
-      padding: const EdgeInsets.fromLTRB(22, 14, 22, 26),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Handle bar baku 40x4 px
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
-            // Header Verifikasi
-            Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.forest,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.forest.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+              // Header Penyelenggara
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: AppColors.forest,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.verified_user_rounded,
+                        color: AppColors.cream,
+                        size: 26,
                       ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.verified_user_rounded,
-                      color: Colors.white,
-                      size: 28,
                     ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.successBg,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.check_circle_rounded, size: 12, color: AppColors.success),
-                                SizedBox(width: 4),
-                                Text(
-                                  'TERVERIFIKASI RESMI WISGO',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.success,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        organizer.name,
-                        style: const TextStyle(
-                          fontSize: 16.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.forest,
-                        ),
-                      ),
-                      Text(
-                        organizer.organizationName,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.muted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Detail Kredibilitas Penyelenggara (7 Poin Resmi Trip Go)
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.creamSubtle,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Column(
-                children: [
-                  // 1. Nama Penyelenggara & Organisasi
-                  _buildCredentialRow(
-                    icon: Icons.person_rounded,
-                    label: '1. Nama Lengkap Penyelenggara',
-                    value: '${organizer.name} (${organizer.organizationName})',
-                    isHighlight: true,
-                  ),
-                  const Divider(height: 16, color: AppColors.divider),
-
-                  // 2. Upload KTP
-                  _buildCredentialRow(
-                    icon: Icons.badge_outlined,
-                    label: '2. Status Upload e-KTP',
-                    value: '${organizer.ktpUploadStatus} • ${organizer.ktpStatus}',
-                    isHighlight: true,
-                  ),
-                  const Divider(height: 16, color: AppColors.divider),
-
-                  // 3. Nomor HP Terverifikasi
-                  _buildCredentialRow(
-                    icon: Icons.phone_android_rounded,
-                    label: '3. Nomor Handphone Terverifikasi',
-                    value: '${organizer.phone} (OTP Terhubung Akun WISGO)',
-                  ),
-                  const Divider(height: 16, color: AppColors.divider),
-
-                  // 4. Akun / Media Sosial
-                  _buildCredentialRow(
-                    icon: Icons.share_rounded,
-                    label: '4. Akun / Media Sosial Terhubung',
-                    value: organizer.socialMedia,
-                  ),
-                  const Divider(height: 16, color: AppColors.divider),
-
-                  // 5. Verifikasi Wajah / Liveness Biometrik
-                  _buildCredentialRow(
-                    icon: Icons.face_retouching_natural_rounded,
-                    label: '5. Verifikasi Wajah (Liveness Biometrik)',
-                    value: organizer.faceVerificationStatus,
-                    isHighlight: true,
-                  ),
-                  const Divider(height: 16, color: AppColors.divider),
-
-                  // 6. Pengalaman Sebagai Penyelenggara
-                  _buildCredentialRow(
-                    icon: Icons.work_history_rounded,
-                    label: '6. Pengalaman Penyelenggara',
-                    value: '${organizer.experienceYears} (${organizer.completedTrips} Trip Berhasil • ★ ${organizer.rating})',
-                  ),
-                  const Divider(height: 16, color: AppColors.divider),
-
-                  // 7. Lisensi & Sertifikasi Kompetensi Khusus
-                  _buildCredentialRow(
-                    icon: Icons.card_membership_rounded,
-                    label: '7. Lisensi & Sertifikasi Khusus',
-                    value: '${organizer.licenseNumber}\n${organizer.specialCompetency}',
-                    isHighlight: true,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Escrow Guarantee Card
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.infoBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.shield_rounded, color: AppColors.info, size: 20),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Jaminan Keamanan Escrow WISGO',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.info,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.successBg,
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
+                            border: Border.all(color: AppColors.successBorder),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle_rounded,
+                                size: 12,
+                                color: AppColors.success,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Penyelenggara Terverifikasi WISGO',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 5),
                         Text(
-                          organizer.escrowProtectionNote,
+                          organizer.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 11.5,
-                            color: Color(0xFF1E3A8A),
-                            height: 1.4,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        Text(
+                          organizer.organizationName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.muted,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, color: AppColors.ink),
+                      tooltip: 'Tutup',
+                    ),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.forest,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              // 5 Informasi Utama Penyelenggara / Pemandu
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Column(
+                  children: [
+                    // 1. Nama
+                    _buildInfoRow(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Nama Penyelenggara / Pemandu',
+                      value: organizer.name,
+                    ),
+                    const Divider(height: 18, color: AppColors.divider),
+
+                    // 2. Nomor HP
+                    _buildInfoRow(
+                      icon: Icons.phone_android_rounded,
+                      label: 'Nomor HP',
+                      value: organizer.phone,
+                    ),
+                    const Divider(height: 18, color: AppColors.divider),
+
+                    // 3. Akun Media Sosial
+                    _buildInfoRow(
+                      icon: Icons.alternate_email_rounded,
+                      label: 'Akun Media Sosial',
+                      value: organizer.socialMedia,
+                    ),
+                    const Divider(height: 18, color: AppColors.divider),
+
+                    // 4. Lisensi (Wajib untuk jalur Hard / Berat)
+                    _buildInfoRow(
+                      icon: Icons.card_membership_rounded,
+                      label: 'Lisensi / Sertifikasi (Wajib Jalur Hard)',
+                      value:
+                          '${organizer.licenseNumber}\n${organizer.specialCompetency}',
+                      isHighlight: true,
+                    ),
+                    const Divider(height: 18, color: AppColors.divider),
+
+                    // 5. Pengalaman Penyelenggara
+                    _buildInfoRow(
+                      icon: Icons.work_history_outlined,
+                      label: 'Pengalaman Penyelenggara',
+                      value:
+                          '${organizer.experienceYears} • ${organizer.completedTrips} Trip Berhasil • ★ ${organizer.rating}',
+                    ),
+                  ],
+                ),
               ),
-              child: const Text(
-                'Saya Mengerti & Terjamin Aman',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              const SizedBox(height: 18),
+
+              SizedBox(
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                  child: const Text(
+                    'Tutup Profil Penyelenggara',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCredentialRow({
+  Widget _buildInfoRow({
     required IconData icon,
     required String label,
     required String value,
@@ -261,8 +227,19 @@ class VerifiedOrganizerSheet extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: isHighlight ? AppColors.success : AppColors.forest),
-        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: isHighlight ? AppColors.sage : AppColors.creamSubtle,
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: AppColors.forest,
+          ),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +258,8 @@ class VerifiedOrganizerSheet extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: isHighlight ? const Color(0xFF065F46) : AppColors.ink,
+                  color: isHighlight ? AppColors.forest : AppColors.ink,
+                  height: 1.35,
                 ),
               ),
             ],

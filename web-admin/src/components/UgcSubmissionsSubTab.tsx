@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Camera,
   Check,
   CheckCircle2,
   Clock,
   EyeOff,
+  GitMerge,
   Image as ImageIcon,
   Inbox,
   MapPin,
   Plus,
   Search,
   Sparkles,
+  Users,
   X,
   XCircle,
 } from 'lucide-react';
@@ -47,6 +50,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
   const [statusFilter, setStatusFilter] = useState<'ALL' | NewTourStatus>('ALL');
   const [regencyFilter, setRegencyFilter] = useState('Semua Kab/Kota');
 
+  // Create New Submission Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formName, setFormName] = useState('');
   const [formSubmitterName, setFormSubmitterName] = useState('');
@@ -62,6 +66,72 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
   const [formPrice, setFormPrice] = useState('Rp 10.000 / orang');
   const [formSensitive, setFormSensitive] = useState(false);
 
+  // Merge Duplicate Submissions Modal
+  const [mergeGroup, setMergeGroup] = useState<NewTour[] | null>(null);
+  const [primaryDataId, setPrimaryDataId] = useState<string>('');
+  const [coverPhotoId, setCoverPhotoId] = useState<string>('');
+  const [mergeName, setMergeName] = useState<string>('');
+  const [mergeDescription, setMergeDescription] = useState<string>('');
+  const [mergeTips, setMergeTips] = useState<string>('');
+
+  const duplicateGroups = useMemo(
+    () => NewTourRepo.findDuplicateGroups(submissions),
+    [submissions]
+  );
+
+  const duplicateGroupById = useMemo(() => {
+    const map = new Map<string, NewTour[]>();
+    duplicateGroups.forEach((group) => {
+      group.forEach((item) => map.set(item.id, group));
+    });
+    return map;
+  }, [duplicateGroups]);
+
+  const openMergeModal = (group: NewTour[]) => {
+    const first = group[0];
+    const second = group[1] || first;
+    setMergeGroup(group);
+    setPrimaryDataId(first.id);
+    setCoverPhotoId(second.photo_url ? second.id : first.id);
+    setMergeName(first.name);
+    setMergeDescription(first.description);
+    const combinedTips = Array.from(
+      new Set(group.map((g) => g.tips_menjaga.trim()).filter(Boolean))
+    ).join(' ');
+    setMergeTips(combinedTips);
+  };
+
+  const handleSelectPrimaryData = (sub: NewTour) => {
+    setPrimaryDataId(sub.id);
+    setMergeName(sub.name);
+    setMergeDescription(sub.description);
+  };
+
+  const handleConfirmMerge = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mergeGroup || mergeGroup.length < 2) return;
+
+    const mergedDest = NewTourRepo.mergeAndApproveToDestination({
+      submissions: mergeGroup,
+      primaryDataSubmissionId: primaryDataId,
+      coverPhotoSubmissionId: coverPhotoId,
+      customName: mergeName,
+      customDescription: mergeDescription,
+      customTips: mergeTips,
+    });
+
+    setSubmissions(NewTourRepo.getAll());
+    setMergeGroup(null);
+    onRefreshDestinations();
+    const creditNames = (mergedDest.contributors || [])
+      .map((c) => `${c.name} (${c.role})`)
+      .join(' & ');
+    showToast(
+      `Destinasi "${mergedDest.name}" terbit hasil penggabungan ${mergeGroup.length} usulan! Kredit: ${creditNames}.`,
+      'success'
+    );
+  };
+
   const toggleFacility = (label: string) => {
     setFormFacilities((prev) =>
       prev.includes(label) ? prev.filter((item) => item !== label) : [...prev, label]
@@ -73,7 +143,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
     setSubmissions(NewTourRepo.getAll());
     onRefreshDestinations();
     showToast(
-      `Usulan "${created.name}" disetujui & masuk ke Direktori Destinasi (${created.category}) lengkap dengan Tips Menjaga Tempat.`,
+      `Usulan "${created.name}" oleh ${sub.submitter_name} disetujui & masuk ke Direktori Destinasi.`,
       'success'
     );
   };
@@ -159,7 +229,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
               Satu pintu kurasi dari form Usul Destinasi Mobile
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shadow-sm">
             <Clock className="w-5 h-5" />
           </div>
         </div>
@@ -169,12 +239,12 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
             <span className="text-[11px] font-extrabold text-[#0D9488] uppercase tracking-wider">
               Disetujui &amp; Terbit
             </span>
-            <div className="text-2xl font-black text-[#0D9488] mt-1">{approvedCount} Destinasi</div>
+            <div className="text-2xl font-black text-[#0D9488] mt-1">{approvedCount} Usulan</div>
             <p className="text-[11px] text-[#0F766E] mt-0.5">
-              Otomatis masuk Direktori Utama + Aturan Etika
+              Otomatis masuk Direktori Utama + Kredit Kontributor
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#0D9488] text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-[#0D9488] text-white flex items-center justify-center shadow-sm">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
@@ -194,6 +264,55 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
           </div>
         </div>
       </div>
+
+      {/* BANNER DETEKSI OTOMATIS USULAN DUPLIKAT */}
+      {duplicateGroups.length > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <GitMerge className="w-5 h-5" />
+            </div>
+            <div className="flex-1 text-xs">
+              <h3 className="font-extrabold text-amber-950">
+                Terdeteksi {duplicateGroups.length} Kelompok Usulan Tempat yang Sama (Duplikat)
+              </h3>
+              <p className="text-amber-900/90 mt-0.5 leading-relaxed">
+                Anda dapat menggabungkan usulan serupa: pilih <strong>deskripsi/data terbaik</strong> dari satu pengusul dan <strong>foto terbaik</strong> dari pengusul lain. Semua nama pengusul otomatis dicantumkan sebagai <strong>Kontributor</strong> tanpa ada yang ditolak.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {duplicateGroups.map((group, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded-xl bg-white border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div>
+                  <div className="font-extrabold text-[#1B1F1A]">
+                    {group.map((g) => `"${g.name}"`).join(' + ')}
+                  </div>
+                  <div className="text-[11px] text-[#4A5248] mt-0.5">
+                    {group.length} Pengusul:{' '}
+                    <strong className="text-[#234B24]">
+                      {group.map((g) => g.submitter_name).join(', ')}
+                    </strong>{' '}
+                    · {group[0].city_regency}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openMergeModal(group)}
+                  className="min-h-[38px] px-4 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 shadow-sm shrink-0 transition"
+                >
+                  <GitMerge className="w-3.5 h-3.5 text-[#F26B4B]" />
+                  <span>Gabungkan &amp; Pilih Terbaik</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl p-4 border border-[#234B24]/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap flex-1">
@@ -278,142 +397,403 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                   </td>
                 </tr>
               ) : (
-                filtered.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-[#F6F3EC]/40 transition align-top">
-                    <td className="py-3.5 px-4 max-w-xs">
-                      <div className="flex items-start gap-3">
-                        <div className="w-14 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-black/5">
-                          {sub.photo_url ? (
-                            <img src={sub.photo_url} alt={sub.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <ImageIcon className="w-4 h-4" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-extrabold text-[#1B1F1A]">{sub.name}</div>
-                          <div className="text-[11px] text-[#4A5248] line-clamp-2 mt-0.5">
-                            {sub.description}
+                filtered.map((sub) => {
+                  const dupGroup = duplicateGroupById.get(sub.id);
+                  return (
+                    <tr key={sub.id} className="hover:bg-[#F6F3EC]/40 transition align-top">
+                      <td className="py-3.5 px-4 max-w-xs">
+                        <div className="flex items-start gap-3">
+                          <div className="w-14 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-black/5">
+                            {sub.photo_url ? (
+                              <img
+                                src={sub.photo_url}
+                                alt={sub.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <ImageIcon className="w-4 h-4" />
+                              </div>
+                            )}
                           </div>
-                          {sub.estimated_price && (
-                            <div className="text-[10px] font-mono font-bold text-[#234B24] mt-1">
-                              Estimasi: {sub.estimated_price}
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-extrabold text-[#1B1F1A]">{sub.name}</span>
+                              {dupGroup && sub.status === 'pending' && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300 inline-flex items-center gap-1">
+                                  <GitMerge className="w-2.5 h-2.5" />
+                                  Duplikat ({dupGroup.length})
+                                </span>
+                              )}
                             </div>
+                            <div className="text-[11px] text-[#4A5248] line-clamp-2 mt-0.5">
+                              {sub.description}
+                            </div>
+                            {sub.estimated_price && (
+                              <div className="text-[10px] font-mono font-bold text-[#234B24] mt-1">
+                                Estimasi: {sub.estimated_price}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-[#1B1F1A]">{sub.city_regency}</div>
+                        <div className="text-[10px] text-[#234B24] font-bold mt-0.5">
+                          {sub.category}
+                        </div>
+                        <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-mono text-[#4A5248]">
+                          {sub.is_sensitive ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">
+                              <EyeOff className="w-3 h-3" />
+                              GPS Terlindungi (Sensitif)
+                            </span>
+                          ) : (
+                            <>
+                              <MapPin className="w-3 h-3 text-[#F26B4B]" />
+                              {sub.latitude.toFixed(4)}, {sub.longitude.toFixed(4)}
+                            </>
                           )}
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-[#1B1F1A]">{sub.city_regency}</div>
-                      <div className="text-[10px] text-[#234B24] font-bold mt-0.5">{sub.category}</div>
-                      <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-mono text-[#4A5248]">
-                        {sub.is_sensitive ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">
-                            <EyeOff className="w-3 h-3" />
-                            GPS Terlindungi (Sensitif)
-                          </span>
-                        ) : (
-                          <>
-                            <MapPin className="w-3 h-3 text-[#F26B4B]" />
-                            {sub.latitude.toFixed(4)}, {sub.longitude.toFixed(4)}
-                          </>
+                      <td className="py-3.5 px-4 max-w-xs">
+                        <div className="p-2 rounded-xl bg-[#E4E9DA]/60 border border-[#CFD8BE] text-[11px] text-[#1B1F1A]">
+                          <div className="font-bold text-[#234B24] flex items-center gap-1 mb-0.5">
+                            <Sparkles className="w-3 h-3" /> Tips Menjaga Tempat:
+                          </div>
+                          <p className="line-clamp-2">{sub.tips_menjaga}</p>
+                        </div>
+                        {sub.facilities && sub.facilities.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {sub.facilities.map((fac) => (
+                              <span
+                                key={fac}
+                                className="px-1.5 py-0.5 rounded bg-[#F6F3EC] border border-[#CFD8BE] text-[10px] font-semibold text-[#4A5248]"
+                              >
+                                {fac}
+                              </span>
+                            ))}
+                          </div>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-3.5 px-4 max-w-xs">
-                      <div className="p-2 rounded-xl bg-[#E4E9DA]/60 border border-[#CFD8BE] text-[11px] text-[#1B1F1A]">
-                        <div className="font-bold text-[#234B24] flex items-center gap-1 mb-0.5">
-                          <Sparkles className="w-3 h-3" /> Tips Menjaga Tempat:
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-[#1B1F1A]">{sub.submitter_name}</div>
+                        <div className="text-[10px] font-mono text-[#767676]">
+                          {sub.submitter_phone}
                         </div>
-                        <p className="line-clamp-2">{sub.tips_menjaga}</p>
-                      </div>
-                      {sub.facilities && sub.facilities.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {sub.facilities.map((fac) => (
-                            <span
-                              key={fac}
-                              className="px-1.5 py-0.5 rounded bg-[#F6F3EC] border border-[#CFD8BE] text-[10px] font-semibold text-[#4A5248]"
-                            >
-                              {fac}
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        {sub.status === 'pending' && (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FFEDD5] text-[#C2410C] inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Pending
+                          </span>
+                        )}
+                        {sub.status === 'approved' && (
+                          <div className="space-y-1">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#CCFBF1] text-[#0D9488] inline-flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> Approved
                             </span>
-                          ))}
-                        </div>
-                      )}
-                    </td>
+                            {sub.merged_role && (
+                              <div className="text-[10px] font-bold text-[#234B24]">
+                                {sub.merged_role}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {sub.status === 'rejected' && (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 inline-flex items-center gap-1">
+                            <XCircle className="w-3 h-3" /> Rejected
+                          </span>
+                        )}
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#1B1F1A]">{sub.submitter_name}</div>
-                      <div className="text-[10px] font-mono text-[#767676]">{sub.submitter_phone}</div>
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      {sub.status === 'pending' && (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FFEDD5] text-[#C2410C] inline-flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Pending
-                        </span>
-                      )}
-                      {sub.status === 'approved' && (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#CCFBF1] text-[#0D9488] inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Approved
-                        </span>
-                      )}
-                      {sub.status === 'rejected' && (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 inline-flex items-center gap-1">
-                          <XCircle className="w-3 h-3" /> Rejected
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {sub.status === 'pending' ? (
-                          <>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          {sub.status === 'pending' ? (
+                            <>
+                              {dupGroup && (
+                                <button
+                                  type="button"
+                                  onClick={() => openMergeModal(dupGroup)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] inline-flex items-center gap-1"
+                                  title="Gabungkan dengan usulan serupa"
+                                >
+                                  <GitMerge className="w-3.5 h-3.5" /> Gabungkan
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleApproveSubmission(sub)}
+                                className="px-3 py-1.5 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-[11px] inline-flex items-center gap-1"
+                              >
+                                <Check className="w-3.5 h-3.5" /> Setujui
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRejectSubmission(sub)}
+                                className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[11px] inline-flex items-center gap-1"
+                              >
+                                <X className="w-3.5 h-3.5" /> Tolak
+                              </button>
+                            </>
+                          ) : sub.status === 'approved' ? (
+                            <span className="text-[11px] text-[#0D9488] font-bold inline-flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Terbit di Direktori
+                            </span>
+                          ) : (
                             <button
                               type="button"
                               onClick={() => handleApproveSubmission(sub)}
-                              className="px-3 py-1.5 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-[11px] inline-flex items-center gap-1"
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-[#234B24] border border-[#234B24]/20 hover:bg-[#234B24]/10"
                             >
-                              <Check className="w-3.5 h-3.5" /> Setujui
+                              Tinjau Ulang &amp; Setujui
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRejectSubmission(sub)}
-                              className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[11px] inline-flex items-center gap-1"
-                            >
-                              <X className="w-3.5 h-3.5" /> Tolak
-                            </button>
-                          </>
-                        ) : sub.status === 'approved' ? (
-                          <span className="text-[11px] text-[#0D9488] font-bold inline-flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Terbit di Direktori
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleApproveSubmission(sub)}
-                            className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-[#234B24] border border-[#234B24]/20 hover:bg-[#234B24]/10"
-                          >
-                            Tinjau Ulang &amp; Setujui
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* ==================================================================== */}
+      {/* MODAL GABUNGKAN USULAN DUPLIKAT (PICK BEST DATA + BEST PHOTO)        */}
+      {/* ==================================================================== */}
+      {mergeGroup && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <div className="bg-white rounded-[28px] w-full max-w-3xl shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="p-5 bg-[#234B24] text-[#F6F3EC] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                  <GitMerge className="w-5 h-5 text-[#F26B4B]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#A7F3D0]">
+                    Kurasi Kolaboratif · {mergeGroup.length} Usulan Serupa
+                  </span>
+                  <h3 className="text-base font-extrabold">
+                    Gabungkan Usulan &amp; Cantumkan Kredit Kontributor
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMergeGroup(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmMerge} className="p-6 overflow-y-auto space-y-5 text-xs">
+              {/* LANGKAH 1: PILIH DATA & DESKRIPSI TERBAIK */}
+              <div className="space-y-2.5">
+                <h4 className="font-extrabold text-[#234B24] uppercase tracking-wider text-[11px]">
+                  1. Pilih Sumber Data, Deskripsi &amp; Koordinat Terbaik
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {mergeGroup.map((sub) => {
+                    const selected = primaryDataId === sub.id;
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => handleSelectPrimaryData(sub)}
+                        className={`text-left p-3.5 rounded-2xl border-2 transition ${
+                          selected
+                            ? 'border-[#234B24] bg-[#E4E9DA]/50'
+                            : 'border-[#CFD8BE] bg-[#F6F3EC]/60 hover:border-[#234B24]/40'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-extrabold text-[#1B1F1A]">{sub.name}</span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                              selected
+                                ? 'bg-[#234B24] text-white'
+                                : 'bg-white text-[#4A5248] border border-[#CFD8BE]'
+                            }`}
+                          >
+                            {selected ? 'Dipilih (Data)' : 'Pilih Data'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#4A5248] mt-1 line-clamp-2">
+                          {sub.description}
+                        </p>
+                        <div className="mt-2 text-[10px] font-bold text-[#234B24]">
+                          Pengusul: {sub.submitter_name} · GPS {sub.latitude.toFixed(4)},{' '}
+                          {sub.longitude.toFixed(4)}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* LANGKAH 2: PILIH FOTO COVER TERBAIK */}
+              <div className="space-y-2.5">
+                <h4 className="font-extrabold text-[#234B24] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-[#F26B4B]" />
+                  <span>
+                    2. Pilih Foto Utama (Cover) Terbaik — Foto lain otomatis tersimpan ke galeri
+                  </span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {mergeGroup.map((sub) => {
+                    const selected = coverPhotoId === sub.id;
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => setCoverPhotoId(sub.id)}
+                        className={`text-left rounded-2xl overflow-hidden border-2 transition ${
+                          selected
+                            ? 'border-[#F26B4B] ring-2 ring-[#F26B4B]/20'
+                            : 'border-[#CFD8BE] opacity-85 hover:opacity-100'
+                        }`}
+                      >
+                        <div className="aspect-[16/9] bg-black/10 relative">
+                          {sub.photo_url ? (
+                            <img
+                              src={sub.photo_url}
+                              alt={sub.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <ImageIcon className="w-6 h-6" />
+                            </div>
+                          )}
+                          {selected && (
+                            <span className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-[#F26B4B] text-white text-[10px] font-black shadow-sm">
+                              ✓ Foto Cover Terpilih
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-2.5 bg-[#F6F3EC] flex items-center justify-between text-[11px]">
+                          <span className="font-bold text-[#1B1F1A]">
+                            Foto oleh {sub.submitter_name}
+                          </span>
+                          <span className="text-[10px] text-[#4A5248]">
+                            {selected ? 'Utama' : 'Masuk Galeri'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* LANGKAH 3: SUNTHING HASIL GABUNGAN */}
+              <div className="space-y-3 p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                <h4 className="font-extrabold text-[#234B24] uppercase tracking-wider text-[11px]">
+                  3. Hasil Final Destinasi &amp; Gabungan Tips
+                </h4>
+                <div>
+                  <label className="block font-bold text-[#1B1F1A] mb-1">Nama Final Destinasi *</label>
+                  <input
+                    type="text"
+                    required
+                    value={mergeName}
+                    onChange={(e) => setMergeName(e.target.value)}
+                    className="w-full min-h-[40px] px-3 py-2 rounded-xl bg-white border border-[#CFD8BE] font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#1B1F1A] mb-1">Deskripsi Final</label>
+                  <textarea
+                    rows={2}
+                    value={mergeDescription}
+                    onChange={(e) => setMergeDescription(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-white border border-[#CFD8BE]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#1B1F1A] mb-1">
+                    Tips Menjaga Tempat Ini (Otomatis Digabung dari Semua Pengusul)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={mergeTips}
+                    onChange={(e) => setMergeTips(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-white border border-[#CFD8BE]"
+                  />
+                </div>
+              </div>
+
+              {/* PRATINJAU KREDIT KONTRIBUTOR ("DIUSULKAN OLEH") */}
+              <div className="p-4 rounded-2xl bg-[#E4E9DA]/70 border border-[#234B24]/20 space-y-2">
+                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5">
+                  <Users className="w-4 h-4" />
+                  <span>Pratinjau Kredit Kontributor (Tampil di Detail Destinasi)</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {mergeGroup.map((sub) => {
+                    const isPrimary = sub.id === primaryDataId;
+                    const isPhoto = sub.id === coverPhotoId;
+                    const role =
+                      isPrimary && isPhoto
+                        ? 'Pengusul Utama'
+                        : isPrimary
+                        ? 'Kontributor Data & Tips'
+                        : isPhoto
+                        ? 'Kontributor Foto'
+                        : 'Pengusul Bersama';
+                    return (
+                      <span
+                        key={sub.id}
+                        className="px-3 py-1 rounded-full bg-white border border-[#234B24]/20 text-[11px] font-bold text-[#1B1F1A]"
+                      >
+                        {sub.submitter_name}{' '}
+                        <span className="text-[#234B24] font-extrabold">({role})</span>
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="text-[10.5px] text-[#4A5248]">
+                  Semua pengusul di atas akan berstatus <strong>Approved (Digabungkan)</strong> dan menerima notifikasi apresiasi.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-[#234B24]/10">
+                <button
+                  type="button"
+                  onClick={() => setMergeGroup(null)}
+                  className="min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="min-h-[42px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-2 shadow-sm"
+                >
+                  <GitMerge className="w-4 h-4 text-[#F26B4B]" />
+                  <span>Gabungkan &amp; Terbitkan 1 Destinasi</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL INPUT USULAN DESTINASI BARU */}
       {isAddModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
           <div className="bg-white rounded-[28px] w-full max-w-2xl p-6 shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[#234B24]/10 shrink-0">
@@ -498,7 +878,9 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">Longitude GPS</label>
+                  <label className="block text-xs font-bold text-[#1B1F1A] mb-1">
+                    Longitude GPS
+                  </label>
                   <input
                     type="number"
                     step="0.0001"
@@ -558,10 +940,11 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                         key={chip}
                         type="button"
                         onClick={() => toggleFacility(chip)}
-                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${active
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition ${
+                          active
                             ? 'bg-[#234B24] text-white border-[#234B24]'
                             : 'bg-[#F6F3EC] text-[#4A5248] border-[#CFD8BE]'
-                          }`}
+                        }`}
                       >
                         {chip}
                       </button>

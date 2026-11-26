@@ -218,6 +218,17 @@ export interface DestinationWeatherSnapshot {
 // ============================================================================
 // 8. DESTINASI UTAMA (destinations)
 // ============================================================================
+export interface DestinationContributor {
+  name: string;
+  phone?: string;
+  role:
+    | 'Pengusul Utama'
+    | 'Kontributor Foto'
+    | 'Kontributor Data & Tips'
+    | 'Pengusul Bersama';
+  submission_id: string;
+}
+
 export interface Destination {
   id: string;
   slug: string;
@@ -231,6 +242,8 @@ export interface Destination {
   geog?: string | null;
   elevation_m?: number;
   cover_image: string;
+  gallery_images?: string[];
+  contributors?: DestinationContributor[];
   crowd_level: CrowdLevel;
   distance_km: number;
   travel_time_min: number;
@@ -501,11 +514,14 @@ export interface CulturalEvent {
   schedule_rule: string;
   next_event_date: string;
   end_date?: string;
+  time?: string;
+  venue?: string;
   latitude: number;
   longitude: number;
   geog?: string | null;
   highlight_item: string;
   cultural_etiquette: string;
+  tips?: string;
   rundown?: string[];
   poster_url?: string;
   organizer?: string;
@@ -564,6 +580,8 @@ export interface NewTour {
   submitter_name: string;
   submitter_phone: string;
   admin_notes?: string;
+  merged_into_destination_id?: string;
+  merged_role?: string;
   created_at: string;
 }
 export type TouristDestinationSubmission = NewTour;
@@ -616,9 +634,16 @@ export type TouristChecklistClaim = UserChallengeReward;
 // ============================================================================
 // 22. 5 LEVEL PETUALANG & JEJAK WISGO (Paspor & Kunjungan Destinasi)
 // ============================================================================
+export type AdventurerLevelName =
+  | 'Pemula'
+  | 'Penjelajah'
+  | 'Petualang'
+  | 'Perintis'
+  | 'Pengelana';
+
 export interface AdventurerLevelConfig {
   level: 1 | 2 | 3 | 4 | 5;
-  name: 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer';
+  name: AdventurerLevelName;
   title: string;
   min_trips: number;
   min_checkpoints: number;
@@ -653,7 +678,7 @@ export interface UserProfileExperience {
   google_avatar?: string;
   is_google_auth: boolean;
   current_level: 1 | 2 | 3 | 4 | 5;
-  level_name: 'Beginner' | 'Explorer' | 'Adventurer' | 'Trailblazer' | 'Wanderer';
+  level_name: AdventurerLevelName;
   visited_count: number;
   total_trips: number;
   total_checkpoints: number;
@@ -906,20 +931,43 @@ export interface SystemBenchmarkMetrics {
   benchmark_history: BenchmarkRunResult[];
 }
 
-export interface GroupVotingItem {
+// ============================================================================
+// 26. BERITA WISATA & BENCANA SUMBAR (Sinkron FE-1 hazard_sos_screen.dart)
+// ============================================================================
+export type SosNewsCategory =
+  | 'Bencana & Vulkanologi'
+  | 'Cuaca & Bahari'
+  | 'Akses Wisata'
+  | 'Info Jalur & Bencana';
+
+export type SosNewsSeverity = 'INFO WISATA' | 'WASPADA' | 'SIAGA HUJAN' | 'DARURAT';
+
+export interface SosNewsItem {
   id: string;
+  category: SosNewsCategory;
+  severity: SosNewsSeverity;
   title: string;
-  category: string;
-  votes_count: number;
-  is_winner?: boolean;
+  region: string;
+  summary: string;
+  advice: string;
+  source: string;
+  is_published: boolean;
+  published_at: string;
 }
 
-export interface GroupRoomPreview {
-  group_code: string;
-  group_name: string;
-  leader_name: string;
-  trip_dates: string;
-  member_count: number;
-  destinations_summary: string[];
-  voting_items: GroupVotingItem[];
+// ============================================================================
+// 27. POI SEARAH RUTE (SHUNLU) (Sinkron FE-1 map_explore_pois_data.dart)
+// ============================================================================
+export type ShunluPoiCategory = 'RM Padang' | 'SPBU' | 'Masjid' | 'ATM & Bengkel';
+
+export interface ShunluPoiItem {
+  id: string;
+  category: ShunluPoiCategory;
+  name: string;
+  detour: string;
+  route: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  is_active: boolean;
 }
