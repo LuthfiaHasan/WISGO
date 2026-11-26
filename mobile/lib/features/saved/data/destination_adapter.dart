@@ -201,13 +201,13 @@ class DestinationAdapter {
     final reviews = [
       UserReview(
         author: 'Rahmat Hidayat (Wisatawan Rombongan)',
-        rating: 4.9,
+        rating: 5.0,
         date: '2 hari lalu',
         comment: 'Harga tiket resmi sesuai aplikasi, tidak ada pungli liar saat masuk. Nagari sangat ramah!',
       ),
       UserReview(
         author: 'Siti Rahmawati',
-        rating: 4.8,
+        rating: 4.0,
         date: '1 minggu lalu',
         comment: 'Pemandangan luar biasa indah, udara sejuk. Rekomendasi datang pagi hari.',
       ),
