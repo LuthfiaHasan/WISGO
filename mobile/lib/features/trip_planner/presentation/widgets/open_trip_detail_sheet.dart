@@ -4,6 +4,8 @@ import '../../../../core/network/auth_guard.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
+import 'open_trip_offline_rules_sheet.dart';
+import 'trip_group_chat_sheet.dart';
 import 'verified_organizer_sheet.dart';
 
 /// Modal Bottom Sheet Detail & Kelola Open Trip (Item 1-7 Open Trip)
@@ -888,20 +890,19 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                       MouseRegion(
                                         cursor: SystemMouseCursors.click,
                                         child: IconButton(
-                                          tooltip: 'Buka Chat Smart Trip Planner',
+                                          tooltip: 'Buka Grup Chat Trip',
                                           icon: const Icon(
-                                            Icons.chat_bubble_outline_rounded,
+                                            Icons.forum_outlined,
                                             color: AppColors.forest,
                                             size: 20,
                                           ),
                                           onPressed: () {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                    'Membuka komunikasi tim Smart Trip Planner dengan ${p.fullName}...'),
-                                                backgroundColor:
-                                                    AppColors.forest,
+                                            showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              backgroundColor: Colors.transparent,
+                                              builder: (_) => TripGroupChatSheet(
+                                                trip: _currentTrip,
                                               ),
                                             );
                                           },
@@ -912,8 +913,90 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                                 );
                               },
                             ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                         ],
+
+                        // Ruang Grup Chat In-App & SOP Perjalanan (Tanpa WhatsApp)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => TripGroupChatSheet(
+                                      trip: _currentTrip,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.forum_rounded, size: 16),
+                                label: const Text(
+                                  'Grup Chat Trip',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.forest,
+                                  backgroundColor: AppColors.sage,
+                                  side: const BorderSide(
+                                    color: AppColors.sageBorder,
+                                  ),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 11),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => OpenTripOfflineRulesSheet(
+                                      trip: _currentTrip,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.rule_folder_outlined,
+                                  size: 16,
+                                ),
+                                label: const Text(
+                                  'SOP Perjalanan',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.forest,
+                                  side: const BorderSide(
+                                    color: AppColors.sageBorder,
+                                  ),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 11),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
