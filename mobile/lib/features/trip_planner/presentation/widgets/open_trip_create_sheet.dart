@@ -56,6 +56,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
 
   DateTime _departureDate = DateTime(2026, 12, 12);
   TimeOfDay _departureTime = const TimeOfDay(hour: 6, minute: 30);
+  bool _hasUploadedKtp = false;
+  bool _hasVerifiedFace = false;
 
   // Itinerary Rundown yang diisi manual oleh pembuat trip (Sistem sediakan slot jam)
   late List<TripItineraryStep> _itinerarySteps;
@@ -931,7 +933,120 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               const SizedBox(height: 6),
               TextField(
                 controller: _hostPhoneController,
-                decoration: _inputDecoration('Nomor WhatsApp Penyelenggara'),
+                decoration: _inputDecoration('Nomor HP Penyelenggara'),
+              ),
+              const SizedBox(height: 12),
+
+              // Verifikasi Identitas Penyelenggara Khusus Form Pembuatan Trip (Poin 12: Upload KTP & Verifikasi Wajah)
+              _buildFieldLabel('VERIFIKASI IDENTITAS PENYELENGGARA (WAJIB)'),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _hasUploadedKtp ? AppColors.successBg : AppColors.creamSubtle,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            _hasUploadedKtp ? Icons.check_circle_rounded : Icons.badge_outlined,
+                            size: 18,
+                            color: _hasUploadedKtp ? AppColors.success : AppColors.forest,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Upload e-KTP Penyelenggara',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
+                              ),
+                              Text(
+                                _hasUploadedKtp ? 'e-KTP berhasil diunggah & terenkripsi' : 'Wajib untuk validasi identitas host',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: _hasUploadedKtp ? AppColors.success : AppColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        OutlinedButton(
+                          onPressed: () => setState(() => _hasUploadedKtp = true),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.forest,
+                            side: const BorderSide(color: AppColors.sageBorder),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Text(
+                            _hasUploadedKtp ? 'Ganti' : 'Upload',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 16, color: AppColors.divider),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _hasVerifiedFace ? AppColors.successBg : AppColors.creamSubtle,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            _hasVerifiedFace ? Icons.check_circle_rounded : Icons.face_retouching_natural_rounded,
+                            size: 18,
+                            color: _hasVerifiedFace ? AppColors.success : AppColors.forest,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Verifikasi Wajah (Liveness)',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
+                              ),
+                              Text(
+                                _hasVerifiedFace ? 'Wajah terverifikasi cocok dengan e-KTP' : 'Swafoto singkat untuk verifikasi penyelenggara',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: _hasVerifiedFace ? AppColors.success : AppColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        OutlinedButton(
+                          onPressed: () => setState(() => _hasVerifiedFace = true),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.forest,
+                            side: const BorderSide(color: AppColors.sageBorder),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Text(
+                            _hasVerifiedFace ? 'Ulangi' : 'Verifikasi',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 18),
 

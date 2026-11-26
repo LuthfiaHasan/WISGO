@@ -5,28 +5,36 @@ import '../../models/open_trip_model.dart';
 import 'destination_panorama_sheet.dart';
 import 'destination_weather_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
-import 'ground_condition_sheet.dart';
 import 'open_trip_detail_sheet.dart';
 import 'open_trip_payment_sheet.dart';
+import 'trip_go_agreement_dialog.dart';
 import 'trip_group_chat_sheet.dart';
 import 'trip_planner_detail_sheet.dart';
 import 'verified_organizer_sheet.dart';
 
-/// Kartu Trip Go Modern & Bersih (Sesuai desain.md)
-/// Mengurangi tumpukan kotak warna-warni (box-in-box) agar fokus pada:
-/// Foto & Destinasi -> Judul & Jadwal -> Titik Kumpul & Penyelenggara ->
-/// Bilah Pintasan Tenang (Cuaca, Kondisi Riil, 360°, SOP) -> Harga & Aksi Utama.
-class OpenTripCard extends StatelessWidget {
+/// Kartu Trip Go Modern & User-Friendly (Sesuai desain.md & 12 Poin Revisi Trip Go)
+class OpenTripCard extends StatefulWidget {
   final OpenTripItem trip;
   final VoidCallback? onTripUpdated;
   final ValueChanged<String>? onTripDeleted;
+  final VoidCallback? onOpenDestination360;
+  final VoidCallback? onOpenDestinationReviews;
 
   const OpenTripCard({
     super.key,
     required this.trip,
     this.onTripUpdated,
     this.onTripDeleted,
+    this.onOpenDestination360,
+    this.onOpenDestinationReviews,
   });
+
+  @override
+  State<OpenTripCard> createState() => _OpenTripCardState();
+}
+
+class _OpenTripCardState extends State<OpenTripCard> {
+  bool _isMeetingReminderActive = false;
 
   String _formatRupiah(int number) {
     return number.toString().replaceAllMapped(
@@ -35,8 +43,71 @@ class OpenTripCard extends StatelessWidget {
         );
   }
 
+  void _openDetailSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => OpenTripDetailSheet(
+        trip: widget.trip,
+        onTripUpdated: (updated) => widget.onTripUpdated?.call(),
+        onTripDeleted: widget.onTripDeleted,
+      ),
+    );
+  }
+
+  Future<void> _handleDaftarAndBayar() async {
+    final agreed = await showTripGoJoinAgreementDialog(
+      context,
+      tripTitle: widget.trip.title,
+    );
+    if (!agreed || !mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => OpenTripPaymentSheet(trip: widget.trip),
+    );
+    if (mounted) widget.onTripUpdated?.call();
+  }
+
+  void _toggleMeetingReminder() {
+    setState(() => _isMeetingReminderActive = !_isMeetingReminderActive);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor:
+            _isMeetingReminderActive ? AppColors.forest : AppColors.ink,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Row(
+          children: [
+            Icon(
+              _isMeetingReminderActive
+                  ? Icons.notifications_active_rounded
+                  : Icons.notifications_off_outlined,
+              size: 18,
+              color: AppColors.cream,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _isMeetingReminderActive
+                    ? 'Pengingat aktif! Notifikasi titik kumpul "${widget.trip.meetingPointName}" akan muncul 1 jam sebelum ${widget.trip.departureTime}.'
+                    : 'Pengingat titik kumpul dinonaktifkan.',
+                style: const TextStyle(fontSize: 12, color: AppColors.cream),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final trip = widget.trip;
     final availableQuota = trip.quotaMax - trip.quotaFilled;
     final isQuotaFull = availableQuota <= 0;
 
@@ -59,24 +130,13 @@ class OpenTripCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           mouseCursor: SystemMouseCursors.click,
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => OpenTripDetailSheet(
-                trip: trip,
-                onTripUpdated: (updated) => onTripUpdated?.call(),
-                onTripDeleted: onTripDeleted,
-              ),
-            );
-          },
+          onTap: _openDetailSheet,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Cover Image Bersih (Maks 2 Badge Atas + Nama Destinasi di atas Scrim)
+              // 1. Cover Image Bersih
               SizedBox(
-                height: 164,
+                height: 162,
                 width: double.infinity,
                 child: Stack(
                   fit: StackFit.expand,
@@ -95,7 +155,6 @@ class OpenTripCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Gradient Scrim sesuai desain.md 06.3 (alpha 0.68 di bawah agar teks putih tajam)
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -104,14 +163,12 @@ class OpenTripCard extends StatelessWidget {
                           colors: [
                             AppColors.ink.withValues(alpha: 0.20),
                             Colors.transparent,
-                            AppColors.ink.withValues(alpha: 0.72),
+                            AppColors.ink.withValues(alpha: 0.74),
                           ],
                           stops: const [0.0, 0.45, 1.0],
                         ),
                       ),
                     ),
-
-                    // Baris Badge Atas: Kategori (kiri) + Kuota (kanan)
                     Positioned(
                       top: AppSpacing.md,
                       left: AppSpacing.md,
@@ -127,7 +184,8 @@ class OpenTripCard extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.cream.withValues(alpha: 0.94),
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
                               ),
                               child: Text(
                                 trip.category,
@@ -151,7 +209,8 @@ class OpenTripCard extends StatelessWidget {
                               color: isQuotaFull
                                   ? AppColors.terracotta
                                   : AppColors.forest.withValues(alpha: 0.92),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.pill),
                             ),
                             child: Text(
                               isQuotaFull
@@ -167,8 +226,6 @@ class OpenTripCard extends StatelessWidget {
                         ],
                       ),
                     ),
-
-                    // Destinasi Utama langsung di atas scrim bawah (tanpa stiker kotak putih)
                     Positioned(
                       bottom: AppSpacing.md,
                       left: AppSpacing.lg,
@@ -219,7 +276,7 @@ class OpenTripCard extends StatelessWidget {
                 ),
               ),
 
-              // 2. Konten Kartu yang Lega & Mudah Dipindai
+              // 2. Konten Kartu
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
@@ -240,7 +297,7 @@ class OpenTripCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
 
-                    // Tanggal & Waktu Keberangkatan (Polos & Bersih)
+                    // Tanggal & Waktu Keberangkatan
                     Row(
                       children: [
                         const Icon(
@@ -265,42 +322,85 @@ class OpenTripCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
 
-                    // Titik Kumpul (1 Baris Interaktif, Tanpa Kotak Merah Mencolok)
-                    InkWell(
-                      mouseCursor: SystemMouseCursors.click,
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => GoogleMapsMeetingPointSheet(trip: trip),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.pin_drop_outlined,
-                              size: 15,
-                              color: AppColors.brush,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Kumpul: ${trip.meetingPointName}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.ink,
-                                ),
+                    // Titik Kumpul + Pengingat Non-Intrusif + Peta Maps (Poin 11)
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.pin_drop_outlined,
+                          size: 15,
+                          color: AppColors.brush,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: InkWell(
+                            mouseCursor: SystemMouseCursors.click,
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) =>
+                                    GoogleMapsMeetingPointSheet(trip: trip),
+                              );
+                            },
+                            child: Text(
+                              'Titik Kumpul: ${trip.meetingPointName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.ink,
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            const Text(
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Tooltip(
+                          message: _isMeetingReminderActive
+                              ? 'Pengingat titik kumpul aktif'
+                              : 'Aktifkan pengingat titik kumpul',
+                          child: InkWell(
+                            mouseCursor: SystemMouseCursors.click,
+                            onTap: _toggleMeetingReminder,
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 3,
+                              ),
+                              child: Icon(
+                                _isMeetingReminderActive
+                                    ? Icons.notifications_active_rounded
+                                    : Icons.notifications_none_rounded,
+                                size: 16,
+                                color: _isMeetingReminderActive
+                                    ? AppColors.terracotta
+                                    : AppColors.muted,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        InkWell(
+                          mouseCursor: SystemMouseCursors.click,
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) =>
+                                  GoogleMapsMeetingPointSheet(trip: trip),
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 3,
+                            ),
+                            child: Text(
                               'Peta ↗',
                               style: TextStyle(
                                 fontSize: 11,
@@ -308,13 +408,13 @@ class OpenTripCard extends StatelessWidget {
                                 color: AppColors.forest,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                     const SizedBox(height: 6),
 
-                    // Penyelenggara Terverifikasi (1 Baris Tenang, Tanpa Kotak Hijau Tebal)
+                    // Penyelenggara / Pemandu (1-Klik Lihat 5 Info Penyelenggara — Poin 12)
                     InkWell(
                       mouseCursor: SystemMouseCursors.click,
                       borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -370,7 +470,7 @@ class OpenTripCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 3. Bilah Pintasan Fitur Seragam (Tenang, Tanpa Rainbow Boxes — Semua Fitur Tetap 1-Klik!)
+                    // 3. Bilah Pintasan Fitur: Chat · Cuaca · Ulasan · 360° (Poin 5, 6, 7, 10)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -385,7 +485,7 @@ class OpenTripCard extends StatelessWidget {
                         children: [
                           _buildQuietShortcut(
                             icon: Icons.forum_outlined,
-                            label: 'Grup Chat',
+                            label: 'Chat',
                             onTap: () {
                               showModalBottomSheet(
                                 context: context,
@@ -412,17 +512,14 @@ class OpenTripCard extends StatelessWidget {
                           ),
                           _buildVerticalDot(),
                           _buildQuietShortcut(
-                            icon: Icons.visibility_outlined,
-                            label: 'Kondisi Riil',
+                            icon: Icons.reviews_outlined,
+                            label: 'Ulasan',
                             onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (_) => GroundConditionSheet(
-                                  destinationName: trip.singleDestination,
-                                ),
-                              );
+                              if (widget.onOpenDestinationReviews != null) {
+                                widget.onOpenDestinationReviews!();
+                              } else {
+                                _openDetailSheet();
+                              }
                             },
                           ),
                           _buildVerticalDot(),
@@ -430,15 +527,19 @@ class OpenTripCard extends StatelessWidget {
                             icon: Icons.threesixty_rounded,
                             label: '360°',
                             onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (_) => DestinationPanoramaSheet(
-                                  destinationName: trip.singleDestination,
-                                  panoramaImageUrl: trip.coverUrl,
-                                ),
-                              );
+                              if (widget.onOpenDestination360 != null) {
+                                widget.onOpenDestination360!();
+                              } else {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (_) => DestinationPanoramaSheet(
+                                    destinationName: trip.singleDestination,
+                                    panoramaImageUrl: trip.coverUrl,
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ],
@@ -449,66 +550,66 @@ class OpenTripCard extends StatelessWidget {
                     const Divider(height: 1, color: AppColors.divider),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 4. Footer: Harga & Escrow (Kiri) + Trip Planner & Daftar (Kanan)
+                    // 4. Baris Harga + Tombol Detail (Poin 8)
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'Rp ${_formatRupiah(trip.pricePerPerson)}',
-                                    style: AppTypography.withTabularFigures(
-                                      const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.forest,
-                                      ),
-                                    ),
-                                  ),
-                                  const Text(
-                                    ' / org',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                ],
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              'Rp ${_formatRupiah(trip.pricePerPerson)}',
+                              style: AppTypography.withTabularFigures(
+                                const TextStyle(
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.forest,
+                                ),
                               ),
-                              const SizedBox(height: 2),
-                              const Row(
-                                children: [
-                                  Icon(
-                                    Icons.verified_user_outlined,
-                                    size: 12,
-                                    color: AppColors.success,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      'Escrow WISGO • Include & Exclude di Detail',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.muted,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                            ),
+                            const Text(
+                              ' / org',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.muted,
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        TextButton.icon(
+                          onPressed: _openDetailSheet,
+                          icon: const Icon(
+                            Icons.info_outline_rounded,
+                            size: 15,
+                            color: AppColors.forest,
+                          ),
+                          label: const Text(
+                            'Detail',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.forest,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            backgroundColor: AppColors.sage,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.xs),
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 2 Tombol Aksi Utama Sejajar & Rapi (Tinggi Baku 42 px)
+                    // 5. Tombol Aksi Utama: Rencana & Persiapan (Poin 9) + Daftar & Bayar (Poin 4)
                     Row(
                       children: [
                         Expanded(
@@ -524,9 +625,12 @@ class OpenTripCard extends StatelessWidget {
                                       TripPlannerDetailSheet(trip: trip),
                                 );
                               },
-                              icon: const Icon(Icons.alt_route_rounded, size: 15),
+                              icon: const Icon(
+                                Icons.fact_check_outlined,
+                                size: 15,
+                              ),
                               label: const Text(
-                                'Trip Planner',
+                                'Persiapan',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -553,17 +657,8 @@ class OpenTripCard extends StatelessWidget {
                           child: SizedBox(
                             height: 42,
                             child: ElevatedButton.icon(
-                              onPressed: isQuotaFull
-                                  ? null
-                                  : () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (_) =>
-                                            OpenTripPaymentSheet(trip: trip),
-                                      ).then((_) => onTripUpdated?.call());
-                                    },
+                              onPressed:
+                                  isQuotaFull ? null : _handleDaftarAndBayar,
                               icon: const Icon(Icons.payment_rounded, size: 15),
                               label: Text(
                                 isQuotaFull ? 'Penuh' : 'Daftar & Bayar',

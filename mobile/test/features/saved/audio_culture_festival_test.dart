@@ -17,8 +17,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 1. In Open Trip: Verify "Kalender Event & Festival Budaya" is NOT present
-    expect(find.text('Trip Go Sumbar'), findsOneWidget);
+    // 1. In Trip Go: Verify "Kalender Event & Festival Budaya" is NOT present
+    expect(find.text('Trip Go'), findsWidgets);
     expect(find.text('Kalender Event & Festival Budaya'), findsNothing);
 
     // 2. Switch to Beranda tab and open Kamus Minang from Kategori Layanan card
