@@ -17,7 +17,7 @@ import {
   PhoneCall,
 } from 'lucide-react';
 import { Destination } from '../types/contract';
-import { submitPungliReport } from '../services/api';
+import { resolveSmartQRWithBridge, submitPungliReport } from '../services/api';
 import { EmergencyContactsRepo, SosSignalsRepo } from '../services/dbRepository';
 import { TOLL_FREE_EMERGENCY_NUMBERS } from '../data/mockDestinations';
 import { ImageDropzone } from '../components/ImageDropzone';
@@ -42,10 +42,26 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
   showToast,
 }) => {
   const [currentDest, setCurrentDest] = useState<Destination>(destination);
+  const [qrSyncedLive, setQrSyncedLive] = useState<boolean>(false);
 
   useEffect(() => {
     setCurrentDest(destination);
   }, [destination]);
+
+  useEffect(() => {
+    let active = true;
+    const key = currentDest.qr_placard_code || currentDest.slug || currentDest.id;
+    resolveSmartQRWithBridge(key).then((res) => {
+      if (!active) return;
+      setQrSyncedLive(res.online);
+      if (res.online && res.destination) {
+        setCurrentDest(res.destination);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [currentDest.id, currentDest.qr_placard_code, currentDest.slug]);
 
   const reporterNameId = useId();
   const reporterPhoneId = useId();
@@ -233,6 +249,11 @@ export const PublicSmartQRView: React.FC<PublicSmartQRViewProps> = ({
             <span className="text-[10px] font-mono text-[#DFECE2]/90 flex items-center gap-1">
               <QrCode className="w-3.5 h-3.5 text-[#E65F2B]" />
               <span>{currentDest.qr_placard_code || 'Smart QR Resmi'}</span>
+              {qrSyncedLive && (
+                <span className="ml-1 px-1.5 py-0.5 rounded bg-[#1E9E5A] text-white text-[9px] font-bold">
+                  LIVE
+                </span>
+              )}
             </span>
           </div>
 

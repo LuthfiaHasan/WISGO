@@ -50,8 +50,8 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                 child: Text(
                                   ev['badge'] as String,
                                   style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
                                     color: badgeColor,
                                   ),
                                 ),
@@ -90,7 +90,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                           ev['title'] as String,
                           style: const TextStyle(
                             fontSize: 19,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                             height: 1.25,
                           ),
@@ -115,7 +115,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                   Text(
                                     ev['date'] as String,
                                     style: const TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.forest,
                                     ),
@@ -138,7 +138,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                   Text(
                                     ev['time'] as String? ?? '08:00 WIB',
                                     style: const TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.ink,
                                     ),
@@ -180,7 +180,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                           ev['location'] as String,
                                           style: const TextStyle(
                                             fontSize: 13,
-                                            fontWeight: FontWeight.w800,
+                                            fontWeight: FontWeight.w700,
                                             color: AppColors.ink,
                                           ),
                                         ),
@@ -188,7 +188,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                         Text(
                                           ev['venue'] as String? ?? 'Sumatera Barat',
                                           style: const TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.muted,
                                           ),
@@ -214,7 +214,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                       child: Text(
                                         'Titik GPS: ${ev["gpsCoordinate"]}',
                                         style: const TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           fontFamily: 'monospace',
                                           color: AppColors.forest,
@@ -236,8 +236,8 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                   label: const Text(
                                     'Arahkan ke Lokasi GPS',
                                     style: TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
@@ -258,7 +258,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                           'Tentang Acara & Nilai Budaya',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                           ),
                         ),
@@ -277,7 +277,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                             'Rangkaian Acara Utama',
                             style: TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.ink,
                             ),
                           ),
@@ -300,7 +300,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                       child: Text(
                                         item,
                                         style: const TextStyle(
-                                          fontSize: 11.5,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.ink,
                                           height: 1.4,
@@ -332,8 +332,8 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                       const Text(
                                         'Tata Krama & Tips Kunjungan Nagari',
                                         style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
                                           color: AppColors.warningDark,
                                         ),
                                       ),
@@ -341,7 +341,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                       Text(
                                         ev['tips'] as String,
                                         style: const TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.warningDark,
                                           height: 1.35,
@@ -380,8 +380,8 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                         Text(
                                           isReminded ? 'Pengingat Festival Aktif' : 'Pasang Pengingat Acara',
                                           style: TextStyle(
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w800,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
                                             color: isReminded ? AppColors.success : AppColors.ink,
                                           ),
                                         ),
@@ -390,7 +390,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                               ? 'Anda akan menerima notifikasi otomatis di hari acara.'
                                               : 'Dapatkan pemberitahuan otomatis saat mendekati jadwal festival.',
                                           style: const TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 12,
                                             color: AppColors.muted,
                                           ),
                                         ),
@@ -416,7 +416,7 @@ extension _AudioCultureFestivalDetailModal on _AudioCultureScreenState {
                                     isReminded ? 'Pengingat Aktif (Ketuk untuk Batalkan)' : 'Aktifkan Pengingat Acara',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w700,
                                       color: isReminded ? AppColors.success : AppColors.forest,
                                     ),
                                   ),

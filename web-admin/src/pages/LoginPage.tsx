@@ -13,7 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
-import { loginAdminJWT, saveAdminSession } from '../services/api';
+import { loginAdminGoogle, loginAdminJWT } from '../services/api';
 
 interface LoginPageProps {
   onLoginSuccess: (session: AdminAuthResponse) => void;
@@ -67,7 +67,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const session = await loginAdminJWT({
         email: targetEmail,
         password: targetPass,
-        role: 'admin_utama',
+        role: 'admin_dispar',
       });
       onLoginSuccess(session);
     } catch (err) {
@@ -83,22 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setSubmitting(true);
     setFormError('');
     try {
-      const googleSession: AdminAuthResponse = {
-        token: `jwt-google-oauth-admin-${Date.now()}`,
-        expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
-        user: {
-          id: 'usr-admin-google-01',
-          phone_number: '6281166002026',
-          full_name: 'Administrator Wisata (Google Verified)',
-          role: 'admin_utama',
-          jenis_input: 'web_admin',
-          email: 'admin.wisgo@sumbarprov.go.id',
-          agency:
-            'Pusat Komando Terpadu WISGO (Google SSO • Dispar Sumbar)',
-          created_at: new Date().toISOString(),
-        },
-      };
-      saveAdminSession(googleSession);
+      const googleSession = await loginAdminGoogle();
       onLoginSuccess(googleSession);
     } catch {
       setFormError('Gagal mengotentikasi akun Google.');
@@ -130,7 +115,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const session = await loginAdminJWT({
         email,
         password,
-        role: 'admin_utama',
+        role: 'admin_dispar',
       });
       onLoginSuccess(session);
     } catch (err) {
@@ -353,7 +338,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-11 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] disabled:opacity-60 text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition"
+              className="w-full h-11 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] disabled:opacity-60 text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
             >
               <Lock className="w-3.5 h-3.5" aria-hidden="true" />
               <span>
@@ -376,7 +361,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               type="button"
               disabled={submitting}
               onClick={handleGoogleLogin}
-              className="w-full h-11 rounded-xl bg-white hover:bg-[#F6F3EC] border border-[#234B24]/20 text-[#1B1F1A] font-bold text-xs flex items-center justify-center gap-2.5 shadow-2xs transition"
+              className="w-full h-11 rounded-xl bg-white hover:bg-[#F6F3EC] border border-[#234B24]/20 text-[#1B1F1A] font-bold text-xs flex items-center justify-center gap-2.5 shadow-sm transition"
             >
               <img
                 src="/assets/synced/google_logo.png"

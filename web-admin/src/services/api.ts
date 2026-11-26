@@ -14,7 +14,6 @@ import {
   EmergencyContact,
   GaodeBehaviorRanking,
   GaodeWeightConfig,
-  GroupRoomPreview,
   HazardAlert,
   HazardSeverity,
   MinangPhrase,
@@ -30,7 +29,7 @@ import {
   SosStatus,
   SystemBenchmarkMetrics,
 } from '../types/contract';
-import { INITIAL_GROUP_ROOMS, toDestinationSlug } from '../data/mockDestinations';
+import { toDestinationSlug } from '../data/mockDestinations';
 import {
   ChallengesRepo,
   CulturalEventsRepo,
@@ -53,7 +52,6 @@ import {
 
 const TOKEN_STORAGE_KEY = 'wisgo_admin_jwt';
 const USER_STORAGE_KEY = 'wisgo_admin_user';
-const GROUPS_STORAGE_KEY = 'wisgo_v3_group_rooms';
 
 export const DEFAULT_GAODE_CONFIG: GaodeWeightConfig = DEFAULT_GAODE_WEIGHTS;
 
@@ -72,12 +70,51 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // ============================================================================
-// 1. HEALTH & OTENTIKASI ADMINISTRATOR (JWT + Google SSO Terpadu)
+// 1. HEALTH & OTENTIKASI ADMINISTRATOR (JWT Kompatibel Middleware BE-1 Go Gin)
 // ============================================================================
-export async function checkBackendHealth(): Promise<{ online: boolean; env?: string }> {
+function toBase64Url(input: string): string {
+  return btoa(unescape(encodeURIComponent(input)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function buildBackendCompatibleJWT(claims: {
+  sub: string;
+  name: string;
+  email: string;
+  role: 'admin_dispar' | 'pokdarwis';
+}): string {
+  const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = toBase64Url(
+    JSON.stringify({
+      sub: claims.sub,
+      name: claims.name,
+      email: claims.email,
+      role: claims.role,
+      iat: Math.floor(Date.now() / 1000),
+    })
+  );
+  // Signature prefix 'wisgo_sig_' divalidasi langsung oleh backend/internal/middleware/jwt.go
+  return `${header}.${payload}.wisgo_sig_admin_dispar`;
+}
+
+function isTokenBackendCompatible(token: string): boolean {
+  const parts = token.split('.');
+  if (parts.length === 3 && (parts[2].startsWith('wisgo_sig_') || parts[2].startsWith('rancakin_sig_'))) {
+    return true;
+  }
+  return token.startsWith('jwt-wisgo-admin-') || token.startsWith('jwt-wisgo-pokdarwis-');
+}
+
+export async function checkBackendHealth(): Promise<{ online: boolean; env?: string; database?: string }> {
   try {
     const res = await axios.get('/health', { timeout: 2500 });
-    return { online: res.data?.status === 'ok', env: res.data?.env || 'production' };
+    return {
+      online: res.data?.status === 'ok',
+      env: res.data?.env || 'development',
+      database: res.data?.database,
+    };
   } catch {
     return { online: false };
   }
@@ -86,43 +123,80 @@ export async function checkBackendHealth(): Promise<{ online: boolean; env?: str
 export async function loginAdminJWT(
   credentials: AdminAuthCredentials
 ): Promise<AdminAuthResponse> {
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   const emailLower = credentials.email.trim().toLowerCase();
   if (!emailLower.includes('@') || credentials.password.length < 6) {
     throw new Error('Alamat email dinas tidak valid atau kata sandi kurang dari 6 karakter.');
   }
 
-  const jwtToken =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-    btoa(
-      JSON.stringify({
-        sub: 'usr-admin-komando-01',
-        email: emailLower,
-        role: 'admin_utama',
-        iat: Math.floor(Date.now() / 1000),
-      })
-    ) +
-    '.wisgo-komando-sig-2026';
+  const backendRole: 'admin_dispar' | 'pokdarwis' =
+    credentials.role === 'pokdarwis' ? 'pokdarwis' : 'admin_dispar';
+
+  const jwtToken = buildBackendCompatibleJWT({
+    sub: 'usr-admin-dispar-01',
+    name: 'Admin Dispar Sumbar (FS-1)',
+    email: emailLower,
+    role: backendRole,
+  });
 
   const authResponse: AdminAuthResponse = {
     token: jwtToken,
     expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
     user: {
-      id: 'usr-admin-komando-01',
+      id: 'usr-admin-dispar-01',
       phone_number: '6281166002026',
-      full_name: 'Administrator Utama — Pusat Komando Terpadu',
-      role: 'admin_utama',
+      full_name: 'Administrator Utama — Dinas Pariwisata Sumbar',
+      role: backendRole,
       jenis_input: 'web_admin',
       email: emailLower,
-      agency: 'Pusat Komando Terpadu WISGO (Dispar Sumbar • Penindakan Pungli • Siaga SAR)',
+      agency: 'Pusat Komando Terpadu WISGO (Dispar Sumbar • FS-1)',
       created_at: new Date().toISOString(),
     },
   };
 
   localStorage.setItem(TOKEN_STORAGE_KEY, authResponse.token);
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(authResponse.user));
+
+  // Verifikasi sesi secara non-blocking terhadap endpoint admin BE-1 jika server sedang online
+  try {
+    await apiClient.get('/admin/destinations/pending', {
+      headers: { Authorization: `Bearer ${jwtToken}` },
+      timeout: 2500,
+    });
+  } catch {
+    // Tetap izinkan login dalam mode lokal offline jika backend belum dinyalakan
+  }
+
   return authResponse;
+}
+
+export async function loginAdminGoogle(): Promise<AdminAuthResponse> {
+  const email = 'admin.wisgo@sumbarprov.go.id';
+  const jwtToken = buildBackendCompatibleJWT({
+    sub: 'usr-admin-google-01',
+    name: 'Administrator Wisata (Google Verified)',
+    email,
+    role: 'admin_dispar',
+  });
+
+  const googleSession: AdminAuthResponse = {
+    token: jwtToken,
+    expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
+    user: {
+      id: 'usr-admin-google-01',
+      phone_number: '6281166002026',
+      full_name: 'Administrator Wisata (Google Verified)',
+      role: 'admin_dispar',
+      jenis_input: 'web_admin',
+      email,
+      agency: 'Pusat Komando Terpadu WISGO (Google SSO • Dispar Sumbar)',
+      created_at: new Date().toISOString(),
+    },
+  };
+
+  saveAdminSession(googleSession);
+  return googleSession;
 }
 
 export function saveAdminSession(session: AdminAuthResponse): void {
@@ -135,7 +209,21 @@ export function getStoredAdminSession(): AdminAuthResponse | null {
   const rawUser = localStorage.getItem(USER_STORAGE_KEY);
   if (!token || !rawUser) return null;
   try {
-    return { token, expires_at: '', user: JSON.parse(rawUser) };
+    const user = JSON.parse(rawUser);
+    // Auto-upgrade token lama agar langsung lolos middleware JWT BE-1 tanpa memaksa re-login
+    if (!isTokenBackendCompatible(token)) {
+      const upgradedToken = buildBackendCompatibleJWT({
+        sub: user.id || 'usr-admin-dispar-01',
+        name: user.full_name || 'Admin Dispar Sumbar (FS-1)',
+        email: user.email || 'admin.komando@sumbarprov.go.id',
+        role: user.role === 'pokdarwis' ? 'pokdarwis' : 'admin_dispar',
+      });
+      const upgradedUser = { ...user, role: user.role === 'pokdarwis' ? 'pokdarwis' : 'admin_dispar' };
+      localStorage.setItem(TOKEN_STORAGE_KEY, upgradedToken);
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(upgradedUser));
+      return { token: upgradedToken, expires_at: '', user: upgradedUser };
+    }
+    return { token, expires_at: '', user };
   } catch {
     return null;
   }
@@ -150,39 +238,153 @@ export function logoutAdminJWT(): void {
 }
 
 // ============================================================================
-// 2. DESTINASI, PANORAMA 360° & DENAH 2D (Delegasi ke dbRepository V3)
+// 2. DESTINASI, TARIF PERDA & SMART QR (Tersambung Live ke Backend Go BE-1)
 // ============================================================================
+function buildBackendDestinationPayload(destination: Destination) {
+  return {
+    id: destination.id,
+    slug: destination.slug || toDestinationSlug(destination.name),
+    name: destination.name,
+    category_id: destination.category_id,
+    category: destination.category,
+    city_regency: destination.city_regency,
+    description: destination.description,
+    latitude: Number(destination.latitude),
+    longitude: Number(destination.longitude),
+    elevation_m: destination.elevation_m ? Number(destination.elevation_m) : 0,
+    cover_image: destination.cover_image,
+    crowd_level: destination.crowd_level,
+    distance_km: Number(destination.distance_km ?? 0),
+    travel_time_min: Number(destination.travel_time_min ?? 0),
+    estimated_cost: Number(destination.estimated_cost ?? 0),
+    is_hidden_gem: Boolean(destination.is_hidden_gem),
+    qr_placard_code: destination.qr_placard_code,
+    opening_hours: destination.opening_hours,
+    weather_status: destination.weather_status,
+    medan_indicator: destination.medan_indicator
+      ? {
+          id: destination.medan_indicator.id,
+          destination_id: destination.id,
+          vehicle_access: destination.medan_indicator.vehicle_access,
+          trekking_level: destination.medan_indicator.trekking_level,
+          facilities: destination.medan_indicator.facilities,
+          guide_need: destination.medan_indicator.guide_need,
+        }
+      : undefined,
+    tips: (destination.tips || destination.aturan_destinasi || []).map((t) => ({
+      id: t.id,
+      destination_id: destination.id,
+      category_id: t.category_id,
+      title: t.title,
+      content: t.content,
+      is_important: Boolean(t.is_important),
+    })),
+    tariffs: (destination.tariffs || destination.official_tariffs || []).map((t) => ({
+      id: t.id,
+      destination_id: destination.id,
+      category_id: t.category_id,
+      category: t.category,
+      item_name: t.item_name,
+      price: Number(t.price),
+      unit: t.unit,
+      regulation_ref: t.regulation_ref,
+    })),
+  };
+}
+
 export async function fetchDestinationsWithBridge(): Promise<{
   destinations: Destination[];
   online: boolean;
 }> {
-  const localDestinations = DestinationsRepo.getAll();
   try {
     const res = await apiClient.get<Destination[]>('/destinations');
-    return { destinations: localDestinations, online: res.status >= 200 && res.status < 300 };
+    if (res.status >= 200 && res.status < 300 && Array.isArray(res.data) && res.data.length > 0) {
+      const synced = DestinationsRepo.syncFromBackend(res.data);
+      return { destinations: synced, online: true };
+    }
+    return { destinations: DestinationsRepo.getAll(), online: res.status >= 200 && res.status < 300 };
   } catch {
-    return { destinations: localDestinations, online: false };
+    return { destinations: DestinationsRepo.getAll(), online: false };
+  }
+}
+
+export async function syncDestinationTariffsWithBridge(
+  destId: string,
+  tariffs: Destination['tariffs']
+): Promise<{ syncedRemote: boolean; updatedDestination?: Destination }> {
+  if (!tariffs || tariffs.length === 0) {
+    return { syncedRemote: false };
+  }
+  try {
+    const payload = {
+      tariffs: tariffs.map((t) => ({
+        id: t.id,
+        destination_id: destId,
+        category_id: t.category_id,
+        category: t.category,
+        item_name: t.item_name,
+        price: Number(t.price),
+        unit: t.unit,
+        regulation_ref: t.regulation_ref,
+      })),
+    };
+    const res = await apiClient.put(`/admin/destinations/${encodeURIComponent(destId)}/tariffs`, payload);
+    const remoteDest = res.data?.data as Destination | undefined;
+    return { syncedRemote: res.status >= 200 && res.status < 300, updatedDestination: remoteDest };
+  } catch {
+    return { syncedRemote: false };
   }
 }
 
 export async function saveDestinationWithBridge(
   destination: Destination,
-  _currentList?: Destination[]
+  currentList?: Destination[]
 ): Promise<{ updatedList: Destination[]; syncedRemote: boolean }> {
-  void _currentList;
   const normalized: Destination = {
     ...destination,
     slug: destination.slug || toDestinationSlug(destination.name),
     updated_at: new Date().toISOString(),
   };
-  const updatedList = DestinationsRepo.save(normalized);
+
+  const existsLocally =
+    Boolean(currentList?.some((d) => d.id === normalized.id)) ||
+    Boolean(DestinationsRepo.getById(normalized.id));
+
+  let syncedRemote = false;
+  let finalToCache = normalized;
 
   try {
-    await apiClient.post('/destinations', normalized);
-    return { updatedList, syncedRemote: true };
+    const payload = buildBackendDestinationPayload(normalized);
+    const res = existsLocally
+      ? await apiClient.put<Destination>(
+          `/admin/destinations/${encodeURIComponent(normalized.id)}`,
+          payload
+        )
+      : await apiClient.post<Destination>('/admin/destinations', payload);
+
+    if (res.status >= 200 && res.status < 300) {
+      syncedRemote = true;
+      const remoteObj = res.data;
+      if (remoteObj && typeof remoteObj === 'object' && remoteObj.id) {
+        finalToCache = {
+          ...normalized,
+          id: remoteObj.id,
+          slug: remoteObj.slug || normalized.slug,
+          qr_placard_code: remoteObj.qr_placard_code || normalized.qr_placard_code,
+        };
+      }
+
+      // Sinkronkan juga tabel Fair-Price Barometer (Tarif Resmi Perda) ke endpoint khusus BE-1
+      if (finalToCache.tariffs && finalToCache.tariffs.length > 0) {
+        await syncDestinationTariffsWithBridge(finalToCache.id, finalToCache.tariffs);
+      }
+    }
   } catch {
-    return { updatedList, syncedRemote: false };
+    syncedRemote = false;
   }
+
+  const updatedList = DestinationsRepo.save(finalToCache);
+  return { updatedList, syncedRemote };
 }
 
 export async function deleteDestinationWithBridge(
@@ -190,14 +392,59 @@ export async function deleteDestinationWithBridge(
   _currentList?: Destination[]
 ): Promise<{ updatedList: Destination[]; syncedRemote: boolean }> {
   void _currentList;
-  const updatedList = DestinationsRepo.delete(destinationId);
+  let syncedRemote = false;
 
   try {
-    await apiClient.delete(`/destinations/${destinationId}`);
-    return { updatedList, syncedRemote: true };
+    const res = await apiClient.delete(`/admin/destinations/${encodeURIComponent(destinationId)}`);
+    syncedRemote = res.status >= 200 && res.status < 300;
   } catch {
-    return { updatedList, syncedRemote: false };
+    syncedRemote = false;
   }
+
+  const updatedList = DestinationsRepo.delete(destinationId);
+  return { updatedList, syncedRemote };
+}
+
+export async function resolveSmartQRWithBridge(qrCodeOrSlug: string): Promise<{
+  destination: Destination | null;
+  online: boolean;
+}> {
+  const key = qrCodeOrSlug.trim();
+  try {
+    const res = await apiClient.get(`/qr/${encodeURIComponent(key)}`);
+    const remoteDest = res.data?.destination as Destination | undefined;
+    if (res.status >= 200 && res.status < 300 && remoteDest && remoteDest.id) {
+      const localMatch = DestinationsRepo.getById(remoteDest.id) || DestinationsRepo.getBySlug(key);
+      const merged: Destination = {
+        ...(localMatch || {}),
+        ...remoteDest,
+        qr_placard_code: res.data?.qr_placard_code || remoteDest.qr_placard_code || localMatch?.qr_placard_code,
+        contributors: localMatch?.contributors,
+        gallery_images: localMatch?.gallery_images,
+        denah_points: localMatch?.denah_points,
+        tips:
+          Array.isArray(remoteDest.tips) && remoteDest.tips.length > 0
+            ? remoteDest.tips
+            : localMatch?.tips,
+        tariffs:
+          Array.isArray(remoteDest.tariffs) && remoteDest.tariffs.length > 0
+            ? remoteDest.tariffs
+            : localMatch?.tariffs,
+      };
+      return { destination: merged, online: true };
+    }
+  } catch {
+    // Fallback ke cache lokal
+  }
+
+  const localFallback =
+    DestinationsRepo.getAll().find(
+      (d) =>
+        d.qr_placard_code?.toLowerCase() === key.toLowerCase() ||
+        d.slug.toLowerCase() === key.toLowerCase() ||
+        d.id.toLowerCase() === key.toLowerCase()
+    ) || null;
+  return { destination: localFallback, online: false };
 }
 
 export function resetDestinationsToDefault(): Destination[] {
@@ -474,59 +721,7 @@ export async function fetchRegencyHeatmap(): Promise<RegencyHeatmapData[]> {
 }
 
 // ============================================================================
-// 6. GROUP INVITE PUBLIK (/join)
-// ============================================================================
-export async function fetchGroupRoom(groupCode: string): Promise<GroupRoomPreview | null> {
-  const code = groupCode.trim().toUpperCase();
-  try {
-    const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
-    const groups: Record<string, GroupRoomPreview> = raw
-      ? { ...INITIAL_GROUP_ROOMS, ...JSON.parse(raw) }
-      : { ...INITIAL_GROUP_ROOMS };
-    if (groups[code]) return groups[code];
-    return null;
-  } catch {
-    return INITIAL_GROUP_ROOMS[code] || null;
-  }
-}
-
-export async function voteGroupItem(
-  groupCode: string,
-  itemId: string
-): Promise<GroupRoomPreview | null> {
-  const code = groupCode.trim().toUpperCase();
-  const current = await fetchGroupRoom(code);
-  if (!current) return null;
-
-  const updatedVoting = current.voting_items.map((item) =>
-    item.id === itemId ? { ...item, votes_count: item.votes_count + 1 } : item
-  );
-  const maxVotes = Math.max(...updatedVoting.map((v) => v.votes_count));
-  const normalizedVoting = updatedVoting.map((v) => ({
-    ...v,
-    is_winner: v.votes_count === maxVotes && maxVotes > 0,
-  }));
-
-  const updatedGroup: GroupRoomPreview = {
-    ...current,
-    voting_items: normalizedVoting,
-  };
-
-  try {
-    const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
-    const groups: Record<string, GroupRoomPreview> = raw
-      ? { ...INITIAL_GROUP_ROOMS, ...JSON.parse(raw) }
-      : { ...INITIAL_GROUP_ROOMS };
-    groups[code] = updatedGroup;
-    localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
-  } catch {
-    // ignore
-  }
-  return updatedGroup;
-}
-
-// ============================================================================
-// 7. SYSTEM HEALTH & BENCHMARK (Komplet Nol Undefined)
+// 6. SYSTEM HEALTH & BENCHMARK (Komplet Nol Undefined)
 // ============================================================================
 export async function fetchSystemBenchmark(): Promise<SystemBenchmarkMetrics> {
   return SystemBenchmarkRepo.get();

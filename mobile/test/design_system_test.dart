@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:rancakin_mobile/core/theme/app_colors.dart';
 import 'package:rancakin_mobile/core/theme/app_tokens.dart';
 import 'package:rancakin_mobile/core/theme/app_theme.dart';
@@ -9,6 +11,11 @@ import 'package:rancakin_mobile/core/widgets/wisgo_badge.dart';
 import 'package:rancakin_mobile/core/widgets/crowd_badge.dart';
 
 void main() {
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    GoogleFonts.config.allowRuntimeFetching = false;
+  });
+
   group('DESIGN SYSTEM CONSTITUTION (desain.md) Tests', () {
     test('01. Core Brand Colors calibration', () {
       expect(AppColors.cream, const Color(0xFFFAF3E6));
@@ -39,15 +46,25 @@ void main() {
       expect(AppColors.pinMitraOranye, const Color(0xFFE65F2B));
     });
 
-    test('03. Typography floor size >= 11 px quality gate', () {
-      expect(AppTypography.display.fontSize! >= 11.0, isTrue);
-      expect(AppTypography.h1.fontSize! >= 11.0, isTrue);
-      expect(AppTypography.h2.fontSize! >= 11.0, isTrue);
-      expect(AppTypography.title.fontSize! >= 11.0, isTrue);
-      expect(AppTypography.body.fontSize! >= 11.0, isTrue);
-      expect(AppTypography.bodySmall.fontSize! >= 11.0, isTrue);
-      expect(AppTypography.caption.fontSize! >= 11.0, isTrue);
-      expect(AppTypography.caption.fontSize, 11.0);
+    test('03. Typography floor size >= 11 px quality gate', () async {
+      // google_fonts memicu microtask fetch/asset-lookup asinkron saat getter
+      // TextStyle dipanggil tanpa font lokal di bundle test; tangkap error
+      // pemuatan font asinkron tanpa menyembunyikan kegagalan assertion ukuran.
+      await runZonedGuarded(() async {
+        expect(AppTypography.display.fontSize! >= 11.0, isTrue);
+        expect(AppTypography.h1.fontSize! >= 11.0, isTrue);
+        expect(AppTypography.h2.fontSize! >= 11.0, isTrue);
+        expect(AppTypography.title.fontSize! >= 11.0, isTrue);
+        expect(AppTypography.body.fontSize! >= 11.0, isTrue);
+        expect(AppTypography.bodySmall.fontSize! >= 11.0, isTrue);
+        expect(AppTypography.caption.fontSize! >= 11.0, isTrue);
+        expect(AppTypography.caption.fontSize, 11.0);
+        await Future<void>.delayed(Duration.zero);
+      }, (error, stack) {
+        if (!error.toString().contains('GoogleFonts')) {
+          throw error;
+        }
+      });
     });
 
     test('04. Radius and Spacing calibration', () {

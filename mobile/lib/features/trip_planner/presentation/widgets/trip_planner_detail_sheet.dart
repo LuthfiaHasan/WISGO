@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
 import 'destination_weather_sheet.dart';
-import 'ground_condition_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
 import 'open_trip_offline_rules_sheet.dart';
 import 'trip_group_chat_sheet.dart';
@@ -29,6 +28,7 @@ class TripPlannerDetailSheet extends StatefulWidget {
 class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isReadinessConfirmed = false;
 
   // Dialog controllers for adding items
   final TextEditingController _newChecklistController = TextEditingController();
@@ -37,7 +37,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -47,6 +47,166 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     _newPackingController.dispose();
     super.dispose();
   }
+
+  Future<void> _showReadinessConfirmDialog(
+    int readinessDone,
+    int readinessTotal,
+    int packingDone,
+    int packingTotal,
+  ) async {
+    bool isChecked = false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.cream,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.fact_check_rounded, color: AppColors.forest, size: 22),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Konfirmasi Kesiapan Trip',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '• Persiapan Trip: $readinessDone / $readinessTotal selesai',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '• Barang Bawaan: $packingDone / $packingTotal selesai',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    mouseCursor: SystemMouseCursors.click,
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => setDialogState(() => isChecked = !isChecked),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isChecked ? AppColors.sage : AppColors.bgCard,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isChecked ? AppColors.forest : AppColors.sageBorder,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: isChecked,
+                              activeColor: AppColors.forest,
+                              onChanged: (v) =>
+                                  setDialogState(() => isChecked = v ?? false),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Saya menyetujui & menyatakan bahwa seluruh persiapan serta barang bawaan wajib sudah saya lengkapi untuk keberangkatan trip ini.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.ink,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx, false),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isChecked ? () => Navigator.pop(dialogCtx, true) : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    disabledBackgroundColor: AppColors.disabledBg,
+                    disabledForegroundColor: AppColors.disabledText,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Setuju & Simpan',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      setState(() => _isReadinessConfirmed = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.forest,
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            'Kesiapan trip Anda berhasil disimpan & tercatat di sistem!',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        ),
+      );
+    }
+  }
+
 
   void _showAddChecklistDialog() {
     showDialog(
@@ -460,7 +620,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              'SMART TRIP PLANNER',
+                              'RENCANA & PERSIAPAN',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5, color: AppColors.forest),
                             ),
@@ -484,22 +644,6 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
                               builder: (_) => DestinationWeatherSheet(destinationName: widget.trip.singleDestination),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 3),
-                        IconButton(
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                          visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.visibility_rounded, size: 18, color: AppColors.success),
-                          tooltip: 'Kondisi Nyata Lokasi',
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => GroundConditionSheet(destinationName: widget.trip.singleDestination),
                             );
                           },
                         ),
@@ -541,7 +685,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                           constraints: const BoxConstraints(),
                           visualDensity: VisualDensity.compact,
                           icon: const Icon(Icons.forum_rounded, size: 18, color: AppColors.forest),
-                          tooltip: 'Buka Grup Chat Trip',
+                          tooltip: 'Buka Chat Trip',
                           onPressed: () {
                             showModalBottomSheet(
                               context: context,
@@ -606,10 +750,9 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                   labelPadding: const EdgeInsets.symmetric(horizontal: 12),
                   labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                   tabs: [
-                    const Tab(text: 'Itinerary'),
-                    Tab(text: 'Checklist Trip ($readinessDone/$readinessTotal)'),
-                    Tab(text: 'Jobdesk Tim (${widget.trip.jobdeskList.length})'),
-                    Tab(text: 'Barang Bawaan ($packingDone/$packingTotal)'),
+                    const Tab(text: 'Jadwal'),
+                    Tab(text: 'Persiapan ($readinessDone/$readinessTotal)'),
+                                        Tab(text: 'Barang Bawaan ($packingDone/$packingTotal)'),
                   ],
                 ),
               ],
@@ -623,9 +766,89 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               children: [
                 _buildItineraryTab(),
                 _buildReadinessChecklistTab(readinessDone, readinessTotal, readinessPercent),
-                _buildJobdeskTab(),
                 _buildPackingListTab(packingDone, packingTotal),
               ],
+            ),
+          ),
+
+          // Bar Wajib Konfirmasi Kesiapan Trip (Poin 9)
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            decoration: const BoxDecoration(
+              color: AppColors.bgCard,
+              border: Border(top: BorderSide(color: AppColors.warmBorder)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _isReadinessConfirmed
+                              ? 'Kesiapan Trip Terkonfirmasi ✓'
+                              : 'Wajib lengkapi Persiapan & Barang Bawaan',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: _isReadinessConfirmed
+                                ? AppColors.success
+                                : AppColors.ink,
+                          ),
+                        ),
+                        Text(
+                          _isReadinessConfirmed
+                              ? 'Data kesiapan Anda sudah tercatat di sistem.'
+                              : 'Persiapan $readinessDone/$readinessTotal • Barang $packingDone/$packingTotal',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _isReadinessConfirmed
+                        ? null
+                        : () => _showReadinessConfirmDialog(
+                              readinessDone,
+                              readinessTotal,
+                              packingDone,
+                              packingTotal,
+                            ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.forest,
+                      foregroundColor: AppColors.cream,
+                      disabledBackgroundColor: AppColors.sage,
+                      disabledForegroundColor: AppColors.success,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      _isReadinessConfirmed ? 'Terkonfirmasi' : 'Konfirmasi Siap',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -969,7 +1192,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Kesiapan Kebutuhan Perjalanan',
+                    'Persiapan Wajib Peserta (Dari Penyelenggara)',
                     style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.forest),
                   ),
                   Text(
@@ -990,7 +1213,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               ),
               const SizedBox(height: 6),
               Text(
-                '$doneCount dari $totalCount kebutuhan telah dipersiapkan dan terverifikasi.',
+                'Centang tiap persiapan dari penyelenggara di bawah, lalu tekan Konfirmasi Siap ($doneCount/$totalCount selesai).',
                 style: const TextStyle(fontSize: 11, color: AppColors.muted),
               ),
             ],
@@ -1053,143 +1276,6 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     );
   }
 
-  // ===========================================================================
-  // TAB 3: PEMBAGIAN JOBDESK TIM (Item 2 Trip Planner)
-  // ===========================================================================
-  Widget _buildJobdeskTab() {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.infoBg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.assignment_ind_rounded, color: AppColors.info, size: 20),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Penyelenggara membagi tanggung jawab agar perjalanan tertib, aman, dan partisipatif.',
-                  style: TextStyle(fontSize: 11.5, color: AppColors.info, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-
-        const Text(
-          'PEMBAGIAN PERAN & TUGAS (JOBDESK)',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
-        ),
-        const SizedBox(height: 8),
-
-        ...widget.trip.jobdeskList.map((job) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.sageBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: AppColors.forest.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(job.icon, size: 18, color: AppColors.forest),
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              job.roleTitle,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.forest),
-                            ),
-                            Text(
-                              'PIC: ${job.picName} (${job.picRole})',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.info),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: job.status == 'Selesai'
-                            ? AppColors.successBg
-                            : AppColors.warningBg,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: job.status == 'Selesai'
-                              ? AppColors.success.withValues(alpha: 0.3)
-                              : AppColors.warning.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        job.status,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: job.status == 'Selesai'
-                              ? AppColors.success
-                              : AppColors.warningDark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Divider(height: 1, color: AppColors.creamSubtle),
-                const SizedBox(height: 8),
-
-                const Text(
-                  'Rincian Tugas:',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.muted),
-                ),
-                const SizedBox(height: 4),
-                ...job.tasks.map((t) => Padding(
-                      padding: const EdgeInsets.only(bottom: 3),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('â€¢ ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.forest)),
-                          Expanded(
-                            child: Text(
-                              t,
-                              style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )),
-              ],
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  // ===========================================================================
-  // TAB 4: CHECKLIST PERSIAPAN BARANG BAWAAN (Item 3 Trip Planner)
-  // ===========================================================================
   Widget _buildPackingListTab(int packedCount, int totalCount) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),

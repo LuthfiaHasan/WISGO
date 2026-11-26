@@ -236,7 +236,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                             '${dest.category} · Terverifikasi Nagari',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -261,7 +261,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                             '360° Ready',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -393,7 +393,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -501,7 +501,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               value,
               textAlign: TextAlign.end,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: color,
                 height: 1.35,
@@ -532,7 +532,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               Text(
                 'Tips Menjaga Tempat Ini (Wajib)',
                 style: TextStyle(
-                  fontSize: 14.5,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: AppColors.forest,
                 ),

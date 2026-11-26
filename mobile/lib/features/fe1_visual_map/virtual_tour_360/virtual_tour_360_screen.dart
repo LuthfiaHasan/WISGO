@@ -184,7 +184,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
             child: Text(
               isLeft ? 'LEFT EYE' : 'RIGHT EYE',
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: Colors.white70,
                 fontWeight: FontWeight.bold,
               ),
@@ -352,8 +352,8 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: -0.2,
                               ),
                             ),
@@ -378,7 +378,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Colors.white70,
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -504,7 +504,7 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 11.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -656,8 +656,8 @@ class _VirtualTour360ScreenState extends State<VirtualTour360Screen> {
                 label,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 11.5,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ],

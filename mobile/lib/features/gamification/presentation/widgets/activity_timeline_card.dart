@@ -66,7 +66,7 @@ class ActivityTimelineCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                         ),
                       ),
@@ -79,7 +79,7 @@ class ActivityTimelineCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.ink.withValues(alpha: 0.7),
                               ),
@@ -88,7 +88,7 @@ class ActivityTimelineCard extends StatelessWidget {
                           Text(
                             ' • $formattedTimestamp',
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               color: AppColors.muted,
                               fontFeatures: [FontFeature.tabularFigures()],
                             ),
@@ -108,7 +108,7 @@ class ActivityTimelineCard extends StatelessWidget {
                         child: Text(
                           activity.note,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.ink,
                           ),
@@ -137,8 +137,8 @@ class ActivityTimelineCard extends StatelessWidget {
                       child: Text(
                         '+${activity.xpEarned} XP',
                         style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.success,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),

@@ -17,12 +17,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 1. In Open Trip: Verify "Kalender Event & Festival Budaya" is NOT present
-    expect(find.text('Trip Go Sumbar'), findsOneWidget);
+    // 1. In Trip Go: Verify "Kalender Event & Festival Budaya" is NOT present
+    expect(find.text('Trip Go'), findsWidgets);
     expect(find.text('Kalender Event & Festival Budaya'), findsNothing);
 
-    // 2. Switch to Kamus Minang tab (index 3)
-    await tester.tap(find.text('Kamus Minang'));
+    // 2. Switch to Beranda tab and open Kamus Minang from Kategori Layanan card
+    await tester.tap(find.text('Beranda'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kamus').first);
     await tester.pumpAndSettle();
 
     // 3. Switch to Kalender Budaya tab

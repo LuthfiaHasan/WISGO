@@ -12,6 +12,7 @@ import {
   CulturalEvent,
   DenahPoint,
   Destination,
+  DestinationContributor,
   DestinationReview,
   DestinationWeatherSnapshot,
   DigitalPassportSpot,
@@ -72,6 +73,8 @@ import {
   SEED_PUNGLI_REPORTS,
   SEED_REGENCY_HEATMAP,
   SEED_SAVED_PLACES,
+  SEED_SHUNLU_POIS,
+  SEED_SOS_NEWS,
   SEED_SOS_SIGNALS,
   SEED_STEMP_VISITS,
   SEED_USERS,
@@ -96,7 +99,7 @@ import {
 import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
 const DB_VERSION_KEY = 'wisgo_v2_db_version';
-export const CURRENT_DB_VERSION = '3.0.0';
+export const CURRENT_DB_VERSION = '3.2.0';
 
 export const DB_KEYS = {
   CATEGORIES: 'wisgo_v3_db_categories',
@@ -135,6 +138,8 @@ export const DB_KEYS = {
   REVIEW_SETTINGS: 'wisgo_v3_db_review_settings',
   REGENCY_HEATMAP: 'wisgo_v3_db_regency_heatmap',
   SYSTEM_BENCHMARK: 'wisgo_v3_db_system_benchmark',
+  SOS_NEWS: 'wisgo_v3_db_sos_news',
+  SHUNLU_POIS: 'wisgo_v3_db_shunlu_pois',
 } as const;
 
 const LEGACY_KEYS_TO_PURGE = [
@@ -300,6 +305,8 @@ function stripLegacyDestinationFields(raw: Destination & Record<string, unknown>
     geog: raw.geog || `SRID=4326;POINT(${Number(raw.longitude ?? 100.3543).toFixed(6)} ${Number(raw.latitude ?? -0.9471).toFixed(6)})`,
     elevation_m: raw.elevation_m,
     cover_image: raw.cover_image || '/assets/synced/panorama_sumbar_default.jpg',
+    gallery_images: Array.isArray(raw.gallery_images) ? raw.gallery_images : undefined,
+    contributors: Array.isArray(raw.contributors) ? raw.contributors : undefined,
     crowd_level: raw.crowd_level || 'Sedang',
     distance_km: Number(raw.distance_km ?? 20),
     travel_time_min: Number(raw.travel_time_min ?? 40),
@@ -876,6 +883,104 @@ export const DestinationsRepo = {
     safeSetLocalStorage(DB_KEYS.DENAH_POINTS, JSON.stringify(SEED_DENAH_POINTS));
     return DestinationsRepo.getAll();
   },
+  syncFromBackend: (remoteDestinations: Destination[]): Destination[] => {
+    if (!Array.isArray(remoteDestinations) || remoteDestinations.length === 0) {
+      return DestinationsRepo.getAll();
+    }
+
+    const existingLocal = DestinationsRepo.getAll();
+    const localById = new Map(existingLocal.map((d) => [d.id, d]));
+    const localBySlug = new Map(existingLocal.map((d) => [d.slug, d]));
+
+    const nextCores: Destination[] = [];
+    const existingMedans = IndikatorMedanRepo.getAll();
+    const medanMap = new Map(existingMedans.map((m) => [m.destination_id, m]));
+    const existingRules = AturanDestinasiRepo.getAll();
+    const rulesByDest = new Map<string, AturanDestinasi[]>();
+    existingRules.forEach((r) => {
+      const arr = rulesByDest.get(r.destination_id) || [];
+      arr.push(r);
+      rulesByDest.set(r.destination_id, arr);
+    });
+    const existingTariffs = OfficialTariffsRepo.getAll();
+    const tariffsByDest = new Map<string, OfficialTariff[]>();
+    existingTariffs.forEach((t) => {
+      const arr = tariffsByDest.get(t.destination_id) || [];
+      arr.push(t);
+      tariffsByDest.set(t.destination_id, arr);
+    });
+
+    for (const raw of remoteDestinations) {
+      const localMatch = localById.get(raw.id) || (raw.slug ? localBySlug.get(raw.slug) : undefined);
+      const cleanCore = stripLegacyDestinationFields({
+        ...(localMatch || {}),
+        ...(raw as Destination & Record<string, unknown>),
+        contributors: raw.contributors || localMatch?.contributors,
+        gallery_images: raw.gallery_images || localMatch?.gallery_images,
+        checkpoints: raw.checkpoints || localMatch?.checkpoints,
+        ticket_price_summary:
+          raw.ticket_price_summary ||
+          localMatch?.ticket_price_summary ||
+          (raw.estimated_cost ? `Rp ${Number(raw.estimated_cost).toLocaleString('id-ID')}` : undefined),
+      });
+      nextCores.push(cleanCore);
+
+      if (raw.medan_indicator) {
+        medanMap.set(
+          cleanCore.id,
+          stripLegacyMedanFields(
+            raw.medan_indicator as IndikatorMedan & Record<string, unknown>,
+            cleanCore.id
+          )
+        );
+      }
+
+      const incomingTips = Array.isArray(raw.tips) && raw.tips.length > 0
+        ? raw.tips
+        : Array.isArray(raw.aturan_destinasi) && raw.aturan_destinasi.length > 0
+        ? raw.aturan_destinasi
+        : null;
+      if (incomingTips) {
+        rulesByDest.set(
+          cleanCore.id,
+          incomingTips.map((t, idx) => ({
+            ...t,
+            id: t.id || `art-${cleanCore.id}-${idx}`,
+            destination_id: cleanCore.id,
+          }))
+        );
+      }
+
+      const incomingTariffs = Array.isArray(raw.tariffs) && raw.tariffs.length > 0
+        ? raw.tariffs
+        : Array.isArray(raw.official_tariffs) && raw.official_tariffs.length > 0
+        ? raw.official_tariffs
+        : null;
+      if (incomingTariffs) {
+        tariffsByDest.set(
+          cleanCore.id,
+          incomingTariffs.map((t, idx) => {
+            const cat = normalizeTariffCategory(t.category || t.item_name);
+            return {
+              ...t,
+              id: t.id || `trf-${cleanCore.id}-${idx}`,
+              destination_id: cleanCore.id,
+              category: cat,
+              category_id: t.category_id || tariffCategoryToId(cat),
+              regulation_ref: t.regulation_ref || `Perda ${cleanCore.city_regency}`,
+            };
+          })
+        );
+      }
+    }
+
+    writeTable(DB_KEYS.DESTINATIONS, nextCores);
+    writeTable(DB_KEYS.INDIKATOR_MEDAN, Array.from(medanMap.values()));
+    writeTable(DB_KEYS.ATURAN_DESTINASI, Array.from(rulesByDest.values()).flat());
+    writeTable(DB_KEYS.OFFICIAL_TARIFFS, Array.from(tariffsByDest.values()).flat());
+
+    return DestinationsRepo.getAll();
+  },
 };
 
 // ============================================================================
@@ -978,8 +1083,45 @@ export const DestinationReviewsRepo = {
 };
 
 // ============================================================================
-// 12. USULAN DESTINASI BARU REPO (Satu Sumber Kebenaran — usul_destinasi_sheet.dart)
+// 12. USULAN DESTINASI BARU REPO (Deteksi Duplikat, Gabung Usulan & Kontributor)
 // ============================================================================
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function normalizeTourTokens(name: string): string[] {
+  const stopWords = new Set(['air', 'terjun', 'wisata', 'pantai', 'bukit', 'danau', 'desa', 'nagari', 'tersembunyi', 'dan', 'di']);
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !stopWords.has(w));
+}
+
+function isLikelyDuplicateTour(a: NewTour, b: NewTour): boolean {
+  if (a.id === b.id) return false;
+  const sameRegency = a.city_regency.toLowerCase() === b.city_regency.toLowerCase();
+  const distMeters = haversineMeters(a.latitude, a.longitude, b.latitude, b.longitude);
+  if (distMeters <= 500) return true;
+  if (!sameRegency) return false;
+
+  const normA = a.name.trim().toLowerCase();
+  const normB = b.name.trim().toLowerCase();
+  if (normA === normB || normA.includes(normB) || normB.includes(normA)) return true;
+
+  const tokensA = normalizeTourTokens(a.name);
+  const tokensB = new Set(normalizeTourTokens(b.name));
+  const shared = tokensA.filter((t) => tokensB.has(t));
+  return shared.length >= 2 || (shared.length === 1 && tokensA.length <= 2 && tokensB.size <= 2);
+}
+
 export const NewTourRepo = {
   getAll: (): NewTour[] => readTable<NewTour>(DB_KEYS.NEW_TOURS, SEED_NEW_TOURS),
   save: (item: NewTour): NewTour[] => {
@@ -996,6 +1138,28 @@ export const NewTourRepo = {
     else updated.unshift(normalized);
     writeTable(DB_KEYS.NEW_TOURS, updated);
     return updated;
+  },
+  findDuplicateGroups: (sourceList?: NewTour[]): NewTour[][] => {
+    const pending = (sourceList || NewTourRepo.getAll()).filter((n) => n.status === 'pending');
+    const visited = new Set<string>();
+    const groups: NewTour[][] = [];
+
+    for (const item of pending) {
+      if (visited.has(item.id)) continue;
+      const cluster: NewTour[] = [item];
+      visited.add(item.id);
+      for (const other of pending) {
+        if (visited.has(other.id)) continue;
+        if (cluster.some((member) => isLikelyDuplicateTour(member, other))) {
+          cluster.push(other);
+          visited.add(other.id);
+        }
+      }
+      if (cluster.length >= 2) {
+        groups.push(cluster);
+      }
+    }
+    return groups;
   },
   rejectWithNotice: (id: string, reason: string): NewTour[] => {
     const list = NewTourRepo.getAll();
@@ -1019,8 +1183,16 @@ export const NewTourRepo = {
     return updated;
   },
   approveToDestinations: (tour: NewTour): Destination => {
+    const newId = `dest-${Date.now()}`;
     const list = NewTourRepo.getAll().map((n) =>
-      n.id === tour.id ? { ...n, status: 'approved' as const } : n
+      n.id === tour.id
+        ? {
+            ...n,
+            status: 'approved' as const,
+            merged_into_destination_id: newId,
+            merged_role: 'Pengusul Utama',
+          }
+        : n
     );
     writeTable(DB_KEYS.NEW_TOURS, list);
 
@@ -1028,7 +1200,6 @@ export const NewTourRepo = {
     const parsedPrice = Number((tour.estimated_price || '').replace(/\D/g, '')) || 10000;
     const tourLat = Number(tour.latitude ?? -0.9471);
     const tourLng = Number(tour.longitude ?? 100.3543);
-    const newId = `dest-${Date.now()}`;
     const facilitiesList = tour.facilities || [];
     const facilitiesLevel =
       facilitiesList.length >= 4
@@ -1036,6 +1207,15 @@ export const NewTourRepo = {
         : facilitiesList.length >= 1
         ? 'Terbatas'
         : 'Belum Ada';
+
+    const contributors: DestinationContributor[] = [
+      {
+        name: tour.submitter_name,
+        phone: tour.submitter_phone,
+        role: 'Pengusul Utama',
+        submission_id: tour.id,
+      },
+    ];
 
     const newDest: Destination = {
       id: newId,
@@ -1052,6 +1232,7 @@ export const NewTourRepo = {
       cover_image:
         tour.photo_url ||
         'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1200&q=80',
+      contributors,
       crowd_level: 'Sepi',
       distance_km: 35,
       travel_time_min: 55,
@@ -1086,6 +1267,167 @@ export const NewTourRepo = {
     DestinationsRepo.save(newDest);
     return DestinationsRepo.getById(newId) || newDest;
   },
+  mergeAndApproveToDestination: (params: {
+    submissions: NewTour[];
+    primaryDataSubmissionId: string;
+    coverPhotoSubmissionId: string;
+    customName?: string;
+    customDescription?: string;
+    customTips?: string;
+  }): Destination => {
+    const { submissions, primaryDataSubmissionId, coverPhotoSubmissionId } = params;
+    const primarySub =
+      submissions.find((s) => s.id === primaryDataSubmissionId) || submissions[0];
+    const photoSub =
+      submissions.find((s) => s.id === coverPhotoSubmissionId) || primarySub;
+
+    const newId = `dest-${Date.now()}`;
+    const finalName = (params.customName || primarySub.name).trim();
+    const finalDescription = (params.customDescription || primarySub.description).trim();
+    const normalizedCategory = normalizeDestinationCategory(primarySub.category);
+    const parsedPrice = Number((primarySub.estimated_price || '').replace(/\D/g, '')) || 10000;
+    const tourLat = Number(primarySub.latitude ?? -0.9471);
+    const tourLng = Number(primarySub.longitude ?? 100.3543);
+
+    // Gabungkan seluruh fasilitas unik dari semua pengusul
+    const mergedFacilities = Array.from(
+      new Set(submissions.flatMap((s) => s.facilities || []))
+    );
+    const facilitiesLevel =
+      mergedFacilities.length >= 4
+        ? 'Toilet, Musala & Parkir Lengkap'
+        : mergedFacilities.length >= 1
+        ? 'Terbatas'
+        : 'Belum Ada';
+
+    // Kumpulkan foto cover + galeri tambahan dari kontributor lain
+    const coverImage =
+      photoSub.photo_url ||
+      primarySub.photo_url ||
+      'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1200&q=80';
+    const galleryImages = Array.from(
+      new Set(
+        submissions
+          .map((s) => s.photo_url)
+          .filter((url): url is string => Boolean(url) && url !== coverImage)
+      )
+    );
+
+    // Susun kredit kontributor yang adil untuk seluruh pengusul
+    const contributors: DestinationContributor[] = submissions.map((s) => {
+      const isPrimaryData = s.id === primarySub.id;
+      const isCoverPhoto = s.id === photoSub.id;
+      let role: DestinationContributor['role'] = 'Pengusul Bersama';
+      if (isPrimaryData && isCoverPhoto) role = 'Pengusul Utama';
+      else if (isPrimaryData) role = 'Kontributor Data & Tips';
+      else if (isCoverPhoto) role = 'Kontributor Foto';
+      return {
+        name: s.submitter_name,
+        phone: s.submitter_phone,
+        role,
+        submission_id: s.id,
+      };
+    });
+
+    // Gabungkan Tips Menjaga Tempat Ini dari semua pengusul
+    const tipsEntries: AturanDestinasi[] = params.customTips?.trim()
+      ? [
+          {
+            id: `art-${Date.now()}-0`,
+            destination_id: newId,
+            category_id: 'cat-rule-lingkungan',
+            title: 'Tips Menjaga Tempat Ini (Gabungan Kontributor)',
+            content: params.customTips.trim(),
+            is_important: true,
+          },
+        ]
+      : submissions
+          .filter((s) => s.tips_menjaga?.trim())
+          .map((s, idx) => ({
+            id: `art-${Date.now()}-${idx}`,
+            destination_id: newId,
+            category_id: 'cat-rule-lingkungan',
+            title: `Tips Menjaga (oleh ${s.submitter_name})`,
+            content: s.tips_menjaga.trim(),
+            is_important: idx === 0,
+          }));
+
+    const contributorNames = contributors.map((c) => `${c.name} (${c.role})`).join(', ');
+
+    const newDest: Destination = {
+      id: newId,
+      slug: toDestinationSlug(finalName),
+      name: finalName,
+      category_id: categoryNameToId(normalizedCategory),
+      category: normalizedCategory,
+      city_regency: primarySub.city_regency,
+      description: finalDescription || 'Destinasi hasil kolaborasi usulan komunitas WISGO.',
+      latitude: tourLat,
+      longitude: tourLng,
+      geog: `SRID=4326;POINT(${tourLng.toFixed(6)} ${tourLat.toFixed(6)})`,
+      elevation_m: 250,
+      cover_image: coverImage,
+      gallery_images: galleryImages.length > 0 ? galleryImages : undefined,
+      contributors,
+      crowd_level: 'Sepi',
+      distance_km: 35,
+      travel_time_min: 55,
+      estimated_cost: parsedPrice,
+      ticket_price_summary: primarySub.estimated_price || `Rp ${parsedPrice.toLocaleString('id-ID')}`,
+      is_hidden_gem: normalizedCategory === 'Hidden Gem' || submissions.some((s) => s.is_sensitive),
+      qr_placard_code: `WISGO-PLG-${Date.now().toString().slice(-4)}`,
+      opening_hours: '08.00 - 17.00 WIB',
+      medan_indicator: {
+        id: `med-${newId}`,
+        destination_id: newId,
+        vehicle_access: mergedFacilities.includes('Area Parkir') ? 'Mobil OK' : 'Hanya Motor',
+        trekking_level: mergedFacilities.includes('Jalur Trekking') ? 'Sedang' : 'Mudah (Datar)',
+        facilities: facilitiesLevel,
+        guide_need: mergedFacilities.includes('Pemandu Lokal') ? 'Disarankan' : 'Mandiri',
+        terrain_note: `Kurasi gabungan komunitas oleh ${contributorNames}. Fasilitas terpantau: ${mergedFacilities.join(', ') || 'Alami'}.`,
+      },
+      tips: tipsEntries,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    DestinationsRepo.save(newDest);
+
+    // Tandai SEMUA usulan yang digabung sebagai approved (tidak ada yang ditolak) & kirim notifikasi apresiasi
+    const roleBySubId = new Map(contributors.map((c) => [c.submission_id, c.role]));
+    const updatedList = NewTourRepo.getAll().map((n) => {
+      const assignedRole = roleBySubId.get(n.id);
+      if (!assignedRole) return n;
+      return {
+        ...n,
+        status: 'approved' as const,
+        merged_into_destination_id: newId,
+        merged_role: assignedRole,
+        admin_notes: `Digabungkan menjadi destinasi "${finalName}" sebagai ${assignedRole}.`,
+      };
+    });
+    writeTable(DB_KEYS.NEW_TOURS, updatedList);
+
+    const now = new Date().toISOString();
+    submissions.forEach((s, idx) => {
+      const role = roleBySubId.get(s.id) || 'Pengusul Bersama';
+      NotifikasiRepo.create({
+        id: `notif-mrg-${Date.now()}-${idx}`,
+        user_id: s.user_id,
+        notification_type: 'system',
+        title: `Usulan "${finalName}" Resmi Terbit!`,
+        message:
+          role === 'Kontributor Foto'
+            ? `Terima kasih ${s.submitter_name}! Foto Anda terpilih sebagai Foto Utama destinasi "${finalName}" dan nama Anda tercantum sebagai Kontributor Foto.`
+            : `Terima kasih ${s.submitter_name}! Usulan Anda untuk "${finalName}" telah diterbitkan bersama kontributor lain (${role}).`,
+        reference_id: newId,
+        is_read: false,
+        created_at: now,
+      });
+    });
+
+    return DestinationsRepo.getById(newId) || newDest;
+  },
 };
 
 // ============================================================================
@@ -1110,8 +1452,24 @@ export const ChallengesRepo = {
 };
 
 export const UserChallengeRewardsRepo = {
-  getAll: (): UserChallengeReward[] =>
-    readTable<UserChallengeReward>(DB_KEYS.USER_CHALLENGE_REWARDS, SEED_USER_CHALLENGE_REWARDS),
+  getAll: (): UserChallengeReward[] => {
+    const raw = readTable<UserChallengeReward>(DB_KEYS.USER_CHALLENGE_REWARDS, SEED_USER_CHALLENGE_REWARDS);
+    // Pastikan reward non-sertifikat (Voucher / Badge) tidak membawa nomor sertifikat dari cache lama
+    return raw.map((claim) => {
+      const isCert = (claim.jenis_reward || '').toLowerCase().includes('sertifikat');
+      if (!isCert && claim.certificate_code) {
+        return {
+          ...claim,
+          certificate_code: null,
+          certificate_url: null,
+          reward_notes:
+            claim.reward_notes?.replace(/^E-Sertifikat & /i, 'Kode Voucher: VCR-TENUN-8311 · ') ||
+            'Hadiah telah dikirimkan ke akun wisatawan.',
+        };
+      }
+      return claim;
+    });
+  },
   save: (item: UserChallengeReward): UserChallengeReward[] => {
     const list = UserChallengeRewardsRepo.getAll();
     const idx = list.findIndex((u) => u.id === item.id);
@@ -1124,20 +1482,29 @@ export const UserChallengeRewardsRepo = {
   validateAndSendReward: (claimId: string, notes?: string): UserChallengeReward[] => {
     const list = UserChallengeRewardsRepo.getAll();
     const timestamp = new Date().toISOString();
-    const certCode = `WG-CERT-2026-${Date.now().toString().slice(-5)}`;
-    const updated = list.map((claim) =>
-      claim.id === claimId
-        ? {
-            ...claim,
-            status: 'HADIAH_TERKIRIM' as const,
-            certificate_code: claim.certificate_code || certCode,
-            certificate_url:
-              claim.certificate_url || `https://wisgo.sumbarprov.go.id/certs/${certCode}.pdf`,
-            completed_at: claim.completed_at || timestamp,
-            reward_notes: notes || claim.reward_notes || 'Diterbitkan otomatis oleh Admin Dispar Sumbar.',
-          }
-        : claim
-    );
+    const suffix = Date.now().toString().slice(-5);
+    const updated = list.map((claim) => {
+      if (claim.id !== claimId) return claim;
+      const rewardType = (claim.jenis_reward || '').toLowerCase();
+      const isCert = rewardType.includes('sertifikat');
+      const isVoucher = rewardType.includes('voucher');
+      const certCode = isCert ? claim.certificate_code || `WISGO-GUB-SB-${suffix}` : null;
+      const defaultNote = isCert
+        ? 'E-Sertifikat Gubernur & hadiah diterbitkan resmi oleh Dinas Pariwisata Sumbar.'
+        : isVoucher
+          ? `Kode Voucher: VCR-WISGO-${suffix} · Berlaku di mitra UMKM Nagari terdaftar.`
+          : 'Lencana & poin XP otomatis terbuka pada profil Jejak WISGO wisatawan.';
+      return {
+        ...claim,
+        status: 'HADIAH_TERKIRIM' as const,
+        certificate_code: certCode,
+        certificate_url: certCode
+          ? claim.certificate_url || `https://wisgo.sumbarprov.go.id/certs/${certCode}.pdf`
+          : null,
+        completed_at: claim.completed_at || timestamp,
+        reward_notes: notes || claim.reward_notes || defaultNote,
+      };
+    });
     writeTable(DB_KEYS.USER_CHALLENGE_REWARDS, updated);
     return updated;
   },
@@ -1502,9 +1869,28 @@ export const SystemBenchmarkRepo = {
 // ============================================================================
 // 18. LEVEL PETUALANG, PROFIL JEJAK WISGO & TEMPLATE SHARE
 // ============================================================================
+const LEVEL_NAME_ID_MAP: Record<number, { name: AdventurerLevelConfig['name']; title: string }> = {
+  1: { name: 'Pemula', title: 'Level 1 – Pemula' },
+  2: { name: 'Penjelajah', title: 'Level 2 – Penjelajah' },
+  3: { name: 'Petualang', title: 'Level 3 – Petualang' },
+  4: { name: 'Perintis', title: 'Level 4 – Perintis' },
+  5: { name: 'Pengelana', title: 'Level 5 – Pengelana' },
+};
+
 export const AdventurerLevelsRepo = {
   getAll: (): AdventurerLevelConfig[] =>
-    readTable<AdventurerLevelConfig>(DB_KEYS.ADVENTURER_LEVELS, SEED_ADVENTURER_LEVELS),
+    readTable<AdventurerLevelConfig>(DB_KEYS.ADVENTURER_LEVELS, SEED_ADVENTURER_LEVELS).map((lvl) => {
+      const canonical = LEVEL_NAME_ID_MAP[lvl.level];
+      if (!canonical) return lvl;
+      const isEnglish = /^(Beginner|Explorer|Adventurer|Trailblazer|Wanderer)$/i.test(lvl.name);
+      return {
+        ...lvl,
+        name: canonical.name,
+        title: isEnglish || /(Beginner|Explorer|Adventurer|Trailblazer|Wanderer)/i.test(lvl.title)
+          ? canonical.title
+          : lvl.title,
+      };
+    }),
   updateLevel: (updatedConfig: AdventurerLevelConfig): AdventurerLevelConfig[] => {
     const list = AdventurerLevelsRepo.getAll();
     const idx = list.findIndex((l) => l.level === updatedConfig.level);
@@ -1573,4 +1959,73 @@ export const SavedPlacesRepo = {
 
 export const UsersRepo = {
   getAll: (): User[] => readTable<User>(DB_KEYS.USERS, SEED_USERS),
+};
+
+// ============================================================================
+// 19. BERITA WISATA & BENCANA SUMBAR (Sinkron FE-1 hazard_sos_screen.dart)
+// ============================================================================
+export const SosNewsRepo = {
+  getAll: (): import('../types/contract').SosNewsItem[] =>
+    readTable<import('../types/contract').SosNewsItem>(DB_KEYS.SOS_NEWS, SEED_SOS_NEWS),
+  save: (item: import('../types/contract').SosNewsItem): import('../types/contract').SosNewsItem[] => {
+    const list = SosNewsRepo.getAll();
+    const idx = list.findIndex((n) => n.id === item.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = item;
+    else updated.unshift(item);
+    writeTable(DB_KEYS.SOS_NEWS, updated);
+    return updated;
+  },
+  delete: (id: string): import('../types/contract').SosNewsItem[] => {
+    const updated = SosNewsRepo.getAll().filter((n) => n.id !== id);
+    writeTable(DB_KEYS.SOS_NEWS, updated);
+    return updated;
+  },
+  togglePublish: (id: string): import('../types/contract').SosNewsItem[] => {
+    const updated = SosNewsRepo.getAll().map((n) =>
+      n.id === id ? { ...n, is_published: !n.is_published } : n
+    );
+    writeTable(DB_KEYS.SOS_NEWS, updated);
+    return updated;
+  },
+  publishFromWeather: (weather: WeatherMonitoringItem): import('../types/contract').SosNewsItem[] => {
+    const warningNote =
+      weather.extreme_warning_text ||
+      'Pantau kondisi cuaca dan utamakan keselamatan sebelum berangkat.';
+    const news: import('../types/contract').SosNewsItem = {
+      id: `news-wtr-${Date.now()}`,
+      category: 'Cuaca & Bahari',
+      severity: weather.weather_status === 'Siaga Cuaca Ekstrem' ? 'DARURAT' : 'SIAGA HUJAN',
+      title: `Peringatan Cuaca ${weather.destination_name}: ${weather.condition}`,
+      region: weather.city_regency,
+      summary: `Suhu ${weather.current_temp_c}°C, peluang hujan ${weather.rain_probability}%, angin ${weather.wind_speed_kmh} km/jam. ${warningNote}`,
+      advice: warningNote,
+      source: 'BMKG & Dispar Sumbar',
+      is_published: true,
+      published_at: new Date().toISOString(),
+    };
+    return SosNewsRepo.save(news);
+  },
+};
+
+// ============================================================================
+// 20. POI SEARAH RUTE (SHUNLU) (Sinkron FE-1 map_explore_pois_data.dart)
+// ============================================================================
+export const ShunluPoisRepo = {
+  getAll: (): import('../types/contract').ShunluPoiItem[] =>
+    readTable<import('../types/contract').ShunluPoiItem>(DB_KEYS.SHUNLU_POIS, SEED_SHUNLU_POIS),
+  save: (item: import('../types/contract').ShunluPoiItem): import('../types/contract').ShunluPoiItem[] => {
+    const list = ShunluPoisRepo.getAll();
+    const idx = list.findIndex((p) => p.id === item.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = item;
+    else updated.unshift(item);
+    writeTable(DB_KEYS.SHUNLU_POIS, updated);
+    return updated;
+  },
+  delete: (id: string): import('../types/contract').ShunluPoiItem[] => {
+    const updated = ShunluPoisRepo.getAll().filter((p) => p.id !== id);
+    writeTable(DB_KEYS.SHUNLU_POIS, updated);
+    return updated;
+  },
 };

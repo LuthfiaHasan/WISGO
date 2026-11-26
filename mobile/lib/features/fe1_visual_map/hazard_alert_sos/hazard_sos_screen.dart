@@ -123,7 +123,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
     return Scaffold(
       backgroundColor: AppColors.cream100,
       appBar: AppBar(
-        title: const Text('Pantauan Jalur Rawan & Kontak Darurat'),
+        title: const Text('Darurat SOS & Info Bencana'),
         actions: [
           IconButton(
             tooltip: 'Segarkan Status Jalur',
@@ -141,29 +141,62 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                 _buildOfflineCacheStatusBar(),
                 const SizedBox(height: 16),
 
-                // 2. HOTLINE DARURAT SUMATERA BARAT
+                // 2. HOTLINE DARURAT SUMATERA BARAT (Grid 2x2 Statis Tanpa Slider - Semua Langsung Terlihat)
                 const Text(
                   'Kontak Darurat Siaga (Bebas Pulsa)',
                   style: TextStyle(
-                    fontSize: 15.5,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.ink900,
                   ),
                 ),
                 const SizedBox(height: 10),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildHotlinePill('SAR Sumbar: 115', 'Basarnas Padang / Sumbar', '115', Icons.phone_in_talk, Colors.red.shade700),
-                      const SizedBox(width: 8),
-                      _buildHotlinePill('BPBD: 112', 'BPBD & Damkar Terpadu', '112', Icons.emergency, AppColors.orange500),
-                      const SizedBox(width: 8),
-                      _buildHotlinePill('Ambulans: 118', 'Layanan Medis Darurat', '118', Icons.local_hospital, AppColors.green800),
-                      const SizedBox(width: 8),
-                      _buildHotlinePill('Polisi: 110', 'Kepolisian RI (Polri)', '110', Icons.local_police, AppColors.indigo500),
-                    ],
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildHotlinePill(
+                        'SAR Sumbar: 115',
+                        'Basarnas Padang / Sumbar',
+                        '115',
+                        Icons.phone_in_talk_rounded,
+                        AppColors.danger,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildHotlinePill(
+                        'BPBD: 112',
+                        'BPBD & Damkar Terpadu',
+                        '112',
+                        Icons.emergency_rounded,
+                        AppColors.warning,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildHotlinePill(
+                        'Ambulans: 118',
+                        'Layanan Medis Darurat',
+                        '118',
+                        Icons.local_hospital_rounded,
+                        AppColors.forest,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildHotlinePill(
+                        'Polisi: 110',
+                        'Kepolisian RI (Polri)',
+                        '110',
+                        Icons.local_police_rounded,
+                        AppColors.info,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
 
@@ -177,7 +210,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 15.5,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.ink900,
                         ),
@@ -192,7 +225,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                       ),
                       child: const Text(
                         '6 Kontak Resmi',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.green800),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.green800),
                       ),
                     ),
                   ],
@@ -201,117 +234,43 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                 ..._buildOfficialEmergencyCards(),
                 const SizedBox(height: 24),
 
-                // 4. DAFTAR KORIDOR RAWAN BENCANA (SITINJAU, ANAI, KELOK 9, KELOK 44)
+                // 4. BERITA KHUSUS WISATA & BENCANA SUMATERA BARAT
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Expanded(
                       child: Text(
-                        'Radar 4 Koridor Jalur Ekstrem',
+                        'Berita Wisata & Bencana Sumbar',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 15.5,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.ink900,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      '${_corridors.length} koridor aktif',
-                      style: const TextStyle(fontSize: 12, color: Colors.black45),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.coralTint,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${_wisataDisasterNews.length} Terkini',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.terracotta,
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
 
-                ..._corridors.map((c) {
-                  final color = _severityColor(c.severity);
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                c.severity.toUpperCase(),
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            const Icon(Icons.cloud_outlined, size: 13, color: Colors.black38),
-                            const SizedBox(width: 4),
-                            Text(
-                              c.weatherStatus,
-                              style: const TextStyle(fontSize: 11, color: Colors.black45),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          c.location,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.ink900,
-                          ),
-                        ),
-                        if (c.roadSegment.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            '${c.roadSegment} • ${c.cityRegency}',
-                            style: const TextStyle(fontSize: 11.5, color: Colors.black45, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                        const SizedBox(height: 6),
-                        Text(
-                          c.message,
-                          style: const TextStyle(fontSize: 12.5, color: Colors.black54, height: 1.35),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            const Icon(Icons.alt_route_rounded, size: 14, color: AppColors.green800),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Jalur Alternatif: ${c.detourRoute}',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  color: AppColors.green800,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                ..._wisataDisasterNews.map((news) => _buildNewsCard(news)),
                 const SizedBox(height: 12),
 
                 // 5. ALAT BANTU SINYAL FISIK (100% OFFLINE TANPA SINYAL)
@@ -356,8 +315,8 @@ class _HazardSosScreenState extends State<HazardSosScreen>
           padding: EdgeInsets.symmetric(vertical: 8),
           child: Center(
             child: Text(
-              'Memuat kontak darurat dari server backend...',
-              style: TextStyle(fontSize: 12, color: Colors.black45),
+              'Memuat kontak darurat dari server backend…',
+              style: TextStyle(fontSize: 12, color: AppColors.muted),
             ),
           ),
         ),
@@ -376,10 +335,10 @@ class _HazardSosScreenState extends State<HazardSosScreen>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          border: Border.all(color: AppColors.warmBorder),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: AppColors.ink.withValues(alpha: 0.02),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -411,7 +370,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                         Text(
                           name,
                           style: const TextStyle(
-                            fontSize: 13.5,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: AppColors.ink900,
                           ),
@@ -419,7 +378,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                         const SizedBox(height: 2),
                         Text(
                           city,
-                          style: const TextStyle(fontSize: 11, color: Colors.black45),
+                          style: const TextStyle(fontSize: 12, color: AppColors.muted),
                         ),
                       ],
                     ),
@@ -430,7 +389,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                     decoration: BoxDecoration(
                       color: AppColors.cream100,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                      border: Border.all(color: AppColors.warmBorder),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -440,7 +399,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                         Text(
                           phone,
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: color,
                           ),
@@ -493,7 +452,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
             const SizedBox(height: 4),
             Row(
               children: [
-                const Text('Nomor Darurat: ', style: TextStyle(fontSize: 13, color: Colors.black54)),
+                const Text('Nomor Darurat: ', style: TextStyle(fontSize: 13, color: AppColors.muted)),
                 Text(
                   number,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: color),
@@ -516,7 +475,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                   Expanded(
                     child: Text(
                       'Mode Uji Coba: Fitur dialer otomatis sengaja ditahan agar tidak melakukan panggilan nyata ke nomor darurat instansi terkait saat pengujian/demo.',
-                      style: TextStyle(fontSize: 11.5, color: Color(0xFF5D4037), height: 1.35),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF5D4037), height: 1.35),
                     ),
                   ),
                 ],
@@ -527,7 +486,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tutup', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            child: const Text('Tutup', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -542,12 +501,12 @@ class _HazardSosScreenState extends State<HazardSosScreen>
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: _isZeroSignalMode ? Colors.orange.shade300 : Colors.black.withValues(alpha: 0.08),
+          color: _isZeroSignalMode ? Colors.orange.shade300 : AppColors.ink.withValues(alpha: 0.08),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.ink.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -572,7 +531,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                       child: Text(
                         _isZeroSignalMode ? 'Mode Blank Spot (Zero-Signal)' : 'Sinyal Normal (Data Aktif)',
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: _isZeroSignalMode ? Colors.orange.shade900 : AppColors.green800,
                         ),
@@ -587,7 +546,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Offline:', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                  const Text('Offline:', style: TextStyle(fontSize: 12, color: AppColors.muted)),
                   const SizedBox(width: 4),
                   Transform.scale(
                     scale: 0.75,
@@ -611,7 +570,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
               const Expanded(
                 child: Text(
                   'Last Known GPS: $_lastKnownLat, $_lastKnownLng (Akurasi ±4m)',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.ink900),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink900),
                 ),
               ),
               Container(
@@ -620,7 +579,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                   color: AppColors.sage100,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text('Cached', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.green800)),
+                child: const Text('Cached', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.green800)),
               ),
             ],
           ),
@@ -640,7 +599,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                   Expanded(
                     child: Text(
                       '${_offlineSosQueue.length} laporan di antrean offline lokal',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
                     ),
                   ),
                   TextButton(
@@ -650,7 +609,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     onPressed: _syncOfflineQueue,
-                    child: const Text('Sinkronkan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    child: const Text('Sinkronkan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -668,10 +627,10 @@ class _HazardSosScreenState extends State<HazardSosScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1.2),
+        border: Border.all(color: AppColors.warmBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppColors.ink.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -692,14 +651,14 @@ class _HazardSosScreenState extends State<HazardSosScreen>
               ),
               Text(
                 'Nol Kuota/Sinyal',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.green800),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.green800),
               ),
             ],
           ),
           const SizedBox(height: 6),
           const Text(
             'Gunakan saat ponsel sama sekali tidak mendapat sinyal seluler untuk menarik perhatian warga nagari atau tim penyelamat dari kejauhan.',
-            style: TextStyle(fontSize: 11.5, color: Colors.black54, height: 1.35),
+            style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.35),
           ),
           const SizedBox(height: 14),
           Row(
@@ -714,7 +673,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                         backgroundColor: _isSirenActive
                             ? Color.lerp(Colors.red.shade700, Colors.red.shade900, _sirenPulseController.value)
                             : Colors.grey.shade100,
-                        foregroundColor: _isSirenActive ? Colors.white : Colors.black87,
+                        foregroundColor: _isSirenActive ? Colors.white : AppColors.ink,
                         elevation: _isSirenActive ? 3 : 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -738,16 +697,16 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                           Text(
                             _isSirenActive ? 'SIRINE AKTIF' : 'SIRINE SUARA',
                             style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                               color: _isSirenActive ? Colors.white : Colors.red.shade800,
                             ),
                           ),
                           Text(
                             _isSirenActive ? 'Volume 110dB' : 'Maksimal',
                             style: TextStyle(
-                              fontSize: 10,
-                              color: _isSirenActive ? Colors.white70 : Colors.black45,
+                              fontSize: 12,
+                              color: _isSirenActive ? Colors.white70 : AppColors.muted,
                             ),
                           ),
                         ],
@@ -763,7 +722,7 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber.shade50,
-                    foregroundColor: Colors.black87,
+                    foregroundColor: AppColors.ink,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -780,14 +739,14 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                       Text(
                         'SENTER MORSE',
                         style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                           color: Colors.orange.shade900,
                         ),
                       ),
                       const Text(
                         'Pola · · · — — — · · ·',
-                        style: TextStyle(fontSize: 10, color: Colors.black45),
+                        style: TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ],
                   ),
@@ -800,27 +759,318 @@ class _HazardSosScreenState extends State<HazardSosScreen>
     );
   }
 
+  List<Map<String, dynamic>> get _wisataDisasterNews {
+    final liveAlerts = _corridors.map((c) {
+      final cleanDetour = c.detourRoute.replaceFirst(
+        RegExp(r'^Alternatif:\s*', caseSensitive: false),
+        '',
+      );
+      return <String, dynamic>{
+        'category': c.severity.toLowerCase() == 'normal' ? 'Akses Wisata' : 'Info Jalur & Bencana',
+        'severity': c.severity.toUpperCase(),
+        'title': 'Kondisi Terkini ${c.location}',
+        'region': c.cityRegency.isNotEmpty ? c.cityRegency : 'Sumatera Barat',
+        'time': c.weatherStatus.isNotEmpty ? c.weatherStatus : 'Diperbarui hari ini',
+        'summary': c.message,
+        'advice': cleanDetour.isNotEmpty
+            ? 'Rute alternatif disarankan: $cleanDetour'
+            : 'Pantau terus perkembangan cuaca sebelum berangkat.',
+        'source': 'BPBD & Dispar Sumbar',
+        'color': _severityColor(c.severity),
+      };
+    }).toList();
+
+    final editorialNews = <Map<String, dynamic>>[
+      {
+        'category': 'Bencana & Vulkanologi',
+        'severity': 'WASPADA',
+        'title': 'Status Aktivitas Gunung Marapi Level II — Radius Aman Wisatawan 3 km',
+        'region': 'Kab. Agam & Tanah Datar',
+        'time': '2 jam lalu • PVMBG',
+        'summary': 'Wisatawan di sekitar Bukittinggi, Nagari Tuo Pariangan, dan kaki Gunung Marapi diimbau mematuhi radius aman 3 km dari kawah serta membawa masker saat hujan abu ringan.',
+        'advice': 'Destinasi Jam Gadang, Ngarai Sianok, dan Istano Basa Pagaruyung tetap aman dikunjungi.',
+        'source': 'PVMBG & BPBD Sumbar',
+        'color': AppColors.warning,
+      },
+      {
+        'category': 'Cuaca & Bahari',
+        'severity': 'INFO WISATA',
+        'title': 'Prakiraan BMKG: Gelombang Perairan Padang–Mandeh Kondusif Pagi hingga Siang',
+        'region': 'Padang & Pesisir Selatan',
+        'time': '3 jam lalu • BMKG Minangkabau',
+        'summary': 'Kondisi perairan Teluk Mandeh dan Pulau Pasumpahan cerah berawan dengan tinggi gelombang 0,5–1,2 m. Pelayaran perahu wisata diimbau kembali sebelum pukul 16.30 WIB.',
+        'advice': 'Selalu gunakan jaket pelampung resmi dari pengelola dermaga sebelum menyeberang.',
+        'source': 'BMKG Stasiun Maritim Teluk Bayur',
+        'color': AppColors.info,
+      },
+      {
+        'category': 'Akses Wisata',
+        'severity': 'SIAGA HUJAN',
+        'title': 'Antisipasi Debit Air Terjun Lembah Harau & Lubuk Hitam Saat Hujan Sore',
+        'region': 'Lima Puluh Kota & Bungus Padang',
+        'time': '5 jam lalu • Dispar Sumbar',
+        'summary': 'Pengunjung air terjun diminta segera menjauh dari aliran sungai apabila air mulai keruh atau terdengar gemuruh di bagian hulu.',
+        'advice': 'Waktu kunjungan paling aman adalah pukul 08.00–14.30 WIB saat cuaca relatif cerah.',
+        'source': 'Dinas Pariwisata Provinsi Sumbar',
+        'color': AppColors.forest,
+      },
+    ];
+
+    return [...editorialNews, ...liveAlerts];
+  }
+
+  Widget _buildNewsCard(Map<String, dynamic> news) {
+    final Color color = news['color'] as Color;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.bgCard,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.warmBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => _showNewsDetailSheet(news),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        news['category'] as String,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        news['time'] as String,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  news['title'] as String,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  news['summary'] as String,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.muted,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_outlined, size: 14, color: AppColors.forest),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        news['region'] as String,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.forest,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Baca detail →',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.terracotta,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNewsDetailSheet(Map<String, dynamic> news) {
+    final Color color = news['color'] as Color;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.cream,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${news['category']} • ${news['severity']}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.ink),
+                    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                news['title'] as String,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${news['source']} • ${news['region']} • ${news['time']}',
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                news['summary'] as String,
+                style: const TextStyle(fontSize: 14, color: AppColors.ink, height: 1.5),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.sage,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.sageBorder),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.shield_outlined, size: 18, color: AppColors.forest),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        news['advice'] as String,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.forest,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHotlinePill(String title, String agency, String number, IconData icon, Color color) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.bgCard,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => _showCallSimulationDialog(agency, number, icon, color),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.28)),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: color),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
               ),
             ],
           ),

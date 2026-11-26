@@ -4,7 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/wisgo_logo.dart';
 import '../../../saved/presentation/screens/saved_places_screen.dart';
 import '../../services/auth_session.dart';
-import 'location_onboarding_screen.dart';
 import 'otp_verification_screen.dart';
 
 /// Layar 3: Masuk (Sign In) & Daftar (Sign Up) Akun WISGO
@@ -158,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'Pilih akun untuk melanjutkan ke WISGO',
                         style: TextStyle(
-                          fontSize: 15.5,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
                           letterSpacing: -0.2,
@@ -256,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Untuk melanjutkan, Google akan membagikan nama, alamat email, dan foto profil Anda dengan WISGO. Sebelum menggunakan aplikasi, tinjau Kebijakan Privasi dan Ketentuan Layanan WISGO.',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     color: Colors.grey.shade600,
                     height: 1.45,
                   ),
@@ -302,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   initialLetter,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
                 ),
@@ -317,7 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     name,
                     style: const TextStyle(
-                      fontSize: 14.5,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1F2937),
                     ),
@@ -326,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     email,
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 13,
                       color: Color(0xFF6B7280),
                       fontWeight: FontWeight.w400,
                     ),
@@ -372,7 +371,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Masuk sebagai $userName ($userEmail)...',
+                'Masuk sebagai $userName ($userEmail)…',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -441,7 +440,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // 3. Top Navigation Bar
+          // 3. Top Navigation Bar (Hanya tombol Kembali -> selalu kembali ke Beranda, tanpa tombol Lewati)
           Positioned(
             top: 0,
             left: 0,
@@ -450,71 +449,25 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    // Tombol Kembali (Pill Glassmorphic Seragam)
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (_) => const LocationOnboardingScreen(),
-                          ),
-                        );
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.sageBorder.withValues(alpha: 0.9),
-                            width: 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              size: 13,
-                              color: AppColors.forest,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Kembali',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.forest,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Tombol Lewati / Tamu
                     Material(
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                       child: InkWell(
                         onTap: () {
-                          AuthSession.instance.setGuestMode();
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (_) => const SavedPlacesScreen(isGuest: true),
-                            ),
-                            (route) => false,
-                          );
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          } else {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) => SavedPlacesScreen(
+                                  isGuest: AuthSession.instance.isGuest,
+                                ),
+                              ),
+                              (route) => false,
+                            );
+                          }
                         },
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
@@ -528,20 +481,31 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
+                                color: AppColors.ink.withValues(alpha: 0.08),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const Text(
-                            'Lewati',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.forest,
-                              letterSpacing: 0.2,
-                            ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 13,
+                                color: AppColors.forest,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Kembali',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.forest,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -552,18 +516,18 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // 4. Kartu Glassmorphic Utama (Sesuai Referensi Gambar 3)
+          // 4. Kartu Glassmorphic Utama (Lebih Ringkas & Proporsional tanpa judul "Masuk ke Akun WISGO")
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(22, 60, 22, 24 + bottomInset),
+                padding: EdgeInsets.fromLTRB(22, 56, 22, 24 + bottomInset),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: BackdropFilter(
                     filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                     child: Container(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 26),
+                      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.82),
                         borderRadius: BorderRadius.circular(28),
@@ -578,7 +542,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             offset: const Offset(0, 10),
                           ),
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: AppColors.ink.withValues(alpha: 0.06),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -591,41 +555,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Identitas Logo WISGO Kompak
                           const Center(
                             child: WisgoLogo(
-                              width: 105,
+                              width: 96,
                             ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 10),
 
-                          // Judul & Subjudul (Hanya Login — tanpa Register)
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Masuk ke Akun WISGO',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.forest,
-                                  letterSpacing: -0.4,
-                                  height: 1.20,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Masuk dengan nomor WhatsApp untuk mulai eksplorasi Sumatera Barat.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.muted,
-                                  height: 1.45,
-                                ),
-                              ),
-                            ],
+                          // Subjudul ringkas (tanpa judul besar agar card lebih pendek & elegan)
+                          const Text(
+                            'Masuk dengan nomor WhatsApp untuk mulai eksplorasi Sumatera Barat.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.muted,
+                              height: 1.4,
+                            ),
                           ),
 
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 18),
 
                           // Input Nomor WhatsApp Aktif
                           Container(
@@ -640,7 +587,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
+                                  color: AppColors.ink.withValues(alpha: 0.03),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -672,7 +619,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         '+62',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w700,
                                           color: AppColors.forest,
                                         ),
                                       ),
@@ -717,7 +664,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: Text(
                                         'Hapus',
                                         style: TextStyle(
-                                          fontSize: 11.5,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           color: AppColors.muted,
                                         ),
@@ -773,7 +720,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text(
                                     'Isi Nomor Contoh',
                                     style: TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.brush,
                                       decoration: TextDecoration.underline,
@@ -829,7 +776,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     foregroundColor: AppColors.cream,
                                     elevation: 3,
                                     shadowColor:
-                                        Colors.black.withValues(alpha: 0.35),
+                                        AppColors.ink.withValues(alpha: 0.35),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(28),
                                       side: BorderSide(
@@ -868,7 +815,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: Text(
                                   'atau',
                                   style: TextStyle(
-                                    fontSize: 12.5,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.muted,
                                   ),
@@ -907,7 +854,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     foregroundColor: AppColors.forest,
                                     elevation: 1,
                                     shadowColor:
-                                        Colors.black.withValues(alpha: 0.06),
+                                        AppColors.ink.withValues(alpha: 0.06),
                                     side: BorderSide(
                                       color: AppColors.sageBorder
                                           .withValues(alpha: 0.9),
@@ -973,7 +920,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: const Text(
                                 'Jelajah Langsung sebagai Tamu',
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.muted,
                                 ),
@@ -1005,7 +952,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text(
                                     'Kode verifikasi 4 digit dikirimkan langsung melalui WhatsApp resmi WISGO.',
                                     style: TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 12,
                                       color: AppColors.forest,
                                       height: 1.35,
                                       fontWeight: FontWeight.w500,

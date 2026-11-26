@@ -12,6 +12,7 @@ import {
   LifeBuoy,
   MapPin,
   Navigation,
+  Newspaper,
   Phone,
   RefreshCw,
   Search,
@@ -28,6 +29,7 @@ import {
   HazardSeverity,
   PungliReport,
   PungliStatus,
+  SosNewsItem,
   SosSignal,
   SosStatus,
   WeatherMonitoringItem,
@@ -40,10 +42,12 @@ import {
 import {
   HazardAlertsRepo,
   PungliReportsRepo,
+  SosNewsRepo,
   SosSignalsRepo,
   WeatherMonitoringRepo,
 } from '../services/dbRepository';
 import { EmergencyContactsManager } from '../components/EmergencyContactsManager';
+import { SosNewsSubTab } from '../components/SosNewsSubTab';
 
 interface CommandCenterPageProps {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -55,7 +59,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   onUpdateBadgeCount,
 }) => {
   const searchInputId = useId();
-  const [activeTab, setActiveTab] = useState<'pungli' | 'sos' | 'hazard' | 'weather'>('pungli');
+  const [activeTab, setActiveTab] = useState<'pungli' | 'sos' | 'news' | 'weather'>('pungli');
 
   const [pungliReports, setPungliReports] = useState<PungliReport[]>(() =>
     PungliReportsRepo.getAll()
@@ -67,6 +71,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
   const [weatherList, setWeatherList] = useState<WeatherMonitoringItem[]>(() =>
     WeatherMonitoringRepo.getAll()
   );
+  const [sosNews, setSosNews] = useState<SosNewsItem[]>(() => SosNewsRepo.getAll());
   const [isRefreshingMeteo, setIsRefreshingMeteo] = useState(false);
 
   // Filters Tab 1
@@ -148,8 +153,8 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       setWeatherList(items);
       showToast(
         liveSuccessCount > 0
-          ? `Cuaca berhasil disegarkan langsung dari Open-Meteo Live (${liveSuccessCount}/${items.length} wilayah).`
-          : 'Koneksi Open-Meteo tidak tersedia — menampilkan Regional Cache tersinkronisasi.',
+          ? `Cuaca real-time berhasil disegarkan (${liveSuccessCount}/${items.length} wilayah).`
+          : 'Koneksi layanan cuaca tidak tersedia — menampilkan data regional tersinkronisasi.',
         liveSuccessCount > 0 ? 'success' : 'info'
       );
     } finally {
@@ -174,10 +179,12 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
 
   const handleBroadcastWeatherHazard = (wtr: WeatherMonitoringItem) => {
     const updatedHazards = WeatherMonitoringRepo.broadcastHazardAlert(wtr);
+    const updatedNews = SosNewsRepo.publishFromWeather(wtr);
     setHazardAlerts(updatedHazards);
+    setSosNews(updatedNews);
     syncSidebarBadge(pungliReports, updatedHazards);
     showToast(
-      `Peringatan cuaca (${wtr.condition}) untuk ${wtr.destination_name} berhasil disiarkan ke Tab Jalur Rawan!`,
+      `Peringatan cuaca (${wtr.condition}) untuk ${wtr.destination_name} disiarkan ke Jalur Rawan & Berita Wisata!`,
       'success'
     );
   };
@@ -237,10 +244,10 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
             Pusat Komando Terpadu Pungli, SOS &amp; Cuaca Sumbar
           </h1>
           <p className="text-xs text-[#4A5248] mt-0.5">
-            Penindakan pungli &amp; fasilitas rusak, 6 kontak darurat real Sumbar (000004), 4 koridor rawan, dan cuaca Open-Meteo Live.
+            Penindakan pungli &amp; fasilitas rusak, 6 kontak darurat resmi Sumbar, berita wisata &amp; bencana, dan cuaca real-time.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-[#234B24] bg-white px-3 py-1.5 rounded-xl border border-[#234B24]/10 shadow-2xs shrink-0">
+        <div className="flex items-center gap-2 text-xs font-semibold text-[#234B24] bg-white px-3 py-1.5 rounded-xl border border-[#234B24]/10 shadow-sm shrink-0">
           <span className="w-2 h-2 rounded-full bg-[#1E9E5A] animate-pulse" />
           <span>Siaga 24/7 · Satgas &amp; BPBD Sumbar</span>
         </div>
@@ -248,7 +255,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
 
       <nav
         aria-label="Tab Pusat Komando"
-        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-sm"
       >
         <button
           type="button"
@@ -277,14 +284,14 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
 
         <button
           type="button"
-          onClick={() => setActiveTab('hazard')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold flex items-center gap-2 ${activeTab === 'hazard' ? 'bg-[#234B24] text-white' : 'text-[#4A5248] hover:bg-[#234B24]/5'
+          onClick={() => setActiveTab('news')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold flex items-center gap-2 ${activeTab === 'news' ? 'bg-[#234B24] text-white' : 'text-[#4A5248] hover:bg-[#234B24]/5'
             }`}
         >
-          <AlertTriangle className="w-3.5 h-3.5 text-[#CA8A04]" />
-          <span>Jalur Rawan (4 Koridor)</span>
+          <Newspaper className="w-3.5 h-3.5 text-[#1E9E5A]" />
+          <span>Berita Wisata &amp; Bencana</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 font-bold">
-            {hazardAlerts.length}
+            {sosNews.filter((n) => n.is_published).length}
           </span>
         </button>
 
@@ -295,7 +302,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
             }`}
         >
           <CloudSun className="w-3.5 h-3.5 text-[#3B82F6]" />
-          <span>Cuaca Open-Meteo Live</span>
+          <span>Cuaca Real-Time</span>
           {extremeWeatherCount > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-600 text-white font-bold">
               {extremeWeatherCount} Ekstrem
@@ -310,22 +317,22 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       {activeTab === 'pungli' && (
         <div className="space-y-5">
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-sm">
               <span className="text-xs font-bold text-[#D95637]">Masuk</span>
               <div className="mt-2 text-2xl font-extrabold">{countMasuk}</div>
               <p className="text-[11px] text-[#4A5248] mt-1">Menunggu verifikasi bukti</p>
             </div>
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-sm">
               <span className="text-xs font-bold text-amber-800">Diverifikasi</span>
               <div className="mt-2 text-2xl font-extrabold">{countVerif}</div>
               <p className="text-[11px] text-[#4A5248] mt-1">Pengecekan lapangan &amp; Perda</p>
             </div>
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-sm">
               <span className="text-xs font-bold text-blue-800">Ditindaklanjuti</span>
               <div className="mt-2 text-2xl font-extrabold">{countTindak}</div>
               <p className="text-[11px] text-[#4A5248] mt-1">Satgas / Pol PP bertindak</p>
             </div>
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-xs">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#234B24]/10 shadow-sm">
               <span className="text-xs font-bold text-emerald-800">Selesai</span>
               <div className="mt-2 text-2xl font-extrabold">{countSelesai}</div>
               <p className="text-[11px] text-[#4A5248] mt-1">Tertib &amp; perbaikan tuntas</p>
@@ -372,7 +379,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
             </select>
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#234B24]/10 overflow-hidden shadow-xs">
+          <div className="bg-white rounded-2xl border border-[#234B24]/10 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead className="bg-[#F6F3EC] text-[#234B24] text-[11px] font-extrabold uppercase border-b border-[#CFD8BE]">
@@ -500,7 +507,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           </div>
 
           {/* Alat Darurat Fisik Offline di Mobile (FE-2 e269e94) */}
-          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-xs grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0">
                 <Volume2 className="w-5 h-5" />
@@ -533,7 +540,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
           <EmergencyContactsManager showToast={showToast} />
 
           {/* Sekunder: Log Sinkronisasi SOS (Audit BE-1) */}
-          <details className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-xs">
+          <details className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-sm">
             <summary className="cursor-pointer font-extrabold text-sm text-[#234B24] flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <LifeBuoy className="w-4 h-4 text-[#F26B4B]" />
@@ -613,98 +620,26 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* TAB 3: JALUR RAWAN (4 KORIDOR BAKU + BROADCAST CUACA)                */}
+      {/* TAB 3: BERITA WISATA & BENCANA SUMBAR (SINKRON FE-1 SIAGA SOS)       */}
       {/* ==================================================================== */}
-      {activeTab === 'hazard' && (
-        <div className="space-y-5">
-          <div className="bg-[#234B24] text-[#F6F3EC] rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-[#F26B4B] text-white flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#A7F3D0]">
-                  4 KORIDOR JALUR EKSTREM SUMATERA BARAT
-                </span>
-                <h2 className="text-lg font-extrabold text-white mt-0.5">
-                  Sitinjau Lauik · Lembah Anai · Kelok 9 · Kelok 44
-                </h2>
-                <p className="text-xs text-[#E4E9DA]/85 mt-1">
-                  Tingkat siaga baku: Normal, Waspada, Siaga, dan Awas Tutup Total. Tersinkron dengan siaran cuaca Open-Meteo.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {hazardAlerts.map((hazard) => {
-              const meta = getHazardSeverityMeta(hazard.severity);
-              return (
-                <div
-                  key={hazard.id}
-                  className="p-5 rounded-2xl bg-white border border-[#CFD8BE] flex flex-col justify-between space-y-3 shadow-xs"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-mono font-bold text-[#4A5248]">
-                          {hazard.corridor_code} · {hazard.city_regency}
-                        </span>
-                        <h4 className="text-sm font-extrabold text-[#1B1F1A] mt-0.5">
-                          {hazard.location}
-                        </h4>
-                        <div className="text-[11px] text-[#767676]">{hazard.road_segment}</div>
-                      </div>
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border shrink-0 inline-flex items-center gap-1.5 ${meta.badge}`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
-                        {hazard.severity}
-                      </span>
-                    </div>
-
-                    <p className="mt-2.5 text-xs text-[#4A5248] leading-relaxed">{hazard.message}</p>
-
-                    <div className="mt-2.5 p-2.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs">
-                      <span className="font-bold text-[#234B24]">Rute Alternatif: </span>
-                      <span>{hazard.detour_route}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-[#E4E9DA] flex items-center justify-between text-[11px]">
-                    <span className="text-[#4A5248]">
-                      Posko: <strong>{hazard.nearest_rescue_post}</strong> ({hazard.emergency_contact})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedHazard(hazard);
-                        setHazardSeverity(hazard.severity);
-                        setHazardMessage(hazard.message);
-                        setHazardDetour(hazard.detour_route);
-                      }}
-                      className="px-3.5 py-1.5 rounded-xl bg-[#234B24] text-white font-bold text-xs inline-flex items-center gap-1"
-                    >
-                      <Navigation className="w-3.5 h-3.5" /> Ubah Status
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      {activeTab === 'news' && (
+        <SosNewsSubTab
+          newsList={sosNews}
+          onChangeNews={setSosNews}
+          showToast={showToast}
+        />
       )}
 
       {/* ==================================================================== */}
-      {/* TAB 4: CUACA OPEN-METEO LIVE (REFRESH ON-DEMAND + 6 SLOT + EDIT)     */}
+      {/* TAB 4: CUACA REAL-TIME DESTINASI                                     */}
       {/* ==================================================================== */}
       {activeTab === 'weather' && (
         <div className="space-y-5">
-          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
             <div>
               <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
                 <CloudSun className="w-5 h-5 text-sky-600" />
-                <span>Pemantauan Cuaca Real-Time Destinasi (Open-Meteo Live API)</span>
+                <span>Pemantauan Cuaca Real-Time Destinasi</span>
               </h3>
               <p className="text-xs text-[#4A5248] mt-0.5">
                 Menyediakan data suhu, kelembapan, angin, peluang hujan, dan prakiraan 6 jam ke depan ke Direktori Destinasi &amp; Plang Smart QR.
@@ -718,7 +653,7 @@ export const CommandCenterPage: React.FC<CommandCenterPageProps> = ({
             >
               <RefreshCw className={`w-4 h-4 text-[#A7F3D0] ${isRefreshingMeteo ? 'animate-spin' : ''}`} />
               <span>
-                {isRefreshingMeteo ? 'Menarik Open-Meteo...' : 'Segarkan dari Open-Meteo Live'}
+                {isRefreshingMeteo ? 'Menyegarkan Cuaca...' : 'Segarkan Cuaca Real-Time'}
               </span>
             </button>
           </div>
