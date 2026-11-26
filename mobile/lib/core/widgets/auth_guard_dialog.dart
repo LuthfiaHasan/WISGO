@@ -51,7 +51,7 @@ class _AuthGuardModal extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cream,
-        borderRadius: AppRadius.rSheet,
+        borderRadius: AppRadius.brSheet,
       ),
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.xl,
@@ -73,7 +73,7 @@ class _AuthGuardModal extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: AppSpacing.lg),
                 decoration: BoxDecoration(
                   color: AppColors.warmBorder,
-                  borderRadius: AppRadius.rPill,
+                  borderRadius: AppRadius.brPill,
                 ),
               ),
             ),
@@ -113,7 +113,7 @@ class _AuthGuardModal extends StatelessWidget {
             // Tombol Masuk dengan Google
             WisgoButton(
               label: 'Masuk dengan Akun Google',
-              icon: Icons.g_mobiledata_rounded,
+              icon: const Icon(Icons.g_mobiledata_rounded, size: 22),
               variant: WisgoButtonVariant.primary,
               onPressed: () {
                 Navigator.of(context).pop(true);
@@ -125,7 +125,7 @@ class _AuthGuardModal extends StatelessWidget {
             WisgoButton(
               label: 'Lanjutkan Jelajah sebagai Tamu',
               variant: WisgoButtonVariant.outline,
-              height: 44.0,
+              size: WisgoButtonSize.medium,
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
