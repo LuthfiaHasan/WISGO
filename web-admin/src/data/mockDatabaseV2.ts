@@ -1731,8 +1731,8 @@ export const SEED_USER_CHALLENGE_REWARDS: UserChallengeReward[] = [
     status: 'SIAP_KLAIM',
     jenis_reward: 'Sertifikat & XP',
     reward: '500 XP + E-Sertifikat Gubernur & Lencana Pengelana',
-    certificate_code: 'WG-CERT-2026-08492',
-    certificate_url: 'https://wisgo.sumbarprov.go.id/certs/WG-CERT-2026-08492.pdf',
+    certificate_code: 'WISGO-GUB-SB-08492',
+    certificate_url: 'https://wisgo.sumbarprov.go.id/certs/WISGO-GUB-SB-08492.pdf',
     completed_at: '2026-11-23T16:00:00Z',
   },
   {
@@ -1763,10 +1763,10 @@ export const SEED_USER_CHALLENGE_REWARDS: UserChallengeReward[] = [
     status: 'HADIAH_TERKIRIM',
     jenis_reward: 'Voucher',
     reward: '300 XP + Voucher Tenun Nagari & Lencana Pariangan',
-    certificate_code: 'WG-CERT-2026-08311',
-    certificate_url: 'https://wisgo.sumbarprov.go.id/certs/WG-CERT-2026-08311.pdf',
+    certificate_code: null,
+    certificate_url: null,
     completed_at: '2026-11-20T14:00:00Z',
-    reward_notes: 'E-Sertifikat & kode voucher tenun sudah diterbitkan otomatis ke akun Jejak WISGO.',
+    reward_notes: 'Kode Voucher: VCR-TENUN-8311 · Lencana Pariangan otomatis terbuka di aplikasi.',
   },
 ];
 
@@ -2475,4 +2475,146 @@ export const SEED_REGENCY_HEATMAP: RegencyHeatmapData[] = [
   { id: 'reg-17', name: 'Kab. Dharmasraya', code: 'DHR', crowd_status: 'Sepi', visitor_count_week: 2500, domestic_pct: 97, foreign_myr_pct: 3, top_destination: 'Candi Padang Roco', wa_leads_count: 210 },
   { id: 'reg-18', name: 'Kab. Solok Selatan', code: 'SLS', crowd_status: 'Sepi', visitor_count_week: 3100, domestic_pct: 94, foreign_myr_pct: 6, top_destination: 'Saribu Rumah Gadang', wa_leads_count: 380 },
   { id: 'reg-19', name: 'Kab. Kepulauan Mentawai', code: 'MTW', crowd_status: 'Sepi', visitor_count_week: 1900, domestic_pct: 35, foreign_myr_pct: 65, top_destination: 'Siberut & Pulau Sipora', wa_leads_count: 490 },
+];
+
+// ============================================================================
+// 31. BERITA WISATA & BENCANA SUMBAR (Sinkron FE-1 hazard_sos_screen.dart)
+// ============================================================================
+export const SEED_SOS_NEWS: import('../types/contract').SosNewsItem[] = [
+  {
+    id: 'news-marapi-01',
+    category: 'Bencana & Vulkanologi',
+    severity: 'WASPADA',
+    title: 'Status Aktivitas Gunung Marapi Level II — Radius Aman Wisatawan 3 km',
+    region: 'Kab. Agam & Tanah Datar',
+    summary:
+      'Wisatawan di sekitar Bukittinggi, Nagari Tuo Pariangan, dan kaki Gunung Marapi diimbau mematuhi radius aman 3 km dari kawah serta membawa masker saat hujan abu ringan.',
+    advice:
+      'Destinasi Jam Gadang, Ngarai Sianok, dan Istano Basa Pagaruyung tetap aman dikunjungi.',
+    source: 'PVMBG & BPBD Sumbar',
+    is_published: true,
+    published_at: '2026-11-26T08:00:00Z',
+  },
+  {
+    id: 'news-bmkg-mandeh-02',
+    category: 'Cuaca & Bahari',
+    severity: 'INFO WISATA',
+    title: 'Prakiraan BMKG: Gelombang Perairan Padang–Mandeh Kondusif Pagi hingga Siang',
+    region: 'Padang & Pesisir Selatan',
+    summary:
+      'Kondisi perairan Teluk Mandeh dan Pulau Pasumpahan cerah berawan dengan tinggi gelombang 0,5–1,2 m. Pelayaran perahu wisata diimbau kembali sebelum pukul 16.30 WIB.',
+    advice:
+      'Selalu gunakan jaket pelampung resmi dari pengelola dermaga sebelum menyeberang.',
+    source: 'BMKG Stasiun Maritim Teluk Bayur',
+    is_published: true,
+    published_at: '2026-11-26T07:00:00Z',
+  },
+  {
+    id: 'news-harau-debit-03',
+    category: 'Akses Wisata',
+    severity: 'SIAGA HUJAN',
+    title: 'Antisipasi Debit Air Terjun Lembah Harau & Lubuk Hitam Saat Hujan Sore',
+    region: 'Lima Puluh Kota & Bungus Padang',
+    summary:
+      'Pengunjung air terjun diminta segera menjauh dari aliran sungai apabila air mulai keruh atau terdengar gemuruh di bagian hulu.',
+    advice:
+      'Waktu kunjungan paling aman adalah pukul 08.00–14.30 WIB saat cuaca relatif cerah.',
+    source: 'Dinas Pariwisata Provinsi Sumbar',
+    is_published: true,
+    published_at: '2026-11-26T05:30:00Z',
+  },
+];
+
+// ============================================================================
+// 32. POI SEARAH RUTE (SHUNLU) (Sinkron FE-1 map_explore_pois_data.dart)
+// ============================================================================
+export const SEED_SHUNLU_POIS: import('../types/contract').ShunluPoiItem[] = [
+  {
+    id: 'poi-rm-1',
+    category: 'RM Padang',
+    name: 'RM Simpang Raya Bukittinggi',
+    detour: 'Detour: +4 menit (350 m)',
+    route: 'Searah koridor Padang → Lembah Harau',
+    latitude: -0.3055,
+    longitude: 100.3695,
+    address: 'Jl. Sudirman No. 8, Bukittinggi',
+    is_active: true,
+  },
+  {
+    id: 'poi-rm-2',
+    category: 'RM Padang',
+    name: 'Rumah Makan Pak Dt. Padang Panjang',
+    detour: 'Detour: +1 menit (80 m)',
+    route: 'Jalur Lintas Padang - Bukittinggi',
+    latitude: -0.4635,
+    longitude: 100.3988,
+    address: 'Jl. Sutan Syahrir No. 45, Padang Panjang',
+    is_active: true,
+  },
+  {
+    id: 'poi-spbu-1',
+    category: 'SPBU',
+    name: 'SPBU Pertamina 14.271.536 Padang Panjang',
+    detour: 'Detour: +2 menit (120 m)',
+    route: 'Tepat di sisi kiri jalur utama Lintas Tengah',
+    latitude: -0.458,
+    longitude: 100.402,
+    address: 'Jl. Raya Padang - Bukittinggi Km 6',
+    is_active: true,
+  },
+  {
+    id: 'poi-spbu-2',
+    category: 'SPBU',
+    name: 'SPBU Koto Baru Lembah Harau',
+    detour: 'Detour: +3 menit (200 m)',
+    route: 'Pintu masuk kawasan lembah',
+    latitude: -0.118,
+    longitude: 100.655,
+    address: 'Jl. Raya Harau Km 2',
+    is_active: true,
+  },
+  {
+    id: 'poi-masjid-1',
+    category: 'Masjid',
+    name: 'Masjid Raya Syekh Ahmad Khatib Al-Minangkabawi',
+    detour: 'Detour: +5 menit (600 m)',
+    route: 'Parkir luas & fasilitas wudu ramah rombongan',
+    latitude: -0.925,
+    longitude: 100.362,
+    address: 'Kec. Padang Utara, Kota Padang',
+    is_active: true,
+  },
+  {
+    id: 'poi-masjid-2',
+    category: 'Masjid',
+    name: 'Masjid Asasi Sigando Padang Panjang (Tertua)',
+    detour: 'Detour: +2 menit (150 m)',
+    route: 'Bangunan bersejarah kayu surau Minang',
+    latitude: -0.47,
+    longitude: 100.41,
+    address: 'Nagari Gunuang, Padang Panjang',
+    is_active: true,
+  },
+  {
+    id: 'poi-atm-1',
+    category: 'ATM & Bengkel',
+    name: 'ATM Center Bank Nagari & Bengkel Siaga Kelok 9',
+    detour: 'Detour: +3 menit (250 m)',
+    route: 'Sebelum tanjakan jembatan layang Kelok 9',
+    latitude: -0.075,
+    longitude: 100.702,
+    address: 'Jalur Lintas Riau - Sumbar Km 32',
+    is_active: true,
+  },
+  {
+    id: 'poi-atm-2',
+    category: 'ATM & Bengkel',
+    name: 'Posko Siaga Mobil & Motor Koto Baru',
+    detour: 'Detour: +2 menit (110 m)',
+    route: 'Rest area pasar Koto Baru',
+    latitude: -0.38,
+    longitude: 100.385,
+    address: 'Jl. Raya Bukittinggi - Padang',
+    is_active: true,
+  },
 ];

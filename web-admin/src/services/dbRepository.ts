@@ -73,6 +73,8 @@ import {
   SEED_PUNGLI_REPORTS,
   SEED_REGENCY_HEATMAP,
   SEED_SAVED_PLACES,
+  SEED_SHUNLU_POIS,
+  SEED_SOS_NEWS,
   SEED_SOS_SIGNALS,
   SEED_STEMP_VISITS,
   SEED_USERS,
@@ -136,6 +138,8 @@ export const DB_KEYS = {
   REVIEW_SETTINGS: 'wisgo_v3_db_review_settings',
   REGENCY_HEATMAP: 'wisgo_v3_db_regency_heatmap',
   SYSTEM_BENCHMARK: 'wisgo_v3_db_system_benchmark',
+  SOS_NEWS: 'wisgo_v3_db_sos_news',
+  SHUNLU_POIS: 'wisgo_v3_db_shunlu_pois',
 } as const;
 
 const LEGACY_KEYS_TO_PURGE = [
@@ -1448,8 +1452,24 @@ export const ChallengesRepo = {
 };
 
 export const UserChallengeRewardsRepo = {
-  getAll: (): UserChallengeReward[] =>
-    readTable<UserChallengeReward>(DB_KEYS.USER_CHALLENGE_REWARDS, SEED_USER_CHALLENGE_REWARDS),
+  getAll: (): UserChallengeReward[] => {
+    const raw = readTable<UserChallengeReward>(DB_KEYS.USER_CHALLENGE_REWARDS, SEED_USER_CHALLENGE_REWARDS);
+    // Pastikan reward non-sertifikat (Voucher / Badge) tidak membawa nomor sertifikat dari cache lama
+    return raw.map((claim) => {
+      const isCert = (claim.jenis_reward || '').toLowerCase().includes('sertifikat');
+      if (!isCert && claim.certificate_code) {
+        return {
+          ...claim,
+          certificate_code: null,
+          certificate_url: null,
+          reward_notes:
+            claim.reward_notes?.replace(/^E-Sertifikat & /i, 'Kode Voucher: VCR-TENUN-8311 · ') ||
+            'Hadiah telah dikirimkan ke akun wisatawan.',
+        };
+      }
+      return claim;
+    });
+  },
   save: (item: UserChallengeReward): UserChallengeReward[] => {
     const list = UserChallengeRewardsRepo.getAll();
     const idx = list.findIndex((u) => u.id === item.id);
@@ -1462,20 +1482,29 @@ export const UserChallengeRewardsRepo = {
   validateAndSendReward: (claimId: string, notes?: string): UserChallengeReward[] => {
     const list = UserChallengeRewardsRepo.getAll();
     const timestamp = new Date().toISOString();
-    const certCode = `WG-CERT-2026-${Date.now().toString().slice(-5)}`;
-    const updated = list.map((claim) =>
-      claim.id === claimId
-        ? {
-            ...claim,
-            status: 'HADIAH_TERKIRIM' as const,
-            certificate_code: claim.certificate_code || certCode,
-            certificate_url:
-              claim.certificate_url || `https://wisgo.sumbarprov.go.id/certs/${certCode}.pdf`,
-            completed_at: claim.completed_at || timestamp,
-            reward_notes: notes || claim.reward_notes || 'Diterbitkan otomatis oleh Admin Dispar Sumbar.',
-          }
-        : claim
-    );
+    const suffix = Date.now().toString().slice(-5);
+    const updated = list.map((claim) => {
+      if (claim.id !== claimId) return claim;
+      const rewardType = (claim.jenis_reward || '').toLowerCase();
+      const isCert = rewardType.includes('sertifikat');
+      const isVoucher = rewardType.includes('voucher');
+      const certCode = isCert ? claim.certificate_code || `WISGO-GUB-SB-${suffix}` : null;
+      const defaultNote = isCert
+        ? 'E-Sertifikat Gubernur & hadiah diterbitkan resmi oleh Dinas Pariwisata Sumbar.'
+        : isVoucher
+          ? `Kode Voucher: VCR-WISGO-${suffix} · Berlaku di mitra UMKM Nagari terdaftar.`
+          : 'Lencana & poin XP otomatis terbuka pada profil Jejak WISGO wisatawan.';
+      return {
+        ...claim,
+        status: 'HADIAH_TERKIRIM' as const,
+        certificate_code: certCode,
+        certificate_url: certCode
+          ? claim.certificate_url || `https://wisgo.sumbarprov.go.id/certs/${certCode}.pdf`
+          : null,
+        completed_at: claim.completed_at || timestamp,
+        reward_notes: notes || claim.reward_notes || defaultNote,
+      };
+    });
     writeTable(DB_KEYS.USER_CHALLENGE_REWARDS, updated);
     return updated;
   },
@@ -1930,4 +1959,73 @@ export const SavedPlacesRepo = {
 
 export const UsersRepo = {
   getAll: (): User[] => readTable<User>(DB_KEYS.USERS, SEED_USERS),
+};
+
+// ============================================================================
+// 19. BERITA WISATA & BENCANA SUMBAR (Sinkron FE-1 hazard_sos_screen.dart)
+// ============================================================================
+export const SosNewsRepo = {
+  getAll: (): import('../types/contract').SosNewsItem[] =>
+    readTable<import('../types/contract').SosNewsItem>(DB_KEYS.SOS_NEWS, SEED_SOS_NEWS),
+  save: (item: import('../types/contract').SosNewsItem): import('../types/contract').SosNewsItem[] => {
+    const list = SosNewsRepo.getAll();
+    const idx = list.findIndex((n) => n.id === item.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = item;
+    else updated.unshift(item);
+    writeTable(DB_KEYS.SOS_NEWS, updated);
+    return updated;
+  },
+  delete: (id: string): import('../types/contract').SosNewsItem[] => {
+    const updated = SosNewsRepo.getAll().filter((n) => n.id !== id);
+    writeTable(DB_KEYS.SOS_NEWS, updated);
+    return updated;
+  },
+  togglePublish: (id: string): import('../types/contract').SosNewsItem[] => {
+    const updated = SosNewsRepo.getAll().map((n) =>
+      n.id === id ? { ...n, is_published: !n.is_published } : n
+    );
+    writeTable(DB_KEYS.SOS_NEWS, updated);
+    return updated;
+  },
+  publishFromWeather: (weather: WeatherMonitoringItem): import('../types/contract').SosNewsItem[] => {
+    const warningNote =
+      weather.extreme_warning_text ||
+      'Pantau kondisi cuaca dan utamakan keselamatan sebelum berangkat.';
+    const news: import('../types/contract').SosNewsItem = {
+      id: `news-wtr-${Date.now()}`,
+      category: 'Cuaca & Bahari',
+      severity: weather.weather_status === 'Siaga Cuaca Ekstrem' ? 'DARURAT' : 'SIAGA HUJAN',
+      title: `Peringatan Cuaca ${weather.destination_name}: ${weather.condition}`,
+      region: weather.city_regency,
+      summary: `Suhu ${weather.current_temp_c}°C, peluang hujan ${weather.rain_probability}%, angin ${weather.wind_speed_kmh} km/jam. ${warningNote}`,
+      advice: warningNote,
+      source: 'BMKG & Dispar Sumbar',
+      is_published: true,
+      published_at: new Date().toISOString(),
+    };
+    return SosNewsRepo.save(news);
+  },
+};
+
+// ============================================================================
+// 20. POI SEARAH RUTE (SHUNLU) (Sinkron FE-1 map_explore_pois_data.dart)
+// ============================================================================
+export const ShunluPoisRepo = {
+  getAll: (): import('../types/contract').ShunluPoiItem[] =>
+    readTable<import('../types/contract').ShunluPoiItem>(DB_KEYS.SHUNLU_POIS, SEED_SHUNLU_POIS),
+  save: (item: import('../types/contract').ShunluPoiItem): import('../types/contract').ShunluPoiItem[] => {
+    const list = ShunluPoisRepo.getAll();
+    const idx = list.findIndex((p) => p.id === item.id);
+    const updated = [...list];
+    if (idx >= 0) updated[idx] = item;
+    else updated.unshift(item);
+    writeTable(DB_KEYS.SHUNLU_POIS, updated);
+    return updated;
+  },
+  delete: (id: string): import('../types/contract').ShunluPoiItem[] => {
+    const updated = ShunluPoisRepo.getAll().filter((p) => p.id !== id);
+    writeTable(DB_KEYS.SHUNLU_POIS, updated);
+    return updated;
+  },
 };

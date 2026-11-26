@@ -514,11 +514,14 @@ export interface CulturalEvent {
   schedule_rule: string;
   next_event_date: string;
   end_date?: string;
+  time?: string;
+  venue?: string;
   latitude: number;
   longitude: number;
   geog?: string | null;
   highlight_item: string;
   cultural_etiquette: string;
+  tips?: string;
   rundown?: string[];
   poster_url?: string;
   organizer?: string;
@@ -928,20 +931,43 @@ export interface SystemBenchmarkMetrics {
   benchmark_history: BenchmarkRunResult[];
 }
 
-export interface GroupVotingItem {
+// ============================================================================
+// 26. BERITA WISATA & BENCANA SUMBAR (Sinkron FE-1 hazard_sos_screen.dart)
+// ============================================================================
+export type SosNewsCategory =
+  | 'Bencana & Vulkanologi'
+  | 'Cuaca & Bahari'
+  | 'Akses Wisata'
+  | 'Info Jalur & Bencana';
+
+export type SosNewsSeverity = 'INFO WISATA' | 'WASPADA' | 'SIAGA HUJAN' | 'DARURAT';
+
+export interface SosNewsItem {
   id: string;
+  category: SosNewsCategory;
+  severity: SosNewsSeverity;
   title: string;
-  category: string;
-  votes_count: number;
-  is_winner?: boolean;
+  region: string;
+  summary: string;
+  advice: string;
+  source: string;
+  is_published: boolean;
+  published_at: string;
 }
 
-export interface GroupRoomPreview {
-  group_code: string;
-  group_name: string;
-  leader_name: string;
-  trip_dates: string;
-  member_count: number;
-  destinations_summary: string[];
-  voting_items: GroupVotingItem[];
+// ============================================================================
+// 27. POI SEARAH RUTE (SHUNLU) (Sinkron FE-1 map_explore_pois_data.dart)
+// ============================================================================
+export type ShunluPoiCategory = 'RM Padang' | 'SPBU' | 'Masjid' | 'ATM & Bengkel';
+
+export interface ShunluPoiItem {
+  id: string;
+  category: ShunluPoiCategory;
+  name: string;
+  detour: string;
+  route: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  is_active: boolean;
 }

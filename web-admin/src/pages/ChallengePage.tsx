@@ -229,14 +229,19 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
 
   const handleConfirmSendReward = () => {
     if (!selectedClaimForReward) return;
+    const isCert = (selectedClaimForReward.jenis_reward || '').toLowerCase().includes('sertifikat');
+    const isVoucher = (selectedClaimForReward.jenis_reward || '').toLowerCase().includes('voucher');
     const updated = UserChallengeRewardsRepo.validateAndSendReward(
       selectedClaimForReward.id,
-      rewardNotesInput.trim() ||
-      'E-Sertifikat Gubernur & hadiah diterbitkan resmi oleh Dinas Pariwisata Sumbar.'
+      rewardNotesInput.trim() || undefined
     );
     setClaims(updated);
     showToast(
-      `E-Sertifikat & Hadiah untuk ${selectedClaimForReward.tourist_name} berhasil diterbitkan!`,
+      isCert
+        ? `E-Sertifikat & Hadiah untuk ${selectedClaimForReward.tourist_name} berhasil diterbitkan!`
+        : isVoucher
+          ? `Kode Voucher & Hadiah untuk ${selectedClaimForReward.tourist_name} berhasil dikirim!`
+          : `Hadiah Lencana & XP untuk ${selectedClaimForReward.tourist_name} berhasil dikonfirmasi!`,
       'success'
     );
     setSelectedClaimForReward(null);
@@ -244,7 +249,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
   };
 
   const handleIssuePassportCertificate = (user: UserProfileExperience) => {
-    const certCode = `WG-CERT-2026-${Date.now().toString().slice(-5)}`;
+    const certCode = `WISGO-GUB-SB-${Date.now().toString().slice(-5)}`;
     const newReward: UserChallengeReward = {
       id: `ucr-${Date.now().toString(36)}`,
       challenge_id: 'chl-10-destinasi',
@@ -387,7 +392,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
           <button
             type="button"
             onClick={handleOpenCreateModal}
-            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-xs shrink-0"
+            className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-sm shrink-0"
           >
             <Plus className="w-4 h-4 text-[#F26B4B]" />
             <span>Buat Tantangan</span>
@@ -397,7 +402,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
 
       {/* 4 KPI */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold">Tantangan Aktif</span>
             <Trophy className="w-4 h-4 text-[#234B24]/70" />
@@ -406,7 +411,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
           <p className="text-xs text-slate-500">Dari {challenges.length} misi gamifikasi</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold">Wisatawan Ikut Serta</span>
             <Users className="w-4 h-4 text-[#1E9E5A]" />
@@ -417,9 +422,9 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
           <p className="text-xs text-slate-500">{stempVisits.length} stempel GPS terverifikasi</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500 font-semibold">Siap Klaim E-Sertifikat</span>
+            <span className="text-xs text-slate-500 font-semibold">Siap Klaim Hadiah</span>
             <Sparkles className="w-4 h-4 text-[#F26B4B]" />
           </div>
           <div className="my-2 text-2xl font-bold text-[#F26B4B]">
@@ -428,7 +433,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
           <p className="text-xs text-slate-500">Menunggu penerbitan Dispar Sumbar</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-semibold">Paspor Digital Minang</span>
             <Stamp className="w-4 h-4 text-[#234B24]/70" />
@@ -443,7 +448,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       {/* 4 Sub-Tab Bar */}
       <nav
         aria-label="Tab Gamifikasi"
-        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-sm"
       >
         {(
           [
@@ -458,7 +463,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
             type="button"
             onClick={() => setActiveTab(tab.key)}
             className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === tab.key
-                ? 'bg-[#234B24] text-white shadow-xs'
+                ? 'bg-[#234B24] text-white shadow-sm'
                 : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
               }`}
           >
@@ -472,7 +477,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       {/* TAB 1: CHECK-IN & TANTANGAN                                          */}
       {/* ==================================================================== */}
       {activeTab === 'checkin' && (
-        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-6">
+        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
             <div className="flex items-center gap-2">
               <button
@@ -493,7 +498,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                     : 'bg-[#F6F3EC] text-[#4A5248]'
                   }`}
               >
-                <span>Verifikasi Klaim &amp; E-Sertifikat</span>
+                <span>Klaim Hadiah &amp; Apresiasi</span>
                 {totalReadyToClaim > 0 && (
                   <span className="w-4 h-4 rounded-full bg-[#F26B4B] text-white text-[9px] flex items-center justify-center font-black">
                     {totalReadyToClaim}
@@ -608,13 +613,17 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                       <th className="py-3 px-4">Wisatawan</th>
                       <th className="py-3 px-4">Tantangan</th>
                       <th className="py-3 px-4">Progress</th>
-                      <th className="py-3 px-4">Reward &amp; E-Sertifikat</th>
+                      <th className="py-3 px-4">Hadiah &amp; Jenis Apresiasi</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4 text-right">Tindakan</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E9DA]">
-                    {filteredClaims.map((clm) => (
+                    {filteredClaims.map((clm) => {
+                      const rewardKind = (clm.jenis_reward || '').toLowerCase();
+                      const isCert = rewardKind.includes('sertifikat');
+                      const isVoucher = rewardKind.includes('voucher');
+                      return (
                       <tr key={clm.id} className="hover:bg-[#F6F3EC]/50">
                         <td className="py-3 px-4">
                           <span className="font-extrabold block">{clm.tourist_name}</span>
@@ -626,11 +635,26 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                         <td className="py-3 px-4 font-bold text-[#234B24]">
                           {clm.progress_count} / {clm.target_destination_count} Destinasi
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-[#C2410C]">{clm.reward}</div>
-                          {clm.certificate_code && (
-                            <span className="text-[10px] font-mono text-[#234B24] font-bold">
-                              Sertifikat: {clm.certificate_code}
+                        <td className="py-3 px-4 space-y-0.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E4E9DA] text-[#234B24]">
+                              {clm.jenis_reward || 'Lencana & XP'}
+                            </span>
+                            <span className="font-bold text-[#C2410C]">{clm.reward}</span>
+                          </div>
+                          {isCert && clm.certificate_code && (
+                            <span className="block text-[10px] font-mono text-[#234B24] font-bold">
+                              No. Sertifikat: {clm.certificate_code}
+                            </span>
+                          )}
+                          {!isCert && isVoucher && clm.status === 'HADIAH_TERKIRIM' && (
+                            <span className="block text-[10px] text-[#0D9488] font-semibold">
+                              {clm.reward_notes || 'Kode voucher UMKM telah dikirim ke akun wisatawan'}
+                            </span>
+                          )}
+                          {!isCert && !isVoucher && clm.status === 'HADIAH_TERKIRIM' && (
+                            <span className="block text-[10px] text-[#4A5248] font-medium">
+                              Lencana &amp; XP otomatis terbuka di aplikasi Mobile
                             </span>
                           )}
                         </td>
@@ -643,7 +667,11 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                                   : 'bg-gray-100 text-[#4A5248]'
                               }`}
                           >
-                            {clm.status}
+                            {clm.status === 'SIAP_KLAIM'
+                              ? 'Siap Klaim'
+                              : clm.status === 'HADIAH_TERKIRIM'
+                                ? 'Hadiah Terkirim'
+                                : 'Dalam Progres'}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -656,12 +684,13 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                               }}
                               className="px-3 py-1.5 rounded-xl bg-[#F26B4B] hover:bg-[#D95637] text-white font-bold text-[11px]"
                             >
-                              Terbitkan Hadiah
+                              {isCert ? 'Terbitkan Sertifikat' : isVoucher ? 'Kirim Voucher' : 'Kirim Hadiah'}
                             </button>
                           )}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -675,7 +704,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       {/* ==================================================================== */}
       {activeTab === 'levels' && (
         <div className="space-y-6">
-          <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-5">
+          <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-sm space-y-5">
             <div>
               <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
                 <Award className="w-5 h-5 text-[#F59E0B]" />
@@ -749,7 +778,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
           </section>
 
           {/* PANEL PASPOR DIGITAL MINANG (10 SPOT RESMI) */}
-          <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-5">
+          <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-sm space-y-5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
               <div>
                 <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
@@ -839,7 +868,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       {/* TAB 3: JEJAK WISGO & RIWAYAT AKTIVITAS (NON-OLAHRAGA / ZERO KM)       */}
       {/* ==================================================================== */}
       {activeTab === 'profiles' && (
-        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-6">
+        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-sm space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#234B24]/10">
             <div>
               <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
@@ -981,7 +1010,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       {/* TAB 4: TEMPLATE SHARE JEJAK WISGO (Stiker Transparan PNG & Kartu)    */}
       {/* ==================================================================== */}
       {activeTab === 'templates' && selectedTemplate && (
-        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-xs space-y-6">
+        <section className="bg-white rounded-2xl p-6 border border-[#234B24]/8 shadow-sm space-y-6">
           <div>
             <h2 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
               <Share2 className="w-5 h-5 text-[#F26B4B]" />
@@ -1339,7 +1368,13 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       {selectedClaimForReward && (
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white rounded-[28px] w-full max-w-md p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-extrabold">Terbitkan Hadiah &amp; E-Sertifikat</h3>
+            <h3 className="text-base font-extrabold">
+              {(selectedClaimForReward.jenis_reward || '').toLowerCase().includes('sertifikat')
+                ? 'Terbitkan E-Sertifikat & Hadiah'
+                : (selectedClaimForReward.jenis_reward || '').toLowerCase().includes('voucher')
+                  ? 'Kirim Kode Voucher & Hadiah'
+                  : 'Konfirmasi Hadiah Lencana & XP'}
+            </h3>
             <p className="text-xs text-[#4A5248]">
               Penerima: <strong>{selectedClaimForReward.tourist_name}</strong> ·{' '}
               {selectedClaimForReward.reward}
@@ -1348,7 +1383,13 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
               rows={2}
               value={rewardNotesInput}
               onChange={(e) => setRewardNotesInput(e.target.value)}
-              placeholder="Catatan penyerahan hadiah / nomor E-Sertifikat..."
+              placeholder={
+                (selectedClaimForReward.jenis_reward || '').toLowerCase().includes('sertifikat')
+                  ? 'Catatan penyerahan / keterangan E-Sertifikat Gubernur...'
+                  : (selectedClaimForReward.jenis_reward || '').toLowerCase().includes('voucher')
+                    ? 'Kode voucher UMKM & catatan penukaran (kosongkan untuk generate otomatis)...'
+                    : 'Catatan konfirmasi hadiah lencana / XP...'
+              }
               className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"
             />
             <div className="flex justify-end gap-2">

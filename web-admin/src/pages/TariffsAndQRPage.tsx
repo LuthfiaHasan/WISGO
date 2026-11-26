@@ -205,7 +205,7 @@ export const TariffsAndQRPage: React.FC<TariffsAndQRPageProps> = ({
         </div>
       </header>
 
-      <section className="no-print bg-white p-6 rounded-2xl border border-[#234B24]/8 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <section className="no-print bg-white p-6 rounded-2xl border border-[#234B24]/8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         <div className="lg:col-span-6 flex flex-col gap-1.5">
           <label
             htmlFor="select-tariff-destination"
@@ -253,7 +253,7 @@ export const TariffsAndQRPage: React.FC<TariffsAndQRPageProps> = ({
         </div>
       </section>
 
-      <section className="no-print bg-white rounded-2xl border border-[#234B24]/8 shadow-xs overflow-hidden">
+      <section className="no-print bg-white rounded-2xl border border-[#234B24]/8 shadow-sm overflow-hidden">
         <div className="px-6 py-4 bg-[#F6F3EC]/80 border-b border-[#234B24]/10 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Receipt className="w-5 h-5 text-[#F26B4B]" />

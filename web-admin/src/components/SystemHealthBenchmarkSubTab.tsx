@@ -135,7 +135,7 @@ export const SystemHealthBenchmarkSubTab: React.FC<SystemHealthBenchmarkSubTabPr
             </span>
           </div>
           <p className="mt-1 text-xs text-[#4A5248]">
-            Pemuatan panorama equirectangular 60 FPS &amp; Denah 2D
+            Pemuatan panorama equirectangular 60 FPS (Bersih Tanpa Pin)
           </p>
         </div>
 

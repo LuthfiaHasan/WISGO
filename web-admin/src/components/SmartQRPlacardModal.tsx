@@ -165,7 +165,7 @@ export const SmartQRPlacardView: React.FC<SmartQRPlacardProps> = ({
       <div className="p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-4 bg-white p-6 rounded-3xl border-2 border-[#234B24]/20 flex flex-col items-center text-center shadow-sm">
           <div className="text-xs font-extrabold uppercase tracking-wider text-[#234B24] mb-3">
-            Pindai Untuk Tarif Perda, Denah Kawasan &amp; Lapor Pungli
+            Pindai Untuk Tarif Perda, Peta Rute &amp; Lapor Pungli
           </div>
 
           <div className="p-4 bg-white rounded-2xl border-2 border-[#1B1F1A] shadow-inner">

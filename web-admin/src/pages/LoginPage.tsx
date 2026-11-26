@@ -338,7 +338,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-11 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] disabled:opacity-60 text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition"
+              className="w-full h-11 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] disabled:opacity-60 text-[#F6F3EC] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
             >
               <Lock className="w-3.5 h-3.5" aria-hidden="true" />
               <span>
@@ -361,7 +361,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               type="button"
               disabled={submitting}
               onClick={handleGoogleLogin}
-              className="w-full h-11 rounded-xl bg-white hover:bg-[#F6F3EC] border border-[#234B24]/20 text-[#1B1F1A] font-bold text-xs flex items-center justify-center gap-2.5 shadow-2xs transition"
+              className="w-full h-11 rounded-xl bg-white hover:bg-[#F6F3EC] border border-[#234B24]/20 text-[#1B1F1A] font-bold text-xs flex items-center justify-center gap-2.5 shadow-sm transition"
             >
               <img
                 src="/assets/synced/google_logo.png"
