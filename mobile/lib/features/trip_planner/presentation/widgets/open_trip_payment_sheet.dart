@@ -392,59 +392,6 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                   desc: 'Bank Nagari & BSI',
                   icon: Icons.account_balance_rounded,
                 ),
-                const SizedBox(height: 10),
-
-                // Fasilitas Singkat (Tanpa kata Include/Exclude)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgCard,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.warmBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Sudah Termasuk',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.success,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.trip.includes.join(' • '),
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.ink,
-                          height: 1.35,
-                        ),
-                      ),
-                      if (widget.trip.excludes.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Tidak Termasuk',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.danger,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          widget.trip.excludes.join(' • '),
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: AppColors.muted,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

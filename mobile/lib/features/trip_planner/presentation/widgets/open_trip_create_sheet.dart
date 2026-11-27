@@ -139,13 +139,13 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
 
   // Fasilitas Include & Exclude yang diinput penyelenggara (berbeda tiap tempat)
   final List<String> _includes = [
-    'Tiket Masuk Resmi Kawasan',
-    'Pemandu Lokal Selama Perjalanan',
-    'Air Mineral & P3K Dasar',
+    'Tiket masuk wisata',
+    'Pemandu perjalanan',
+    'Air mineral & P3K',
   ];
   final List<String> _excludes = [
-    'Pengeluaran Pribadi & Cinderamata',
-    'Transportasi Menuju Titik Kumpul',
+    'Pengeluaran pribadi',
+    'Transportasi menuju titik kumpul',
   ];
 
   // Peraturan / SOP Khusus Destinasi yang diinput penyelenggara
