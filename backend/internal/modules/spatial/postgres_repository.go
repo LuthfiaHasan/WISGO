@@ -293,3 +293,20 @@ func (r *postgresRepository) DeleteEmergencyContact(id string) error {
 	return r.fallback.DeleteEmergencyContact(id)
 }
 
+func (r *postgresRepository) ListSosNews(portalFilter, categoryFilter string, onlyPublished bool) []models.SosNewsItem {
+	return r.fallback.ListSosNews(portalFilter, categoryFilter, onlyPublished)
+}
+
+func (r *postgresRepository) UpsertSosNews(item models.SosNewsItem) models.SosNewsItem {
+	return r.fallback.UpsertSosNews(item)
+}
+
+func (r *postgresRepository) DeleteSosNews(id string) error {
+	return r.fallback.DeleteSosNews(id)
+}
+
+func (r *postgresRepository) SyncLivePortalNews() ([]models.SosNewsItem, int) {
+	return r.fallback.SyncLivePortalNews()
+}
+
+

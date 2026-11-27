@@ -23,6 +23,13 @@ type Repository interface {
 	FindPending() []models.Destination
 	VerifyDestination(id string, status string) (*models.Destination, error)
 	SaveOfflineBundle(destID, version string, payloadJSON []byte)
+
+	// Meja Kurasi Usulan Destinasi Wisatawan (Tabel new_tour)
+	ListNewTours(statusFilter string) []models.NewTour
+	UpsertNewTour(tour models.NewTour) models.NewTour
+	ApproveNewTourToDestination(id string) (*models.Destination, *models.NewTour, error)
+	RejectNewTour(id string, reason string) (*models.NewTour, error)
+	MergeNewToursToDestination(req MergeNewToursInput) (*models.Destination, []models.NewTour, error)
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -45,12 +52,14 @@ func EstimateSumbarTravelMinutes(distanceKm float64) int {
 type inMemoryRepository struct {
 	mu           sync.RWMutex
 	destinations []models.Destination
+	newTours     []models.NewTour
 }
 
-// NewRepository membuat instance repository baru dengan initial seeder 20 Destinasi Sumbar
+// NewRepository membuat instance repository baru dengan initial seeder 20 Destinasi Sumbar + new_tour
 func NewRepository() Repository {
 	return &inMemoryRepository{
 		destinations: Seed20DestinationsSumbar(),
+		newTours:     models.GetDefaultNewTours(),
 	}
 }
 
@@ -278,4 +287,271 @@ func (r *inMemoryRepository) VerifyDestination(id string, status string) (*model
 }
 
 func (r *inMemoryRepository) SaveOfflineBundle(destID, version string, payloadJSON []byte) {}
+
+func (r *inMemoryRepository) ListNewTours(statusFilter string) []models.NewTour {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	st := strings.ToLower(strings.TrimSpace(statusFilter))
+	if st == "" || st == "all" {
+		out := make([]models.NewTour, len(r.newTours))
+		copy(out, r.newTours)
+		return out
+	}
+
+	var results []models.NewTour
+	for _, n := range r.newTours {
+		if strings.ToLower(n.Status) == st {
+			results = append(results, n)
+		}
+	}
+	return results
+}
+
+func (r *inMemoryRepository) UpsertNewTour(tour models.NewTour) models.NewTour {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if strings.TrimSpace(tour.ID) == "" {
+		tour.ID = fmt.Sprintf("nt-%d", time.Now().UnixNano()%1000000)
+	}
+	if strings.TrimSpace(tour.UserID) == "" {
+		tour.UserID = "usr-tourist-01"
+	}
+	if strings.TrimSpace(tour.CategoryID) == "" {
+		tour.CategoryID = mapCategoryNameToID(tour.Category, tour.Name, tour.IsSensitive)
+	}
+	tour.Category = mapCategoryIDToName(tour.CategoryID)
+	if strings.TrimSpace(tour.Status) == "" {
+		tour.Status = "pending"
+	}
+	if strings.TrimSpace(tour.SubmitterName) == "" {
+		tour.SubmitterName = "Wisatawan Komunitas WISGO"
+	}
+	if strings.TrimSpace(tour.SubmitterPhone) == "" {
+		tour.SubmitterPhone = "6281234567890"
+	}
+	if strings.TrimSpace(tour.PhotoURL) == "" {
+		tour.PhotoURL = "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=900&q=80"
+	}
+	if strings.TrimSpace(tour.CreatedAt) == "" {
+		tour.CreatedAt = time.Now().Format(time.RFC3339)
+	}
+
+	for i, existing := range r.newTours {
+		if strings.EqualFold(existing.ID, tour.ID) {
+			r.newTours[i] = tour
+			return tour
+		}
+	}
+	r.newTours = append([]models.NewTour{tour}, r.newTours...)
+	return tour
+}
+
+func buildDestinationFromNewTour(tour models.NewTour) models.Destination {
+	newID := fmt.Sprintf("dest-%d", time.Now().UnixNano()%1000000)
+	catID := tour.CategoryID
+	if catID == "" {
+		catID = mapCategoryNameToID(tour.Category, tour.Name, tour.IsSensitive)
+	}
+	catName := mapCategoryIDToName(catID)
+
+	vehicleAccess := "Hanya Motor"
+	trekkingLevel := "Mudah (Datar)"
+	guideNeed := "Mandiri"
+	for _, f := range tour.Facilities {
+		fl := strings.ToLower(f)
+		if strings.Contains(fl, "parkir") {
+			vehicleAccess = "Mobil OK"
+		}
+		if strings.Contains(fl, "trekking") {
+			trekkingLevel = "Sedang"
+		}
+		if strings.Contains(fl, "pemandu") {
+			guideNeed = "Disarankan"
+		}
+	}
+	facLevel := "Belum Ada"
+	if len(tour.Facilities) >= 4 {
+		facLevel = "Toilet, Musala & Parkir Lengkap"
+	} else if len(tour.Facilities) >= 1 {
+		facLevel = "Terbatas"
+	}
+
+	cover := tour.PhotoURL
+	if cover == "" {
+		cover = "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=1200&q=80"
+	}
+
+	distKm := CalculateSpatialDistanceKm(-0.9471, 100.4172, tour.Latitude, tour.Longitude)
+	travelMin := EstimateSumbarTravelMinutes(distKm)
+
+	return models.Destination{
+		ID:                 newID,
+		Slug:               strings.ToLower(strings.ReplaceAll(strings.TrimSpace(tour.Name), " ", "-")),
+		Name:               tour.Name,
+		CategoryID:         catID,
+		Category:           catName,
+		CityRegency:        tour.CityRegency,
+		Description:        tour.Description,
+		Latitude:           tour.Latitude,
+		Longitude:          tour.Longitude,
+		ElevationM:         250,
+		CoverImage:         cover,
+		CrowdLevel:         "Sepi",
+		DistanceKm:         distKm,
+		TravelTimeMin:      travelMin,
+		EstimatedCost:      10000,
+		IsHiddenGem:        catID == "cat-hidden-gem" || tour.IsSensitive,
+		VerificationStatus: "verified",
+		QRPlacardCode:      fmt.Sprintf("WISGO-PLG-%d", time.Now().Unix()%10000),
+		OpeningHours:       "08.00 - 17.00 WIB",
+		MedanIndicator: &models.MedanIndicator{
+			ID:             fmt.Sprintf("med-%s", newID),
+			DestinationID:  newID,
+			VehicleAccess:  vehicleAccess,
+			TrekkingLevel:  trekkingLevel,
+			CellularSignal: "4G Kuat",
+			Facilities:     facLevel,
+			GuideNeed:      guideNeed,
+		},
+		Tips: []models.LocalTip{
+			{
+				ID:            fmt.Sprintf("art-%d", time.Now().UnixNano()%100000),
+				DestinationID: newID,
+				CategoryID:    "cat-rule-lingkungan",
+				Title:         "Tips Menjaga Tempat Ini",
+				Content:       tour.TipsMenjaga,
+				Aturan:        tour.TipsMenjaga,
+				IsImportant:   true,
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+}
+
+func (r *inMemoryRepository) ApproveNewTourToDestination(id string) (*models.Destination, *models.NewTour, error) {
+	r.mu.Lock()
+	var target *models.NewTour
+	targetIdx := -1
+	for i, n := range r.newTours {
+		if strings.EqualFold(n.ID, id) {
+			cp := n
+			target = &cp
+			targetIdx = i
+			break
+		}
+	}
+	if target == nil {
+		r.mu.Unlock()
+		return nil, nil, fmt.Errorf("Usulan new_tour '%s' tidak ditemukan", id)
+	}
+
+	dest := buildDestinationFromNewTour(*target)
+	target.Status = "approved"
+	target.MergedIntoDestinationID = dest.ID
+	target.MergedRole = "Pengusul Utama"
+	r.newTours[targetIdx] = *target
+	r.destinations = append([]models.Destination{dest}, r.destinations...)
+	r.mu.Unlock()
+
+	return &dest, target, nil
+}
+
+func (r *inMemoryRepository) RejectNewTour(id string, reason string) (*models.NewTour, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if strings.TrimSpace(reason) == "" {
+		reason = "Belum memenuhi kriteria kurasi Dispar Sumbar."
+	}
+	for i, n := range r.newTours {
+		if strings.EqualFold(n.ID, id) {
+			r.newTours[i].Status = "rejected"
+			r.newTours[i].AdminNotes = reason
+			updated := r.newTours[i]
+			return &updated, nil
+		}
+	}
+	return nil, fmt.Errorf("Usulan new_tour '%s' tidak ditemukan", id)
+}
+
+func (r *inMemoryRepository) MergeNewToursToDestination(req MergeNewToursInput) (*models.Destination, []models.NewTour, error) {
+	r.mu.Lock()
+	var matched []models.NewTour
+	idSet := make(map[string]bool)
+	for _, sid := range req.SubmissionIDs {
+		idSet[strings.ToLower(strings.TrimSpace(sid))] = true
+	}
+	for _, sub := range req.Submissions {
+		idSet[strings.ToLower(strings.TrimSpace(sub.ID))] = true
+	}
+
+	for _, n := range r.newTours {
+		if idSet[strings.ToLower(n.ID)] {
+			matched = append(matched, n)
+		}
+	}
+	if len(matched) == 0 && len(req.Submissions) > 0 {
+		matched = req.Submissions
+	}
+	if len(matched) == 0 {
+		r.mu.Unlock()
+		return nil, nil, fmt.Errorf("Tidak ada usulan new_tour yang ditemukan untuk digabungkan")
+	}
+
+	primarySub := matched[0]
+	photoSub := matched[0]
+	for _, s := range matched {
+		if strings.EqualFold(s.ID, req.PrimaryDataSubmissionID) {
+			primarySub = s
+		}
+		if strings.EqualFold(s.ID, req.CoverPhotoSubmissionID) {
+			photoSub = s
+		}
+	}
+
+	mergedTour := primarySub
+	if strings.TrimSpace(req.CustomName) != "" {
+		mergedTour.Name = strings.TrimSpace(req.CustomName)
+	}
+	if strings.TrimSpace(req.CustomDescription) != "" {
+		mergedTour.Description = strings.TrimSpace(req.CustomDescription)
+	}
+	if strings.TrimSpace(req.CustomTips) != "" {
+		mergedTour.TipsMenjaga = strings.TrimSpace(req.CustomTips)
+	}
+	if photoSub.PhotoURL != "" {
+		mergedTour.PhotoURL = photoSub.PhotoURL
+	}
+
+	dest := buildDestinationFromNewTour(mergedTour)
+	var updatedTours []models.NewTour
+
+	for i, n := range r.newTours {
+		if idSet[strings.ToLower(n.ID)] {
+			isPrimary := strings.EqualFold(n.ID, primarySub.ID)
+			isPhoto := strings.EqualFold(n.ID, photoSub.ID)
+			role := "Pengusul Bersama"
+			if isPrimary && isPhoto {
+				role = "Pengusul Utama"
+			} else if isPrimary {
+				role = "Kontributor Data & Tips"
+			} else if isPhoto {
+				role = "Kontributor Foto"
+			}
+			r.newTours[i].Status = "approved"
+			r.newTours[i].MergedIntoDestinationID = dest.ID
+			r.newTours[i].MergedRole = role
+			r.newTours[i].AdminNotes = fmt.Sprintf("Digabungkan menjadi destinasi '%s' sebagai %s.", dest.Name, role)
+			updatedTours = append(updatedTours, r.newTours[i])
+		}
+	}
+	r.destinations = append([]models.Destination{dest}, r.destinations...)
+	r.mu.Unlock()
+
+	return &dest, updatedTours, nil
+}
+
 

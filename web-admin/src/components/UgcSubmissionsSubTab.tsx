@@ -1,15 +1,18 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Camera,
   Check,
   CheckCircle2,
   Clock,
+  Database,
+  Eye,
   EyeOff,
   GitMerge,
   Image as ImageIcon,
   Inbox,
   MapPin,
   Plus,
+  RefreshCw,
   Search,
   Sparkles,
   Users,
@@ -23,6 +26,13 @@ import {
   categoryNameToId,
 } from '../data/mockDestinations';
 import { NewTourRepo } from '../services/dbRepository';
+import {
+  approveNewTourWithBridge,
+  createNewTourWithBridge,
+  fetchNewToursWithBridge,
+  mergeNewToursWithBridge,
+  rejectNewTourWithBridge,
+} from '../services/api';
 import { ImageDropzone } from './ImageDropzone';
 
 interface UgcSubmissionsSubTabProps {
@@ -49,6 +59,36 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | NewTourStatus>('ALL');
   const [regencyFilter, setRegencyFilter] = useState('Semua Kab/Kota');
+  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [isSyncingBackend, setIsSyncingBackend] = useState(false);
+  const [backendSynced, setBackendSynced] = useState(false);
+  const [inspectingTour, setInspectingTour] = useState<NewTour | null>(null);
+
+  const loadFromBackend = useCallback(
+    async (notify = false) => {
+      setIsSyncingBackend(true);
+      try {
+        const res = await fetchNewToursWithBridge();
+        setSubmissions(res.submissions);
+        setBackendSynced(res.online);
+        if (notify) {
+          showToast(
+            res.online
+              ? 'Meja Kurasi new_tour berhasil disinkronkan dengan Database PostgreSQL BE-1.'
+              : 'Menampilkan antrean new_tour dari penyimpanan lokal V3.',
+            res.online ? 'success' : 'info'
+          );
+        }
+      } finally {
+        setIsSyncingBackend(false);
+      }
+    },
+    [showToast]
+  );
+
+  useEffect(() => {
+    void loadFromBackend(false);
+  }, [loadFromBackend]);
 
   // Create New Submission Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -107,20 +147,22 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
     setMergeDescription(sub.description);
   };
 
-  const handleConfirmMerge = (e: React.FormEvent) => {
+  const handleConfirmMerge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mergeGroup || mergeGroup.length < 2) return;
 
-    const mergedDest = NewTourRepo.mergeAndApproveToDestination({
-      submissions: mergeGroup,
-      primaryDataSubmissionId: primaryDataId,
-      coverPhotoSubmissionId: coverPhotoId,
-      customName: mergeName,
-      customDescription: mergeDescription,
-      customTips: mergeTips,
-    });
+    const { mergedDestination: mergedDest, submissions: nextSubs, syncedRemote } =
+      await mergeNewToursWithBridge({
+        submissions: mergeGroup,
+        primaryDataSubmissionId: primaryDataId,
+        coverPhotoSubmissionId: coverPhotoId,
+        customName: mergeName,
+        customDescription: mergeDescription,
+        customTips: mergeTips,
+      });
 
-    setSubmissions(NewTourRepo.getAll());
+    setSubmissions(nextSubs);
+    if (syncedRemote) setBackendSynced(true);
     setMergeGroup(null);
     onRefreshDestinations();
     const creditNames = (mergedDest.contributors || [])
@@ -138,9 +180,12 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
     );
   };
 
-  const handleApproveSubmission = (sub: NewTour) => {
-    const created = NewTourRepo.approveToDestinations(sub);
-    setSubmissions(NewTourRepo.getAll());
+  const handleApproveSubmission = async (sub: NewTour) => {
+    const { createdDestination: created, submissions: nextSubs, syncedRemote } =
+      await approveNewTourWithBridge(sub);
+    setSubmissions(nextSubs);
+    if (syncedRemote) setBackendSynced(true);
+    if (inspectingTour?.id === sub.id) setInspectingTour(null);
     onRefreshDestinations();
     showToast(
       `Usulan "${created.name}" oleh ${sub.submitter_name} disetujui & masuk ke Direktori Destinasi.`,
@@ -148,21 +193,23 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
     );
   };
 
-  const handleRejectSubmission = (sub: NewTour) => {
+  const handleRejectSubmission = async (sub: NewTour) => {
     const reason = window.prompt(
       `Masukkan alasan penolakan untuk usulan "${sub.name}":`,
       'Belum memenuhi kriteria akses aman & kelengkapan foto lokasi.'
     );
     if (reason === null) return;
-    const updated = NewTourRepo.rejectWithNotice(
+    const { submissions: updated, syncedRemote } = await rejectNewTourWithBridge(
       sub.id,
       reason.trim() || 'Belum memenuhi kriteria kurasi Dispar Sumbar.'
     );
     setSubmissions(updated);
+    if (syncedRemote) setBackendSynced(true);
+    if (inspectingTour?.id === sub.id) setInspectingTour(null);
     showToast(`Usulan "${sub.name}" ditolak dan notifikasi dikirim ke pengusul.`, 'info');
   };
 
-  const handleSaveNewTour = (e: React.FormEvent) => {
+  const handleSaveNewTour = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formSubmitterName.trim() || !formTips.trim()) {
       showToast('Nama destinasi, nama pengusul, dan Tips Menjaga Tempat wajib diisi.', 'warning');
@@ -192,10 +239,14 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
       created_at: new Date().toISOString(),
     };
 
-    const updated = NewTourRepo.save(newItem);
+    const { submissions: updated, syncedRemote } = await createNewTourWithBridge(newItem);
     setSubmissions(updated);
+    if (syncedRemote) setBackendSynced(true);
     setIsAddModalOpen(false);
-    showToast(`Usulan destinasi "${newItem.name}" berhasil masuk antrean kurasi.`, 'success');
+    showToast(
+      `Usulan destinasi "${newItem.name}" berhasil masuk antrean Meja Kurasi (new_tour).`,
+      'success'
+    );
   };
 
   const filtered = submissions.filter((sub) => {
@@ -209,7 +260,11 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
     const matchesStatus = statusFilter === 'ALL' || sub.status === statusFilter;
     const matchesRegency =
       regencyFilter === 'Semua Kab/Kota' || sub.city_regency === regencyFilter;
-    return matchesSearch && matchesStatus && matchesRegency;
+    const matchesCat =
+      categoryFilter === 'ALL' ||
+      sub.category === categoryFilter ||
+      sub.category_id === categoryFilter;
+    return matchesSearch && matchesStatus && matchesRegency && matchesCat;
   });
 
   const pendingCount = submissions.filter((s) => s.status === 'pending').length;
@@ -218,6 +273,50 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* HEADER MEJA KURASI USULAN DESTINASI WISATAWAN (TABEL new_tour) */}
+      <div className="bg-white rounded-2xl p-5 border border-[#234B24]/15 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#234B24] text-[#F6F3EC] inline-flex items-center gap-1">
+              <Database className="w-3 h-3 text-[#A7F3D0]" />
+              Tabel ERD: new_tour
+            </span>
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border inline-flex items-center gap-1 ${
+                backendSynced
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-amber-50 text-amber-800 border-amber-300'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  backendSynced ? 'bg-emerald-600 animate-pulse' : 'bg-amber-500'
+                }`}
+              />
+              {backendSynced ? 'Tersinkron Live PostgreSQL BE-1' : 'Penyimpanan Lokal V3 Aktif'}
+            </span>
+          </div>
+          <h2 className="text-base font-extrabold text-[#1B1F1A]">
+            Meja Kurasi Usulan Destinasi Wisatawan (UGC &amp; Hidden Gem)
+          </h2>
+          <p className="text-xs text-[#4A5248]">
+            Verifikasi usulan destinasi baru dari wisatawan (relasi <code className="font-mono font-bold text-[#234B24]">new_tour.category_id → categories.id</code>). Saat disetujui, data otomatis dipromosikan ke tabel <code className="font-mono font-bold text-[#234B24]">destinations</code>, <code className="font-mono font-bold text-[#234B24]">indikator_medan</code>, dan <code className="font-mono font-bold text-[#234B24]">aturan_destinasi</code>.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => void loadFromBackend(true)}
+            disabled={isSyncingBackend}
+            className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#F6F3EC] hover:bg-[#E4E9DA] border border-[#CFD8BE] text-[#234B24] text-xs font-bold inline-flex items-center gap-1.5 transition"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingBackend ? 'animate-spin' : ''}`} />
+            <span>Segarkan new_tour</span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-2xl bg-[#FFEDD5]/60 border border-[#FDBA74] flex items-center justify-between">
           <div>
@@ -346,6 +445,19 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
             {SUMBAR_REGENCIES.map((reg) => (
               <option key={reg} value={reg}>
                 {reg}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs font-bold text-[#1B1F1A]"
+          >
+            <option value="ALL">5 Master Kategori (Semua)</option>
+            {MASTER_DESTINATION_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
               </option>
             ))}
           </select>
@@ -513,6 +625,14 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
 
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => setInspectingTour(sub)}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#F6F3EC] hover:bg-[#E4E9DA] text-[#234B24] border border-[#CFD8BE] font-bold text-[11px] inline-flex items-center gap-1"
+                            title="Inspeksi detail usulan new_tour"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Detail
+                          </button>
                           {sub.status === 'pending' ? (
                             <>
                               {dupGroup && (
@@ -527,14 +647,14 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                               )}
                               <button
                                 type="button"
-                                onClick={() => handleApproveSubmission(sub)}
+                                onClick={() => void handleApproveSubmission(sub)}
                                 className="px-3 py-1.5 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-[11px] inline-flex items-center gap-1"
                               >
                                 <Check className="w-3.5 h-3.5" /> Setujui
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleRejectSubmission(sub)}
+                                onClick={() => void handleRejectSubmission(sub)}
                                 className="px-2.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[11px] inline-flex items-center gap-1"
                               >
                                 <X className="w-3.5 h-3.5" /> Tolak
@@ -547,7 +667,7 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                           ) : (
                             <button
                               type="button"
-                              onClick={() => handleApproveSubmission(sub)}
+                              onClick={() => void handleApproveSubmission(sub)}
                               className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-[#234B24] border border-[#234B24]/20 hover:bg-[#234B24]/10"
                             >
                               Tinjau Ulang &amp; Setujui
@@ -1015,6 +1135,112 @@ export const UgcSubmissionsSubTab: React.FC<UgcSubmissionsSubTabProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL INSPEKSI DETAIL USULAN DESTINASI (new_tour) */}
+      {inspectingTour && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <div className="bg-white rounded-[28px] w-full max-w-2xl shadow-2xl border border-[#234B24]/10 max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="p-5 bg-[#234B24] text-[#F6F3EC] flex items-center justify-between shrink-0">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#A7F3D0]">
+                  Inspeksi Kurasi Tabel new_tour · ID: {inspectingTour.id}
+                </span>
+                <h3 className="text-base font-extrabold">{inspectingTour.name}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectingTour(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+              {inspectingTour.photo_url && (
+                <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 border border-[#CFD8BE]">
+                  <img
+                    src={inspectingTour.photo_url}
+                    alt={inspectingTour.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                  <div className="text-[10px] font-bold text-[#767676] uppercase">Kategori Induk</div>
+                  <div className="font-extrabold text-[#234B24] mt-0.5">{inspectingTour.category}</div>
+                  <div className="text-[10px] font-mono text-[#4A5248]">{inspectingTour.category_id}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                  <div className="text-[10px] font-bold text-[#767676] uppercase">Wilayah &amp; GPS</div>
+                  <div className="font-extrabold text-[#1B1F1A] mt-0.5">{inspectingTour.city_regency}</div>
+                  <div className="text-[10px] font-mono text-[#4A5248]">
+                    {inspectingTour.latitude.toFixed(4)}, {inspectingTour.longitude.toFixed(4)}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]">
+                  <div className="text-[10px] font-bold text-[#767676] uppercase">Pengusul Komunitas</div>
+                  <div className="font-extrabold text-[#1B1F1A] mt-0.5">{inspectingTour.submitter_name}</div>
+                  <div className="text-[10px] font-mono text-[#4A5248]">{inspectingTour.submitter_phone}</div>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#F6F3EC] border border-[#CFD8BE] space-y-1">
+                <div className="font-extrabold text-[#1B1F1A]">Deskripsi Lokasi Usulan</div>
+                <p className="text-[#4A5248] leading-relaxed">{inspectingTour.description}</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#E4E9DA]/70 border border-[#234B24]/20 space-y-1">
+                <div className="font-extrabold text-[#234B24] flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Tips Menjaga Tempat Ini (Wajib Hidden Gem)</span>
+                </div>
+                <p className="text-[#1B1F1A] leading-relaxed">{inspectingTour.tips_menjaga}</p>
+              </div>
+
+              {inspectingTour.admin_notes && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900">
+                  <strong>Catatan Kurator Dispar:</strong> {inspectingTour.admin_notes}
+                </div>
+              )}
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#234B24]/10">
+                <button
+                  type="button"
+                  onClick={() => setInspectingTour(null)}
+                  className="min-h-[40px] px-4 py-2 rounded-xl font-bold text-[#4A5248] hover:bg-[#F6F3EC]"
+                >
+                  Tutup
+                </button>
+                {inspectingTour.status !== 'rejected' && (
+                  <button
+                    type="button"
+                    onClick={() => void handleRejectSubmission(inspectingTour)}
+                    className="min-h-[40px] px-4 py-2 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold inline-flex items-center gap-1.5"
+                  >
+                    <X className="w-4 h-4" /> Tolak Usulan
+                  </button>
+                )}
+                {inspectingTour.status !== 'approved' && (
+                  <button
+                    type="button"
+                    onClick={() => void handleApproveSubmission(inspectingTour)}
+                    className="min-h-[40px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold inline-flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Check className="w-4 h-4" /> Setujui &amp; Terbitkan ke Direktori
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

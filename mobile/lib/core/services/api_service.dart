@@ -644,4 +644,45 @@ class ApiService {
   static Future<ApiResponse<dynamic>> verifyQRPlacard(String qrCode) async {
     return await ApiClient.get('/pungli/verify-qr/$qrCode');
   }
+
+  /// Ambil Berita Wisata & Bencana Sumatera Barat (sumbarkita.id & sumbar.antaranews.com)
+  static Future<ApiResponse<dynamic>> getSumbarNews({
+    String? portal,
+    bool refresh = false,
+  }) async {
+    return await ApiClient.get('/spatial/news', queryParams: {
+      if (portal != null && portal.isNotEmpty) 'portal': portal,
+      if (refresh) 'refresh': 'true',
+    });
+  }
+
+  /// Usulkan destinasi baru ke Meja Kurasi Dispar (Tabel new_tour BE-1)
+  static Future<ApiResponse<dynamic>> proposeNewTour({
+    required String name,
+    required String category,
+    required String cityRegency,
+    required String description,
+    required double latitude,
+    required double longitude,
+    required String tipsMenjaga,
+    required String submitterName,
+    String submitterPhone = '6281234567890',
+    List<String> facilities = const ['Jalur Trekking', 'Spot Foto Alami'],
+    bool isSensitive = false,
+  }) async {
+    return await ApiClient.post('/destinations/new-tours', body: {
+      'user_id': ApiConfig.currentUserId,
+      'name': name,
+      'category': category,
+      'city_regency': cityRegency,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+      'tips_menjaga': tipsMenjaga,
+      'submitter_name': submitterName,
+      'submitter_phone': submitterPhone,
+      'facilities': facilities,
+      'is_sensitive': isSensitive,
+    });
+  }
 }

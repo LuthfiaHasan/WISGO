@@ -890,3 +890,122 @@ type TopDestinationMetric struct {
 	TotalCheckIns   int    `json:"total_checkins"`
 }
 
+// NewTour merepresentasikan tabel new_tour (ERD Revisi: Meja Kurasi Usulan Destinasi Wisatawan)
+type NewTour struct {
+	ID                      string   `json:"id"`
+	UserID                  string   `json:"user_id"`
+	Name                    string   `json:"name"`
+	CategoryID              string   `json:"category_id"`
+	Category                string   `json:"category"`
+	CityRegency             string   `json:"city_regency"`
+	Description             string   `json:"description"`
+	Latitude                float64  `json:"latitude"`
+	Longitude               float64  `json:"longitude"`
+	TipsMenjaga             string   `json:"tips_menjaga"`
+	Facilities              []string `json:"facilities,omitempty"`
+	EstimatedPrice          string   `json:"estimated_price,omitempty"`
+	PhotoURL                string   `json:"photo_url,omitempty"`
+	IsSensitive             bool     `json:"is_sensitive"`
+	Status                  string   `json:"status"` // pending, approved, rejected
+	SubmitterName           string   `json:"submitter_name"`
+	SubmitterPhone          string   `json:"submitter_phone"`
+	AdminNotes              string   `json:"admin_notes,omitempty"`
+	MergedIntoDestinationID string   `json:"merged_into_destination_id,omitempty"`
+	MergedRole              string   `json:"merged_role,omitempty"`
+	CreatedAt               string   `json:"created_at"`
+}
+
+// DestinationContributor kredit pengusul/kontributor pada hasil kurasi kolaboratif new_tour
+type DestinationContributor struct {
+	Name         string `json:"name"`
+	Phone        string `json:"phone,omitempty"`
+	Role         string `json:"role"` // Pengusul Utama | Kontributor Foto | Kontributor Data & Tips | Pengusul Bersama
+	SubmissionID string `json:"submission_id"`
+}
+
+// GetDefaultNewTours mengembalikan seeder awal tabel new_tour (Sinkron UgcSubmissionsSubTab.tsx)
+func GetDefaultNewTours() []NewTour {
+	return []NewTour{
+		{
+			ID:             "nt-001",
+			UserID:         "usr-tourist-01",
+			Name:           "Sarasah Murai Tersembunyi",
+			CategoryID:     "cat-hidden-gem",
+			Category:       "Hidden Gem",
+			CityRegency:    "Kab. Lima Puluh Kota",
+			Description:    "Air terjun tujuh tingkat di pelosok hutan Harau dengan kolam alami nan jernih berbatu lumut hijau.",
+			Latitude:       -0.0984,
+			Longitude:      100.6812,
+			TipsMenjaga:    "Wajib membawa kantong sampah sendiri, dilarang menyalakan api unggun sembarangan, dan lapor ke posko Pokdarwis.",
+			Facilities:     []string{"Jalur Trekking", "Pemandu Lokal", "Spot Foto Alami"},
+			EstimatedPrice: "Rp 15.000 / orang",
+			PhotoURL:       "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=800&q=80",
+			IsSensitive:    true,
+			Status:         "pending",
+			SubmitterName:  "Rian Pratama",
+			SubmitterPhone: "6281377889901",
+			CreatedAt:      "2026-11-22T14:00:00Z",
+		},
+		{
+			ID:             "nt-002",
+			UserID:         "usr-tourist-02",
+			Name:           "Puncak Gagoan Paninggahan",
+			CategoryID:     "cat-alam-geopark",
+			Category:       "Alam & Geopark",
+			CityRegency:    "Kab. Solok",
+			Description:    "Tebing batu karang alami dengan panorama 360 derajat ke hamparan biru Danau Singkarak.",
+			Latitude:       -0.6341,
+			Longitude:      100.5124,
+			TipsMenjaga:    "Jangan melewati garis pengaman tebing saat angin kencang dan bawa kembali seluruh botol minum.",
+			Facilities:     []string{"Area Parkir", "Gazebo / Pondok", "Spot Foto Alami", "Warung Kuliner"},
+			EstimatedPrice: "Rp 10.000 / orang",
+			PhotoURL:       "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80",
+			IsSensitive:    false,
+			Status:         "pending",
+			SubmitterName:  "Nur Aisyah",
+			SubmitterPhone: "6281299887766",
+			CreatedAt:      "2026-11-23T11:30:00Z",
+		},
+		{
+			ID:             "nt-003",
+			UserID:         "usr-tourist-04",
+			Name:           "Air Terjun Sarasah Murai",
+			CategoryID:     "cat-hidden-gem",
+			Category:       "Hidden Gem",
+			CityRegency:    "Kab. Lima Puluh Kota",
+			Description:    "Air terjun alami di lembah Harau dengan cahaya matahari pagi menembus tebing, sangat bagus untuk fotografi alam.",
+			Latitude:       -0.0987,
+			Longitude:      100.6815,
+			TipsMenjaga:    "Gunakan sandal gunung anti-selip karena batu lumut licin dan jangan memetik anggrek hutan di sekitar tebing.",
+			Facilities:     []string{"Area Parkir", "Gazebo / Pondok", "Spot Foto Alami"},
+			EstimatedPrice: "Rp 15.000 / orang",
+			PhotoURL:       "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=900&q=80",
+			IsSensitive:    true,
+			Status:         "pending",
+			SubmitterName:  "Siti Rahma",
+			SubmitterPhone: "6282177665544",
+			CreatedAt:      "2026-11-24T08:45:00Z",
+		},
+	}
+}
+
+// SosNewsItem merepresentasikan Berita Wisata & Bencana Sumatera Barat (sumbarkita.id & sumbar.antaranews.com)
+type SosNewsItem struct {
+	ID           string   `json:"id"`
+	Category     string   `json:"category"`      // Bencana & Vulkanologi | Cuaca & Bahari | Akses Wisata | Info Jalur & Bencana
+	Severity     string   `json:"severity"`      // INFO WISATA | WASPADA | SIAGA HUJAN | DARURAT
+	Title        string   `json:"title"`
+	Region       string   `json:"region"`
+	Summary      string   `json:"summary"`
+	Advice       string   `json:"advice"`
+	Source       string   `json:"source"`        // Sumbarkita.id | ANTARA Sumbar (sumbar.antaranews.com) | BMKG & BPBD Sumbar
+	PortalDomain string   `json:"portal_domain"` // sumbarkita.id | sumbar.antaranews.com | dispar.sumbarprov.go.id
+	SourceURL    string   `json:"source_url"`
+	ImageURL     string   `json:"image_url,omitempty"`
+	Author       string   `json:"author,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
+	IsPublished  bool     `json:"is_published"`
+	PublishedAt  string   `json:"published_at"`
+}
+
+

@@ -338,6 +338,49 @@ class DestinationRepository {
     return _mockEmergencyContacts;
   }
 
+  /// Mengambil Berita Wisata & Bencana Sumatera Barat dari sumbarkita.id & sumbar.antaranews.com (`GET /api/v1/spatial/news`)
+  Future<List<SumbarNewsModel>> getSumbarDisasterNews({
+    String portal = '',
+    bool refresh = false,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (portal.isNotEmpty && portal != 'Semua') {
+        queryParams['portal'] = portal;
+      }
+      if (refresh) {
+        queryParams['refresh'] = 'true';
+      }
+      final uri = Uri.parse('$baseUrl/spatial/news').replace(
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      final response = await http
+          .get(uri)
+          .timeout(const Duration(milliseconds: 3200));
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        final List<dynamic> list = (decoded is List)
+            ? decoded
+            : (decoded is Map<String, dynamic> && decoded['news'] is List
+                ? decoded['news'] as List<dynamic>
+                : <dynamic>[]);
+        if (list.isNotEmpty) {
+          return list
+              .map((item) => SumbarNewsModel.fromJson(item as Map<String, dynamic>))
+              .where((item) => item.isPublished)
+              .toList();
+        }
+      }
+    } catch (_) {}
+
+    if (portal.isEmpty || portal == 'Semua') {
+      return _mockSumbarPortalNews;
+    }
+    return _mockSumbarPortalNews
+        .where((n) => n.portalDomain.toLowerCase().contains(portal.toLowerCase()))
+        .toList();
+  }
+
   /// Mengirim sinyal darurat SOS GPS ke Posko SAR & Satgas Nagari (`POST /api/v1/hazards/sos`)
   Future<String?> sendSosSignal(SOSSignalModel signal) async {
     try {
@@ -1296,6 +1339,99 @@ class DestinationRepository {
       ],
       tariffs: [],
       scenes360: [],
+    ),
+  ];
+
+  static const List<SumbarNewsModel> _mockSumbarPortalNews = [
+    SumbarNewsModel(
+      id: 'news-sk-marapi-01',
+      category: 'Bencana & Vulkanologi',
+      severity: 'WASPADA',
+      title: 'PVMBG: Gunung Marapi Sumbar Masih Berstatus Waspada Level II, Wisatawan Dilarang Masuk Radius 3 Km',
+      region: 'Kab. Agam & Kab. Tanah Datar',
+      summary:
+          'Laporan Sumbarkita.id mencatat Pos Pengamatan Gunung Api (PGA) Marapi di Bukittinggi masih merekam aktivitas hembusan vulkanik. Wisatawan di sekitar lereng Agam serta Tanah Datar diimbau mematuhi batas radius 3 kilometer dari Kawah Verbeek dan menyiapkan masker.',
+      advice:
+          'Destinasi Jam Gadang, Ngarai Sianok, dan Istano Basa Pagaruyung berada di luar zona bahaya dan tetap aman dikunjungi.',
+      source: 'Sumbarkita.id • Redaksi Kebencanaan Sumbar',
+      portalDomain: 'sumbarkita.id',
+      sourceUrl: 'https://sumbarkita.id/tag/gunung-marapi/',
+      publishedAt: '1 jam lalu • sumbarkita.id',
+    ),
+    SumbarNewsModel(
+      id: 'news-antara-anai-02',
+      category: 'Info Jalur & Bencana',
+      severity: 'SIAGA HUJAN',
+      title: 'BPBD dan Balai Jalan Nasional Pantau Ketat Jalur Lembah Anai Padang–Bukittinggi Saat Hujan Deras',
+      region: 'Kab. Tanah Datar & Padang Pariaman',
+      summary:
+          'ANTARA Sumbar melaporkan petugas gabungan bersiaga di koridor jalan nasional Lembah Anai menyusul tingginya intensitas curah hujan di hulu Sungai Batang Anai. Pengendara wisata tujuan Bukittinggi diminta memperhatikan rambu peringatan dini.',
+      advice:
+          'Jika debit air Sungai Batang Anai meningkat tajam atau hujan ekstrem, gunakan jalur alternatif Sicincin – Malalak – Bukittinggi.',
+      source: 'ANTARA Sumbar (sumbar.antaranews.com)',
+      portalDomain: 'sumbar.antaranews.com',
+      sourceUrl: 'https://sumbar.antaranews.com/berita-terkini',
+      publishedAt: '2 jam lalu • sumbar.antaranews.com',
+    ),
+    SumbarNewsModel(
+      id: 'news-sk-sitinjau-03',
+      category: 'Info Jalur & Bencana',
+      severity: 'WASPADA',
+      title: 'Kabut Tebal dan Hujan Guyur Tanjakan Ekstrem Sitinjau Lauik Padang–Solok, Pengendara Diminta Jaga Jarak',
+      region: 'Kota Padang & Kab. Solok',
+      summary:
+          'Pantauan Sumbarkita.id di koridor Panorama 1 dan Panorama 2 Sitinjau Lauik menunjukkan jarak pandang berkurang hingga 30 meter saat hujan sore. Posko PKJR bersama TRC BPBD tetap bersiaga mengatur kelancaran kendaraan wisata menuju Danau Kembar dan Alahan Panjang.',
+      advice:
+          'Pastikan pengereman kendaraan prima, nyalakan lampu kabut, dan jaga jarak aman minimal 25 meter di belakang truk bermuatan.',
+      source: 'Sumbarkita.id • Info Lintas Sumbar',
+      portalDomain: 'sumbarkita.id',
+      sourceUrl: 'https://sumbarkita.id/tag/sitinjau-lauik/',
+      publishedAt: '3 jam lalu • sumbarkita.id',
+    ),
+    SumbarNewsModel(
+      id: 'news-antara-mandeh-04',
+      category: 'Cuaca & Bahari',
+      severity: 'INFO WISATA',
+      title: 'BMKG Maritim Teluk Bayur: Gelombang Perairan Wisata Bahari Mandeh dan Pulau Angso Duo Kondusif',
+      region: 'Kab. Pesisir Selatan & Kota Pariaman',
+      summary:
+          'Berdasarkan rilis BMKG yang dikutip ANTARA Sumbar, tinggi gelombang di perairan Teluk Mandeh, Carocok Painan, hingga Pantai Gandoriah Pariaman berkisar 0,5 hingga 1,25 meter pada pagi hingga siang hari sehingga aman untuk aktivitas island hopping.',
+      advice:
+          'Wisatawan wajib mengenakan jaket pelampung (life jacket) berstandar keselamatan dan kembali ke dermaga sebelum pukul 16.30 WIB.',
+      source: 'ANTARA Sumbar (sumbar.antaranews.com)',
+      portalDomain: 'sumbar.antaranews.com',
+      sourceUrl: 'https://sumbar.antaranews.com/pariwisata',
+      publishedAt: '4 jam lalu • sumbar.antaranews.com',
+    ),
+    SumbarNewsModel(
+      id: 'news-sk-harau-05',
+      category: 'Akses Wisata',
+      severity: 'SIAGA HUJAN',
+      title: 'Dispar & Pokdarwis Imbau Pengunjung Air Terjun Lembah Harau dan Lubuk Hitam Waspadai Perubahan Debit Air',
+      region: 'Kab. Lima Puluh Kota & Bungus Kota Padang',
+      summary:
+          'Sumbarkita.id memberitakan pengelola ekowisata Lembah Harau, Air Terjun Nyarai, dan Lubuk Hitam (Cindakir) meningkatkan pengawasan hulu sungai pada musim penghujan guna mencegah risiko kepala air (banjir kiriman hulu).',
+      advice:
+          'Segera naik ke tepian apabila air terjun berubah keruh kecokelatan atau terdengar suara gemuruh dari atas tebing.',
+      source: 'Sumbarkita.id • Pariwisata & Nagari',
+      portalDomain: 'sumbarkita.id',
+      sourceUrl: 'https://sumbarkita.id/tag/lembah-harau/',
+      publishedAt: '5 jam lalu • sumbarkita.id',
+    ),
+    SumbarNewsModel(
+      id: 'news-antara-kelok44-06',
+      category: 'Akses Wisata',
+      severity: 'WASPADA',
+      title: 'Mitigasi Jalur Wisata Kelok 44 Danau Maninjau, Dishub dan BPBD Agam Siagakan Pos Pantau Tikungan',
+      region: 'Kab. Agam (Matur – Maninjau)',
+      summary:
+          'ANTARA Sumbar memberitakan kesiapsiagaan petugas di sepanjang 44 tikungan tajam penghubung Bukittinggi–Matur menuju kaldera Danau Maninjau dan Puncak Lawang untuk memastikan keamanan bus dan kendaraan wisatawan.',
+      advice:
+          'Gunakan gigi rendah saat menuruni Kelok 44, bunyikan klakson pada tikungan buta, dan hindari memberi makan kera liar di bahu jalan.',
+      source: 'ANTARA Sumbar (sumbar.antaranews.com)',
+      portalDomain: 'sumbar.antaranews.com',
+      sourceUrl: 'https://sumbar.antaranews.com/daerah',
+      publishedAt: '6 jam lalu • sumbar.antaranews.com',
     ),
   ];
 }

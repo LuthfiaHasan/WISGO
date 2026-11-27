@@ -23,6 +23,9 @@ class _HazardSosScreenState extends State<HazardSosScreen>
   bool _isLoading = true;
   List<HazardAlertModel> _corridors = [];
   List<EmergencyContactModel> _officialContacts = [];
+  List<SumbarNewsModel> _portalNews = [];
+  String _selectedNewsPortal = 'Semua';
+  bool _isSyncingPortalNews = false;
 
   // Status Jaringan & Offline Caching
   bool _isZeroSignalMode = false;
@@ -59,13 +62,31 @@ class _HazardSosScreenState extends State<HazardSosScreen>
     final results = await Future.wait([
       _repository.getHazardAlerts(),
       _repository.getEmergencyContacts(),
+      _repository.getSumbarDisasterNews(),
     ]);
     if (!mounted) return;
     setState(() {
       _corridors = results[0] as List<HazardAlertModel>;
       _officialContacts = results[1] as List<EmergencyContactModel>;
+      _portalNews = results[2] as List<SumbarNewsModel>;
       _isLoading = false;
     });
+  }
+
+  Future<void> _refreshPortalNews() async {
+    setState(() => _isSyncingPortalNews = true);
+    final latest = await _repository.getSumbarDisasterNews(refresh: true);
+    if (!mounted) return;
+    setState(() {
+      _portalNews = latest;
+      _isSyncingPortalNews = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Berita sumbarkita.id & sumbar.antaranews.com berhasil diperbarui!'),
+        backgroundColor: AppColors.green800,
+      ),
+    );
   }
 
   Color _severityColor(String severity) {
@@ -234,39 +255,110 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                 ..._buildOfficialEmergencyCards(),
                 const SizedBox(height: 24),
 
-                // 4. BERITA KHUSUS WISATA & BENCANA SUMATERA BARAT
+                // 4. BERITA KHUSUS WISATA & BENCANA SUMATERA BARAT (sumbarkita.id & sumbar.antaranews.com)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Expanded(
-                      child: Text(
-                        'Berita Wisata & Bencana Sumbar',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.ink900,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Berita Wisata & Bencana Sumbar',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.ink900,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Sumber resmi: sumbarkita.id & sumbar.antaranews.com',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.coralTint,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${_wisataDisasterNews.length} Terkini',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.terracotta,
+                    InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: _isSyncingPortalNews ? null : _refreshPortalNews,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.coralTint,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.sync_rounded,
+                              size: 14,
+                              color: AppColors.terracotta,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _isSyncingPortalNews
+                                  ? 'Menarik...'
+                                  : '${_wisataDisasterNews.length} Berita',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.terracotta,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      'Semua',
+                      'sumbarkita.id',
+                      'sumbar.antaranews',
+                      'Info Jalur BPBD',
+                    ].map((portal) {
+                      final isSelected = _selectedNewsPortal == portal;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(
+                            portal,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? Colors.white : AppColors.ink900,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: portal == 'sumbarkita.id'
+                              ? const Color(0xFF064E3B)
+                              : portal == 'sumbar.antaranews'
+                                  ? const Color(0xFF991B1B)
+                                  : AppColors.green800,
+                          backgroundColor: Colors.white,
+                          side: BorderSide(
+                            color: isSelected ? Colors.transparent : AppColors.warmBorder,
+                          ),
+                          onSelected: (_) {
+                            setState(() => _selectedNewsPortal = portal);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -759,6 +851,42 @@ class _HazardSosScreenState extends State<HazardSosScreen>
     );
   }
 
+  Color _newsSeverityColor(String severity) {
+    switch (severity.toUpperCase()) {
+      case 'DARURAT':
+      case 'AWAS TUTUP TOTAL':
+      case 'AWAS':
+        return Colors.red.shade700;
+      case 'SIAGA HUJAN':
+      case 'SIAGA':
+        return AppColors.coral500;
+      case 'WASPADA':
+        return AppColors.warning;
+      case 'INFO WISATA':
+      case 'NORMAL':
+      default:
+        return AppColors.forest;
+    }
+  }
+
+  String _formatNewsTime(String publishedAt, String domain) {
+    if (publishedAt.contains('lalu') || publishedAt.contains('•')) {
+      return publishedAt;
+    }
+    final parsed = DateTime.tryParse(publishedAt);
+    if (parsed != null) {
+      final diff = DateTime.now().toUtc().difference(parsed.toUtc());
+      if (diff.inHours <= 0) {
+        return 'Baru saja • $domain';
+      }
+      if (diff.inHours < 24) {
+        return '${diff.inHours} jam lalu • $domain';
+      }
+      return '${parsed.day}/${parsed.month}/${parsed.year} • $domain';
+    }
+    return domain;
+  }
+
   List<Map<String, dynamic>> get _wisataDisasterNews {
     final liveAlerts = _corridors.map((c) {
       final cleanDetour = c.detourRoute.replaceFirst(
@@ -776,51 +904,88 @@ class _HazardSosScreenState extends State<HazardSosScreen>
             ? 'Rute alternatif disarankan: $cleanDetour'
             : 'Pantau terus perkembangan cuaca sebelum berangkat.',
         'source': 'BPBD & Dispar Sumbar',
+        'portal_domain': 'bpbd.sumbarprov.go.id',
+        'source_url': 'https://bpbd.sumbarprov.go.id/',
         'color': _severityColor(c.severity),
       };
     }).toList();
 
-    final editorialNews = <Map<String, dynamic>>[
-      {
-        'category': 'Bencana & Vulkanologi',
-        'severity': 'WASPADA',
-        'title': 'Status Aktivitas Gunung Marapi Level II — Radius Aman Wisatawan 3 km',
-        'region': 'Kab. Agam & Tanah Datar',
-        'time': '2 jam lalu • PVMBG',
-        'summary': 'Wisatawan di sekitar Bukittinggi, Nagari Tuo Pariangan, dan kaki Gunung Marapi diimbau mematuhi radius aman 3 km dari kawah serta membawa masker saat hujan abu ringan.',
-        'advice': 'Destinasi Jam Gadang, Ngarai Sianok, dan Istano Basa Pagaruyung tetap aman dikunjungi.',
-        'source': 'PVMBG & BPBD Sumbar',
-        'color': AppColors.warning,
-      },
-      {
-        'category': 'Cuaca & Bahari',
-        'severity': 'INFO WISATA',
-        'title': 'Prakiraan BMKG: Gelombang Perairan Padang–Mandeh Kondusif Pagi hingga Siang',
-        'region': 'Padang & Pesisir Selatan',
-        'time': '3 jam lalu • BMKG Minangkabau',
-        'summary': 'Kondisi perairan Teluk Mandeh dan Pulau Pasumpahan cerah berawan dengan tinggi gelombang 0,5–1,2 m. Pelayaran perahu wisata diimbau kembali sebelum pukul 16.30 WIB.',
-        'advice': 'Selalu gunakan jaket pelampung resmi dari pengelola dermaga sebelum menyeberang.',
-        'source': 'BMKG Stasiun Maritim Teluk Bayur',
-        'color': AppColors.info,
-      },
-      {
-        'category': 'Akses Wisata',
-        'severity': 'SIAGA HUJAN',
-        'title': 'Antisipasi Debit Air Terjun Lembah Harau & Lubuk Hitam Saat Hujan Sore',
-        'region': 'Lima Puluh Kota & Bungus Padang',
-        'time': '5 jam lalu • Dispar Sumbar',
-        'summary': 'Pengunjung air terjun diminta segera menjauh dari aliran sungai apabila air mulai keruh atau terdengar gemuruh di bagian hulu.',
-        'advice': 'Waktu kunjungan paling aman adalah pukul 08.00–14.30 WIB saat cuaca relatif cerah.',
-        'source': 'Dinas Pariwisata Provinsi Sumbar',
-        'color': AppColors.forest,
-      },
-    ];
+    final portalArticles = _portalNews.map((n) {
+      return <String, dynamic>{
+        'category': n.category,
+        'severity': n.severity,
+        'title': n.title,
+        'region': n.region,
+        'time': _formatNewsTime(n.publishedAt, n.portalDomain),
+        'summary': n.summary,
+        'advice': n.advice,
+        'source': n.source,
+        'portal_domain': n.portalDomain,
+        'source_url': n.sourceUrl,
+        'color': _newsSeverityColor(n.severity),
+      };
+    }).toList();
 
-    return [...editorialNews, ...liveAlerts];
+    final combined = <Map<String, dynamic>>[...portalArticles, ...liveAlerts];
+    if (_selectedNewsPortal == 'sumbarkita.id') {
+      return combined
+          .where((item) =>
+              (item['portal_domain'] as String? ?? '').toLowerCase().contains('sumbarkita'))
+          .toList();
+    }
+    if (_selectedNewsPortal == 'sumbar.antaranews') {
+      return combined
+          .where((item) =>
+              (item['portal_domain'] as String? ?? '').toLowerCase().contains('antara'))
+          .toList();
+    }
+    if (_selectedNewsPortal == 'Info Jalur BPBD') {
+      return liveAlerts;
+    }
+    return combined;
+  }
+
+  Widget _buildPortalBadge(String portalDomain) {
+    final isSumbarkita = portalDomain.toLowerCase().contains('sumbarkita');
+    final isAntara = portalDomain.toLowerCase().contains('antara');
+    final Color bg = isSumbarkita
+        ? const Color(0xFF064E3B)
+        : isAntara
+            ? const Color(0xFF991B1B)
+            : AppColors.green800;
+    final String label = isSumbarkita
+        ? 'sumbarkita.id'
+        : isAntara
+            ? 'sumbar.antaranews.com'
+            : 'BPBD Sumbar';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.public_rounded, size: 11, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildNewsCard(Map<String, dynamic> news) {
     final Color color = news['color'] as Color;
+    final String portalDomain = news['portal_domain'] as String? ?? 'sumbarkita.id';
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -841,6 +1006,8 @@ class _HazardSosScreenState extends State<HazardSosScreen>
               children: [
                 Row(
                   children: [
+                    _buildPortalBadge(portalDomain),
+                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -851,19 +1018,19 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                         news['category'] as String,
                         style: TextStyle(
                           color: color,
-                          fontSize: 12,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         news['time'] as String,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.right,
-                        style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                        style: const TextStyle(fontSize: 11.5, color: AppColors.muted),
                       ),
                     ),
                   ],
@@ -927,6 +1094,8 @@ class _HazardSosScreenState extends State<HazardSosScreen>
 
   void _showNewsDetailSheet(Map<String, dynamic> news) {
     final Color color = news['color'] as Color;
+    final String portalDomain = news['portal_domain'] as String? ?? 'sumbarkita.id';
+    final String sourceUrl = news['source_url'] as String? ?? 'https://sumbarkita.id/';
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -956,6 +1125,8 @@ class _HazardSosScreenState extends State<HazardSosScreen>
               const SizedBox(height: 12),
               Row(
                 children: [
+                  _buildPortalBadge(portalDomain),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -1021,6 +1192,62 @@ class _HazardSosScreenState extends State<HazardSosScreen>
                           fontWeight: FontWeight.w600,
                           color: AppColors.forest,
                           height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.link_rounded, size: 18, color: AppColors.green800),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        sourceUrl,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: AppColors.cream100,
+                      ),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: sourceUrl));
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Tautan berita $portalDomain disalin ke clipboard!'),
+                            backgroundColor: AppColors.green800,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 14, color: AppColors.green800),
+                      label: const Text(
+                        'Salin Link',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.green800,
                         ),
                       ),
                     ),

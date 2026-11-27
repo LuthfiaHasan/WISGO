@@ -364,3 +364,60 @@ Jika Anda ingin menguji manual, gunakan salah satu token berikut pada tab **Auth
 * **Method & URL**: `DELETE http://localhost:8080/api/v1/admin/destinations/dest-001`
 * **Auth**: Bearer Token Wisatawan (`TokenTourist`)
 * **Expected (`403 Forbidden`)**: `"code": "FORBIDDEN_INSUFFICIENT_ROLE"`, membuktikan proteksi RBAC berjalan ketat.
+
+---
+
+## Modul 8: Meja Kurasi Usulan Destinasi Wisatawan (Tabel `new_tour`) & Berita Bencana Sumbar (`sumbarkita.id` & `sumbar.antaranews.com`)
+
+### 39. [GET] Ambil Antrean Meja Kurasi Usulan Destinasi (`new_tour`)
+* **Method & URL**: `GET http://localhost:8080/api/v1/destinations/new-tours`
+* **Expected (`200 OK`)**: Mengembalikan daftar usulan destinasi wisatawan dari tabel `new_tour` beserta `pending_count`, `approved_count`, dan `rejected_count`.
+
+### 40. [POST] Kirim Usulan Destinasi Baru ke Tabel `new_tour`
+* **Method & URL**: `POST http://localhost:8080/api/v1/destinations/new-tours`
+* **Body JSON**:
+  ```json
+  {
+    "name": "Air Terjun Sarasah Barasok",
+    "category": "Hidden Gem",
+    "city_regency": "Kab. Lima Puluh Kota",
+    "description": "Air terjun bertingkat dengan kabut embun pagi di lembah Harau.",
+    "latitude": -0.1012,
+    "longitude": 100.6731,
+    "tips_menjaga": "Bawa kembali sampah plastik dan tetap di jalur setapak Pokdarwis.",
+    "submitter_name": "Ilham Fathoni",
+    "submitter_phone": "6281234567890",
+    "facilities": ["Jalur Trekking", "Spot Foto Alami"],
+    "is_sensitive": true
+  }
+  ```
+* **Expected (`201 Created`)**: Data tersimpan ke tabel `new_tour` dengan `status: "pending"`.
+
+### 41. [PUT] Setujui Usulan `new_tour` & Promosikan ke Direktori `destinations` (Admin)
+* **Method & URL**: `PUT http://localhost:8080/api/v1/admin/new-tours/nt-002/approve`
+* **Auth**: Bearer Token `jwt-wisgo-admin-dispar-sumbar-2026`
+* **Expected (`200 OK`)**: Status `new_tour` berubah menjadi `"approved"` dan otomatis membuat destinasi terverifikasi baru di tabel `destinations`, `indikator_medan`, dan `aturan_destinasi`.
+
+### 42. [POST] Gabungkan Usulan Duplikat `new_tour` + Kredit Kontributor (Admin)
+* **Method & URL**: `POST http://localhost:8080/api/v1/admin/new-tours/merge`
+* **Auth**: Bearer Token `jwt-wisgo-admin-dispar-sumbar-2026`
+* **Body JSON**:
+  ```json
+  {
+    "submission_ids": ["nt-001", "nt-003"],
+    "primary_data_submission_id": "nt-001",
+    "cover_photo_submission_id": "nt-003",
+    "custom_name": "Air Terjun Sarasah Murai Harau"
+  }
+  ```
+* **Expected (`200 OK`)**: Menggabungkan data terbaik & foto cover terbaik menjadi 1 destinasi resmi di `destinations`.
+
+### 43. [GET] Ambil Berita Wisata & Bencana Sumatera Barat (`sumbarkita.id` & `sumbar.antaranews.com`)
+* **Method & URL**: `GET http://localhost:8080/api/v1/spatial/news`
+* **Query Opsional**: `?portal=sumbarkita.id` atau `?portal=sumbar.antaranews.com`
+* **Expected (`200 OK`)**: Mengembalikan daftar berita wisata & kebencanaan Sumatera Barat lengkap dengan `portal_domain` (`sumbarkita.id` / `sumbar.antaranews.com`), `source_url`, `severity`, `region`, `summary`, dan `advice`.
+
+### 44. [POST] Tarik Berita Live RSS `sumbarkita.id` & `sumbar.antaranews.com`
+* **Method & URL**: `POST http://localhost:8080/api/v1/spatial/news/sync-portals`
+* **Expected (`200 OK`)**: Menarik RSS terbaru dari portal `sumbarkita.id` dan `sumbar.antaranews.com` serta menyinkronkannya ke feed berita aplikasi Mobile & Web Admin.
+

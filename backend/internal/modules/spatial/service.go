@@ -25,6 +25,12 @@ type Service interface {
 	UpdateSOSTicketStatus(idOrCode, status, sarUnit string) (*models.SOSSignal, error)
 	UpsertEmergencyContact(contact models.EmergencyContact) models.EmergencyContact
 	DeleteEmergencyContact(id string) error
+
+	// Berita Wisata & Bencana Sumatera Barat (sumbarkita.id & sumbar.antaranews.com)
+	GetSosNews(portalFilter, categoryFilter string, onlyPublished bool) []models.SosNewsItem
+	UpsertSosNews(item models.SosNewsItem) models.SosNewsItem
+	DeleteSosNews(id string) error
+	SyncLivePortalNews() ([]models.SosNewsItem, int)
 }
 
 type service struct {
@@ -245,6 +251,23 @@ func (s *service) UpsertEmergencyContact(contact models.EmergencyContact) models
 func (s *service) DeleteEmergencyContact(id string) error {
 	return s.repo.DeleteEmergencyContact(id)
 }
+
+func (s *service) GetSosNews(portalFilter, categoryFilter string, onlyPublished bool) []models.SosNewsItem {
+	return s.repo.ListSosNews(portalFilter, categoryFilter, onlyPublished)
+}
+
+func (s *service) UpsertSosNews(item models.SosNewsItem) models.SosNewsItem {
+	return s.repo.UpsertSosNews(item)
+}
+
+func (s *service) DeleteSosNews(id string) error {
+	return s.repo.DeleteSosNews(id)
+}
+
+func (s *service) SyncLivePortalNews() ([]models.SosNewsItem, int) {
+	return s.repo.SyncLivePortalNews()
+}
+
 
 func (s *service) RecordTelemetry(input NavigationTelemetryInput) (*models.GaodeBehaviorRanking, error) {
 	if strings.TrimSpace(input.DestinationID) == "" {
