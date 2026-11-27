@@ -10,6 +10,7 @@ import '../../../../core/models/user_profile.dart';
 import '../../../../core/localization/app_locale.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/auth_guard_dialog.dart';
+import '../../../../core/widgets/wisgo_destination_image.dart';
 import '../../../../core/widgets/wisgo_facility_icon.dart';
 import '../../../auth/presentation/screens/edit_profile_screen.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
@@ -43,6 +44,7 @@ import '../../../trip_planner/presentation/widgets/travel_experience_sheet.dart'
 import '../../../trip_planner/presentation/widgets/travel_share_card_sheet.dart';
 import '../widgets/offline_banner.dart';
 import '../widgets/saved_empty_state.dart';
+import '../widgets/wisgo_hero_slider.dart';
 
 /// Extension untuk menjembatani model FE-2 dengan layar detail FE-1
 extension SavedDestinationModelFe1Bridge on SavedDestinationModel {
@@ -307,15 +309,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
-  // Hero Landmark Slider & Explore Scroll State (nullable & lazy-init agar aman saat Hot Reload)
-  PageController? _heroPageController;
+  // Explore Scroll State (nullable & lazy-init agar aman saat Hot Reload)
   ScrollController? _exploreScrollController;
   GlobalKey? _wisataSectionKey;
-  int? _heroSliderIndex = 0;
-  Timer? _heroSliderTimer;
-
-  PageController get _safeHeroPageController =>
-      _heroPageController ??= PageController();
+  List<SavedDestinationModel>? _cachedHeroLandmarks;
+  bool _showAllExploreDestinations = false;
 
   ScrollController get _safeExploreScrollController =>
       _exploreScrollController ??= ScrollController();
@@ -351,6 +349,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   List<SavedDestinationModel> get _heroLandmarks {
+    if (_cachedHeroLandmarks != null) return _cachedHeroLandmarks!;
     const heroIds = [
       'gunung-padang',
       'lembah-harau',
@@ -367,7 +366,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         }
       }
     }
-    return picked.isNotEmpty ? picked : kAllSumbarDestinations.take(5).toList();
+    _cachedHeroLandmarks =
+        picked.isNotEmpty ? picked : kAllSumbarDestinations.take(5).toList();
+    return _cachedHeroLandmarks!;
   }
 
   void _handleAuthSessionChanged() {
@@ -377,8 +378,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   @override
   void dispose() {
     AuthSession.instance.removeListener(_handleAuthSessionChanged);
-    _heroSliderTimer?.cancel();
-    _heroPageController?.dispose();
     _exploreScrollController?.dispose();
     _petaScrollController.dispose();
     _searchController.dispose();
@@ -398,18 +397,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     if (widget.initialLoading) {
       _savedViewState = 'shimmer';
     }
-    _heroSliderTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      final ctrl = _heroPageController;
-      if (!mounted || ctrl == null || !ctrl.hasClients) return;
-      final total = _heroLandmarks.length;
-      if (total <= 1) return;
-      final next = ((_heroSliderIndex ?? 0) + 1) % total;
-      ctrl.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 480),
-        curve: Curves.easeInOutCubic,
-      );
-    });
   }
 
 
@@ -719,352 +706,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   }
 
   Widget _buildHeroLandmarkSlider() {
-    final slides = _heroLandmarks;
-    final activeIdx = (_heroSliderIndex ?? 0).clamp(0, slides.length - 1);
-    final controller = _safeHeroPageController;
-    return Column(
-      children: [
-        SizedBox(
-          height: 222,
-          child: PageView.builder(
-            controller: controller,
-            allowImplicitScrolling: true,
-            physics: const BouncingScrollPhysics(),
-            itemCount: slides.length,
-            onPageChanged: (idx) => setState(() => _heroSliderIndex = idx),
-            itemBuilder: (context, idx) {
-              return RepaintBoundary(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 1),
-                  child: _buildHeroLandmarkSlideItem(slides[idx], idx),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 10),
-        // Minimalist High-Contrast Pill Dot Indicators
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(slides.length, (idx) {
-            final active = idx == activeIdx;
-            return GestureDetector(
-              onTap: () {
-                if (controller.hasClients) {
-                  controller.animateToPage(
-                    idx,
-                    duration: const Duration(milliseconds: 480),
-                    curve: Curves.easeInOutCubic,
-                  );
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: active ? 20 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: active
-                      ? AppColors.forest
-                      : AppColors.ink.withValues(alpha: 0.20),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeroLandmarkSlideItem(SavedDestinationModel hero, int idx) {
-    final badgeLabels = AppLocale.isEn
-        ? [
-            'MAIN LANDMARK',
-            'GRANITE CLIFFS',
-            'BUKITTINGGI ICON',
-            'MARINE PARADISE',
-            'MINANG HERITAGE',
-          ]
-        : [
-            'LANDMARK UTAMA',
-            'TEBING GRANIT',
-            'IKON BUKITTINGGI',
-            'SURGA BAHARI',
-            'WARISAN MINANG',
-          ];
-    final temps = ['28°C', '24°C', '22°C', '29°C', '25°C'];
-    final badgeText = badgeLabels[idx % badgeLabels.length];
-    final tempText = temps[idx % temps.length];
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.12),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(color: AppColors.forest),
-          Image.network(
-            hero.imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(color: AppColors.forest),
-          ),
-          // Smooth Editorial Bottom Scrim
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  const Color(0xFF0A140D).withValues(alpha: 0.84),
-                  const Color(0xFF0A140D).withValues(alpha: 0.24),
-                  Colors.black.withValues(alpha: 0.06),
-                ],
-                stops: const [0.0, 0.56, 1.0],
-              ),
-            ),
-          ),
-          // Top Subtle Translucent Glass Pills (Ringan 60fps tanpa BackdropFilter lag saat swipe)
-          Positioned(
-            top: 12,
-            left: 12,
-            right: 12,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0E1D13).withValues(alpha: 0.52),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.24),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.location_on_rounded,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${hero.region}, Sumbar',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0E1D13).withValues(alpha: 0.52),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.24),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.wb_sunny_rounded,
-                        size: 12,
-                        color: Color(0xFFFCD34D),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        tempText,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Bottom Hero Text + Clean Pure Frosted Glass Buttons
-          Positioned(
-            bottom: 14,
-            left: 14,
-            right: 14,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC85B2D),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Text(
-                        badgeText,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.6,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      '${hero.distanceKm.toStringAsFixed(hero.distanceKm.truncateToDouble() == hero.distanceKm ? 0 : 1)} ${AppLocale.tr('km dari sini', 'km away')}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.86),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  hero.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 17.5,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.18,
-                    letterSpacing: -0.35,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    // Translucent Glass Primary Button (Ringan 60fps tanpa GPU stall saat geser)
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
-                          onTap: () => _openDestinationDetailModal(hero),
-                          borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            height: 42,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.28),
-                                  Colors.white.withValues(alpha: 0.16),
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.38),
-                                width: 0.9,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  AppLocale.tr(
-                                    'Lihat Destinasi',
-                                    'View Destination',
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: 0.1,
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Matching Translucent Glass 360° Button
-                    Tooltip(
-                      message: 'Panorama 360°',
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
-                          onTap: () => _open360AndDenahModal(hero),
-                          borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.28),
-                                  Colors.white.withValues(alpha: 0.16),
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.38),
-                                width: 0.9,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.threesixty_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return WisgoHeroSlider(
+      slides: _heroLandmarks,
+      isEnglish: AppLocale.isEn,
+      onOpenDetail: _openDestinationDetailModal,
+      onOpen360: _open360AndDenahModal,
     );
   }
 
@@ -1780,10 +1426,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               fit: StackFit.expand,
                               children: [
                                 Container(color: AppColors.forest),
-                                Image.network(
-                                  place.imageUrl,
+                                WisgoDestinationImage(
+                                  source: place.imageUrl,
+                                  destinationId: place.id,
+                                  destinationTitle: place.title,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Image.asset(
+                                  cacheWidth: 480,
+                                  fallback: Image.asset(
                                     'assets/images/splash_bg_1.jpg',
                                     fit: BoxFit.cover,
                                   ),
@@ -2877,24 +2526,78 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                 ),
               )
-            else
+            else ...[
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 11,
-                    mainAxisSpacing: 12,
-                    mainAxisExtent: 312,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    mainAxisExtent: 254,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _buildDestinationGridCard(
                       filtered[index],
                     ),
-                    childCount: filtered.length,
+                    childCount:
+                        (!isExploreFiltering &&
+                            !_showAllExploreDestinations &&
+                            filtered.length > 6)
+                        ? 6
+                        : filtered.length,
                   ),
                 ),
               ),
+              if (!isExploreFiltering && filtered.length > 6)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+                    child: Center(
+                      child: OutlinedButton.icon(
+                        onPressed: () => setState(
+                          () => _showAllExploreDestinations =
+                              !_showAllExploreDestinations,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFFCF7),
+                          foregroundColor: AppColors.forest,
+                          side: const BorderSide(color: AppColors.sageBorder),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 9,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        icon: Icon(
+                          _showAllExploreDestinations
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: AppColors.forest,
+                        ),
+                        label: Text(
+                          _showAllExploreDestinations
+                              ? AppLocale.tr(
+                                  'Tampilkan Lebih Ringkas (6)',
+                                  'Show Less (6)',
+                                )
+                              : AppLocale.tr(
+                                  'Lihat Semua Destinasi (${filtered.length})',
+                                  'View All Destinations (${filtered.length})',
+                                ),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
 
             // 9. Kartu Budaya "Tahukah Kamu?" + Ruang Scroll Aman di atas FAB & Tab Bar
             SliverToBoxAdapter(
@@ -5830,10 +5533,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               child: Stack(
                                 fit: StackFit.expand,
                                 children: [
-                                  Image.network(
-                                    photoUrl,
+                                  WisgoDestinationImage(
+                                    source: photoUrl,
+                                    destinationId: dest.id,
+                                    destinationTitle: dest.name,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Image.asset(
+                                    cacheWidth: 520,
+                                    fallback: Image.asset(
                                       'assets/images/splash_bg_1.jpg',
                                       fit: BoxFit.cover,
                                     ),
@@ -5857,10 +5563,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         sigmaY: 8,
                                         tileMode: TileMode.clamp,
                                       ),
-                                      child: Image.network(
-                                        photoUrl,
+                                      child: WisgoDestinationImage(
+                                        source: photoUrl,
+                                        destinationId: dest.id,
+                                        destinationTitle: dest.name,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => Image.asset(
+                                        cacheWidth: 320,
+                                        filterQuality: FilterQuality.low,
+                                        fallback: Image.asset(
                                           'assets/images/splash_bg_1.jpg',
                                           fit: BoxFit.cover,
                                         ),
@@ -6448,30 +6158,32 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Foto Atas Lebih Turun ke Bawah + Progressive Blur (0 Garis Sambungan)
+          // Foto Atas Proporsional Ringkas + Progressive Blur (0 Garis Sambungan)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: 196,
+            height: 144,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(
-                  place.imageUrl,
+                WisgoDestinationImage(
+                  source: place.imageUrl,
+                  destinationId: place.id,
+                  destinationTitle: place.title,
                   fit: BoxFit.cover,
+                  cacheWidth: 480,
                   filterQuality: FilterQuality.medium,
-                  errorBuilder: (_, __, ___) =>
-                      const ColoredBox(color: AppColors.sage),
+                  fallback: const ColoredBox(color: AppColors.sage),
                 ),
                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  height: 82,
+                  height: 54,
                   child: ClipRect(
                     child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      imageFilter: ImageFilter.blur(sigmaX: 9, sigmaY: 9),
                       child: ShaderMask(
                         shaderCallback: (rect) => const LinearGradient(
                           begin: Alignment.topCenter,
@@ -6480,13 +6192,15 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           stops: [0.0, 0.65],
                         ).createShader(rect),
                         blendMode: BlendMode.dstIn,
-                        child: Image.network(
-                          place.imageUrl,
+                        child: WisgoDestinationImage(
+                          source: place.imageUrl,
+                          destinationId: place.id,
+                          destinationTitle: place.title,
                           fit: BoxFit.cover,
+                          cacheWidth: 320,
                           alignment: Alignment.bottomCenter,
                           filterQuality: FilterQuality.low,
-                          errorBuilder: (_, __, ___) =>
-                              const SizedBox.shrink(),
+                          fallback: const SizedBox.shrink(),
                         ),
                       ),
                     ),
@@ -6504,13 +6218,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.ink.withValues(alpha: 0.22),
+                      AppColors.ink.withValues(alpha: 0.20),
                       Colors.transparent,
-                      cardBg.withValues(alpha: 0.78),
+                      cardBg.withValues(alpha: 0.80),
                       cardBg,
                       cardBg,
                     ],
-                    stops: const [0.0, 0.28, 0.48, 0.57, 1.0],
+                    stops: const [0.0, 0.24, 0.43, 0.52, 1.0],
                   ),
                 ),
               ),
@@ -6595,7 +6309,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                  padding: const EdgeInsets.fromLTRB(9, 0, 9, 9),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -6607,20 +6321,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 13.2,
                               fontWeight: FontWeight.w800,
                               color: AppColors.ink,
-                              height: 1.22,
+                              height: 1.18,
                               letterSpacing: -0.25,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
                             const Icon(
                               Icons.location_on_rounded,
-                              size: 11.5,
+                              size: 11,
                               color: AppColors.brush,
                             ),
                             const SizedBox(width: 2),
@@ -6630,7 +6344,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.muted,
                                 ),
@@ -6638,10 +6352,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 9),
+                        const SizedBox(height: 7),
                         // Deretan Ikon Fasilitas 3D Clay Sejajar Penuh Kiri-Kanan
                         SizedBox(
-                          height: 30,
+                          height: 27,
                           child: Row(
                             children: List.generate(
                               place.facilities.take(5).length,
@@ -6651,7 +6365,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 return Expanded(
                                   child: Padding(
                                     padding: EdgeInsets.only(
-                                      right: fIdx == totalFac - 1 ? 0 : 5,
+                                      right: fIdx == totalFac - 1 ? 0 : 4,
                                     ),
                                     child: Tooltip(
                                       message: fac,
@@ -6659,13 +6373,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       child: InkWell(
                                         onTap: () =>
                                             _openFacilityDetailSheet(fac, place),
-                                        borderRadius: BorderRadius.circular(9),
+                                        borderRadius: BorderRadius.circular(8),
                                         child: Container(
-                                          height: 30,
+                                          height: 27,
                                           decoration: BoxDecoration(
                                             color: AppColors.creamSubtle
                                                 .withValues(alpha: 0.85),
-                                            borderRadius: BorderRadius.circular(9),
+                                            borderRadius: BorderRadius.circular(8),
                                             border: Border.all(
                                               color: AppColors.warmBorder
                                                   .withValues(alpha: 0.8),
@@ -6674,7 +6388,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           alignment: Alignment.center,
                                           child: WisgoFacilityIcon(
                                             facilityName: fac,
-                                            size: 19,
+                                            size: 17,
                                             fallbackIcon: _getFacilityIcon(fac),
                                           ),
                                         ),
@@ -6686,13 +6400,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         // 2 Tombol Aksi Sejajar Rapi
                         Row(
                           children: [
                             Expanded(
                               child: SizedBox(
-                                height: 33,
+                                height: 30,
                                 child: OutlinedButton(
                                   onPressed: () => _open360AndDenahModal(place),
                                   style: OutlinedButton.styleFrom(
@@ -6705,7 +6419,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       horizontal: 4,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(11),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                   child: FittedBox(
@@ -6713,7 +6427,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                     child: Text(
                                       AppLocale.tr('Panorama 360°', '360°'),
                                       style: const TextStyle(
-                                        fontSize: 10.5,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -6721,10 +6435,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 5),
                             Expanded(
                               child: SizedBox(
-                                height: 33,
+                                height: 30,
                                 child: ElevatedButton(
                                   onPressed: () =>
                                       _openDestinationDetailModal(place),
@@ -6736,7 +6450,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                       horizontal: 4,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(11),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                   child: FittedBox(
@@ -6799,10 +6513,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 fit: StackFit.expand,
                 children: [
                   Container(color: AppColors.forest),
-                  Image.network(
-                    place.imageUrl,
+                  WisgoDestinationImage(
+                    source: place.imageUrl,
+                    destinationId: place.id,
+                    destinationTitle: place.title,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: AppColors.forest),
+                    cacheWidth: 720,
+                    fallback: const ColoredBox(color: AppColors.forest),
                   ),
                   Container(
                     decoration: BoxDecoration(

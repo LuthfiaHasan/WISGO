@@ -39,4 +39,5 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/gambar_asli/
     - assets/audio/

@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppColors.ink,
+                        color: const Color(0xFF1D1D1F),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -1119,11 +1119,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: ElevatedButton(
                                   onPressed: _handleAppleSignIn,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.ink,
+                                    backgroundColor: const Color(0xFF1D1D1F),
                                     foregroundColor: Colors.white,
                                     elevation: 1,
-                                    shadowColor:
-                                        AppColors.ink.withValues(alpha: 0.16),
+                                    shadowColor: const Color(0xFF1D1D1F)
+                                        .withValues(alpha: 0.22),
+                                    side: const BorderSide(
+                                      color: Color(0xFF3A3A3C),
+                                      width: 0.9,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(28),
                                     ),

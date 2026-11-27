@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/wisgo_destination_image.dart';
 import '../../../core/widgets/wisgo_facility_icon.dart';
 import '../../../core/widgets/crowd_badge.dart';
 import '../../fair_price/data/models/fair_price_tariff_model.dart';
@@ -249,12 +250,14 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       fit: StackFit.expand,
       children: [
         Container(color: AppColors.forest),
-        if (dest.coverImage.isNotEmpty)
-          Image.network(
-            dest.coverImage,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(color: AppColors.forest),
-          ),
+        WisgoDestinationImage(
+          source: dest.coverImage,
+          destinationId: dest.id,
+          destinationTitle: dest.name,
+          fit: BoxFit.cover,
+          cacheWidth: 1080,
+          fallback: const ColoredBox(color: AppColors.forest),
+        ),
         // Scrim natural hanya di tepi atas & bawah agar foto asli tetap jernih
         const DecoratedBox(
           decoration: BoxDecoration(
