@@ -22,8 +22,11 @@ func NewHandler(service Service) *Handler {
 
 // RegisterRoutes mendaftarkan seluruh endpoint system_core ke router group
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	// Publik: Katalog Kontrak 24 Endpoint & Sistem Notifikasi In-App (Tabel notifikasi BE-1)
+	// Publik: Katalog Kontrak 24 Endpoint, Telemetri SLA & Sistem Notifikasi In-App (Tabel notifikasi & api_telemetry_logs BE-1)
 	rg.GET("/system/contracts", h.GetSystemContractsCatalog)
+	rg.GET("/system/benchmark", h.GetSystemBenchmarkAdmin)
+	rg.POST("/system/benchmark/run", h.GetSystemBenchmarkAdmin)
+	rg.GET("/system/telemetry-logs", h.GetTelemetryLogs)
 	rg.GET("/notifications", h.GetSystemNotifications)
 	rg.POST("/notifications/broadcast", h.PostBroadcastNotification)
 
@@ -32,9 +35,22 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	admin.Use(middleware.RequireRoles("admin_dispar", "pokdarwis"))
 	{
 		admin.GET("/system/benchmark", h.GetSystemBenchmarkAdmin)
+		admin.POST("/system/benchmark/run", h.GetSystemBenchmarkAdmin)
+		admin.GET("/system/telemetry-logs", h.GetTelemetryLogs)
 		admin.POST("/cache/flush", h.PostFlushCacheAdmin)
 		admin.POST("/notifications/broadcast", h.PostBroadcastNotification)
 	}
+}
+
+// GetTelemetryLogs GET /api/v1/system/telemetry-logs & GET /api/v1/admin/system/telemetry-logs
+func (h *Handler) GetTelemetryLogs(c *gin.Context) {
+	logs := middleware.GetRecentTelemetryLogs(50)
+	c.JSON(http.StatusOK, gin.H{
+		"status":         "ok",
+		"table":          "api_telemetry_logs",
+		"total_recorded": len(logs),
+		"logs":           logs,
+	})
 }
 
 // GetSystemContractsCatalog GET /api/v1/system/contracts

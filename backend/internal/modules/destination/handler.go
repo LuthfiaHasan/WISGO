@@ -13,8 +13,9 @@ import (
 
 // Handler menangani request HTTP untuk domain Direktori Destinasi, Spasial, Offline Bundle, dan CMS Admin
 type Handler struct {
-	service Service
-	cache   *middleware.InMemoryTTLCache
+	service     Service
+	cache       *middleware.InMemoryTTLCache
+	rateLimiter *middleware.TokenBucketRateLimiter
 }
 
 // NewHandler membuat instance handler baru
@@ -23,6 +24,19 @@ func NewHandler(service Service, cache *middleware.InMemoryTTLCache) *Handler {
 		service: service,
 		cache:   cache,
 	}
+}
+
+// WithRateLimiter memasang Token Bucket Rate Limiter anti-spam pada endpoint usulan destinasi publik
+func (h *Handler) WithRateLimiter(rl *middleware.TokenBucketRateLimiter) *Handler {
+	h.rateLimiter = rl
+	return h
+}
+
+func (h *Handler) protectRateLimit(action string) gin.HandlerFunc {
+	if h.rateLimiter != nil {
+		return h.rateLimiter.Protect(action)
+	}
+	return func(c *gin.Context) { c.Next() }
 }
 
 // RegisterRoutes mendaftarkan seluruh endpoint destinasi ke Gin RouterGroup
@@ -37,8 +51,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/destinations/:id/tariffs", h.GetDestinationTariffs)
 	rg.GET("/destinations/:id/offline-bundle", h.GetOfflineBundle)
 
-	// Wisatawan (Role: tourist): Input Wisata Hidden Gem (BE-1 Pilar 2 & 6)
-	rg.POST("/destinations/hidden-gem", h.CreateHiddenGemTourist)
+	// Wisatawan (Role: tourist): Input Wisata Hidden Gem (BE-1 Pilar 2 & 6 — Dilindungi Rate Limiter)
+	rg.POST("/destinations/hidden-gem", h.protectRateLimit("ugc_hidden_gem"), h.CreateHiddenGemTourist)
 
 	// CMS Admin (Diproteksi Middleware JWT RBAC)
 	cmsDisparOrPokdarwis := middleware.RequireRoles("admin_dispar", "pokdarwis")
@@ -62,8 +76,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 	// Meja Kurasi Usulan Destinasi Wisatawan (Tabel new_tour — Sinkron UgcSubmissionsSubTab.tsx & Mobile)
 	rg.GET("/destinations/new-tours", h.GetNewTours)
-	rg.POST("/destinations/new-tours", h.CreateNewTour)
-	rg.POST("/destinations/propose", h.CreateNewTour)
+	rg.POST("/destinations/new-tours", h.protectRateLimit("ugc_new_tour"), h.CreateNewTour)
+	rg.POST("/destinations/propose", h.protectRateLimit("ugc_new_tour"), h.CreateNewTour)
 	rg.GET("/admin/new-tours", cmsDisparOrPokdarwis, h.GetNewTours)
 	rg.POST("/admin/new-tours", cmsDisparOrPokdarwis, h.CreateNewTour)
 	rg.PUT("/admin/new-tours/:id/approve", cmsDisparOrPokdarwis, h.ApproveNewTourAdmin)
