@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/wisgo_facility_icon.dart';
 import '../../../core/widgets/crowd_badge.dart';
 import '../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../fair_price/presentation/widgets/fair_price_barometer_table.dart';
@@ -655,17 +656,33 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     );
   }
 
+  String _formatEntryFeeDisplay(String raw) {
+    final trimmed = raw.trim();
+    final match = RegExp(r'^Rp\s*(\d{4,})$', caseSensitive: false)
+        .firstMatch(trimmed);
+    if (match == null) return trimmed;
+    final digits = match.group(1)!;
+    final formatted = digits.replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+    return 'Rp $formatted';
+  }
+
   Widget _buildFourStatsGrid(DestinationModel dest) {
-    return GridView.count(
-      crossAxisCount: 2,
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 2.0,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        mainAxisExtent: 80,
+      ),
       children: [
         _buildStatTile(
-          icon: Icons.route_outlined,
+          assetPath: 'assets/images/det_jarak.png',
+          fallbackIcon: Icons.route_outlined,
           iconColor: AppColors.forest,
           iconBg: AppColors.sage,
           label: 'Jarak Tempuh',
@@ -681,35 +698,39 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
           ),
         ),
         _buildStatTile(
-          icon: Icons.schedule_rounded,
+          assetPath: 'assets/images/det_waktu.png',
+          fallbackIcon: Icons.schedule_rounded,
           iconColor: AppColors.info,
           iconBg: AppColors.infoBg,
           label: 'Estimasi Waktu',
           child: Text(
             dest.travelTime,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
               color: AppColors.ink,
+              height: 1.2,
             ),
           ),
         ),
         _buildStatTile(
-          icon: Icons.people_alt_outlined,
+          assetPath: 'assets/images/det_keramaian.png',
+          fallbackIcon: Icons.people_alt_outlined,
           iconColor: AppColors.goldMinang,
           iconBg: AppColors.warningBg,
           label: 'Keramaian',
           child: CrowdBadge(level: dest.crowdLevelEnum),
         ),
         _buildStatTile(
-          icon: Icons.confirmation_number_outlined,
+          assetPath: 'assets/images/det_tiket.png',
+          fallbackIcon: Icons.confirmation_number_outlined,
           iconColor: AppColors.forest,
           iconBg: AppColors.sage,
           label: 'Tiket Masuk',
           child: Text(
-            dest.entryFee,
+            _formatEntryFeeDisplay(dest.entryFee),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -724,7 +745,8 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   }
 
   Widget _buildStatTile({
-    required IconData icon,
+    required String assetPath,
+    required IconData fallbackIcon,
     required Color iconColor,
     required Color iconBg,
     required String label,
@@ -733,20 +755,29 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.warmBorder),
+        color: Colors.white.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.warmBorder.withValues(alpha: 0.85)),
       ),
       child: Row(
         children: [
           Container(
-            width: 34,
-            height: 34,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(11),
+              color: iconBg.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 17, color: iconColor),
+            alignment: Alignment.center,
+            child: Image.asset(
+              assetPath,
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              errorBuilder: (_, __, ___) =>
+                  Icon(fallbackIcon, size: 18, color: iconColor),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -759,12 +790,12 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.muted,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 DefaultTextStyle.merge(
                   style: const TextStyle(
                     fontFeatures: [FontFeature.tabularFigures()],
@@ -782,12 +813,14 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   Widget _buildFiveMedanGrid(MedanIndicatorModel medan) {
     final items = [
       (
+        asset: 'assets/images/det_kendaraan.png',
         icon: Icons.directions_car_filled_outlined,
         title: 'Akses Kendaraan',
         value: medan.vehicleAccess,
         color: AppColors.forest,
       ),
       (
+        asset: 'assets/images/fac_trekking.png',
         icon: Icons.nordic_walking_outlined,
         title: 'Trekking',
         value: medan.trekkingLevel,
@@ -796,6 +829,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             : AppColors.forest,
       ),
       (
+        asset: 'assets/images/det_sinyal.png',
         icon: Icons.cell_tower_rounded,
         title: 'Sinyal Seluler',
         value: medan.cellularSignal,
@@ -804,6 +838,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             : AppColors.success,
       ),
       (
+        asset: 'assets/images/fac_pemandu.png',
         icon: Icons.person_pin_circle_outlined,
         title: 'Pemandu',
         value: medan.guideNeed,
@@ -815,39 +850,52 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
 
     return Column(
       children: [
-        GridView.count(
-          crossAxisCount: 2,
+        GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.75,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            mainAxisExtent: 82,
+          ),
           children: items.map((item) {
             return Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.bgCard,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.warmBorder),
+                color: Colors.white.withValues(alpha: 0.78),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColors.warmBorder.withValues(alpha: 0.85),
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: item.color.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(item.icon, size: 15, color: item.color),
-                      ),
-                      const SizedBox(width: 7),
-                      Expanded(
-                        child: Text(
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: item.color.withValues(alpha: 0.11),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      item.asset,
+                      width: 23,
+                      height: 23,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (_, __, ___) =>
+                          Icon(item.icon, size: 17, color: item.color),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -857,18 +905,19 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                             color: AppColors.muted,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    item.value,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: item.color,
-                      height: 1.25,
+                        const SizedBox(height: 3),
+                        Text(
+                          item.value,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: item.color,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -882,23 +931,33 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.warmBorder),
+            color: Colors.white.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: AppColors.warmBorder.withValues(alpha: 0.85),
+            ),
           ),
           child: Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                  color: AppColors.sage,
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.sage.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.wc_outlined,
-                  size: 17,
-                  color: AppColors.forest,
+                alignment: Alignment.center,
+                child: Image.asset(
+                  'assets/images/fac_toilet.png',
+                  width: 23,
+                  height: 23,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.wc_outlined,
+                    size: 18,
+                    color: AppColors.forest,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -909,7 +968,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                     const Text(
                       'Fasilitas Umum',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                         color: AppColors.muted,
                       ),
@@ -1022,6 +1081,77 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   // ===========================================================================
   // TAB 2: TARIF RESMI & FASILITAS LENGKAP
   // ===========================================================================
+  void _openFairPriceBarometerSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollCtrl) => SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10, bottom: 4),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 4, 12, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Barometer Tarif Wajar',
+                      style: TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  children: [
+                    FairPriceBarometerTable(
+                      destinationData: _matchedPlace,
+                      selectedCategory: 'ALL',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTarifFasilitasSection() {
     return Column(
       key: const ValueKey('tab-tarif'),
@@ -1065,17 +1195,17 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _getFacilityIcon(fac),
-                          size: 13,
-                          color: AppColors.forest,
+                        WisgoFacilityIcon(
+                          facilityName: fac,
+                          size: 18,
+                          fallbackIcon: _getFacilityIcon(fac),
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 6),
                         Flexible(
                           child: Text(
                             fac,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w700,
                               color: AppColors.forest,
                             ),
@@ -1116,28 +1246,27 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                       ),
                     ),
                   ),
-                  if (widget.onOpenBarometer != null)
-                    GestureDetector(
-                      onTap: widget.onOpenBarometer,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.sage,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'Barometer →',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.forest,
-                          ),
+                  GestureDetector(
+                    onTap: _openFairPriceBarometerSheet,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.sage,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text(
+                        'Barometer →',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.forest,
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
               const SizedBox(height: 3),
@@ -1203,24 +1332,100 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-
-        // Fair-Price Barometer Resmi
-        const Text(
-          'Fair-Price Barometer (Tarif Wajar Nagari)',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: AppColors.ink,
-            letterSpacing: -0.2,
-          ),
-        ),
-        const SizedBox(height: 10),
-        widget.fe2FairPriceSlot ??
-            FairPriceBarometerTable(
-              destinationData: _matchedPlace,
-              selectedCategory: 'ALL',
-            ),
+                const SizedBox(height: 12),
+                // Strip Ringkas Anti-Pungli & Pintasan Barometer Tarif Wajar (Tanpa Duplikasi Tabel/Foto)
+                if (widget.fe2FairPriceSlot != null) ...[
+                  const SizedBox(height: 4),
+                  widget.fe2FairPriceSlot!,
+                ] else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.sage.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: AppColors.brush.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.verified_user_rounded,
+                                size: 18,
+                                color: AppColors.forest,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Barometer Tarif Wajar (Anti-Pungli)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.ink,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Bandingkan tarif resmi vs batas wajar & laporkan jika ada pungli.',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: AppColors.muted,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: OutlinedButton.icon(
+                            onPressed: _openFairPriceBarometerSheet,
+                            icon: const Icon(
+                              Icons.balance_rounded,
+                              size: 16,
+                              color: AppColors.forest,
+                            ),
+                            label: const Text(
+                              'Lihat Barometer Tarif Wajar',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.forest,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.white.withValues(alpha: 0.85),
+                              side: BorderSide(
+                                color: AppColors.brush.withValues(alpha: 0.35),
+                              ),
+                              shape: const StadiumBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
       ],
     );
   }
