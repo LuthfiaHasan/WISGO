@@ -668,7 +668,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               ),
                               const SizedBox(height: 10),
                               const Text(
-                                'Termasuk dalam Harga (Include):',
+                                'Sudah Termasuk',
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
@@ -694,7 +694,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               )),
                               const SizedBox(height: 8),
                               const Text(
-                                'Tidak Termasuk dalam Harga (Exclude):',
+                                'Tidak Termasuk',
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,

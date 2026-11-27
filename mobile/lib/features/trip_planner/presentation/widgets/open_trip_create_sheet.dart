@@ -486,7 +486,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
         backgroundColor: AppColors.cream,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          isInclude ? 'Tambah Fasilitas Include' : 'Tambah Biaya Exclude',
+          isInclude ? 'Tambah Fasilitas Termasuk' : 'Tambah Biaya Tidak Termasuk',
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink),
         ),
         content: TextField(
@@ -494,8 +494,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
           autofocus: true,
           decoration: _inputDecoration(
             isInclude
-                ? 'Cth: Sewa Pelampung / Makan Siang Nasi Kapau'
-                : 'Cth: Sewa Baju Adat / Ojek Lokal',
+                ? 'Sewa Pelampung / Makan Siang Nasi Kapau'
+                : 'Sewa Baju Adat / Ojek Lokal',
           ),
         ),
         actions: [
