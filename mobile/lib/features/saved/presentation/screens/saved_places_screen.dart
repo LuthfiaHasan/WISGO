@@ -381,6 +381,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   void dispose() {
     AuthSession.instance.removeListener(_handleAuthSessionChanged);
     TripETicketStore.instance.removeListener(_handleNewETicket);
+    OrganizerNotificationBridge.latestNotif
+        .removeListener(_handleAdminVerificationNotif);
     _exploreScrollController?.dispose();
     _petaScrollController.dispose();
     _searchController.dispose();
@@ -441,11 +443,23 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     });
   }
 
+  void _handleAdminVerificationNotif() {
+    final notif = OrganizerNotificationBridge.latestNotif.value;
+    if (notif == null || !mounted) return;
+    final exists = _appNotifications.any((n) => n['id'] == notif['id']);
+    if (exists) return;
+    setState(() {
+      _appNotifications.insert(0, Map<String, dynamic>.from(notif));
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     AuthSession.instance.addListener(_handleAuthSessionChanged);
     TripETicketStore.instance.addListener(_handleNewETicket);
+    OrganizerNotificationBridge.latestNotif
+        .addListener(_handleAdminVerificationNotif);
     _activeTabIndex = widget.initialTabIndex;
     _isOfflineMode = widget.initialOfflineMode;
     if (widget.isGuest) {
@@ -2900,6 +2914,30 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message: 'Atur & Kelola Open Trip',
+                        child: InkWell(
+                          mouseCursor: SystemMouseCursors.click,
+                          onTap: _openOrganizerHubModal,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.forest,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.sageBorder),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.manage_accounts_rounded,
+                              size: 16,
+                              color: AppColors.cream,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -4412,6 +4450,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   iconColor = AppColors.forest;
                                   iconBg = AppColors.successBorder;
                                   break;
+                                case 'admin_rejected':
+                                  notifIcon = Icons.gpp_bad_rounded;
+                                  iconColor = AppColors.danger;
+                                  iconBg = AppColors.dangerBg;
+                                  break;
                                 case 'eticket':
                                   notifIcon = Icons.confirmation_number_rounded;
                                   iconColor = AppColors.forest;
@@ -4472,6 +4515,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           orElse: () => _budayaFestivals.first,
                                         );
                                         _openFestivalDetailModal(matched);
+                                      } else if (type == 'opentrip' ||
+                                          type == 'admin_rejected') {
+                                        _openOrganizerHubModal();
                                       } else if (type == 'eticket' && notif['ticketCode'] != null) {
                                         final ticket = TripETicketStore.instance
                                             .findByCode(notif['ticketCode'] as String);

@@ -283,13 +283,19 @@ class _OpenTripOrganizerHubSheetState extends State<OpenTripOrganizerHubSheet> {
                     ...myTrips.map((trip) {
                       final isApproved = trip.verificationStatus ==
                           TripVerificationStatus.approved;
+                      final isRejected = trip.verificationStatus ==
+                          TripVerificationStatus.rejected;
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppColors.bgCard,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.sageBorder),
+                          border: Border.all(
+                            color: isRejected
+                                ? AppColors.danger
+                                : AppColors.sageBorder,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,25 +321,31 @@ class _OpenTripOrganizerHubSheetState extends State<OpenTripOrganizerHubSheet> {
                                   decoration: BoxDecoration(
                                     color: trip.isTripCompleted
                                         ? AppColors.infoBg
-                                        : (isApproved
-                                            ? AppColors.successBg
-                                            : AppColors.warningBg),
+                                        : (isRejected
+                                            ? AppColors.dangerBg
+                                            : (isApproved
+                                                ? AppColors.successBg
+                                                : AppColors.warningBg)),
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                   child: Text(
                                     trip.isTripCompleted
                                         ? 'Selesai ✓'
-                                        : (isApproved
-                                            ? 'Terverifikasi ✓'
-                                            : 'Menunggu Admin'),
+                                        : (isRejected
+                                            ? 'Ditolak Admin'
+                                            : (isApproved
+                                                ? 'Disetujui ✓'
+                                                : 'Menunggu Admin')),
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w800,
                                       color: trip.isTripCompleted
                                           ? AppColors.info
-                                          : (isApproved
-                                              ? AppColors.success
-                                              : AppColors.warningDark),
+                                          : (isRejected
+                                              ? AppColors.danger
+                                              : (isApproved
+                                                  ? AppColors.success
+                                                  : AppColors.warningDark)),
                                     ),
                                   ),
                                 ),
@@ -341,7 +353,7 @@ class _OpenTripOrganizerHubSheetState extends State<OpenTripOrganizerHubSheet> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${trip.singleDestination} • ${trip.departureDate} (${trip.departureTime})',
+                              '${trip.singleDestination} • Level ${trip.difficultyLevel} • ${trip.departureDate}',
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 color: AppColors.muted,
@@ -349,41 +361,121 @@ class _OpenTripOrganizerHubSheetState extends State<OpenTripOrganizerHubSheet> {
                             ),
                             const SizedBox(height: 10),
 
-                            if (!isApproved) ...[
+                            if (isRejected) ...[
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.dangerBg,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Ditolak Admin: ${trip.adminRejectionReason ?? 'Foto KTP / Lisensi belum jelas. Silakan ajukan ulang.'}',
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.danger,
+                                  ),
+                                ),
+                              ),
                               SizedBox(
                                 width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      trip.verificationStatus =
-                                          TripVerificationStatus.approved;
-                                    });
-                                    widget.onTripsChanged();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        backgroundColor: AppColors.success,
-                                        content: Text(
-                                          'Admin ACC! Tombol Penyelenggara & Data Peserta kini terbuka.',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.verified_rounded, size: 16),
+                                child: OutlinedButton.icon(
+                                  onPressed: _openCreateForm,
+                                  icon: const Icon(Icons.refresh_rounded, size: 16),
                                   label: const Text(
-                                    'Simulasi ACC Admin (Uji Coba)',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                                    'Perbaiki & Ajukan Ulang',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.forest,
-                                    foregroundColor: AppColors.cream,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.danger,
+                                    side: const BorderSide(color: AppColors.danger),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
                                 ),
+                              ),
+                            ] else if (!isApproved) ...[
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        setState(() {
+                                          trip.verificationStatus =
+                                              TripVerificationStatus.approved;
+                                        });
+                                        OrganizerNotificationBridge.emit(
+                                          tripId: trip.id,
+                                          tripTitle: trip.title,
+                                          approved: true,
+                                        );
+                                        widget.onTripsChanged();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            backgroundColor: AppColors.success,
+                                            content: Text(
+                                              'Notifikasi terkirim: Disetujui Admin! Manajemen Penyelenggara kini aktif.',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.verified_rounded, size: 15),
+                                      label: const Text(
+                                        'ACC Admin (Uji)',
+                                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.forest,
+                                        foregroundColor: AppColors.cream,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        setState(() {
+                                          trip.verificationStatus =
+                                              TripVerificationStatus.rejected;
+                                          trip.adminRejectionReason =
+                                              'Foto KTP kurang jelas atau nomor lisensi tidak valid.';
+                                        });
+                                        OrganizerNotificationBridge.emit(
+                                          tripId: trip.id,
+                                          tripTitle: trip.title,
+                                          approved: false,
+                                          reason: trip.adminRejectionReason!,
+                                        );
+                                        widget.onTripsChanged();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            backgroundColor: AppColors.danger,
+                                            content: Text(
+                                              'Notifikasi terkirim: Pengajuan Ditolak Admin.',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.close_rounded, size: 15),
+                                      label: const Text(
+                                        'Tolak (Uji)',
+                                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.danger,
+                                        side: const BorderSide(color: AppColors.danger),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ] else ...[
                               Row(

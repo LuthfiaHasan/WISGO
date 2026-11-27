@@ -128,8 +128,11 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
 
   DateTime _departureDate = DateTime(2026, 12, 12);
   TimeOfDay _departureTime = const TimeOfDay(hour: 6, minute: 30);
+  int _wizardStep = 0; // 0: Data Diri, 1: KTP & Wajah, 2: Level & Detail Trip
   bool _hasUploadedKtp = false;
-  bool _isHardRoute = false;
+  bool _hasVerifiedFace = false;
+  String _difficultyLevel = 'Medium'; // 'Easy' | 'Medium' | 'Hard'
+  bool get _isHardRoute => _difficultyLevel == 'Hard';
   bool _hasUploadedLicense = false;
 
   // Itinerary Rundown yang diisi manual oleh pembuat trip (Sistem sediakan slot jam)
@@ -620,7 +623,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       _selectedSingleDestination = newDest;
       // Item 2: Kategori otomatis ditentukan berdasarkan destinasi yang dipilih
       _autoDeterminedCategory = determineCategoryForDestination(newDest);
-      _isHardRoute = _detectHardRoute(newDest);
+      _difficultyLevel = _detectHardRoute(newDest) ? 'Hard' : 'Medium';
       _titleController.text = 'Eksplorasi $newDest';
       _applyGoogleMapsPointFor(newDest);
     });
@@ -757,12 +760,12 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       return;
     }
 
-    if (!_hasUploadedKtp) {
+    if (!_hasUploadedKtp || !_hasVerifiedFace) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppColors.terracotta,
           content: Text(
-            'Langkah 2: Wajib Upload KTP sebelum mengajukan Open Trip.',
+            'Langkah 2: Wajib Upload KTP dan Autentikasi Wajah terlebih dahulu.',
           ),
         ),
       );
@@ -820,6 +823,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       quotaMax: quota,
       quotaFilled: 1, // Host sebagai peserta pertama
       verificationStatus: TripVerificationStatus.pendingAdmin,
+      difficultyLevel: _difficultyLevel,
       isCreatedByCurrentUser: true,
       organizer: VerifiedOrganizer(
         id: 'ORG-USER',
@@ -936,7 +940,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               const SizedBox(height: 16),
 
               const Text(
-                'BUAT JADWAL TRIP GO BARU',
+                'PENGAJUAN PENYELENGGARA OPEN TRIP',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -945,10 +949,358 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Sistem WISGO: 1 Destinasi Tunggal per Perjalanan • Kategori Otomatis',
+                'Ikuti 3 langkah pendaftaran penyelenggara sebelum verifikasi Admin WISGO',
                 style: TextStyle(fontSize: 11, color: AppColors.muted),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
+
+              // Indikator 3 Halaman Bertahap
+              Row(
+                children: [
+                  _wizardPill(0, '1. Data Diri'),
+                  const SizedBox(width: 6),
+                  _wizardPill(1, '2. KTP & Wajah'),
+                  const SizedBox(width: 6),
+                  _wizardPill(2, '3. Level & Trip'),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              if (_wizardStep == 0) ...[
+                _buildFieldLabel('LANGKAH 1 • DATA DIRI PENYELENGGARA'),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: _hostNameController,
+                  decoration: _inputDecoration('Nama Lengkap'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _hostPhoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: _inputDecoration('Nomor Telepon / WhatsApp Aktif'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _hostSocialController,
+                  decoration: _inputDecoration('Akun Instagram (Cth: @username)'),
+                ),
+                const SizedBox(height: 18),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_hostNameController.text.trim().isEmpty ||
+                        _hostPhoneController.text.trim().isEmpty ||
+                        _hostSocialController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: AppColors.terracotta,
+                          content: Text('Lengkapi Nama, Nomor Telepon, dan Instagram terlebih dahulu.'),
+                        ),
+                      );
+                      return;
+                    }
+                    setState(() => _wizardStep = 1);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text(
+                    'Lanjut ke Upload KTP & Wajah →',
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ] else if (_wizardStep == 1) ...[
+                _buildFieldLabel('LANGKAH 2 • UPLOAD KTP + AUTENTIKASI WAJAH'),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _hasUploadedKtp ? AppColors.successBorder : AppColors.warmBorder,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: _hasUploadedKtp ? AppColors.successBg : AppColors.creamSubtle,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          _hasUploadedKtp ? Icons.check_circle_rounded : Icons.badge_outlined,
+                          size: 20,
+                          color: _hasUploadedKtp ? AppColors.success : AppColors.forest,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Upload Foto e-KTP',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                            ),
+                            Text(
+                              _hasUploadedKtp
+                                  ? 'e-KTP berhasil diunggah'
+                                  : 'Wajib unggah foto KTP yang jelas',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _hasUploadedKtp ? AppColors.success : AppColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => setState(() => _hasUploadedKtp = true),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.forest,
+                          side: const BorderSide(color: AppColors.sageBorder),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text(_hasUploadedKtp ? 'Ganti' : 'Upload KTP', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _hasVerifiedFace ? AppColors.successBorder : AppColors.warmBorder,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: _hasVerifiedFace ? AppColors.successBg : AppColors.creamSubtle,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          _hasVerifiedFace ? Icons.check_circle_rounded : Icons.face_retouching_natural_rounded,
+                          size: 20,
+                          color: _hasVerifiedFace ? AppColors.success : AppColors.forest,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Verifikasi / Autentikasi Wajah',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                            ),
+                            Text(
+                              _hasVerifiedFace
+                                  ? 'Autentikasi wajah cocok dengan KTP ✓'
+                                  : 'Swafoto liveness untuk pencocokan KTP',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _hasVerifiedFace ? AppColors.success : AppColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => setState(() => _hasVerifiedFace = true),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.forest,
+                          side: const BorderSide(color: AppColors.sageBorder),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text(_hasVerifiedFace ? 'Ulangi' : 'Verifikasi', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: OutlinedButton(
+                        onPressed: () => setState(() => _wizardStep = 0),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.forest,
+                          side: const BorderSide(color: AppColors.sageBorder),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text('← Kembali', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 3,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (!_hasUploadedKtp || !_hasVerifiedFace) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                backgroundColor: AppColors.terracotta,
+                                content: Text('Selesaikan Upload KTP dan Autentikasi Wajah terlebih dahulu.'),
+                              ),
+                            );
+                            return;
+                          }
+                          setState(() => _wizardStep = 2);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.forest,
+                          foregroundColor: AppColors.cream,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text('Lanjut ke Level & Trip →', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+              // LANGKAH 3: LEVEL (EASY / MEDIUM / HARD) & LISENSI / PENGALAMAN + DETAIL TRIP
+              _buildFieldLabel('LANGKAH 3 • LEVEL JALUR & LISENSI / PENGALAMAN'),
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: ['Easy', 'Medium', 'Hard'].map((lvl) {
+                        final selected = _difficultyLevel == lvl;
+                        final isHard = lvl == 'Hard';
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(right: lvl == 'Hard' ? 0 : 6),
+                            child: ChoiceChip(
+                              selected: selected,
+                              label: Center(
+                                child: Text(
+                                  lvl == 'Hard' ? 'Hard (Lisensi)' : lvl,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: selected
+                                        ? Colors.white
+                                        : (isHard ? AppColors.terracotta : AppColors.forest),
+                                  ),
+                                ),
+                              ),
+                              selectedColor: isHard ? AppColors.terracotta : AppColors.forest,
+                              backgroundColor: isHard ? AppColors.coralTint : AppColors.creamSubtle,
+                              showCheckmark: false,
+                              side: BorderSide(
+                                color: selected
+                                    ? (isHard ? AppColors.terracotta : AppColors.forest)
+                                    : AppColors.sageBorder,
+                              ),
+                              onSelected: (_) => setState(() => _difficultyLevel = lvl),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                    if (_isHardRoute) ...[
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.coralTint,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.terracotta),
+                            SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Level Hard: Penyelenggara WAJIB mengupload Lisensi Pemandu (HPI / BNSP / Guide Gunung).',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.terracotta),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _hasUploadedLicense
+                                  ? 'Dokumen lisensi berhasil diunggah ✓'
+                                  : 'Belum ada file lisensi diunggah',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: _hasUploadedLicense ? AppColors.success : AppColors.muted,
+                              ),
+                            ),
+                          ),
+                          OutlinedButton(
+                            onPressed: () => setState(() => _hasUploadedLicense = true),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.forest,
+                              side: const BorderSide(color: AppColors.sageBorder),
+                            ),
+                            child: Text(_hasUploadedLicense ? 'Ganti' : 'Upload Lisensi', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _hostLicenseController,
+                        decoration: _inputDecoration('Nomor Lisensi Pemandu (Wajib Level Hard)'),
+                      ),
+                      const SizedBox(height: 8),
+                    ] else ...[
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.sage.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline_rounded, size: 15, color: AppColors.forest),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Level $_difficultyLevel: Tidak wajib upload lisensi — cukup sertakan Pengalaman memandu/mengelola trip.',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.forest),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    TextField(
+                      controller: _hostExperienceController,
+                      maxLines: 2,
+                      decoration: _inputDecoration('Pengalaman Penyelenggara (Cth: 3 Tahun Guide Wisata Sumbar)'),
+                    ),
+                  ],
+                ),
+              ),
 
               // 1. ATURAN 1: PILIH DESTINASI TUNGGAL (Single Destination)
               _buildFieldLabel('1. TUJUAN / DESTINASI TUNGGAL (WAJIB 1 DESTINASI)'),
@@ -1571,254 +1923,77 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 14),
 
-              // 1. Data Diri Penyelenggara (Nama, Nomor Telepon, Instagram)
-              _buildFieldLabel('1. DATA DIRI PENYELENGGARA'),
-              TextField(
-                controller: _hostNameController,
-                decoration: _inputDecoration('Nama Lengkap'),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _hostPhoneController,
-                decoration: _inputDecoration('Nomor Telepon Aktif'),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _hostSocialController,
-                decoration: _inputDecoration('Akun Instagram (Cth: @username)'),
-              ),
-              const SizedBox(height: 14),
-
-              // 2. Upload KTP (Wajib)
-              _buildFieldLabel('2. UPLOAD KTP (WAJIB)'),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _hasUploadedKtp ? AppColors.successBorder : AppColors.warmBorder,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _hasUploadedKtp ? AppColors.successBg : AppColors.creamSubtle,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        _hasUploadedKtp ? Icons.check_circle_rounded : Icons.badge_outlined,
-                        size: 18,
-                        color: _hasUploadedKtp ? AppColors.success : AppColors.forest,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Upload Foto e-KTP',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
-                          ),
-                          Text(
-                            _hasUploadedKtp
-                                ? 'e-KTP berhasil diunggah untuk verifikasi admin'
-                                : 'Wajib diunggah sebagai syarat verifikasi penyelenggara',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: _hasUploadedKtp ? AppColors.success : AppColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    OutlinedButton(
-                      onPressed: () => setState(() => _hasUploadedKtp = true),
+              // Tombol Navigasi & Ajukan Verifikasi Admin
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: OutlinedButton(
+                      onPressed: () => setState(() => _wizardStep = 1),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.forest,
                         side: const BorderSide(color: AppColors.sageBorder),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      child: Text(
-                        _hasUploadedKtp ? 'Ganti' : 'Upload KTP',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                      child: const Text('← Kembali', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 3,
+                    child: ElevatedButton(
+                      onPressed: _submitTrip,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.forest,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text(
+                        'Ajukan Verifikasi Admin',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
-
-              // 3. Lisensi (Wajib untuk Jalur Hard) atau Cukup Pengalaman (Tempat Umum)
-              _buildFieldLabel('3. LISENSI (WAJIB HARD) / PENGALAMAN (TEMPAT UMUM)'),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.warmBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ChoiceChip(
-                            selected: !_isHardRoute,
-                            label: Center(
-                              child: Text(
-                                'Tempat Umum',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: !_isHardRoute ? Colors.white : AppColors.forest,
-                                ),
-                              ),
-                            ),
-                            selectedColor: AppColors.forest,
-                            backgroundColor: AppColors.creamSubtle,
-                            showCheckmark: false,
-                            side: BorderSide(
-                              color: !_isHardRoute ? AppColors.forest : AppColors.sageBorder,
-                            ),
-                            onSelected: (_) => setState(() => _isHardRoute = false),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ChoiceChip(
-                            selected: _isHardRoute,
-                            label: Center(
-                              child: Text(
-                                'Jalur Hard (Wajib Lisensi)',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: _isHardRoute ? Colors.white : AppColors.terracotta,
-                                ),
-                              ),
-                            ),
-                            selectedColor: AppColors.terracotta,
-                            backgroundColor: AppColors.coralTint,
-                            showCheckmark: false,
-                            side: BorderSide(
-                              color: _isHardRoute ? AppColors.terracotta : AppColors.warmBorder,
-                            ),
-                            onSelected: (_) => setState(() => _isHardRoute = true),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    if (_isHardRoute) ...[
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: _hasUploadedLicense ? AppColors.successBg : AppColors.coralTint,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              _hasUploadedLicense ? Icons.verified_rounded : Icons.workspace_premium_rounded,
-                              size: 18,
-                              color: _hasUploadedLicense ? AppColors.success : AppColors.terracotta,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Upload Lisensi Pemandu (Wajib Hard)',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
-                                ),
-                                Text(
-                                  _hasUploadedLicense
-                                      ? 'Dokumen lisensi berhasil diunggah'
-                                      : 'Wajib unggah sertifikat/lisensi HPI, BNSP, atau Guide Gunung',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: _hasUploadedLicense ? AppColors.success : AppColors.muted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          OutlinedButton(
-                            onPressed: () => setState(() => _hasUploadedLicense = true),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.forest,
-                              side: const BorderSide(color: AppColors.sageBorder),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: Text(
-                              _hasUploadedLicense ? 'Ganti' : 'Upload',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _hostLicenseController,
-                        decoration: _inputDecoration('Nomor Lisensi Pemandu (Wajib untuk Jalur Hard)'),
-                      ),
-                      const SizedBox(height: 8),
-                    ] else ...[
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.sage.withValues(alpha: 0.65),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.info_outline_rounded, size: 15, color: AppColors.forest),
-                            SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Untuk destinasi tempat umum tidak wajib lisensi — cukup tuliskan pengalaman Anda memandu/mengelola trip.',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.forest),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    TextField(
-                      controller: _hostExperienceController,
-                      maxLines: 2,
-                      decoration: _inputDecoration('Pengalaman Penyelenggara (Cth: 3 Tahun Guide Wisata Sumbar)'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Tombol Publikasi
-              ElevatedButton(
-                onPressed: _submitTrip,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.forest,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                child: const Text(
-                  'Ajukan Verifikasi Admin & Buat Trip Go',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
-                ),
-              ),
+              ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _wizardPill(int stepIdx, String label) {
+    final isActive = _wizardStep == stepIdx;
+    final isDone = _wizardStep > stepIdx;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.forest
+              : (isDone ? AppColors.successBg : AppColors.creamSubtle),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive
+                ? AppColors.forest
+                : (isDone ? AppColors.successBorder : AppColors.warmBorder),
+          ),
+        ),
+        child: Text(
+          isDone ? '$label ✓' : label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: isActive
+                ? AppColors.cream
+                : (isDone ? AppColors.success : AppColors.muted),
           ),
         ),
       ),

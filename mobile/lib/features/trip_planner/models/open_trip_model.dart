@@ -11,6 +11,35 @@ enum TripGoRole {
 enum TripVerificationStatus {
   pendingAdmin,
   approved,
+  rejected,
+}
+
+/// Bridge notifikasi status verifikasi Admin (Disetujui / Ditolak) ke Pusat Notifikasi
+class OrganizerNotificationBridge {
+  OrganizerNotificationBridge._();
+  static final ValueNotifier<Map<String, dynamic>?> latestNotif =
+      ValueNotifier<Map<String, dynamic>?>(null);
+
+  static void emit({
+    required String tripId,
+    required String tripTitle,
+    required bool approved,
+    String reason = '',
+  }) {
+    latestNotif.value = {
+      'id': 'notif_admin_${tripId}_${DateTime.now().millisecondsSinceEpoch}',
+      'title': approved
+          ? 'Open Trip Disetujui Admin ✓'
+          : 'Pengajuan Open Trip Ditolak',
+      'message': approved
+          ? 'Selamat! "$tripTitle" telah diverifikasi Admin WISGO. Menu Manajemen Penyelenggara kini aktif.'
+          : 'Pengajuan "$tripTitle" ditolak Admin: ${reason.isEmpty ? 'Dokumen KTP/Lisensi perlu diperbaiki.' : reason}',
+      'time': 'Baru saja',
+      'isRead': false,
+      'type': approved ? 'opentrip' : 'admin_rejected',
+      'tripId': tripId,
+    };
+  }
 }
 
 /// Model Penyelenggara Terverifikasi (Item 2 Spesifikasi Trip Go)
@@ -453,6 +482,8 @@ class OpenTripItem {
 
   // ROLE & VERIFICATION LIFECYCLE STATE
   TripVerificationStatus verificationStatus;
+  String difficultyLevel; // 'Easy' | 'Medium' | 'Hard'
+  String? adminRejectionReason;
   final bool isCreatedByCurrentUser;
   bool isCurrentUserJoined;
   bool isScheduleReviewed;
@@ -499,6 +530,8 @@ class OpenTripItem {
         'Forum Diskusi & Chat Komunikasi Smart Trip Planner (In-App)',
     this.whatsappGroupLink = '',
     this.verificationStatus = TripVerificationStatus.approved,
+    this.difficultyLevel = 'Medium',
+    this.adminRejectionReason,
     this.isCreatedByCurrentUser = false,
     this.isCurrentUserJoined = false,
     this.isScheduleReviewed = false,
