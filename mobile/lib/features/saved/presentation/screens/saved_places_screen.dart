@@ -10,6 +10,7 @@ import '../../../../core/models/user_profile.dart';
 import '../../../../core/localization/app_locale.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/auth_guard_dialog.dart';
+import '../../../../core/widgets/wisgo_facility_icon.dart';
 import '../../../auth/presentation/screens/edit_profile_screen.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../auth/presentation/screens/splash_screen.dart';
@@ -2878,18 +2879,18 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                sliver: SliverList(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 11,
+                    mainAxisSpacing: 12,
+                    mainAxisExtent: 312,
+                  ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildDestinationCard(
-                          filtered[index],
-                          isSavedContext: false,
-                        ),
-                      );
-                    },
+                    (context, index) => _buildDestinationGridCard(
+                      filtered[index],
+                    ),
                     childCount: filtered.length,
                   ),
                 ),
@@ -6425,6 +6426,345 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
+  Widget _buildDestinationGridCard(SavedDestinationModel place) {
+    final isBookmarked = _savedIds.contains(place.id);
+    final distText =
+        '${place.distanceKm.toStringAsFixed(place.distanceKm.truncateToDouble() == place.distanceKm ? 0 : 1)} km';
+    const cardBg = Color(0xFFFFFCF7);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.warmBorder.withValues(alpha: 0.85)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.ink.withValues(alpha: 0.055),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // Foto Atas Lebih Turun ke Bawah + Progressive Blur (0 Garis Sambungan)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 196,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  place.imageUrl,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (_, __, ___) =>
+                      const ColoredBox(color: AppColors.sage),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 82,
+                  child: ClipRect(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: ShaderMask(
+                        shaderCallback: (rect) => const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.white],
+                          stops: [0.0, 0.65],
+                        ).createShader(rect),
+                        blendMode: BlendMode.dstIn,
+                        child: Image.network(
+                          place.imageUrl,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.bottomCenter,
+                          filterQuality: FilterQuality.low,
+                          errorBuilder: (_, __, ___) =>
+                              const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Gradasi Menyeluruh Full-Card (100% menutupi batas bawah foto sehingga mustahil muncul garis 1px)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.ink.withValues(alpha: 0.22),
+                      Colors.transparent,
+                      cardBg.withValues(alpha: 0.78),
+                      cardBg,
+                      cardBg,
+                    ],
+                    stops: const [0.0, 0.28, 0.48, 0.57, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Rating + Jarak (kiri atas) & Bookmark (kanan atas)
+          Positioned(
+            top: 8,
+            left: 8,
+            right: 8,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink.withValues(alpha: 0.56),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 12,
+                        color: AppColors.goldSoft,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${place.rating} • $distText',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _toggleBookmark(place.id),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.ink.withValues(alpha: 0.44),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.30),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      isBookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      size: 15,
+                      color: isBookmarked ? AppColors.goldSoft : Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Konten Bawah Kartu (Judul Lebih Besar + Lokasi + 5 Ikon 3D + 2 Tombol)
+          Positioned.fill(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Ruang visual foto fleksibel (mendorong judul + ikon turun rapi ke bawah)
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _openDestinationDetailModal(place),
+                    behavior: HitTestBehavior.translucent,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                        GestureDetector(
+                          onTap: () => _openDestinationDetailModal(place),
+                          child: Text(
+                            place.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                              height: 1.22,
+                              letterSpacing: -0.25,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              size: 11.5,
+                              color: AppColors.brush,
+                            ),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                place.subRegion,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.muted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 9),
+                        // Deretan Ikon Fasilitas 3D Clay Sejajar Penuh Kiri-Kanan
+                        SizedBox(
+                          height: 30,
+                          child: Row(
+                            children: List.generate(
+                              place.facilities.take(5).length,
+                              (fIdx) {
+                                final fac = place.facilities[fIdx];
+                                final totalFac = place.facilities.take(5).length;
+                                return Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      right: fIdx == totalFac - 1 ? 0 : 5,
+                                    ),
+                                    child: Tooltip(
+                                      message: fac,
+                                      preferBelow: false,
+                                      child: InkWell(
+                                        onTap: () =>
+                                            _openFacilityDetailSheet(fac, place),
+                                        borderRadius: BorderRadius.circular(9),
+                                        child: Container(
+                                          height: 30,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.creamSubtle
+                                                .withValues(alpha: 0.85),
+                                            borderRadius: BorderRadius.circular(9),
+                                            border: Border.all(
+                                              color: AppColors.warmBorder
+                                                  .withValues(alpha: 0.8),
+                                            ),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: WisgoFacilityIcon(
+                                            facilityName: fac,
+                                            size: 19,
+                                            fallbackIcon: _getFacilityIcon(fac),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // 2 Tombol Aksi Sejajar Rapi
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 33,
+                                child: OutlinedButton(
+                                  onPressed: () => _open360AndDenahModal(place),
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: AppColors.creamSubtle,
+                                    foregroundColor: AppColors.forest,
+                                    side: const BorderSide(
+                                      color: AppColors.sageBorder,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(11),
+                                    ),
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      AppLocale.tr('Panorama 360°', '360°'),
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: SizedBox(
+                                height: 33,
+                                child: ElevatedButton(
+                                  onPressed: () =>
+                                      _openDestinationDetailModal(place),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.forest,
+                                    foregroundColor: AppColors.cream,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(11),
+                                    ),
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      AppLocale.tr('Detail', 'Details'),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDestinationCard(
     SavedDestinationModel place, {
     required bool isSavedContext,
@@ -6637,21 +6977,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         _openFacilityDetailSheet(fac, place),
                                     borderRadius: BorderRadius.circular(8),
                                     child: Container(
-                                      width: 28,
-                                      height: 28,
+                                      width: 30,
+                                      height: 30,
                                       decoration: BoxDecoration(
-                                        color: AppColors.creamSubtle,
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: AppColors.creamSubtle.withValues(alpha: 0.82),
+                                        borderRadius: BorderRadius.circular(9),
                                         border: Border.all(
                                           color: AppColors.warmBorder
-                                              .withValues(alpha: 0.9),
+                                              .withValues(alpha: 0.85),
                                         ),
                                       ),
                                       alignment: Alignment.center,
-                                      child: Icon(
-                                        _getFacilityIcon(fac),
-                                        size: 14,
-                                        color: AppColors.forest,
+                                      child: WisgoFacilityIcon(
+                                        facilityName: fac,
+                                        size: 19,
+                                        fallbackIcon: _getFacilityIcon(fac),
                                       ),
                                     ),
                                   ),
@@ -7059,12 +7399,19 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.forest,
-                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.sage.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.sageBorder),
                         ),
-                        child: Icon(_getFacilityIcon(facName), size: 20, color: AppColors.cream),
+                        alignment: Alignment.center,
+                        child: WisgoFacilityIcon(
+                          facilityName: facName,
+                          size: 24,
+                          fallbackIcon: _getFacilityIcon(facName),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Column(

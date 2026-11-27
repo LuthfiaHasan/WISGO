@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_config.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/wisgo_facility_icon.dart';
 import '../../../fair_price/data/models/fair_price_tariff_model.dart';
 
 class _SubmittedLocationRecord {
@@ -633,7 +634,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       ),
                       const SizedBox(height: 16),
 
-                      // 8. Kategori Wisata
+                      // 8. Kategori Wisata (Pil Frosted-Glass Lembut + Ikon 3D)
                       _buildFieldHeader('Kategori Wisata Alam', Icons.category_rounded),
                       const SizedBox(height: 8),
                       Wrap(
@@ -641,33 +642,75 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                         runSpacing: 8,
                         children: _categories.map((cat) {
                           final isSelected = cat == _selectedCategory;
-                          return ChoiceChip(
-                            label: Text(
-                              cat,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isSelected ? Colors.white : AppColors.ink,
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => setState(() => _selectedCategory = cat),
+                              borderRadius: BorderRadius.circular(999),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.sage.withValues(alpha: 0.9)
+                                      : AppColors.cream,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.brush.withValues(alpha: 0.55)
+                                        : AppColors.warmBorder,
+                                    width: isSelected ? 1.2 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      resolveNatureCategoryAsset(cat),
+                                      width: 18,
+                                      height: 18,
+                                      fit: BoxFit.contain,
+                                      filterQuality: FilterQuality.medium,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.terrain_rounded,
+                                        size: 14,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      cat,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: isSelected
+                                            ? AppColors.forest
+                                            : AppColors.ink,
+                                      ),
+                                    ),
+                                    if (isSelected) ...[
+                                      const SizedBox(width: 5),
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 14,
+                                        color: AppColors.brush,
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
-                            selected: isSelected,
-                            selectedColor: AppColors.forest,
-                            backgroundColor: AppColors.cream,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            side: BorderSide(
-                              color: isSelected ? AppColors.forest : AppColors.sageBorder,
-                            ),
-                            onSelected: (selected) {
-                              if (selected) setState(() => _selectedCategory = cat);
-                            },
                           );
                         }).toList(),
                       ),
                       const SizedBox(height: 16),
 
-                      // 9. Fasilitas & Informasi Tiket
+                      // 9. Fasilitas yang Tersedia di Lokasi (8 Ikon 3D Clay + Pil Lembut Tanpa Tumpang Tindih)
                       _buildFieldHeader(
                         'Fasilitas yang Tersedia di Lokasi',
                         Icons.check_circle_outline_rounded,
@@ -681,38 +724,70 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                           final IconData facIcon = fac['icon'] as IconData;
                           final bool isChecked = _selectedFacilities.contains(facName);
 
-                          return FilterChip(
-                            avatar: Icon(
-                              facIcon,
-                              size: 14,
-                              color: isChecked ? Colors.white : AppColors.forest,
-                            ),
-                            label: Text(
-                              facName,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isChecked ? Colors.white : AppColors.ink,
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isChecked) {
+                                    _selectedFacilities.remove(facName);
+                                  } else {
+                                    _selectedFacilities.add(facName);
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(999),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isChecked
+                                      ? AppColors.sage.withValues(alpha: 0.9)
+                                      : AppColors.cream,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isChecked
+                                        ? AppColors.brush.withValues(alpha: 0.55)
+                                        : AppColors.warmBorder,
+                                    width: isChecked ? 1.2 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    WisgoFacilityIcon(
+                                      facilityName: facName,
+                                      size: 19,
+                                      fallbackIcon: facIcon,
+                                    ),
+                                    const SizedBox(width: 7),
+                                    Text(
+                                      facName,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isChecked
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: isChecked
+                                            ? AppColors.forest
+                                            : AppColors.ink,
+                                      ),
+                                    ),
+                                    if (isChecked) ...[
+                                      const SizedBox(width: 5),
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 14,
+                                        color: AppColors.brush,
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
-                            selected: isChecked,
-                            selectedColor: AppColors.forest,
-                            backgroundColor: AppColors.cream,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            side: BorderSide(
-                              color: isChecked ? AppColors.forest : AppColors.sageBorder,
-                            ),
-                            onSelected: (selected) {
-                              setState(() {
-                                if (selected) {
-                                  _selectedFacilities.add(facName);
-                                } else {
-                                  _selectedFacilities.remove(facName);
-                                }
-                              });
-                            },
                           );
                         }).toList(),
                       ),
