@@ -268,12 +268,16 @@ class _OpenTripParticipantsSheetState extends State<OpenTripParticipantsSheet> {
                                     ),
                                     _miniCheck(
                                       'Persiapan',
-                                      '${p.readinessDone}/${p.readinessTotal}',
+                                      p.readinessDone >= p.readinessTotal
+                                          ? 'Siap ✓'
+                                          : 'Proses',
                                       p.readinessDone >= p.readinessTotal,
                                     ),
                                     _miniCheck(
                                       'Barang',
-                                      '${p.packingDone}/${p.packingTotal}',
+                                      p.packingDone >= p.packingTotal
+                                          ? 'Siap ✓'
+                                          : 'Proses',
                                       p.packingDone >= p.packingTotal,
                                     ),
                                   ],

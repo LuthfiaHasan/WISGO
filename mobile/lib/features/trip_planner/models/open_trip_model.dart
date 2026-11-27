@@ -925,7 +925,7 @@ final List<OpenTripItem> kMockOpenTrips = [
     itinerary: [
       TripItineraryStep(
         time: '06.00 - 06.30 WIB',
-        activity: 'Kumpul & Presensi di Titik Kumpul (Google Maps)',
+        activity: 'Kumpul & Presensi di Titik Kumpul',
         location: 'Rest Area Simpang Harau',
         notes: 'Cek kehadiran peserta, pembagian name-tag & snack pagi.',
         status: 'Akan Datang',
@@ -942,7 +942,7 @@ final List<OpenTripItem> kMockOpenTrips = [
       TripItineraryStep(
         time: '07.45 - 11.30 WIB',
         activity: 'Eksplorasi Tebing & Sarasah Bunta',
-        location: 'Lembah Harau (Sarasah Bunta)',
+        location: 'Kawasan Lembah Harau & Sarasah Bunta',
         notes: 'Trekking santai, foto tebing vertikal, dan berenang air terjun.',
         status: 'Akan Datang',
         icon: Icons.landscape_rounded,

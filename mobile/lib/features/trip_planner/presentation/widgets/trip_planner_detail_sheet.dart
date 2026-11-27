@@ -107,19 +107,19 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                      children: const [
                         Text(
-                          '• Persiapan Trip: $readinessDone / $readinessTotal selesai',
-                          style: const TextStyle(
+                          '• Jadwal perjalanan sudah dipahami',
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
-                          '• Barang Bawaan: $packingDone / $packingTotal selesai',
-                          style: const TextStyle(
+                          '• Persiapan & barang bawaan sudah lengkap',
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
@@ -401,9 +401,9 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     ),
                     const SizedBox(height: 12),
 
-                    // 1. JAM / WAKTU (DISEDIAKAN SISTEM)
+                    // 1. JAM / WAKTU
                     const Text(
-                      'PILIHAN JAM / WAKTU (DARI SISTEM):',
+                      'PILIHAN JAM / WAKTU',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
@@ -464,16 +464,16 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     ),
                     const SizedBox(height: 10),
 
-                    // 2. NAMA KEGIATAN (DIISI MANUAL OLEH PEMBUAT TRIP)
+                    // 2. NAMA KEGIATAN
                     const Text(
-                      'NAMA KEGIATAN / AKTIVITAS (MANUAL):',
+                      'NAMA KEGIATAN',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
                       controller: activityCtrl,
                       decoration: InputDecoration(
-                        hintText: 'Cth: Kumpul & Briefing / Trekking Air Terjun',
+                        hintText: 'Kumpul & Briefing / Trekking Air Terjun',
                         hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
                         filled: true,
                         fillColor: AppColors.cream,
@@ -483,16 +483,16 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     ),
                     const SizedBox(height: 10),
 
-                    // 3. LOKASI KEGIATAN (MANUAL)
+                    // 3. LOKASI KEGIATAN
                     const Text(
-                      'LOKASI / TEMPAT (MANUAL):',
+                      'LOKASI',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
                       controller: locationCtrl,
                       decoration: InputDecoration(
-                        hintText: 'Cth: Titik Kumpul Rest Area / Tebing Echo',
+                        hintText: 'Titik Kumpul Rest Area / Tebing Echo',
                         hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
                         filled: true,
                         fillColor: AppColors.cream,
@@ -502,9 +502,9 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                     ),
                     const SizedBox(height: 10),
 
-                    // 4. CATATAN / SOP (MANUAL)
+                    // 4. CATATAN
                     const Text(
-                      'CATATAN / INSTRUKSI KHUSUS (MANUAL):',
+                      'CATATAN KHUSUS',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
@@ -512,7 +512,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                       controller: notesCtrl,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        hintText: 'Cth: Wajib memakai alas kaki antiselip & jaket',
+                        hintText: 'Wajib memakai alas kaki antiselip & jaket',
                         hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
                         filled: true,
                         fillColor: AppColors.cream,
@@ -718,31 +718,31 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                 ),
                 const SizedBox(height: 8),
 
-                // Trip Title & Single Destination Badge
+                // Trip Title & Destination Badge
                 Text(
                   widget.trip.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Wrap(
-                  spacing: 8,
+                  spacing: 6,
                   runSpacing: 4,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.forest.withValues(alpha: 0.12),
+                        color: AppColors.forest.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'Destinasi Tunggal: ${widget.trip.singleDestination}',
+                        widget.trip.singleDestination,
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: AppColors.infoBg,
                         borderRadius: BorderRadius.circular(6),
@@ -753,7 +753,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: widget.isOrganizerMode
                             ? AppColors.forest
@@ -771,10 +771,10 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                       ),
                       child: Text(
                         widget.isOrganizerMode
-                            ? 'Mode Penyelenggara (Edit)'
+                            ? 'Penyelenggara'
                             : (widget.isJoinedParticipant
-                                ? 'Mode Peserta Terdaftar'
-                                : 'Pratinjau (Belum Daftar)'),
+                                ? 'Peserta Terdaftar'
+                                : 'Belum Terdaftar'),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
@@ -790,27 +790,34 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                 ),
                 const SizedBox(height: 10),
 
-                // TabBar (4 Fitur Perencanaan Inti â€” Komunikasi dipisah ke Grup Chat)
+                // TabBar Bersih Tanpa Angka Pecahan
                 TabBar(
                   controller: _tabController,
-                  isScrollable: true,
                   labelColor: AppColors.forest,
                   unselectedLabelColor: AppColors.muted,
                   indicatorColor: AppColors.forest,
-                  indicatorWeight: 3,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                  indicatorWeight: 2.5,
+                  labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                  unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   tabs: [
                     Tab(
                       text: widget.isJoinedParticipant && widget.trip.isScheduleReviewed
-                          ? '1. Jadwal ✓'
-                          : '1. Jadwal',
+                          ? 'Jadwal ✓'
+                          : 'Jadwal',
                     ),
                     Tab(
-                      text: '2. Persiapan ($readinessDone/$readinessTotal)',
+                      text: widget.isJoinedParticipant &&
+                              readinessTotal > 0 &&
+                              readinessDone >= readinessTotal
+                          ? 'Persiapan ✓'
+                          : 'Persiapan',
                     ),
                     Tab(
-                      text: '3. Barang Bawaan ($packingDone/$packingTotal)',
+                      text: widget.isJoinedParticipant &&
+                              packingTotal > 0 &&
+                              packingDone >= packingTotal
+                          ? 'Barang Bawaan ✓'
+                          : 'Barang Bawaan',
                     ),
                   ],
                 ),
@@ -913,7 +920,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Mode Pratinjau — Daftar & bayar trip ini terlebih dahulu untuk mencentang persiapan & konfirmasi kesiapan.',
+                                'Daftar trip terlebih dahulu untuk mengisi checklist persiapan.',
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
@@ -998,7 +1005,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
       );
     }
 
-    // Step 1: Jadwal -> "Saya Siap Jadwal"
+    // Step 1: Jadwal -> "Lanjut Persiapan"
     if (_currentTabIndex == 0) {
       return Row(
         children: [
@@ -1009,12 +1016,12 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               children: [
                 Text(
                   trip.isScheduleReviewed
-                      ? 'Langkah 1/3 • Jadwal Siap ✓'
-                      : 'Langkah 1/3 • Pahami Jadwal',
+                      ? 'Jadwal Siap ✓'
+                      : 'Jadwal Perjalanan',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: trip.isScheduleReviewed ? AppColors.success : AppColors.ink,
                   ),
@@ -1044,7 +1051,7 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               ),
             ),
             child: const Text(
-              'Siap Jadwal →',
+              'Lanjut Persiapan →',
               style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
             ),
           ),
@@ -1063,21 +1070,21 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
               children: [
                 Text(
                   allReadinessDone
-                      ? 'Langkah 2/3 • Persiapan Lengkap ✓'
-                      : 'Langkah 2/3 • Lengkapi Persiapan',
+                      ? 'Persiapan Lengkap ✓'
+                      : 'Checklist Persiapan',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: allReadinessDone ? AppColors.success : AppColors.ink,
                   ),
                 ),
-                Text(
-                  'Tercentang $readinessDone dari $readinessTotal persiapan wajib.',
+                const Text(
+                  'Centang daftar persiapan sebelum lanjut ke barang bawaan.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                  style: TextStyle(fontSize: 11, color: AppColors.muted),
                 ),
               ],
             ),
@@ -1096,11 +1103,9 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: Text(
-              allReadinessDone
-                  ? 'Lanjut Barang →'
-                  : 'Persiapan $readinessDone/$readinessTotal',
-              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+            child: const Text(
+              'Lanjut Barang →',
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -1110,17 +1115,17 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     // Step 3: Barang Bawaan -> Finalisasi Semua
     final bool canFinalize =
         trip.isScheduleReviewed && allReadinessDone && allPackingDone;
-    String actionLabel = 'Finalisasi Semua ✓';
+    String actionLabel = 'Konfirmasi Kesiapan';
     VoidCallback? onPressed;
 
     if (!trip.isScheduleReviewed) {
-      actionLabel = 'Cek Jadwal Dulu';
+      actionLabel = 'Cek Jadwal';
       onPressed = () => _tabController.animateTo(0);
     } else if (!allReadinessDone) {
-      actionLabel = 'Cek Persiapan Dulu';
+      actionLabel = 'Cek Persiapan';
       onPressed = () => _tabController.animateTo(1);
     } else if (!allPackingDone) {
-      actionLabel = 'Barang $packingDone/$packingTotal';
+      actionLabel = 'Konfirmasi Kesiapan';
       onPressed = null;
     } else {
       onPressed = () => _showReadinessConfirmDialog(
@@ -1140,21 +1145,21 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
             children: [
               Text(
                 canFinalize
-                    ? 'Langkah 3/3 • Siap Finalisasi!'
-                    : 'Langkah 3/3 • Lengkapi Barang Bawaan',
+                    ? 'Siap Berangkat ✓'
+                    : 'Checklist Barang Bawaan',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: canFinalize ? AppColors.success : AppColors.ink,
                 ),
               ),
-              Text(
-                'Barang bawaan $packingDone/$packingTotal siap di tas.',
+              const Text(
+                'Centang barang bawaan Anda sebelum konfirmasi kesiapan.',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                style: TextStyle(fontSize: 11, color: AppColors.muted),
               ),
             ],
           ),
@@ -1197,11 +1202,11 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'RUNDOWN PERJALANAN (MANUAL)',
+                    'RUNDOWN PERJALANAN',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
                   ),
                   Text(
-                    '${widget.trip.departureDate} (${widget.trip.duration})',
+                    '${widget.trip.departureDate} • ${widget.trip.duration}',
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.ink),
                   ),
                 ],
@@ -1502,62 +1507,18 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
   }
 
   // ===========================================================================
-  // TAB 2: CHECKLIST PERJALANAN (Item 1 Trip Planner)
+  // TAB 2: CHECKLIST PERSIAPAN
   // ===========================================================================
   Widget _buildReadinessChecklistTab(int doneCount, int totalCount, double percent) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
       children: [
-        // Progress Card
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.sageBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Persiapan Wajib Peserta (Dari Penyelenggara)',
-                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.forest),
-                  ),
-                  Text(
-                    '${(percent * 100).toInt()}% Siap',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.forest),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: percent,
-                  minHeight: 8,
-                  backgroundColor: AppColors.cream,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.forest),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Centang tiap persiapan dari penyelenggara di bawah, lalu tekan Konfirmasi Siap ($doneCount/$totalCount selesai).',
-                style: const TextStyle(fontSize: 11, color: AppColors.muted),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
         // Action: Tambah Checklist (Khusus Penyelenggara)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'DAFTAR PERSIAPAN WAJIB PESERTA',
+              'DAFTAR PERSIAPAN PESERTA',
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
             ),
             if (widget.isOrganizerMode)
@@ -1615,56 +1576,23 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.sageBorder),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.luggage_rounded, color: AppColors.forest, size: 22),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Status Perlengkapan Bawaan',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.forest),
-                      ),
-                      Text(
-                        '$packedCount dari $totalCount barang siap di tas',
-                        style: const TextStyle(fontSize: 11, color: AppColors.muted),
-                      ),
-                    ],
-                  ),
-                ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'DAFTAR BARANG BAWAAN',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
+            ),
+            if (widget.isOrganizerMode)
+              TextButton.icon(
+                onPressed: _showAddPackingDialog,
+                icon: const Icon(Icons.add_rounded, size: 14),
+                label: const Text('Tambah Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                style: TextButton.styleFrom(foregroundColor: AppColors.forest),
               ),
-              if (widget.isOrganizerMode)
-                OutlinedButton.icon(
-                  onPressed: _showAddPackingDialog,
-                  icon: const Icon(Icons.add_rounded, size: 14),
-                  label: const Text('Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.forest,
-                    side: const BorderSide(color: AppColors.forest),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
-        const SizedBox(height: 12),
-
-        const Text(
-          'CHECKLIST BARANG BAWAAN PESERTA',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.forest),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
 
         ...widget.trip.packingList.map((pack) {
           final canToggle = !widget.isOrganizerMode && widget.isJoinedParticipant;
