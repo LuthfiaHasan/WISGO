@@ -25,11 +25,27 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
   bool _agreedToTerms = false;
   String _bookingCode = '';
   TripETicket? _issuedTicket;
+  final TextEditingController _nameCtrl =
+      TextEditingController(text: 'Wisatawan WISGO');
+  final TextEditingController _phoneCtrl =
+      TextEditingController(text: '0812-3456-7890');
+  final TextEditingController _emergencyCtrl =
+      TextEditingController(text: '0813-9876-5432 (Keluarga)');
+  final TextEditingController _notesCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _bookingCode = 'TRIP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emergencyCtrl.dispose();
+    _notesCtrl.dispose();
+    super.dispose();
   }
 
   int get _availableSlots => widget.trip.quotaMax - widget.trip.quotaFilled;
@@ -59,6 +75,33 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
         issuedAt: DateTime.now(),
       );
       TripETicketStore.instance.addTicket(ticket);
+      widget.trip.participants.insert(
+        0,
+        OpenTripParticipant(
+          userId: 'usr-current',
+          bookingCode: _bookingCode,
+          fullName: _nameCtrl.text.trim().isEmpty
+              ? 'Wisatawan WISGO'
+              : _nameCtrl.text.trim(),
+          phoneNumber: _phoneCtrl.text.trim().isEmpty
+              ? '0812-3456-7890'
+              : _phoneCtrl.text.trim(),
+          emergencyContact: _emergencyCtrl.text.trim().isEmpty
+              ? '-'
+              : _emergencyCtrl.text.trim(),
+          seatCount: _participantCount,
+          paymentMethod: _selectedPaymentMethod,
+          totalPaid: _totalAmount,
+          specialNotes: _notesCtrl.text.trim(),
+          joinedAt: 'Hari ini',
+          isScheduleReady: widget.trip.isScheduleReviewed,
+          readinessDone: widget.trip.readinessChecklist.where((e) => e.isDone).length,
+          readinessTotal: widget.trip.readinessChecklist.length,
+          packingDone: widget.trip.packingList.where((e) => e.isPacked).length,
+          packingTotal: widget.trip.packingList.length,
+          isFinalized: widget.trip.isReadinessFinalized,
+        ),
+      );
       setState(() {
         _isProcessing = false;
         _isPaid = true;
@@ -243,6 +286,65 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: 14),
+
+          // Data Peserta untuk Penyelenggara
+          const Text(
+            'Data Peserta (Tampil di Daftar Anggota Penyelenggara)',
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _nameCtrl,
+            decoration: InputDecoration(
+              labelText: 'Nama Lengkap Peserta',
+              filled: true,
+              fillColor: AppColors.creamSubtle,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _phoneCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'No. HP / WA',
+                    filled: true,
+                    fillColor: AppColors.creamSubtle,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _emergencyCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Kontak Darurat',
+                    filled: true,
+                    fillColor: AppColors.creamSubtle,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _notesCtrl,
+            decoration: InputDecoration(
+              labelText: 'Catatan Khusus / Alergi / Ukuran Jaket (Opsional)',
+              filled: true,
+              fillColor: AppColors.creamSubtle,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
           ),
           const SizedBox(height: 14),
 

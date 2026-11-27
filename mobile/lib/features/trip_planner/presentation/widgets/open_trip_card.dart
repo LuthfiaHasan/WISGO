@@ -7,6 +7,7 @@ import 'destination_weather_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
 import 'open_trip_detail_sheet.dart';
 import 'open_trip_payment_sheet.dart';
+import 'organizer_rating_dialog.dart';
 import 'trip_go_agreement_dialog.dart';
 import 'trip_group_chat_sheet.dart';
 import 'trip_planner_detail_sheet.dart';
@@ -874,6 +875,93 @@ class _OpenTripCardState extends State<OpenTripCard> {
                           ),
                         ],
                       ),
+                      if (trip.isTripCompleted) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: ElevatedButton.icon(
+                            onPressed: trip.hasReviewedOrganizer
+                                ? null
+                                : () async {
+                                    final messenger =
+                                        ScaffoldMessenger.of(context);
+                                    final ok = await showOrganizerRatingDialog(
+                                      context,
+                                      trip: trip,
+                                    );
+                                    if (ok && mounted) {
+                                      setState(() {});
+                                      widget.onTripUpdated?.call();
+                                      messenger.showSnackBar(
+                                        const SnackBar(
+                                          backgroundColor: AppColors.success,
+                                          content: Text(
+                                            'Terima kasih! Rating & ulasan masuk ke Pencapaian Penyelenggara.',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            icon: Icon(
+                              trip.hasReviewedOrganizer
+                                  ? Icons.check_circle_rounded
+                                  : Icons.star_rounded,
+                              size: 16,
+                            ),
+                            label: Text(
+                              trip.hasReviewedOrganizer
+                                  ? 'Penyelenggara Sudah Diulas ✓'
+                                  : 'Beri Rating & Ulasan Penyelenggara',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.warning,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: AppColors.sage,
+                              disabledForegroundColor: AppColors.success,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ] else if (trip.isReadinessFinalized) ...[
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              setState(() => trip.isTripCompleted = true);
+                              OrganizerRatingStore.instance
+                                  .markOrganizerTripCompleted();
+                              widget.onTripUpdated?.call();
+                            },
+                            icon: const Icon(Icons.flag_rounded, size: 14),
+                            label: const Text(
+                              'Simulasi Trip Selesai (Uji Rating)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.info,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ),
+                      ],
                     ] else ...[
                       Row(
                         children: [

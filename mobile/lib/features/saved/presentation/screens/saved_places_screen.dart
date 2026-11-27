@@ -21,7 +21,7 @@ import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../trip_planner/models/open_trip_model.dart';
 import '../../../trip_planner/presentation/widgets/open_trip_card.dart';
-import '../../../trip_planner/presentation/widgets/open_trip_create_sheet.dart';
+import '../../../trip_planner/presentation/widgets/open_trip_organizer_hub_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_go_agreement_dialog.dart';
 import '../../../trip_planner/presentation/widgets/trip_eticket_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_detail_sheet.dart';
@@ -273,7 +273,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // Open Trip & Trip Planner State
   String _openTripFilterCategory = 'Semua';
   String _tripGoSearchQuery = '';
-  TripGoRole _tripGoRole = TripGoRole.participant;
   List<OpenTripItem>? _customOpenTrips;
   List<OpenTripItem> get _activeOpenTrips => _customOpenTrips ?? kMockOpenTrips;
 
@@ -2763,138 +2762,20 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     showTripGoGuideSheet(context);
   }
 
-  void _openCreateOpenTripModal() {
-    showModalBottomSheet(
+  void _openOrganizerHubModal() {
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => OpenTripCreateSheet(
+      builder: (_) => OpenTripOrganizerHubSheet(
+        allTrips: _activeOpenTrips,
         onTripCreated: (newTrip) {
           setState(() {
             _customOpenTrips ??= List<OpenTripItem>.from(kMockOpenTrips);
             _customOpenTrips!.insert(0, newTrip);
-            _tripGoRole = TripGoRole.organizer;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              backgroundColor: AppColors.forest,
-              content: Text(
-                'Pengajuan Open Trip terkirim! Menunggu verifikasi Admin WISGO. Anda dapat menguji ACC Admin di tab Penyelenggara.',
-              ),
-            ),
-          );
         },
-      ),
-    );
-  }
-
-  Widget _buildTripGoRoleButton({
-    required TripGoRole role,
-    required IconData icon,
-    required String label,
-    required int badgeCount,
-  }) {
-    final isSelected = _tripGoRole == role;
-    return Expanded(
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
-        onTap: () => setState(() => _tripGoRole = role),
-        borderRadius: BorderRadius.circular(11),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.forest : Colors.transparent,
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? AppColors.cream : AppColors.forest,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected ? AppColors.cream : AppColors.forest,
-                  ),
-                ),
-              ),
-              if (badgeCount > 0) ...[
-                const SizedBox(width: 5),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.cream.withValues(alpha: 0.22)
-                        : AppColors.sage,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '$badgeCount',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: isSelected ? AppColors.cream : AppColors.forest,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrganizerStepDot(String num, String label, bool isDone) {
-    return Expanded(
-      child: Column(
-        children: [
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              color: isDone ? AppColors.success : AppColors.creamSubtle,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDone ? AppColors.success : AppColors.warmBorder,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: isDone
-                ? const Icon(Icons.check_rounded, size: 13, color: Colors.white)
-                : Text(
-                    num,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.muted,
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: isDone ? FontWeight.w700 : FontWeight.w600,
-              color: isDone ? AppColors.ink : AppColors.muted,
-              height: 1.2,
-            ),
-          ),
-        ],
+        onTripsChanged: () => setState(() {}),
       ),
     );
   }
@@ -2925,7 +2806,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
 
     return Column(
       children: [
-        // Top Sticky Header: Bersih, Judul "Trip Go" + Tagline + Role Switcher (Wisatawan vs Penyelenggara)
+        // Top Sticky Header: Bersih, Judul "Trip Go" + Tagline + Panduan
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -3031,429 +2912,251 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   height: 1.35,
                 ),
               ),
-              const SizedBox(height: 10),
-
-              // Role Switcher: Posisi Pengguna Saat Ini (Wisatawan / Peserta vs Penyelenggara / Host)
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppColors.creamSubtle,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.warmBorder),
-                ),
-                child: Row(
-                  children: [
-                    _buildTripGoRoleButton(
-                      role: TripGoRole.participant,
-                      icon: Icons.hiking_rounded,
-                      label: 'Trip Wisatawan',
-                      badgeCount: 0,
-                    ),
-                    const SizedBox(width: 4),
-                    _buildTripGoRoleButton(
-                      role: TripGoRole.organizer,
-                      icon: Icons.verified_user_rounded,
-                      label: 'Open Trip',
-                      badgeCount: myOrganizerTrips.length,
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
 
-        // Scrollable Body sesuai Role Aktif
+        // Scrollable Body: Langsung Jadwal Trip Go Terbuka + Tombol Open Trip di bawah (seperti Usul Wisata di Beranda)
         Expanded(
-          child: _tripGoRole == TripGoRole.organizer
-              ? ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
+            children: [
+              // Pencarian Trip Go
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: TextField(
+                  onChanged: (val) => setState(() => _tripGoSearchQuery = val),
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink),
+                  decoration: InputDecoration(
+                    hintText: 'Cari Trip Go, destinasi, atau pemandu...',
+                    hintStyle: const TextStyle(fontSize: 12.5, color: AppColors.muted),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.forest),
+                    suffixIcon: _tripGoSearchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.muted),
+                            onPressed: () => setState(() => _tripGoSearchQuery = ''),
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                ),
+              ),
+
+              // Filter Kategori Perjalanan Terstruktur (5 Kluster Utama)
+              SizedBox(
+                height: 36,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
                   children: [
-                    // Kartu Status & Alur 4 Langkah Penyelenggara
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgCard,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.warmBorder),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'STATUS PENYELENGGARA',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                  color: AppColors.brush,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: hasApprovedOrganizerTrip
-                                      ? AppColors.successBg
-                                      : (hasPendingOrganizerTrip
-                                          ? AppColors.warningBg
-                                          : AppColors.sage),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  hasApprovedOrganizerTrip
-                                      ? 'Penyelenggara Terverifikasi ✓'
-                                      : (hasPendingOrganizerTrip
-                                          ? 'Menunggu Verifikasi Admin'
-                                          : 'Belum Mengajukan'),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: hasApprovedOrganizerTrip
-                                        ? AppColors.success
-                                        : (hasPendingOrganizerTrip
-                                            ? AppColors.warningDark
-                                            : AppColors.forest),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildOrganizerStepDot(
-                                '1',
-                                'Data Diri',
-                                myOrganizerTrips.isNotEmpty,
-                              ),
-                              _buildOrganizerStepDot(
-                                '2',
-                                'Upload KTP',
-                                myOrganizerTrips.isNotEmpty,
-                              ),
-                              _buildOrganizerStepDot(
-                                '3',
-                                'Lisensi /\nPengalaman',
-                                myOrganizerTrips.isNotEmpty,
-                              ),
-                              _buildOrganizerStepDot(
-                                '4',
-                                'Verifikasi\nAdmin',
-                                hasApprovedOrganizerTrip,
-                              ),
-                              _buildOrganizerStepDot(
-                                '5',
-                                'Atur\nRencana',
-                                hasApprovedOrganizerTrip,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Tombol Utama Buat Open Trip Baru
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _openCreateOpenTripModal,
-                        icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-                        label: const Text(
-                          'Buat Open Trip & Ajukan Verifikasi',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.forest,
-                          foregroundColor: AppColors.cream,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                    'Semua',
+                    'Alam & Geopark',
+                    'Budaya & Nagari',
+                    'Hidden Gem',
+                    'Religi',
+                    'Kuliner',
+                  ].map((category) {
+                    final isSelected = _openTripFilterCategory == category;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        selected: isSelected,
+                        label: Text(
+                          category,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? Colors.white : AppColors.forest,
                           ),
                         ),
+                        backgroundColor: Colors.white,
+                        selectedColor: AppColors.forest,
+                        checkmarkColor: Colors.white,
+                        side: BorderSide(
+                          color: isSelected ? AppColors.forest : AppColors.sageBorder,
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                        onSelected: (val) {
+                          setState(() {
+                            _openTripFilterCategory = category;
+                          });
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 14),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 14),
 
-                    Text(
-                      'Trip Go yang Saya Kelola (${myOrganizerTrips.length})',
+              // Daftar Kartu Open Trip
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Jadwal Trip Go Terbuka (${filteredTrips.length})',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
                         color: AppColors.ink,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '1 Destinasi Tunggal',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
 
-                    if (myOrganizerTrips.isEmpty)
+              if (filteredTrips.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.sageBorder),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Belum ada Trip Go untuk pencarian atau kategori ini.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.4),
+                    ),
+                  ),
+                )
+              else
+                ...filteredTrips.map((trip) {
+                  return OpenTripCard(
+                    trip: trip,
+                    isOrganizerView: false,
+                    onTripUpdated: _syncReadinessReminderNotifications,
+                    onTripDeleted: (deletedId) {
+                      setState(() {
+                        _activeOpenTrips.removeWhere((t) => t.id == deletedId);
+                      });
+                    },
+                    onOpenDestination360: () {
+                      final matched = _findDestinationForTrip(trip.singleDestination);
+                      _open360AndDenahModal(matched);
+                    },
+                    onOpenDestinationReviews: () {
+                      final matched = _findDestinationForTrip(trip.singleDestination);
+                      _openDestinationDetailModal(matched);
+                    },
+                  );
+                }),
+
+              const SizedBox(height: 10),
+
+              // Tombol Bawah "Open Trip" (Penyelenggara) — seragam dengan Usul Wisata di Beranda
+              InkWell(
+                mouseCursor: SystemMouseCursors.click,
+                onTap: _openOrganizerHubModal,
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgCard,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.sageBorder, width: 1.2),
+                  ),
+                  child: Row(
+                    children: [
                       Container(
-                        padding: const EdgeInsets.all(22),
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
-                          color: AppColors.bgCard,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.warmBorder),
+                          color: AppColors.forest,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Column(
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.verified_user_rounded,
+                          color: AppColors.cream,
+                          size: 21,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.assignment_ind_outlined,
-                              size: 38,
-                              color: AppColors.forest,
+                            Row(
+                              children: [
+                                const Text(
+                                  'Open Trip (Penyelenggara)',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                if (hasApprovedOrganizerTrip || hasPendingOrganizerTrip) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: hasApprovedOrganizerTrip
+                                          ? AppColors.successBg
+                                          : AppColors.warningBg,
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      hasApprovedOrganizerTrip
+                                          ? 'Aktif (${myOrganizerTrips.length})'
+                                          : 'Menunggu Admin',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: hasApprovedOrganizerTrip
+                                            ? AppColors.success
+                                            : AppColors.warningDark,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                            SizedBox(height: 10),
-                            Text(
-                              'Belum Ada Open Trip yang Dibuat',
-                              textAlign: TextAlign.center,
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Ajukan trip baru, cek verifikasi admin & kelola data peserta',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              'Semua wisatawan bisa menjadi penyelenggara! Lengkapi 1) Data Diri (Nama, No. Telp, Instagram), 2) Upload KTP, 3) Upload Lisensi (wajib jalur hard, tempat umum cukup pengalaman), 4) Verifikasi Admin, lalu 5) Atur Rencana & Persiapan peserta.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 color: AppColors.muted,
-                                height: 1.4,
                               ),
                             ),
                           ],
                         ),
-                      )
-                    else
-                      ...myOrganizerTrips.map((trip) {
-                        return OpenTripCard(
-                          trip: trip,
-                          isOrganizerView: true,
-                          onSimulateAdminApprove: () {
-                            setState(() {
-                              trip.verificationStatus =
-                                  TripVerificationStatus.approved;
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                backgroundColor: AppColors.success,
-                                content: Text(
-                                  'Selamat! Admin WISGO telah memverifikasi Anda sebagai Penyelenggara. Trip kini tayang ke Wisatawan & Anda bisa mengatur Rencana & Persiapan!',
-                                ),
-                              ),
-                            );
-                          },
-                          onTripUpdated: _syncReadinessReminderNotifications,
-                          onTripDeleted: (deletedId) {
-                            setState(() {
-                              _activeOpenTrips
-                                  .removeWhere((t) => t.id == deletedId);
-                            });
-                          },
-                          onOpenDestination360: () {
-                            final matched = _findDestinationForTrip(
-                              trip.singleDestination,
-                            );
-                            _open360AndDenahModal(matched);
-                          },
-                          onOpenDestinationReviews: () {
-                            final matched = _findDestinationForTrip(
-                              trip.singleDestination,
-                            );
-                            _openDestinationDetailModal(matched);
-                          },
-                        );
-                      }),
-                  ],
-                )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
-                  children: [
-                    // Pencarian Trip Go
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.bgCard,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.warmBorder),
                       ),
-                      child: TextField(
-                        onChanged: (val) =>
-                            setState(() => _tripGoSearchQuery = val),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.ink,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Cari Trip Go, destinasi, atau pemandu...',
-                          hintStyle: const TextStyle(
-                            fontSize: 12.5,
-                            color: AppColors.muted,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            size: 20,
-                            color: AppColors.forest,
-                          ),
-                          suffixIcon: _tripGoSearchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(
-                                    Icons.close_rounded,
-                                    size: 18,
-                                    color: AppColors.muted,
-                                  ),
-                                  onPressed: () =>
-                                      setState(() => _tripGoSearchQuery = ''),
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: AppColors.forest,
                       ),
-                    ),
-
-                    // Filter Kategori Perjalanan Terstruktur (5 Kluster Utama)
-                    SizedBox(
-                      height: 36,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          'Semua',
-                          'Alam & Geopark',
-                          'Budaya & Nagari',
-                          'Hidden Gem',
-                          'Religi',
-                          'Kuliner',
-                        ].map((category) {
-                          final isSelected = _openTripFilterCategory == category;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              selected: isSelected,
-                              label: Text(
-                                category,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : AppColors.forest,
-                                ),
-                              ),
-                              backgroundColor: Colors.white,
-                              selectedColor: AppColors.forest,
-                              checkmarkColor: Colors.white,
-                              side: BorderSide(
-                                color: isSelected
-                                    ? AppColors.forest
-                                    : AppColors.sageBorder,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 0,
-                              ),
-                              onSelected: (val) {
-                                setState(() {
-                                  _openTripFilterCategory = category;
-                                });
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Daftar Kartu Open Trip
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Jadwal Trip Go Terbuka (${filteredTrips.length})',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '1 Destinasi Tunggal',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    if (filteredTrips.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.sageBorder),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Belum ada Trip Go untuk pencarian atau kategori ini.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.muted,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      ...filteredTrips.map((trip) {
-                        return OpenTripCard(
-                          trip: trip,
-                          isOrganizerView: false,
-                          onTripUpdated: _syncReadinessReminderNotifications,
-                          onTripDeleted: (deletedId) {
-                            setState(() {
-                              _activeOpenTrips
-                                  .removeWhere((t) => t.id == deletedId);
-                            });
-                          },
-                          onOpenDestination360: () {
-                            final matched = _findDestinationForTrip(
-                              trip.singleDestination,
-                            );
-                            _open360AndDenahModal(matched);
-                          },
-                          onOpenDestinationReviews: () {
-                            final matched = _findDestinationForTrip(
-                              trip.singleDestination,
-                            );
-                            _openDestinationDetailModal(matched);
-                          },
-                        );
-                      }),
-                  ],
+                    ],
+                  ),
                 ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -8412,6 +8115,185 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
 
               const SizedBox(height: 18),
+
+              // 2A. Pencapaian & Rating Penyelenggara Open Trip
+              AnimatedBuilder(
+                animation: OrganizerRatingStore.instance,
+                builder: (context, _) {
+                  final ratingStore = OrganizerRatingStore.instance;
+                  final reviews = ratingStore.allReviews;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 18),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.workspace_premium_rounded, size: 18, color: AppColors.goldMinang),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Pencapaian Penyelenggara',
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.warningBg,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 14, color: AppColors.warning),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${ratingStore.overallAccountRating} (${reviews.length} Ulasan)',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.warningDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.sage,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      '${ratingStore.completedTripsAsOrganizer}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Trip Selesai',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.creamSubtle,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.warmBorder),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      ratingStore.overallAccountRating >= 4.8
+                                          ? 'Pemandu Prima'
+                                          : 'Terverifikasi',
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.ink,
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Lencana Akun',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (reviews.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.cream,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.warmBorder),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Ulasan Terbaru • ${reviews.first.reviewerName}',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    Text(
+                                      '★ ${reviews.first.rating}.0',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.warningDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  reviews.first.comment,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppColors.ink,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
 
               // 2B. Riwayat e-Tiket Trip Go Saya (Tersimpan & Siap Print PDF)
               AnimatedBuilder(

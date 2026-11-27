@@ -260,27 +260,136 @@ String determineCategoryForDestination(String destinationName) {
   return 'Alam & Geopark';
 }
 
-/// Model Peserta Terdaftar pada Open Trip (Item BE-2)
+/// Model Peserta Terdaftar beserta Kelengkapan Data & Persiapan untuk Penyelenggara
 class OpenTripParticipant {
   final String userId;
+  final String bookingCode;
   final String fullName;
   final String phoneNumber;
+  final String emergencyContact;
+  final int seatCount;
+  final String paymentMethod;
+  final int totalPaid;
+  final String specialNotes;
   final String joinedAt;
+  bool isScheduleReady;
+  int readinessDone;
+  int readinessTotal;
+  int packingDone;
+  int packingTotal;
+  bool isFinalized;
+  bool isCheckedInAtMeetingPoint;
 
-  const OpenTripParticipant({
+  OpenTripParticipant({
     required this.userId,
+    this.bookingCode = 'TRIP-RESMI',
     required this.fullName,
     required this.phoneNumber,
+    this.emergencyContact = '-',
+    this.seatCount = 1,
+    this.paymentMethod = 'WISGO_PAY',
+    this.totalPaid = 135000,
+    this.specialNotes = '',
     required this.joinedAt,
+    this.isScheduleReady = false,
+    this.readinessDone = 0,
+    this.readinessTotal = 6,
+    this.packingDone = 0,
+    this.packingTotal = 10,
+    this.isFinalized = false,
+    this.isCheckedInAtMeetingPoint = false,
   });
 
   factory OpenTripParticipant.fromJson(Map<String, dynamic> json) {
     return OpenTripParticipant(
       userId: json['user_id']?.toString() ?? '',
+      bookingCode: json['booking_code']?.toString() ?? 'TRIP-RESMI',
       fullName: json['full_name']?.toString() ?? 'Peserta',
       phoneNumber: json['phone_number']?.toString() ?? '',
+      emergencyContact: json['emergency_contact']?.toString() ?? '-',
+      seatCount: (json['seat_count'] as num?)?.toInt() ?? 1,
+      paymentMethod: json['payment_method']?.toString() ?? 'WISGO_PAY',
+      totalPaid: (json['total_paid'] as num?)?.toInt() ?? 135000,
+      specialNotes: json['special_notes']?.toString() ?? '',
       joinedAt: json['joined_at']?.toString() ?? '',
     );
+  }
+}
+
+/// Model Ulasan & Rating untuk Penyelenggara setelah Open Trip selesai
+class OrganizerReview {
+  final String id;
+  final String organizerId;
+  final String organizerName;
+  final String tripTitle;
+  final String reviewerName;
+  final int rating;
+  final String comment;
+  final List<String> tags;
+  final DateTime createdAt;
+
+  const OrganizerReview({
+    required this.id,
+    required this.organizerId,
+    required this.organizerName,
+    required this.tripTitle,
+    required this.reviewerName,
+    required this.rating,
+    required this.comment,
+    this.tags = const [],
+    required this.createdAt,
+  });
+}
+
+/// Store terpusat untuk Rating, Ulasan & Pencapaian Akun Penyelenggara
+class OrganizerRatingStore extends ChangeNotifier {
+  OrganizerRatingStore._();
+  static final OrganizerRatingStore instance = OrganizerRatingStore._();
+
+  final List<OrganizerReview> _reviews = [
+    OrganizerReview(
+      id: 'rev-init-1',
+      organizerId: 'ORG-01',
+      organizerName: 'Rahmat Hidayat (Guide Nagari)',
+      tripTitle: 'Jelajah Lembah Harau & Air Terjun Sarasah Bunta',
+      reviewerName: 'Nadia Putri',
+      rating: 5,
+      comment:
+          'Pemandunya sangat ramah, tepat waktu di titik kumpul, dan penjelasan sejarah Lembah Harau sangat menarik!',
+      tags: const ['Tepat Waktu', 'Pemandu Ramah', 'Rute Aman'],
+      createdAt: DateTime(2026, 11, 20),
+    ),
+  ];
+
+  int _completedTripsAsOrganizer = 1;
+
+  List<OrganizerReview> get allReviews => List.unmodifiable(_reviews);
+  int get completedTripsAsOrganizer => _completedTripsAsOrganizer;
+
+  List<OrganizerReview> reviewsForOrganizer(String organizerId) =>
+      _reviews.where((r) => r.organizerId == organizerId).toList();
+
+  double averageRatingForOrganizer(String organizerId, double fallback) {
+    final list = reviewsForOrganizer(organizerId);
+    if (list.isEmpty) return fallback;
+    final sum = list.fold<int>(0, (acc, r) => acc + r.rating);
+    return double.parse((sum / list.length).toStringAsFixed(2));
+  }
+
+  double get overallAccountRating {
+    if (_reviews.isEmpty) return 4.95;
+    final sum = _reviews.fold<int>(0, (acc, r) => acc + r.rating);
+    return double.parse((sum / _reviews.length).toStringAsFixed(2));
+  }
+
+  void markOrganizerTripCompleted() {
+    _completedTripsAsOrganizer++;
+    notifyListeners();
+  }
+
+  void addReview(OrganizerReview review) {
+    _reviews.insert(0, review);
+    notifyListeners();
   }
 }
 
@@ -348,6 +457,9 @@ class OpenTripItem {
   bool isCurrentUserJoined;
   bool isScheduleReviewed;
   bool isReadinessFinalized;
+  bool isTripCompleted;
+  bool hasReviewedOrganizer;
+  final List<OpenTripParticipant> participants;
 
   OpenTripItem({
     required this.id,
@@ -391,7 +503,49 @@ class OpenTripItem {
     this.isCurrentUserJoined = false,
     this.isScheduleReviewed = false,
     this.isReadinessFinalized = false,
-  })  : destinationDescription = destinationDescription ??
+    this.isTripCompleted = false,
+    this.hasReviewedOrganizer = false,
+    List<OpenTripParticipant>? participants,
+  })  : participants = participants ??
+            [
+              OpenTripParticipant(
+                userId: 'usr-p1',
+                bookingCode: 'TRIP-84210',
+                fullName: 'Siti Rahma',
+                phoneNumber: '0813-6542-1120',
+                emergencyContact: '0812-6611-8890 (Ibu Rahma)',
+                seatCount: 1,
+                paymentMethod: 'QRIS',
+                totalPaid: pricePerPerson,
+                specialNotes: 'Tidak ada alergi makanan',
+                joinedAt: '25 Nov 2026',
+                isScheduleReady: true,
+                readinessDone: 6,
+                readinessTotal: 6,
+                packingDone: 10,
+                packingTotal: 10,
+                isFinalized: true,
+              ),
+              OpenTripParticipant(
+                userId: 'usr-p2',
+                bookingCode: 'TRIP-84219',
+                fullName: 'Doni Pratama',
+                phoneNumber: '0852-7410-3398',
+                emergencyContact: '0811-6620-4411 (Ayah Doni)',
+                seatCount: 2,
+                paymentMethod: 'WISGO_PAY',
+                totalPaid: pricePerPerson * 2,
+                specialNotes: 'Bawa kamera & tripod, butuh jaket ukuran L',
+                joinedAt: '26 Nov 2026',
+                isScheduleReady: true,
+                readinessDone: 4,
+                readinessTotal: 6,
+                packingDone: 7,
+                packingTotal: 10,
+                isFinalized: false,
+              ),
+            ],
+        destinationDescription = destinationDescription ??
             'Kawasan cagar alam Lembah Harau dengan formasi tebing batuan vertikal 100-300 meter, akses jalan aspal datar yang mudah dijangkau, serta kolam alami air terjun Sarasah Bunta yang sejuk.',
         includes = includes ??
             const [
