@@ -67,6 +67,31 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
   // Itinerary Rundown yang diisi manual oleh pembuat trip (Sistem sediakan slot jam)
   late List<TripItineraryStep> _itinerarySteps;
 
+  // Fasilitas Include & Exclude yang diinput penyelenggara (berbeda tiap tempat)
+  final List<String> _includes = [
+    'Tiket Masuk Resmi Kawasan',
+    'Pemandu Lokal Selama Perjalanan',
+    'Air Mineral & P3K Dasar',
+  ];
+  final List<String> _excludes = [
+    'Pengeluaran Pribadi & Cinderamata',
+    'Transportasi Menuju Titik Kumpul',
+  ];
+
+  // Peraturan / SOP Khusus Destinasi yang diinput penyelenggara
+  final List<OfflineTripRule> _offlineRules = [
+    const OfflineTripRule(
+      title: 'Toleransi Waktu Titik Kumpul 15 Menit',
+      ruleDescription: 'Peserta wajib hadir di meeting point sesuai jadwal keberangkatan.',
+      iconCode: 'schedule',
+    ),
+    const OfflineTripRule(
+      title: 'Patuhi Instruksi Pemandu & Etika Lokasi',
+      ruleDescription: 'Dilarang membuang sampah sembarangan atau keluar dari jalur rombongan.',
+      iconCode: 'warning',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -373,6 +398,122 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
     );
   }
 
+  Future<void> _showAddFacilityDialog({required bool isInclude}) async {
+    final ctrl = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.cream,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          isInclude ? 'Tambah Fasilitas Include' : 'Tambah Biaya Exclude',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink),
+        ),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: _inputDecoration(
+            isInclude
+                ? 'Cth: Sewa Pelampung / Makan Siang Nasi Kapau'
+                : 'Cth: Sewa Baju Adat / Ojek Lokal',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: AppColors.muted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = ctrl.text.trim();
+              if (val.isEmpty) return;
+              setState(() {
+                if (isInclude) {
+                  _includes.add(val);
+                } else {
+                  _excludes.add(val);
+                }
+              });
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.forest,
+              foregroundColor: AppColors.cream,
+            ),
+            child: const Text('Tambah'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showAddOrEditRuleDialog({int? editIndex}) async {
+    final isEditing = editIndex != null;
+    final existing = isEditing ? _offlineRules[editIndex] : null;
+    final titleCtrl = TextEditingController(text: existing?.title ?? '');
+    final descCtrl = TextEditingController(text: existing?.ruleDescription ?? '');
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.cream,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          isEditing ? 'Ubah Peraturan / SOP Trip' : 'Tambah Peraturan / SOP Trip',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.ink),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleCtrl,
+              decoration: _inputDecoration('Judul Peraturan (Cth: Wajib Alas Kaki Antiselip)'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: descCtrl,
+              maxLines: 3,
+              decoration: _inputDecoration('Penjelasan aturan khusus untuk destinasi ini...'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: AppColors.muted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final title = titleCtrl.text.trim();
+              final desc = descCtrl.text.trim();
+              if (title.isEmpty) return;
+              final rule = OfflineTripRule(
+                title: title,
+                ruleDescription: desc.isEmpty
+                    ? 'Wajib dipatuhi seluruh peserta di lokasi.'
+                    : desc,
+                iconCode: 'warning',
+              );
+              setState(() {
+                if (isEditing) {
+                  _offlineRules[editIndex] = rule;
+                } else {
+                  _offlineRules.add(rule);
+                }
+              });
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.forest,
+              foregroundColor: AppColors.cream,
+            ),
+            child: Text(isEditing ? 'Simpan' : 'Tambah'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -510,6 +651,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       meetingPointLng: 100.6721,
       googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=-0.1132,100.6721',
       pricePerPerson: price,
+      includes: List<String>.from(_includes),
+      excludes: List<String>.from(_excludes),
       quotaMax: quota,
       quotaFilled: 1, // Host sebagai peserta pertama
       verificationStatus: TripVerificationStatus.pendingAdmin,
@@ -529,18 +672,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
             : _hostExperienceController.text.trim(),
         organizationName: 'Penyelenggara Trip Go WISGO',
       ),
-      offlineRules: const [
-        OfflineTripRule(
-          title: 'Toleransi Waktu Titik Kumpul 15 Menit',
-          ruleDescription: 'Peserta wajib hadir di meeting point tepat waktu.',
-          iconCode: 'schedule',
-        ),
-        OfflineTripRule(
-          title: 'Asuransi Keselamatan Perjalanan',
-          ruleDescription: 'Peserta terdaftar asuransi resmi selama kegiatan berlangsung.',
-          iconCode: 'security',
-        ),
-      ],
+      offlineRules: List<OfflineTripRule>.from(_offlineRules),
       readinessChecklist: [
         TripReadinessItem(
           id: 'ready_1',
@@ -983,6 +1115,191 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                         onPressed: () => _showAddOrEditItineraryDialog(),
                         icon: const Icon(Icons.add_rounded, size: 16),
                         label: const Text('Tambah Jam & Kegiatan Rundown', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.forest,
+                          side: const BorderSide(color: AppColors.forest),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Detail Fasilitas & Layanan (Include & Exclude — Diinput Penyelenggara)
+              _buildFieldLabel('DETAIL FASILITAS (INCLUDE & EXCLUDE)'),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Termasuk dalam Harga (Include):',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.success),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _showAddFacilityDialog(isInclude: true),
+                          icon: const Icon(Icons.add_rounded, size: 14),
+                          label: const Text('Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.forest,
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ..._includes.asMap().entries.map((entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_rounded, size: 15, color: AppColors.success),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(entry.value, style: const TextStyle(fontSize: 12, color: AppColors.ink)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 15, color: AppColors.muted),
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => setState(() => _includes.removeAt(entry.key)),
+                              ),
+                            ],
+                          ),
+                        )),
+                    const Divider(height: 18, color: AppColors.divider),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Tidak Termasuk (Exclude):',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.danger),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _showAddFacilityDialog(isInclude: false),
+                          icon: const Icon(Icons.add_rounded, size: 14),
+                          label: const Text('Tambah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.forest,
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ..._excludes.asMap().entries.map((entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.cancel_rounded, size: 15, color: AppColors.danger),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(entry.value, style: const TextStyle(fontSize: 12, color: AppColors.ink)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 15, color: AppColors.muted),
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => setState(() => _excludes.removeAt(entry.key)),
+                              ),
+                            ],
+                          ),
+                        )),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Peraturan & SOP Perjalanan (Diinput Penyelenggara karena tiap tempat berbeda)
+              _buildFieldLabel('PERATURAN & SOP PERJALANAN (KHUSUS LOKASI INI)'),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.warmBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Aturan ini akan tampil ke peserta di tombol SOP Perjalanan sebelum mereka mendaftar.',
+                      style: TextStyle(fontSize: 11, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 8),
+                    ..._offlineRules.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final rule = entry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.creamSubtle,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.warmBorder),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.rule_folder_rounded, size: 16, color: AppColors.forest),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    rule.title,
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.ink),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    rule.ruleDescription,
+                                    style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_rounded, size: 15, color: AppColors.forest),
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _showAddOrEditRuleDialog(editIndex: idx),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded, size: 15, color: AppColors.danger),
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => setState(() => _offlineRules.removeAt(idx)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showAddOrEditRuleDialog(),
+                        icon: const Icon(Icons.add_rounded, size: 16),
+                        label: const Text('Tambah Peraturan / SOP Lokasi', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.forest,
                           side: const BorderSide(color: AppColors.forest),
