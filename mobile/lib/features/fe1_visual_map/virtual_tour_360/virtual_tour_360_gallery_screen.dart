@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/wisgo_destination_image.dart';
 import '../../../core/localization/app_locale.dart';
 import '../data/destination_repository.dart';
 import '../models/destination_model.dart';
@@ -545,21 +546,18 @@ class _VirtualTour360GalleryScreenState
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Cover Panorama Photo
-              if (hasNetworkCover)
-                Image.network(
-                  dest.coverImage,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Image.asset(
-                    'assets/images/panorama_sumbar_default.jpg',
-                    fit: BoxFit.cover,
-                  ),
-                )
-              else
-                Image.asset(
+              // Cover Panorama Photo (prioritas foto asli lokal Sumatera Barat)
+              WisgoDestinationImage(
+                source: hasNetworkCover ? dest.coverImage : null,
+                destinationId: dest.id,
+                destinationTitle: dest.name,
+                fit: BoxFit.cover,
+                cacheWidth: 900,
+                fallback: Image.asset(
                   'assets/images/panorama_sumbar_default.jpg',
                   fit: BoxFit.cover,
                 ),
+              ),
 
               // Editorial Gradient Overlay
               DecoratedBox(
