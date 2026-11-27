@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
 
@@ -41,12 +42,79 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
   late String _autoDeterminedCategory;
 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _meetingPointNameController =
-      TextEditingController(text: 'Rest Area Simpang Harau');
-  final TextEditingController _meetingAddressController =
-      TextEditingController(text: 'Jl. Raya Payakumbuh-Harau KM 8, Kab. Lima Puluh Kota');
   final TextEditingController _priceController = TextEditingController(text: '125000');
   final TextEditingController _quotaMaxController = TextEditingController(text: '8');
+
+  // Titik Kumpul Otomatis Terintegrasi Google Maps (tanpa ketik manual)
+  static const Map<String, Map<String, dynamic>> _meetingPointsByDestination = {
+    'Lembah Harau & Sarasah Bunta': {
+      'name': 'Rest Area Simpang Harau',
+      'address': 'Jl. Raya Payakumbuh-Harau KM 8, Kab. Lima Puluh Kota',
+      'lat': -0.1132,
+      'lng': 100.6721,
+    },
+    'Jam Gadang Bukittinggi': {
+      'name': 'Pelataran Jam Gadang (Gerbang Utama)',
+      'address': 'Jl. Raya Pasar Ateh, Guguk Panjang, Kota Bukittinggi',
+      'lat': -0.3052,
+      'lng': 100.3692,
+    },
+    'Istano Basa Pagaruyung': {
+      'name': 'Gerbang Utama Istano Basa Pagaruyung',
+      'address': 'Nagari Pagaruyung, Kec. Tanjung Emas, Kab. Tanah Datar',
+      'lat': -0.4712,
+      'lng': 100.6214,
+    },
+    'Ekowisata Air Terjun Nyarai (Hidden Gem)': {
+      'name': 'Posko Pokdarwis LA Nyarai',
+      'address': 'Korong Gamaran, Salibutan Lubuk Alung, Kab. Padang Pariaman',
+      'lat': -0.6654,
+      'lng': 100.2981,
+    },
+    'Kawasan Bahari Mandeh': {
+      'name': 'Dermaga TPI Carocok Tarusan',
+      'address': 'Kawasan Wisata Mandeh, Koto XI Tarusan, Kab. Pesisir Selatan',
+      'lat': -1.2135,
+      'lng': 100.4158,
+    },
+    'Jembatan Akar Bayang (Hidden Gem)': {
+      'name': 'Area Parkir Jembatan Akar Pulut-Pulut',
+      'address': 'Nagari Pulut-Pulut, Kec. IV Nagari Bayang Utara, Pesisir Selatan',
+      'lat': -1.2491,
+      'lng': 100.5944,
+    },
+    'Desa Wisata Nagari Tuo Pariangan': {
+      'name': 'Masjid Ishlah & Balai Adat Pariangan',
+      'address': 'Nagari Pariangan, Kec. Pariangan, Kab. Tanah Datar',
+      'lat': -0.4534,
+      'lng': 100.5112,
+    },
+    'Masjid Raya Sumatera Barat (Religi)': {
+      'name': 'Pelataran Timur Masjid Raya Sumbar',
+      'address': 'Jl. Khatib Sulaiman, Alai Parak Kopi, Kota Padang',
+      'lat': -0.9242,
+      'lng': 100.3623,
+    },
+    'Los Lambuang Nasi Kapau Pasar Ateh (Kuliner)': {
+      'name': 'Pintu Masuk Pasar Ateh / Los Lambuang',
+      'address': 'Jl. Pasar Atas, Benteng Pasar Atas, Kota Bukittinggi',
+      'lat': -0.3046,
+      'lng': 100.3698,
+    },
+    'Danau Singkarak & Kuliner Ikan Bilih': {
+      'name': 'Dermaga Wisata Batu Taba Singkarak',
+      'address': 'Jl. Lintas Sumatera Batu Taba, Kec. Batipuh Selatan, Tanah Datar',
+      'lat': -0.6184,
+      'lng': 100.5318,
+    },
+  };
+
+  late String _meetingPointName;
+  late String _meetingAddress;
+  late double _meetingLat;
+  late double _meetingLng;
+  String get _googleMapsUrl =>
+      'https://www.google.com/maps/search/?api=1&query=$_meetingLat,$_meetingLng';
   final TextEditingController _hostNameController =
       TextEditingController(text: 'Rahmat Hidayat (Guide Nagari)');
   final TextEditingController _hostLicenseController =
@@ -92,19 +160,29 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
     ),
   ];
 
+  void _applyGoogleMapsPointFor(String dest) {
+    final preset = _meetingPointsByDestination[dest] ??
+        _meetingPointsByDestination.values.first;
+    _meetingPointName = preset['name'] as String;
+    _meetingAddress = preset['address'] as String;
+    _meetingLat = preset['lat'] as double;
+    _meetingLng = preset['lng'] as double;
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedSingleDestination = _availableSingleDestinations.first;
     _autoDeterminedCategory = determineCategoryForDestination(_selectedSingleDestination);
     _titleController.text = 'Eksplorasi $_selectedSingleDestination';
+    _applyGoogleMapsPointFor(_selectedSingleDestination);
 
     // Inisialisasi rundown default dengan jam dari sistem untuk diisi/diubah pembuat trip
     _itinerarySteps = [
       TripItineraryStep(
         time: '06.30 - 07.30 WIB',
         activity: 'Kumpul di Meeting Point & Briefing Tim',
-        location: _meetingPointNameController.text.trim(),
+        location: _meetingPointName,
         notes: 'Presensi peserta, doa bersama & pembagian ID card rombongan',
         status: 'Akan Datang',
         icon: Icons.flag_rounded,
@@ -517,8 +595,6 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
   @override
   void dispose() {
     _titleController.dispose();
-    _meetingPointNameController.dispose();
-    _meetingAddressController.dispose();
     _priceController.dispose();
     _quotaMaxController.dispose();
     _hostNameController.dispose();
@@ -546,7 +622,95 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       _autoDeterminedCategory = determineCategoryForDestination(newDest);
       _isHardRoute = _detectHardRoute(newDest);
       _titleController.text = 'Eksplorasi $newDest';
+      _applyGoogleMapsPointFor(newDest);
     });
+  }
+
+  Future<void> _openGoogleMapsPin() async {
+    final uri = Uri.parse(_googleMapsUrl);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pin Google Maps: $_meetingPointName ($_meetingLat, $_meetingLng)')),
+      );
+    }
+  }
+
+  Future<void> _showPickGoogleMapsHubDialog() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        decoration: const BoxDecoration(
+          color: AppColors.cream,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.warmBorder,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const Text(
+                'Pilih Titik Kumpul Google Maps',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.ink),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 280,
+                child: ListView(
+                  children: _meetingPointsByDestination.entries.map((entry) {
+                    final preset = entry.value;
+                    final name = preset['name'] as String;
+                    final address = preset['address'] as String;
+                    final isCurrent = name == _meetingPointName;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      leading: Icon(
+                        Icons.location_on_rounded,
+                        color: isCurrent ? AppColors.forest : AppColors.danger,
+                      ),
+                      title: Text(
+                        name,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.ink),
+                      ),
+                      subtitle: Text(
+                        address,
+                        style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                      ),
+                      trailing: isCurrent
+                          ? const Icon(Icons.check_circle_rounded, color: AppColors.forest)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          _meetingPointName = name;
+                          _meetingAddress = address;
+                          _meetingLat = preset['lat'] as double;
+                          _meetingLng = preset['lng'] as double;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _pickDate() async {
@@ -645,11 +809,11 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       departureTime:
           '${_departureTime.hour.toString().padLeft(2, '0')}.${_departureTime.minute.toString().padLeft(2, '0')} WIB',
       duration: '1 Hari (Day Trip)',
-      meetingPointName: _meetingPointNameController.text.trim(),
-      meetingPointAddress: _meetingAddressController.text.trim(),
-      meetingPointLat: -0.1132,
-      meetingPointLng: 100.6721,
-      googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=-0.1132,100.6721',
+      meetingPointName: _meetingPointName,
+      meetingPointAddress: _meetingAddress,
+      meetingPointLat: _meetingLat,
+      meetingPointLng: _meetingLng,
+      googleMapsUrl: _googleMapsUrl,
       pricePerPerson: price,
       includes: List<String>.from(_includes),
       excludes: List<String>.from(_excludes),
@@ -926,16 +1090,110 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 14),
 
-              // Titik Kumpul (Google Maps)
-              _buildFieldLabel('TITIK KUMPUL (TERINTEGRASI GOOGLE MAPS)'),
-              TextField(
-                controller: _meetingPointNameController,
-                decoration: _inputDecoration('Nama Tempat Titik Kumpul (e.g. Rest Area Simpang Harau)'),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _meetingAddressController,
-                decoration: _inputDecoration('Alamat Lengkap Titik Kumpul untuk Google Maps'),
+              // Titik Kumpul Otomatis (Google Maps — Tanpa Ketik Manual)
+              _buildFieldLabel('TITIK KUMPUL (OTOMATIS GOOGLE MAPS)'),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.sageBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.dangerBg,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.location_on_rounded,
+                            size: 18,
+                            color: AppColors.danger,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _meetingPointName,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _meetingAddress,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.muted,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Pin GPS: ${_meetingLat.toStringAsFixed(4)}, ${_meetingLng.toStringAsFixed(4)}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _showPickGoogleMapsHubDialog,
+                            icon: const Icon(Icons.edit_location_alt_rounded, size: 15),
+                            label: const Text(
+                              'Ganti Titik',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.forest,
+                              side: const BorderSide(color: AppColors.sageBorder),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _openGoogleMapsPin,
+                            icon: const Icon(Icons.map_rounded, size: 15),
+                            label: const Text(
+                              'Buka Google Maps ↗',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.forest,
+                              foregroundColor: AppColors.cream,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 14),
 
