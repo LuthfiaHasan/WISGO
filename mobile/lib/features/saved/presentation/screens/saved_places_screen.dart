@@ -22,6 +22,8 @@ import '../../../trip_planner/presentation/widgets/destination_weather_sheet.dar
 import '../../../trip_planner/presentation/widgets/open_trip_card.dart';
 import '../../../trip_planner/presentation/widgets/open_trip_create_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_go_agreement_dialog.dart';
+import '../../../trip_planner/presentation/widgets/trip_eticket_sheet.dart';
+import '../../../trip_planner/services/trip_eticket_store.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
 import '../../../fe1_visual_map/destination_detail/destination_detail_screen.dart';
@@ -377,6 +379,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   @override
   void dispose() {
     AuthSession.instance.removeListener(_handleAuthSessionChanged);
+    TripETicketStore.instance.removeListener(_handleNewETicket);
     _heroSliderTimer?.cancel();
     _heroPageController?.dispose();
     _exploreScrollController?.dispose();
@@ -385,10 +388,31 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     super.dispose();
   }
 
+  void _handleNewETicket() {
+    final ticket = TripETicketStore.instance.lastIssuedTicket;
+    if (ticket == null || !mounted) return;
+    final notifId = 'notif_eticket_${ticket.bookingCode}';
+    final exists = _appNotifications.any((n) => n['id'] == notifId);
+    if (exists) return;
+    setState(() {
+      _appNotifications.insert(0, {
+        'id': notifId,
+        'title': 'e-Tiket Trip Go Terbit: ${ticket.bookingCode}',
+        'message':
+            '${ticket.tripTitle} (${ticket.departureDate} • ${ticket.departureTime}) — Ketuk untuk melihat & unduh PDF.',
+        'time': 'Baru saja',
+        'isRead': false,
+        'type': 'eticket',
+        'ticketCode': ticket.bookingCode,
+      });
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     AuthSession.instance.addListener(_handleAuthSessionChanged);
+    TripETicketStore.instance.addListener(_handleNewETicket);
     _activeTabIndex = widget.initialTabIndex;
     _isOfflineMode = widget.initialOfflineMode;
     if (widget.isGuest) {
@@ -4831,6 +4855,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   iconColor = AppColors.forest;
                                   iconBg = AppColors.successBorder;
                                   break;
+                                case 'eticket':
+                                  notifIcon = Icons.confirmation_number_rounded;
+                                  iconColor = AppColors.forest;
+                                  iconBg = AppColors.sage;
+                                  break;
                                 case 'passport':
                                   notifIcon = Icons.verified_rounded;
                                   iconColor = AppColors.info;
@@ -4881,6 +4910,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           orElse: () => _budayaFestivals.first,
                                         );
                                         _openFestivalDetailModal(matched);
+                                      } else if (type == 'eticket' && notif['ticketCode'] != null) {
+                                        final ticket = TripETicketStore.instance
+                                            .findByCode(notif['ticketCode'] as String);
+                                        if (ticket != null) {
+                                          showTripETicketSheet(context, ticket);
+                                        }
                                       }
                                     },
                                     child: Padding(
@@ -8722,6 +8757,175 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
 
               const SizedBox(height: 18),
+
+              // 2B. Riwayat e-Tiket Trip Go Saya (Tersimpan & Siap Print PDF)
+              AnimatedBuilder(
+                animation: TripETicketStore.instance,
+                builder: (context, _) {
+                  final tickets = TripETicketStore.instance.tickets;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 18),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.confirmation_number_rounded, size: 18, color: AppColors.forest),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Riwayat e-Tiket Trip Go',
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.sage,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '${tickets.length} Tiket',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        if (tickets.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.creamSubtle,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.warmBorder),
+                            ),
+                            child: const Text(
+                              'Belum ada e-Tiket Trip Go. Setelah Anda melakukan Daftar & Bayar di Trip Go, e-Tiket resmi akan otomatis tersimpan di sini & di Notifikasi untuk diunduh/print PDF.',
+                              style: TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.4),
+                            ),
+                          )
+                        else
+                          ...tickets.map((t) => Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.cream,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.sageBorder),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          t.bookingCode,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            color: AppColors.forest,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.successBg,
+                                            borderRadius: BorderRadius.circular(999),
+                                          ),
+                                          child: const Text(
+                                            'LUNAS',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.success,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      t.tripTitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.ink,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${t.departureDate} • ${t.departureTime} • ${t.participantCount} Orang',
+                                      style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: () => showTripETicketSheet(context, t),
+                                            icon: const Icon(Icons.qr_code_2_rounded, size: 15),
+                                            label: const Text(
+                                              'Lihat Tiket',
+                                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: AppColors.forest,
+                                              side: const BorderSide(color: AppColors.sageBorder),
+                                              padding: const EdgeInsets.symmetric(vertical: 6),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            onPressed: () => printOrDownloadTripETicketPdf(context, t),
+                                            icon: const Icon(Icons.picture_as_pdf_rounded, size: 15),
+                                            label: const Text(
+                                              'Print PDF',
+                                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.forest,
+                                              foregroundColor: AppColors.cream,
+                                              elevation: 0,
+                                              padding: const EdgeInsets.symmetric(vertical: 6),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
               // 3. Riwayat Perjalanan & Aktivitas (Activity Timeline)
               Padding(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
+import '../../services/trip_eticket_store.dart';
+import 'trip_eticket_sheet.dart';
 
 /// Modal Transaksi Langsung Melalui Sistem WISGO (Item 3 Open Trip)
 class OpenTripPaymentSheet extends StatefulWidget {
@@ -22,6 +24,7 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
   bool _isPaid = false;
   bool _agreedToTerms = false;
   String _bookingCode = '';
+  TripETicket? _issuedTicket;
 
   @override
   void initState() {
@@ -37,9 +40,29 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
 
     Future.delayed(const Duration(milliseconds: 1400), () {
       if (!mounted) return;
+      final ticket = TripETicket(
+        bookingCode: _bookingCode,
+        tripId: widget.trip.id,
+        tripTitle: widget.trip.title,
+        singleDestination: widget.trip.singleDestination,
+        category: widget.trip.category,
+        departureDate: widget.trip.departureDate,
+        departureTime: widget.trip.departureTime,
+        duration: widget.trip.duration,
+        meetingPointName: widget.trip.meetingPointName,
+        meetingPointAddress: widget.trip.meetingPointAddress,
+        organizerName: widget.trip.organizer.name,
+        organizerPhone: widget.trip.organizer.phone,
+        participantCount: _participantCount,
+        totalAmount: _totalAmount,
+        paymentMethod: _selectedPaymentMethod,
+        issuedAt: DateTime.now(),
+      );
+      TripETicketStore.instance.addTicket(ticket);
       setState(() {
         _isProcessing = false;
         _isPaid = true;
+        _issuedTicket = ticket;
         widget.trip.isCurrentUserJoined = true;
         widget.trip.quotaFilled = (widget.trip.quotaFilled + _participantCount).clamp(0, widget.trip.quotaMax);
       });
@@ -529,10 +552,41 @@ class _OpenTripPaymentSheetState extends State<OpenTripPaymentSheet> {
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
+
+        if (_issuedTicket != null) ...[
+          OutlinedButton.icon(
+            onPressed: () =>
+                printOrDownloadTripETicketPdf(context, _issuedTicket!),
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+            label: const Text(
+              'Unduh / Print e-Tiket (PDF)',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.forest,
+              side: const BorderSide(color: AppColors.forest, width: 1.3),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
 
         ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
+          onPressed: () {
+            Navigator.pop(context, true);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                backgroundColor: AppColors.forest,
+                content: Text(
+                  'e-Tiket tersimpan di Riwayat (Profil) & Pusat Notifikasi!',
+                ),
+              ),
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.forest,
             foregroundColor: Colors.white,
