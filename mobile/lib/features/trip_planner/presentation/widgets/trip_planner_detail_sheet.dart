@@ -17,12 +17,14 @@ class TripPlannerDetailSheet extends StatefulWidget {
   final OpenTripItem trip;
   final bool isOrganizerMode;
   final bool isJoinedParticipant;
+  final VoidCallback? onReadinessFinalized;
 
   const TripPlannerDetailSheet({
     super.key,
     required this.trip,
     this.isOrganizerMode = false,
     this.isJoinedParticipant = true,
+    this.onReadinessFinalized,
   });
 
   @override
@@ -32,7 +34,7 @@ class TripPlannerDetailSheet extends StatefulWidget {
 class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isReadinessConfirmed = false;
+  int _currentTabIndex = 0;
 
   // Dialog controllers for adding items
   final TextEditingController _newChecklistController = TextEditingController();
@@ -42,6 +44,13 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging &&
+          _currentTabIndex != _tabController.index &&
+          mounted) {
+        setState(() => _currentTabIndex = _tabController.index);
+      }
+    });
   }
 
   @override
@@ -197,13 +206,17 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
     );
 
     if (confirmed == true && mounted) {
-      setState(() => _isReadinessConfirmed = true);
+      setState(() {
+        widget.trip.isScheduleReviewed = true;
+        widget.trip.isReadinessFinalized = true;
+      });
+      widget.onReadinessFinalized?.call();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppColors.forest,
           behavior: SnackBarBehavior.floating,
           content: Text(
-            'Kesiapan trip Anda berhasil disimpan & tercatat di sistem!',
+            'Finalisasi berhasil! Jadwal, persiapan & barang bawaan Anda telah tervalidasi.',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ),
@@ -788,9 +801,17 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                   labelPadding: const EdgeInsets.symmetric(horizontal: 12),
                   labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
                   tabs: [
-                    const Tab(text: 'Jadwal'),
-                    Tab(text: 'Persiapan ($readinessDone/$readinessTotal)'),
-                                        Tab(text: 'Barang Bawaan ($packingDone/$packingTotal)'),
+                    Tab(
+                      text: widget.isJoinedParticipant && widget.trip.isScheduleReviewed
+                          ? '1. Jadwal ✓'
+                          : '1. Jadwal',
+                    ),
+                    Tab(
+                      text: '2. Persiapan ($readinessDone/$readinessTotal)',
+                    ),
+                    Tab(
+                      text: '3. Barang Bawaan ($packingDone/$packingTotal)',
+                    ),
                   ],
                 ),
               ],
@@ -902,81 +923,262 @@ class _TripPlannerDetailSheetState extends State<TripPlannerDetailSheet>
                             ),
                           ],
                         )
-                      : Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _isReadinessConfirmed
-                                        ? 'Kesiapan Trip Terkonfirmasi ✓'
-                                        : 'Wajib lengkapi Persiapan & Barang Bawaan',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: _isReadinessConfirmed
-                                          ? AppColors.success
-                                          : AppColors.ink,
-                                    ),
-                                  ),
-                                  Text(
-                                    _isReadinessConfirmed
-                                        ? 'Data kesiapan Anda sudah tercatat di penyelenggara.'
-                                        : 'Persiapan $readinessDone/$readinessTotal • Barang $packingDone/$packingTotal',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            ElevatedButton(
-                              onPressed: _isReadinessConfirmed
-                                  ? null
-                                  : () => _showReadinessConfirmDialog(
-                                        readinessDone,
-                                        readinessTotal,
-                                        packingDone,
-                                        packingTotal,
-                                      ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.forest,
-                                foregroundColor: AppColors.cream,
-                                disabledBackgroundColor: AppColors.sage,
-                                disabledForegroundColor: AppColors.success,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: Text(
-                                _isReadinessConfirmed
-                                    ? 'Terkonfirmasi'
-                                    : 'Konfirmasi Siap',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
+                      : _buildParticipantSequentialFooter(
+                          readinessDone: readinessDone,
+                          readinessTotal: readinessTotal,
+                          packingDone: packingDone,
+                          packingTotal: packingTotal,
                         )),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildParticipantSequentialFooter({
+    required int readinessDone,
+    required int readinessTotal,
+    required int packingDone,
+    required int packingTotal,
+  }) {
+    final trip = widget.trip;
+    final allReadinessDone = readinessTotal == 0 || readinessDone >= readinessTotal;
+    final allPackingDone = packingTotal == 0 || packingDone >= packingTotal;
+
+    if (trip.isReadinessFinalized) {
+      return Row(
+        children: [
+          const Icon(Icons.verified_rounded, size: 20, color: AppColors.success),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Finalisasi Kesiapan Tervalidasi ✓',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.success,
+                  ),
+                ),
+                Text(
+                  'Jadwal, persiapan & barang bawaan siap berangkat.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: () {
+              setState(() => trip.isReadinessFinalized = false);
+              widget.onReadinessFinalized?.call();
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.forest,
+              side: const BorderSide(color: AppColors.sageBorder),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              'Ubah',
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Step 1: Jadwal -> "Saya Siap Jadwal"
+    if (_currentTabIndex == 0) {
+      return Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  trip.isScheduleReviewed
+                      ? 'Langkah 1/3 • Jadwal Siap ✓'
+                      : 'Langkah 1/3 • Pahami Jadwal',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: trip.isScheduleReviewed ? AppColors.success : AppColors.ink,
+                  ),
+                ),
+                const Text(
+                  'Pastikan jam & titik kumpul sesuai rencana Anda.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => trip.isScheduleReviewed = true);
+              _tabController.animateTo(1);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.forest,
+              foregroundColor: AppColors.cream,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Siap Jadwal →',
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Step 2: Persiapan -> "Lanjut Barang Bawaan"
+    if (_currentTabIndex == 1) {
+      return Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  allReadinessDone
+                      ? 'Langkah 2/3 • Persiapan Lengkap ✓'
+                      : 'Langkah 2/3 • Lengkapi Persiapan',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: allReadinessDone ? AppColors.success : AppColors.ink,
+                  ),
+                ),
+                Text(
+                  'Tercentang $readinessDone dari $readinessTotal persiapan wajib.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: allReadinessDone ? () => _tabController.animateTo(2) : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.forest,
+              foregroundColor: AppColors.cream,
+              disabledBackgroundColor: AppColors.disabledBg,
+              disabledForegroundColor: AppColors.disabledText,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              allReadinessDone
+                  ? 'Lanjut Barang →'
+                  : 'Persiapan $readinessDone/$readinessTotal',
+              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Step 3: Barang Bawaan -> Finalisasi Semua
+    final bool canFinalize =
+        trip.isScheduleReviewed && allReadinessDone && allPackingDone;
+    String actionLabel = 'Finalisasi Semua ✓';
+    VoidCallback? onPressed;
+
+    if (!trip.isScheduleReviewed) {
+      actionLabel = 'Cek Jadwal Dulu';
+      onPressed = () => _tabController.animateTo(0);
+    } else if (!allReadinessDone) {
+      actionLabel = 'Cek Persiapan Dulu';
+      onPressed = () => _tabController.animateTo(1);
+    } else if (!allPackingDone) {
+      actionLabel = 'Barang $packingDone/$packingTotal';
+      onPressed = null;
+    } else {
+      onPressed = () => _showReadinessConfirmDialog(
+            readinessDone,
+            readinessTotal,
+            packingDone,
+            packingTotal,
+          );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                canFinalize
+                    ? 'Langkah 3/3 • Siap Finalisasi!'
+                    : 'Langkah 3/3 • Lengkapi Barang Bawaan',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: canFinalize ? AppColors.success : AppColors.ink,
+                ),
+              ),
+              Text(
+                'Barang bawaan $packingDone/$packingTotal siap di tas.',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.forest,
+            foregroundColor: AppColors.cream,
+            disabledBackgroundColor: AppColors.disabledBg,
+            disabledForegroundColor: AppColors.disabledText,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(
+            actionLabel,
+            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
     );
   }
 

@@ -23,6 +23,7 @@ import '../../../trip_planner/presentation/widgets/open_trip_card.dart';
 import '../../../trip_planner/presentation/widgets/open_trip_create_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_go_agreement_dialog.dart';
 import '../../../trip_planner/presentation/widgets/trip_eticket_sheet.dart';
+import '../../../trip_planner/presentation/widgets/trip_planner_detail_sheet.dart';
 import '../../../trip_planner/services/trip_eticket_store.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
@@ -405,6 +406,40 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
         'type': 'eticket',
         'ticketCode': ticket.bookingCode,
       });
+
+      final reminderId = 'notif_readiness_${ticket.tripId}';
+      final hasReminder = _appNotifications.any((n) => n['id'] == reminderId);
+      if (!hasReminder) {
+        _appNotifications.insert(0, {
+          'id': reminderId,
+          'title': 'Pengingat Wajib: Validasi Rencana & Persiapan',
+          'message':
+              'Jadwal ${ticket.tripTitle} (${ticket.departureDate} • ${ticket.departureTime}) sudah dekat, namun Rencana & Persiapan belum difinalisasi. Ketuk untuk melengkapi!',
+          'time': 'Pengingat Jadwal',
+          'isRead': false,
+          'type': 'readiness_reminder',
+          'tripId': ticket.tripId,
+        });
+      }
+    });
+  }
+
+  void _syncReadinessReminderNotifications() {
+    if (!mounted) return;
+    setState(() {
+      for (final trip in _activeOpenTrips) {
+        if (trip.isCurrentUserJoined && trip.isReadinessFinalized) {
+          final reminderId = 'notif_readiness_${trip.id}';
+          for (final n in _appNotifications) {
+            if (n['id'] == reminderId) {
+              n['isRead'] = true;
+              n['title'] = 'Validasi Rencana & Persiapan Selesai ✓';
+              n['message'] =
+                  '${trip.title} sudah terfinalisasi (Jadwal, Persiapan & Barang Bawaan siap).';
+            }
+          }
+        }
+      }
     });
   }
 
@@ -3375,7 +3410,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               ),
                             );
                           },
-                          onTripUpdated: () => setState(() {}),
+                          onTripUpdated: _syncReadinessReminderNotifications,
                           onTripDeleted: (deletedId) {
                             setState(() {
                               _activeOpenTrips
@@ -3556,7 +3591,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                         return OpenTripCard(
                           trip: trip,
                           isOrganizerView: false,
-                          onTripUpdated: () => setState(() {}),
+                          onTripUpdated: _syncReadinessReminderNotifications,
                           onTripDeleted: (deletedId) {
                             setState(() {
                               _activeOpenTrips
@@ -4860,6 +4895,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   iconColor = AppColors.forest;
                                   iconBg = AppColors.sage;
                                   break;
+                                case 'readiness_reminder':
+                                  notifIcon = Icons.assignment_late_rounded;
+                                  iconColor = AppColors.warningDark;
+                                  iconBg = AppColors.warningBg;
+                                  break;
                                 case 'passport':
                                   notifIcon = Icons.verified_rounded;
                                   iconColor = AppColors.info;
@@ -4916,6 +4956,23 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                         if (ticket != null) {
                                           showTripETicketSheet(context, ticket);
                                         }
+                                      } else if (type == 'readiness_reminder' && notif['tripId'] != null) {
+                                        final tripId = notif['tripId'] as String;
+                                        final matchedTrip = _activeOpenTrips.firstWhere(
+                                          (t) => t.id == tripId,
+                                          orElse: () => _activeOpenTrips.first,
+                                        );
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (_) => TripPlannerDetailSheet(
+                                            trip: matchedTrip,
+                                            isOrganizerMode: false,
+                                            isJoinedParticipant: true,
+                                            onReadinessFinalized: _syncReadinessReminderNotifications,
+                                          ),
+                                        );
                                       }
                                     },
                                     child: Padding(

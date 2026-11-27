@@ -346,6 +346,8 @@ class OpenTripItem {
   TripVerificationStatus verificationStatus;
   final bool isCreatedByCurrentUser;
   bool isCurrentUserJoined;
+  bool isScheduleReviewed;
+  bool isReadinessFinalized;
 
   OpenTripItem({
     required this.id,
@@ -387,6 +389,8 @@ class OpenTripItem {
     this.verificationStatus = TripVerificationStatus.approved,
     this.isCreatedByCurrentUser = false,
     this.isCurrentUserJoined = false,
+    this.isScheduleReviewed = false,
+    this.isReadinessFinalized = false,
   })  : destinationDescription = destinationDescription ??
             'Kawasan cagar alam Lembah Harau dengan formasi tebing batuan vertikal 100-300 meter, akses jalan aspal datar yang mudah dijangkau, serta kolam alami air terjun Sarasah Bunta yang sejuk.',
         includes = includes ??

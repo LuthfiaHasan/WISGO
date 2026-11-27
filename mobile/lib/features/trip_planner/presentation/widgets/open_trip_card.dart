@@ -797,15 +797,20 @@ class _OpenTripCardState extends State<OpenTripCard> {
                                       trip: trip,
                                       isOrganizerMode: false,
                                       isJoinedParticipant: true,
+                                      onReadinessFinalized: widget.onTripUpdated,
                                     ),
                                   );
                                 },
-                                icon: const Icon(
-                                  Icons.fact_check_rounded,
+                                icon: Icon(
+                                  trip.isReadinessFinalized
+                                      ? Icons.verified_rounded
+                                      : Icons.fact_check_rounded,
                                   size: 15,
                                 ),
-                                label: const Text(
-                                  'Lengkapi Persiapan',
+                                label: Text(
+                                  trip.isReadinessFinalized
+                                      ? 'Siap Berangkat ✓'
+                                      : 'Lengkapi Persiapan',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
