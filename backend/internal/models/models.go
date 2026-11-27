@@ -1,0 +1,1011 @@
+package models
+
+import (
+	"time"
+)
+
+// --- Domain Models BE-1: Core & Spasial (Pilar 1, 2, 3, 7) ---
+
+// Category tabel master kategori yang menyatukan seluruh category_id lintas modul (ERD Revisi #1 & Poin 6)
+type Category struct {
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`             // Alam & Geopark, Budaya & Nagari, Hidden Gem, Religi, Kuliner
+	Slug             string    `json:"slug"`
+	Description      string    `json:"description,omitempty"`
+	IconURL          string    `json:"icon_url,omitempty"`
+	DestinationCount int       `json:"destination_count"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+// GetDefaultCategories mengembalikan 5 Kategori Induk Resmi Wisata Ranah Minang (Poin 6)
+func GetDefaultCategories() []Category {
+	now := time.Now()
+	return []Category{
+		{
+			ID:               "cat-alam-geopark",
+			Name:             "Alam & Geopark",
+			Slug:             "alam-geopark",
+			Description:      "Wisata bentang alam, tebing granit purba, ngarai, danau pegunungan, dan geopark Sumatera Barat.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-alam.png",
+			DestinationCount: 7,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-budaya-nagari",
+			Name:             "Budaya & Nagari",
+			Slug:             "budaya-nagari",
+			Description:      "Wisata warisan budaya Minangkabau, rumah gadang, desa adat terindah, dan sejarah peradaban Minang.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-budaya.png",
+			DestinationCount: 7,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-hidden-gem",
+			Name:             "Hidden Gem",
+			Slug:             "hidden-gem",
+			Description:      "Destinasi alami tersembunyi yang asri, minim keramaian, dan membutuhkan edukasi kelestarian tinggi.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-hidden-gem.png",
+			DestinationCount: 3,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-religi",
+			Name:             "Religi",
+			Slug:             "religi",
+			Description:      "Wisata masjid bersejarah berarsitektur Minang, surau tarekat, dan jejak peradaban Islam Minangkabau.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-religi.png",
+			DestinationCount: 1,
+			CreatedAt:        now,
+		},
+		{
+			ID:               "cat-kuliner",
+			Name:             "Kuliner",
+			Slug:             "kuliner",
+			Description:      "Sentra kuliner Minangkabau otentik, los lambuang pasar tradisional, rumah makan legendaris, dan sentra rendang.",
+			IconURL:          "https://cdn.wisgo.sumbarprov.go.id/icons/cat-kuliner.png",
+			DestinationCount: 2,
+			CreatedAt:        now,
+		},
+	}
+}
+
+// WeatherInfo memuat data cuaca real-time tingkat kota/kabupaten destinasi (Poin 7)
+type WeatherInfo struct {
+	CityRegency     string `json:"city_regency"`
+	TemperatureC    int    `json:"temperature_c"`
+	Condition       string `json:"condition"`        // Cerah Berawan, Hujan Sedang, Hujan Lebat Berkabut
+	WeatherStatus   string `json:"weather_status"`   // Aman / Waspada Hujan / Siaga Cuaca Ekstrem
+	HumidityPercent int    `json:"humidity_percent"` // 70-90%
+	WindSpeedKmh    int    `json:"wind_speed_kmh"`   // 10-25 km/h
+	RainProbability int    `json:"rain_probability"` // 20-80%
+	Forecast        string `json:"forecast"`         // Prediksi cuaca beberapa waktu ke depan
+	AlertNote       string `json:"alert_note,omitempty"`
+	Source          string `json:"source,omitempty"` // Open-Meteo Live API / Regional Engine
+	LastUpdated     string `json:"last_updated"`
+}
+
+// Destination merepresentasikan destinasi wisata di Sumatera Barat
+// Dilengkapi 4 Statistik Keputusan di Depan (DistanceKm, TravelTimeMin, CrowdLevel, EstimatedCost)
+type Destination struct {
+	ID            string    `json:"id"`
+	Slug          string    `json:"slug,omitempty"`
+	Name          string    `json:"name"`
+	CategoryID    string    `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #2)
+	Category      string    `json:"category"`       // Alam & Geopark, Budaya & Nagari, Hidden Gem, Religi, Kuliner
+	CityRegency   string    `json:"city_regency"`   // 19 Kab/Kota Sumbar
+	Description   string    `json:"description"`
+	Latitude      float64   `json:"latitude"`
+	Longitude     float64   `json:"longitude"`
+	ElevationM    int       `json:"elevation_m,omitempty"`
+	CoverImage    string    `json:"cover_image"`
+	CrowdLevel    string    `json:"crowd_level"`     // Sepi, Sedang, Ramai (Statistik Keputusan #3)
+	DistanceKm    float64   `json:"distance_km"`     // Statistik Keputusan #1 (Jarak dari posisi user / Padang)
+	TravelTimeMin int       `json:"travel_time_min"` // Statistik Keputusan #2 (Estimasi waktu tempuh menit)
+	EstimatedCost float64   `json:"estimated_cost"`  // Statistik Keputusan #4 (Biaya tiket dasar resmi Perda)
+	IsHiddenGem        bool      `json:"is_hidden_gem"`   // Penanda wajib tampil kartu Tips Menjaga Tempat
+	VerificationStatus string    `json:"verification_status,omitempty"` // verified (default), pending (menunggu kurasi admin), rejected
+	QRPlacardCode      string    `json:"qr_placard_code,omitempty"`
+	OpeningHours  string    `json:"opening_hours,omitempty"`
+	WeatherStatus string    `json:"weather_status,omitempty"` // Status cuaca ringkas (Poin 7)
+	Weather       *WeatherInfo `json:"weather,omitempty"`     // Data cuaca real-time per kota/kabupaten (Poin 7)
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+
+	// Relasi Sprint 1 & Sprint 2 (1:1 MedanIndicator & MicroMap, 1:N Tips, Tariffs, Scenes360)
+	MedanIndicator *MedanIndicator  `json:"medan_indicator,omitempty"`
+	Tips           []LocalTip       `json:"tips,omitempty"`
+	Tariffs        []OfficialTariff `json:"tariffs,omitempty"`
+	Scenes360      []Scene360       `json:"scenes_360,omitempty"`
+	MicroMap       *ScenicMicroMap  `json:"micro_map,omitempty"`
+}
+
+// MedanIndicator memuat 5 Indikator Medan Lapangan (ERD Revisi #3: indikator_medan)
+type MedanIndicator struct {
+	ID             string `json:"id"`
+	DestinationID  string `json:"destination_id"`
+	VehicleAccess  string `json:"vehicle_access"`  // Mobil OK, Hanya Motor, Jalan Kaki
+	TrekkingLevel  string `json:"trekking_level"`  // Datar / Mudah, Sedang, Curam / Ekstrem
+	CellularSignal string `json:"cellular_signal"` // 4G Kuat, Sinyal Lemah, Blank Spot
+	Facilities     string `json:"facilities"`      // Toilet & Musala Lengkap, Terbatas, Belum Ada
+	GuideNeed      string `json:"guide_need"`       // Wajib Pemandu, Disarankan, Mandiri
+	PokdarwisName  string `json:"pokdarwis_name,omitempty"` // Opsional / Dihapus di skema baru
+}
+
+// IndikatorMedan alias nama tabel ERD Revisi #3
+type IndikatorMedan = MedanIndicator
+
+// LocalTip aturan, larangan adat & tips menjaga tempat (ERD Revisi #4: aturan_destinasi)
+type LocalTip struct {
+	ID            string `json:"id"`
+	DestinationID string `json:"destination_id"`
+	CategoryID    string `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #4)
+	Title         string `json:"title,omitempty"`
+	Category      string `json:"category,omitempty"`    // kelestarian_alam, etika_adat, keselamatan_medan
+	Aturan        string `json:"aturan,omitempty"`      // Kolom 'aturan' di tabel aturan_destinasi
+	Content       string `json:"content"`               // Kompatibel dengan frontend JSON
+	IsImportant   bool   `json:"is_important"`
+}
+
+// AturanDestinasi alias nama tabel ERD Revisi #4
+type AturanDestinasi = LocalTip
+
+// OfficialTariff tabel Fair-Price Barometer (ERD Revisi #5: official_tariffs)
+type OfficialTariff struct {
+	ID            string  `json:"id"`
+	DestinationID string  `json:"destination_id"`
+	CategoryID    string  `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #5)
+	ItemName      string  `json:"item_name"`             // Tiket Masuk, Parkir Motor, Parkir Mobil, Sewa Bendi
+	Category      string  `json:"category,omitempty"`
+	Price         float64 `json:"price"`
+	Unit          string  `json:"unit"`           // per orang, per kendaraan, per jam
+	RegulationRef string  `json:"regulation_ref"` // No Perda / Peraturan Nagari
+}
+
+// --- Domain Models BE-1: Sprint 2 (Hari 6â€“10: 360Â° 4-Pin, Shunlu, Peta Mikro, Lapor Pungli) ---
+
+// Scene360 representasi foto panorama view resolusi tajam aerial & ground (Pilar 1, Poin 9)
+type Scene360 struct {
+	ID              string       `json:"id"`
+	DestinationID   string       `json:"destination_id"`
+	Title           string       `json:"title"`
+	Type            string       `json:"type"`                     // aerial, ground
+	ViewMode        string       `json:"view_mode,omitempty"`        // photo_panorama (Pilar 1 - Penyederhanaan panorama view ringan)
+	ImageResolution string       `json:"image_resolution,omitempty"` // 4K Equirectangular Panorama
+	PanoramaURL     string       `json:"panorama_url"`
+	UploadFormat    string       `json:"upload_format,omitempty"` // url, base64, multipart
+	SpatialAudioURL string       `json:"spatial_audio_url,omitempty"`
+	InitialPitch    float64      `json:"initial_pitch"`
+	InitialYaw      float64      `json:"initial_yaw"`
+	IsDefaultScene  bool         `json:"is_default_scene"`
+	Hotspots        []Hotspot360 `json:"hotspots,omitempty"`
+}
+
+// PanoramaScene alias nama tabel ERD Revisi #6
+type PanoramaScene = Scene360
+
+// Hotspot360 pin interaktif 4 jenis terstandarisasi pada kanvas 360° (ERD Revisi #7: panorama_hotspots)
+type Hotspot360 struct {
+	ID          string  `json:"id"`
+	SceneID     string  `json:"scene_id"`
+	Type        string  `json:"type"`  // navigasi (biru), audio (emas), fasilitas (hijau), mitra (oranye)
+	ColorRadar  string  `json:"color_radar,omitempty"` // Kolom color_radar (ERD Revisi #7)
+	ColorToken  string  `json:"color_token,omitempty"`
+	Pitch       float64 `json:"pitch"` // -90.0 s/d +90.0 derajat
+	Yaw         float64 `json:"yaw"`   // 0.0 s/d 360.0 derajat
+	Title       string  `json:"title"`
+	TargetRef   string  `json:"target_ref,omitempty"` // ID Scene tujuan (dive-in) atau ID Mitra Nagari (Quick Booking)
+	VoiceText   string  `json:"voice_text,omitempty"` // Kolom voice_text (revisi dari audio_url)
+	AudioURL    string  `json:"audio_url,omitempty"`  // Kompatibel dengan frontend JSON
+	Description string  `json:"description,omitempty"`
+}
+
+// PanoramaHotspot alias nama tabel ERD Revisi #7
+type PanoramaHotspot = Hotspot360
+
+// OfflineBundle paket JSON + tiles terkompresi untuk mode offline (ERD Revisi #8: offline_bundles)
+type OfflineBundle struct {
+	ID                 string    `json:"id"`
+	DestinationID      string    `json:"destination_id"`
+	BundleVersion      string    `json:"bundle_version"`
+	BundleSizeMB       float64   `json:"bundle_size_mb"`
+	MapTilesURL        string    `json:"map_tiles_url"`
+	CompressedPackage  string    `json:"compressed_package,omitempty"`
+	CreatedAt          time.Time `json:"created_at"`
+}
+
+// ShunluPOI titik singgah searah rute aktif (ERD Revisi #11: visit_point)
+type ShunluPOI struct {
+	ID                  string  `json:"id"`
+	Name                string  `json:"name"`
+	CategoryID          string  `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #11)
+	Category            string  `json:"category"`              // rm_padang, spbu, masjid_bersih, atm, bengkel
+	CorridorRoad        string  `json:"corridor_road"`         // Lintas Padang-Bukittinggi, Lintas Bukittinggi-Harau, dll.
+	CityRegency         string  `json:"city_regency"`
+	Latitude            float64 `json:"latitude"`
+	Longitude           float64 `json:"longitude"`
+	DetourMinutes       int     `json:"detour_minutes"`        // +X menit memutar dari rute utama
+	DetourDistanceMeter int     `json:"detour_distance_meter"` // Jarak dari poros jalan utama (meter)
+	HighlightNote       string  `json:"highlight_note"`
+	OpeningHours        string  `json:"opening_hours"`
+	IsRecommended       bool    `json:"is_recommended"`
+}
+
+// VisitPoint alias nama tabel ERD Revisi #11
+type VisitPoint = ShunluPOI
+
+// ScenicMicroMap peta mikro internal kawasan wisata luas + titik pemicu Audio GPS <=15m
+type ScenicMicroMap struct {
+	ID                  string              `json:"id"`
+	DestinationID       string              `json:"destination_id"`
+	DestinationName     string              `json:"destination_name"`
+	AreaSizeHectare     float64             `json:"area_size_hectare"`
+	WalkwayGeoJSON      string              `json:"walkway_geojson"`
+	ChildFriendlyPath   bool                `json:"child_friendly_path"`
+	ElderlyFriendlyPath bool                `json:"elderly_friendly_path"`
+	InternalPOIs        []MicroMapPOI       `json:"internal_pois"`
+	AudioTriggers       []AudioTriggerPoint `json:"audio_triggers"`
+}
+
+// MicroMapPOI fasilitas mikro di dalam kawasan wisata (Gerbang, Spot Foto, Toilet, Pos Pokdarwis)
+type MicroMapPOI struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Type        string  `json:"type"` // gerbang, spot_foto, toilet_musala, pos_pokdarwis, gardu_pandang
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	Description string  `json:"description"`
+}
+
+// AudioTriggerPoint titik koordinat pemicu narasi cerita otomatis saat GPS wisatawan <=15 meter
+type AudioTriggerPoint struct {
+	ID              string  `json:"id"`
+	DestinationID   string  `json:"destination_id"`
+	Title           string  `json:"title"`
+	Latitude        float64 `json:"latitude"`
+	Longitude       float64 `json:"longitude"`
+	TriggerRadiusM  float64 `json:"trigger_radius_m"` // Default <= 15.0 meter
+	AudioURLID      string  `json:"audio_url_id"`
+	AudioURLMinang  string  `json:"audio_url_minang,omitempty"`
+	TranscriptShort string  `json:"transcript_short"`
+}
+
+// PungliReport laporan pungli / fasilitas rusak dari wisatawan ke Pusat Komando Satgas Saber Pungli
+type PungliReport struct {
+	ID                    string    `json:"id"`
+	TicketCode            string    `json:"ticket_code"` // Contoh: PGL-202611-0091
+	DestinationID         string    `json:"destination_id"`
+	DestinationName       string    `json:"destination_name,omitempty"`
+	ReporterName          string    `json:"reporter_name"`     // Boleh Anonim ("Wisatawan Anonim")
+	IncidentCategory      string    `json:"incident_category"` // parkir_liar, tiket_di_atas_perda, paksaan_pemandu, fasilitas_rusak
+	ChargedAmountIDR      float64   `json:"charged_amount_idr"`
+	OfficialPerdaPriceIDR float64   `json:"official_perda_price_idr"`
+	OverchargeAmountIDR   float64   `json:"overcharge_amount_idr"`
+	PhotoEvidence         string    `json:"photo_evidence"`
+	UploadFormat          string    `json:"upload_format,omitempty"` // url, base64, multipart
+	Latitude              float64   `json:"latitude"`
+	Longitude             float64   `json:"longitude"`
+	Description           string    `json:"description"`
+	Status                string    `json:"status"` // Masuk, Diverifikasi, Ditindaklanjuti, Selesai
+	SatgasNotes           string    `json:"satgas_notes,omitempty"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
+}
+
+// --- Domain Models BE-1: Sprint 3 (Hari 11â€“15: Gaode Ranking, Hazard Alert, SOS GPS, Kamus Minang & Kalender Budaya) ---
+
+// GaodeBehaviorRanking menyimpan metrik telemetri perilaku nyata anti-bintang palsu (ERD Revisi #10: gaode_behavior_rankings)
+type GaodeBehaviorRanking struct {
+	ID                     string    `json:"id"`
+	DestinationID          string    `json:"destination_id"`
+	DestinationName        string    `json:"destination_name"`
+	CategoryID             string    `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #10)
+	Category               string    `json:"category"`              // Hidden Gem, Kuliner Legendaris, Alam & Geopark, Budaya & Nagari
+	CityRegency            string    `json:"city_regency"`
+	RankPosition           int       `json:"rank_position"`
+	GaodeAuthenticityScore float64   `json:"gaode_authenticity_score"` // Skor 0 - 100 hasil kalkulasi telemetri GPS
+	GaodeScore             float64   `json:"gaode_score,omitempty"`    // Alias di ERD
+	ActiveNavCount30d      int       `json:"active_nav_count_30d"`     // Jumlah navigasi diselesaikan dalam 30 hari terakhir
+	ActualDwellTimeMin     int       `json:"actual_dwell_time_min,omitempty"`
+	AvgDwellTimeMin        int       `json:"avg_dwell_time_min"`       // Rata-rata waktu singgah nyata GPS (menit)
+	ReturnVisitRatePct     float64   `json:"return_visit_rate_pct"`    // Persentase kunjungan berulang wisatawan
+	ReturnVisitorRate      float64   `json:"return_visitor_rate,omitempty"`
+	AntiFakeReviewVerified bool      `json:"anti_fake_review_verified"`
+	TrendingBadge          string    `json:"trending_badge"`
+	UpdatedAt              time.Time `json:"updated_at"`
+}
+
+// HazardAlert alert jalur rawan bencana Sumatera Barat (Sitinjau Lauik, Lembah Anai, Kelok 9, Kelok 44 - Sprint 3 P7.2)
+type HazardAlert struct {
+	ID                  string    `json:"id"`
+	CorridorCode        string    `json:"corridor_code"` // SITINJAU-LAUIK, LEMBAH-ANAI, KELOK-9, KELOK-44
+	Location            string    `json:"location"`
+	RoadSegment         string    `json:"road_segment"`
+	CityRegency         string    `json:"city_regency"`
+	Latitude            float64   `json:"latitude"`
+	Longitude           float64   `json:"longitude"`
+	RadiusMeter         int       `json:"radius_meter"`
+	Severity            string    `json:"severity"`       // Normal, Waspada, Siaga, Awas Tutup Total
+	HazardType          string    `json:"hazard_type"`    // Rawan Longsor, Kabut Tebal, Jalan Buka-Tutup, Banjir Bandang
+	WeatherStatus       string    `json:"weather_status"` // Hujan Lebat, Gerimis Berkabut, Cerah Berawan
+	SlopeGradientDeg    int       `json:"slope_gradient_deg"`
+	Message             string    `json:"message"`
+	DetourRoute         string    `json:"detour_route"`
+	DetourRouteGeoJSON  string    `json:"detour_route_geojson"`
+	NearestRescuePost   string    `json:"nearest_rescue_post"`
+	EmergencyContact    string    `json:"emergency_contact"`
+	TriggeredByAdmin    string    `json:"triggered_by_admin,omitempty"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+// SOSSignal sinyal pancaran darurat GPS dari wisatawan di jalur ekstrem / destinasi blank spot (Pilar 7 – P7.2)
+type SOSSignal struct {
+	ID                  string     `json:"id"`
+	SOSCode             string     `json:"sos_code"` // Contoh: SOS-SUMBAR-202611-001
+	TouristName         string     `json:"tourist_name"`
+	PhoneNumber         string     `json:"phone_number"`
+	EmergencyType       string     `json:"emergency_type"` // Kendaraan Mogok di Tanjakan, Terjebak Longsor, Darurat Medis, Tersesat di Jalur
+	Latitude            float64    `json:"latitude"`
+	Longitude           float64    `json:"longitude"`
+	BatteryPercent      int        `json:"battery_percent"`
+	PassengersCount     int        `json:"passengers_count"`
+	NearestCorridor     string     `json:"nearest_corridor"`
+	NearestRescuePost   string     `json:"nearest_rescue_post"`
+	DistanceToRescueKm  float64    `json:"distance_to_rescue_km"`
+	ETARescueMinutes    int        `json:"eta_rescue_minutes"`
+	Status              string     `json:"status"` // Dipancarkan, Tim SAR Meluncur, Evakuasi Selesai
+	Notes               string     `json:"notes"`
+	IsOfflineSync       bool       `json:"is_offline_sync,omitempty"`       // True jika disinkronkan dari antrean offline HP
+	OfflineTriggeredAt  *time.Time `json:"offline_triggered_at,omitempty"`  // Timestamp saat tombol ditekan offline
+	EmergencyCallAction string     `json:"emergency_call_action,omitempty"` // Skema panggilan cepat: tel:112 atau tel:(0751)890721
+	CreatedAt           time.Time  `json:"created_at"`
+}
+
+// EmergencyCallProtocol protokol panggilan suara darurat langsung (bebas pulsa / offline)
+type EmergencyCallProtocol struct {
+	NationalEmergency string `json:"national_emergency"` // 112 (Bebas Pulsa)
+	Police            string `json:"police"`             // 110 (Bebas Pulsa)
+	BPBDSumbar        string `json:"bpbd_sumbar"`        // (0751) 890721
+	PMISumbar         string `json:"pmi_sumbar"`         // (0751) 27882
+	PrimaryAction     string `json:"primary_action"`     // tel:112
+	Description       string `json:"description"`
+}
+
+// GetDefaultEmergencyCallProtocol menyediakan konfigurasi panggilan suara cepat darurat Sumbar
+func GetDefaultEmergencyCallProtocol() EmergencyCallProtocol {
+	return EmergencyCallProtocol{
+		NationalEmergency: "112",
+		Police:            "110",
+		BPBDSumbar:        "(0751) 890721",
+		PMISumbar:         "(0751) 27882",
+		PrimaryAction:     "tel:112",
+		Description:       "Panggilan darurat suara langsung. Hubungi 112 (Layanan Darurat Terpadu / Bebas Pulsa) atau (0751) 890721 (BPBD Sumbar) saat kondisi darurat atau tanpa koneksi internet.",
+	}
+}
+
+// MinangPhrase entri Kamus Saku Audio Bahasa Minang sehari-hari (ERD Revisi #14: minang_phrases)
+type MinangPhrase struct {
+	ID                string `json:"id"`
+	CategoryID        string `json:"category_id,omitempty"` // Relasi FK ke categories.id (ERD Revisi #14)
+	Category          string `json:"category"`              // sapaan_adat, tawar_pasar, kuliner_rm, navigasi_darurat
+	MinangPhraseText  string `json:"minang_phrase,omitempty"`
+	IndonesianMeaning string `json:"indonesian_meaning,omitempty"`
+	IndonesianText    string `json:"indonesian_text"`
+	MinangText        string `json:"minang_text"`
+	PhoneticGuide     string `json:"phonetic_guide"`
+	VoiceText         string `json:"voice_text,omitempty"` // Kolom voice_text (revisi audio_url)
+	AudioURL          string `json:"audio_url"`            // Kompatibel dengan frontend JSON
+	DialectNote       string `json:"dialect_note"`         // Dialek Padang / Bukittinggi (Darek) / Pesisir
+	UsageContextTip   string `json:"usage_context_tip"`
+	ContextUsage      string `json:"context_usage,omitempty"`
+	PolitenessLevel   string `json:"politeness_level"` // Kato Nan Ampek
+	KatoType          string `json:"kato_type,omitempty"`
+	CulturalEtiquette string `json:"cultural_etiquette,omitempty"`
+}
+
+// CulturalEvent agenda Kalender Budaya & Hari Pakan Sumatera Barat (ERD Revisi #15: cultural_events)
+type CulturalEvent struct {
+	ID                string  `json:"id"`
+	UserID            string  `json:"user_id,omitempty"` // Penginput event oleh vendor/admin (ERD Revisi #15)
+	Title             string  `json:"title"`
+	EventName         string  `json:"event_name,omitempty"`
+	EventType         string  `json:"event_type"` // Hari Pakan Nagari, Festival Budaya, Tradisi Adat
+	NagariLocation    string  `json:"nagari_location"`
+	EventLocation     string  `json:"event_location,omitempty"`
+	CityRegency       string  `json:"city_regency"`
+	ScheduleRule      string  `json:"schedule_rule"` // Contoh: Setiap Hari Sabtu (Pakan Sabtu), Tahunan
+	NextEventDate     string  `json:"next_event_date"`
+	Latitude          float64 `json:"latitude"`
+	Longitude         float64 `json:"longitude"`
+	DistanceKm        float64 `json:"distance_km,omitempty"`
+	HighlightItem     string  `json:"highlight_item"`
+	Significance      string  `json:"significance,omitempty"`
+	CulturalEtiquette string  `json:"cultural_etiquette"`
+}
+
+// EmergencyContact master kontak darurat & pos SAR koridor ekstrem (ERD Tambahan Sistem)
+type EmergencyContact struct {
+	ID               string  `json:"id"`
+	CorridorCode     string  `json:"corridor_code"` // SITINJAU-LAUIK, LEMBAH-ANAI, KELOK-9, KELOK-44
+	AgencyType       string  `json:"agency_type"`   // BPBD, Basarnas, Kepolisian, PMI, Damkar
+	AgencyName       string  `json:"agency_name"`
+	PhoneNumber      string  `json:"phone_number"`
+	WhatsAppNumber   string  `json:"whatsapp_number,omitempty"`
+	Latitude         float64 `json:"latitude,omitempty"`
+	Longitude        float64 `json:"longitude,omitempty"`
+	City             string  `json:"city"`
+	CreatedByAdminID string  `json:"created_by_admin_id,omitempty"`
+	IsActive         bool    `json:"is_active"`
+}
+
+// GetDefaultEmergencyContacts menyediakan daftar kontak darurat resmi Pos Penanggulangan Bencana Sumbar
+func GetDefaultEmergencyContacts() []EmergencyContact {
+	return []EmergencyContact{
+		{
+			ID:           "emg-001",
+			CorridorCode: "PROV-SUMBAR",
+			AgencyType:   "BPBD",
+			AgencyName:   "BPBD Sumatera Barat",
+			PhoneNumber:  "(0751) 890721",
+			City:         "Provinsi Sumatera Barat",
+			Latitude:     -0.9471,
+			Longitude:    100.3543,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-002",
+			CorridorCode: "PROV-SUMBAR",
+			AgencyType:   "PMI",
+			AgencyName:   "PMI Sumatera Barat",
+			PhoneNumber:  "(0751) 27882",
+			City:         "Kota Padang",
+			Latitude:     -0.9324,
+			Longitude:    100.3621,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-003",
+			CorridorCode: "SITINJAU-LAUIK",
+			AgencyType:   "Damkar",
+			AgencyName:   "Damkar Kota Padang",
+			PhoneNumber:  "08116606113",
+			City:         "Kota Padang",
+			Latitude:     -0.9512,
+			Longitude:    100.3705,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-004",
+			CorridorCode: "LEMBAH-ANAI",
+			AgencyType:   "BPBD",
+			AgencyName:   "BPBD Padang Pariaman",
+			PhoneNumber:  "08116662114",
+			City:         "Kab. Padang Pariaman",
+			Latitude:     -0.6272,
+			Longitude:    100.2811,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-005",
+			CorridorCode: "MANDEH-PESSEL",
+			AgencyType:   "BPBD",
+			AgencyName:   "BPBD Pesisir Selatan",
+			PhoneNumber:  "085269380950",
+			City:         "Kab. Pesisir Selatan",
+			Latitude:     -1.3502,
+			Longitude:    100.5694,
+			IsActive:     true,
+		},
+		{
+			ID:           "emg-006",
+			CorridorCode: "MALALAK-AGAM",
+			AgencyType:   "Damkar",
+			AgencyName:   "Damkar Bukittinggi",
+			PhoneNumber:  "085355157883",
+			City:         "Kota Bukittinggi",
+			Latitude:     -0.3055,
+			Longitude:    100.3692,
+			IsActive:     true,
+		},
+	}
+}
+
+
+// ApiTelemetryLog log kecepatan dan SLA performa API <100ms (ERD Tambahan Sistem)
+type ApiTelemetryLog struct {
+	ID           string    `json:"id"`
+	EndpointPath string    `json:"endpoint_path"`
+	HTTPMethod   string    `json:"http_method"`
+	LatencyMS    float64   `json:"latency_ms"`
+	StatusCode   int       `json:"status_code"`
+	CacheHit     bool      `json:"cache_hit"`
+	RecordedAt   time.Time `json:"recorded_at"`
+}
+
+// --- Domain Models BE-2: Grup, Mitra, Escrow & Komunitas (Pilar 4, 5, 6, 8) ---
+
+// User profil pengguna / wisatawan
+type User struct {
+	ID          string    `json:"id"`
+	PhoneNumber string    `json:"phone_number"`
+	FullName    string    `json:"full_name"`
+	Role        string    `json:"role"` // tourist, partner, admin_dispar, satgas_pungli
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// SavedPlace bookmark tempat favorit wisatawan (Pilar 3 & Layar 04)
+type SavedPlace struct {
+	ID            string       `json:"id"`
+	UserID        string       `json:"user_id"`
+	DestinationID string       `json:"destination_id"`
+	CreatedAt     time.Time    `json:"created_at"`
+	Destination   *Destination `json:"destination,omitempty"`
+}
+
+// Itinerary master rencana perjalanan (Pilar 4 & Layar 06)
+type Itinerary struct {
+	ID          string          `json:"id"`
+	UserID      string          `json:"user_id"`
+	Title       string          `json:"title"`
+	StartDate   string          `json:"start_date"` // format YYYY-MM-DD
+	EndDate     string          `json:"end_date"`
+	TotalDays   int             `json:"total_days"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+	Items       []ItineraryItem `json:"items,omitempty"`
+}
+
+// ItineraryItem rincian per jam & destinasi per hari dalam trip
+type ItineraryItem struct {
+	ID            string       `json:"id"`
+	ItineraryID   string       `json:"itinerary_id"`
+	DayNumber     int          `json:"day_number"` // Hari ke 1 - 7
+	TimeSlot      string       `json:"time_slot"`  // Contoh "09:00"
+	DestinationID string       `json:"destination_id"`
+	Notes         string       `json:"notes,omitempty"`
+	TrafficAlert  string       `json:"traffic_alert,omitempty"` // Contoh "Pasar Koto Baru Macet"
+	Destination   *Destination `json:"destination,omitempty"`
+}
+
+// GroupRoom ruang perjalanan bersama untuk koordinasi rombongan
+type GroupRoom struct {
+	ID        string        `json:"id"`
+	RoomCode  string        `json:"room_code"` // Unik, dibagikan via link WA
+	Title     string        `json:"title"`
+	LeaderID  string        `json:"leader_id"`
+	CreatedAt time.Time     `json:"created_at"`
+	Members   []GroupMember `json:"members,omitempty"`
+}
+
+// GroupMember anggota dalam group room
+type GroupMember struct {
+	ID          string    `json:"id"`
+	GroupRoomID string    `json:"group_room_id"`
+	UserID      string    `json:"user_id"`
+	Role        string    `json:"role"` // leader, member
+	JoinedAt    time.Time `json:"joined_at"`
+	User        *User     `json:"user,omitempty"`
+}
+
+// GroupVote hasil pemungutan suara destinasi di dalam rombongan
+type GroupVote struct {
+	ID            string `json:"id"`
+	GroupRoomID   string `json:"group_room_id"`
+	UserID        string `json:"user_id"`
+	DestinationID string `json:"destination_id"`
+	VoteType      string `json:"vote_type"` // upvote / downvote
+}
+
+// PartnerNagari 5 kategori mitra lokal (Homestay, Transport, Pokdarwis, Kuliner, Baju Adat)
+type PartnerNagari struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Category    string  `json:"category"`
+	WhatsApp    string  `json:"whatsapp"`
+	SpicyLevel  int     `json:"spicy_level,omitempty"` // Khusus kuliner (0-5)
+	IsVerified  bool    `json:"is_verified"`
+	StandardFee float64 `json:"standard_fee"`
+	Unit        string  `json:"unit,omitempty"`        // malam/kamar, hari, orang, porsi, set
+	NagariName  string  `json:"nagari_name"`
+}
+
+// BookingEscrow transaksi rekening bersama terhubung bot WA
+type BookingEscrow struct {
+	ID           string    `json:"id"`
+	PartnerID    string    `json:"partner_id"`
+	UserID       string    `json:"user_id"`
+	TotalAmount  float64   `json:"total_amount"`
+	Currency     string    `json:"currency"` // IDR / MYR
+	Status       string    `json:"status"`   // PENDING_WA, CONFIRMED, ESCROW_LOCKED, REDEEMED, REFUNDED
+	QRCodeTicket string    `json:"qr_code_ticket"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// CommunityPlace tempat baru usulan komunitas (Pilar 6)
+type CommunityPlace struct {
+	ID          string    `json:"id"`
+	UserID      string    `json:"user_id"`
+	Name        string    `json:"name"`
+	Category    string    `json:"category"`
+	CityRegency string    `json:"city_regency"`
+	Description string    `json:"description"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	TipsMenjaga string    `json:"tips_menjaga"` // Wajib diisi untuk kelestarian alam
+	IsSensitive bool      `json:"is_sensitive"` // Proteksi radius perkiraan hingga dikurasi Pokdarwis
+	Status      string    `json:"status"`       // PENDING_CURATION, APPROVED, REJECTED
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// SharedTrip papan tebengan / cari barengan sewa armada (Pilar 6)
+type SharedTrip struct {
+	ID               string    `json:"id"`
+	UserID           string    `json:"user_id"`
+	Title            string    `json:"title"`
+	DestinationID    string    `json:"destination_id,omitempty"`
+	Category         string    `json:"category,omitempty"`
+	DestinationRoute string    `json:"destination_route"`
+	DepartureDate    time.Time `json:"departure_date"`
+	AvailableSeats   int       `json:"available_seats"`
+	CostPerPerson    float64   `json:"cost_per_person"`
+	ContactWA        string    `json:"contact_wa"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+// DigitalPassport stempel check-in anti-fake GPS (radius <= 200m)
+type DigitalPassport struct {
+	ID            string    `json:"id"`
+	UserID        string    `json:"user_id"`
+	DestinationID string    `json:"destination_id"`
+	CheckedInAt   time.Time `json:"checked_in_at"`
+	IsGPSValid    bool      `json:"is_gps_valid"`
+}
+
+// --- DTO (Data Transfer Object) untuk API BE-2 ---
+
+// OTPRequest request kirim OTP 4 kotak
+type OTPRequest struct {
+	PhoneNumber string `json:"phone_number"`
+}
+
+// OTPVerifyRequest request verifikasi kode OTP
+type OTPVerifyRequest struct {
+	PhoneNumber string `json:"phone_number"`
+	OTPCode     string `json:"otp_code"`
+}
+
+// AuthResponse response token JWT & profil
+type AuthResponse struct {
+	Token string `json:"token"`
+	User  User   `json:"user"`
+}
+
+// AutoItineraryRequest request generator jadwal otomatis 1-7 hari
+type AutoItineraryRequest struct {
+	UserID       string   `json:"user_id"`
+	DurationDays int      `json:"duration_days"` // 1 - 7 hari
+	ArrivalPoint string   `json:"arrival_point"` // "BIM" atau "Darat"
+	TravelerType string   `json:"traveler_type"` // "family", "backpacker", "culinary", "open_trip"
+	PeopleCount  int      `json:"people_count,omitempty"` // Jumlah orang rombongan
+	BudgetLevel  string   `json:"budget_level,omitempty"` // "hemat", "sedang", "sultan"
+	Preferences  []string `json:"preferences,omitempty"`
+}
+
+// CreateGroupRequest request buat ruang rombongan baru
+type CreateGroupRequest struct {
+	LeaderID string `json:"leader_id"`
+	Title    string `json:"title"`
+}
+
+// GroupVoteRequest request voting destinasi/homestay
+type GroupVoteRequest struct {
+	GroupRoomID   string `json:"group_room_id"`
+	UserID        string `json:"user_id"`
+	DestinationID string `json:"destination_id"`
+	VoteType      string `json:"vote_type"` // "upvote" / "downvote"
+}
+
+// VoteResultItem ringkasan voting per destinasi
+type VoteResultItem struct {
+	DestinationID   string  `json:"destination_id"`
+	DestinationName string  `json:"destination_name"`
+	Upvotes         int     `json:"upvotes"`
+	Downvotes       int     `json:"downvotes"`
+	ApprovalPercent float64 `json:"approval_percent"`
+}
+
+// CommunityPlaceRequest request pengajuan tempat baru komunitas
+type CommunityPlaceRequest struct {
+	UserID      string  `json:"user_id"`
+	Name        string  `json:"name"`
+	Category    string  `json:"category"`
+	CityRegency string  `json:"city_regency"`
+	Description string  `json:"description"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	TipsMenjaga string  `json:"tips_menjaga"` // Wajib untuk hidden gem
+	IsSensitive bool    `json:"is_sensitive"` // Proteksi radius perkiraan hingga dikurasi Pokdarwis
+}
+
+// --- DTO MINGGU 3: ESCROW, BOT WA, SPLIT-BILL & RADAR ---
+
+// CreateBookingRequest request pemesanan via Quick Drawer 360
+type CreateBookingRequest struct {
+	PartnerID   string  `json:"partner_id"`
+	UserID      string  `json:"user_id"`
+	TotalAmount float64 `json:"total_amount"`
+	Currency    string  `json:"currency"` // IDR / MYR
+}
+
+// WAWebhookRequest payload webhook respon Bot WhatsApp mitra
+type WAWebhookRequest struct {
+	BookingID string `json:"booking_id"`
+	Action    string `json:"action"` // "1" = Terima, "0" = Tolak
+	Notes     string `json:"notes,omitempty"`
+}
+
+// ScanRedeemRequest payload scan QR E-Ticket saat tamu tiba di lokasi
+type ScanRedeemRequest struct {
+	PartnerID    string `json:"partner_id"`
+	QRCodeTicket string `json:"qr_code_ticket"`
+}
+
+// SplitBillRequest payload kalkulator patungan rombongan
+type SplitBillRequest struct {
+	TotalAmount float64  `json:"total_amount"`
+	Description string   `json:"description"`
+	MemberIDs   []string `json:"member_ids,omitempty"`
+}
+
+// SplitBillResponse rincian pembagian tagihan per orang
+type SplitBillResponse struct {
+	TotalAmount     float64                `json:"total_amount"`
+	MemberCount     int                    `json:"member_count"`
+	AmountPerPerson float64                `json:"amount_per_person"`
+	Description     string                 `json:"description"`
+	Shares          []SplitBillMemberShare `json:"shares"`
+}
+
+// SplitBillMemberShare porsi tagihan individu beserta link bayar QRIS
+type SplitBillMemberShare struct {
+	UserID      string  `json:"user_id"`
+	Amount      float64 `json:"amount"`
+	PaymentLink string  `json:"payment_link"`
+}
+
+// RadarPingRequest koordinat GPS opt-in anggota rombongan
+type RadarPingRequest struct {
+	UserID    string  `json:"user_id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+// MemberRadarLocation posisi radar anggota terkini
+type MemberRadarLocation struct {
+	UserID    string    `json:"user_id"`
+	Latitude  float64   `json:"latitude"`
+	Longitude float64   `json:"longitude"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// CreateSharedTripRequest postingan baru papan cari barengan
+type CreateSharedTripRequest struct {
+	UserID           string    `json:"user_id"`
+	Title            string    `json:"title"`
+	DestinationID    string    `json:"destination_id"`
+	Category         string    `json:"category"`
+	DestinationRoute string    `json:"destination_route"`
+	DepartureDate    time.Time `json:"departure_date"`
+	AvailableSeats   int       `json:"available_seats"`
+	CostPerPerson    float64   `json:"cost_per_person"`
+	ContactWA        string    `json:"contact_wa"`
+}
+
+// --- DTO MINGGU 4: GAMIFIKASI PASPOR DIGITAL, ANTI-FAKE GPS & ANALITIK DISPAR ---
+
+// CheckInRequest payload check-in validasi radius <= 200m
+type CheckInRequest struct {
+	UserID         string  `json:"user_id"`
+	DestinationID  string  `json:"destination_id"`
+	Latitude       float64 `json:"latitude"`
+	Longitude      float64 `json:"longitude"`
+	IsCarvingFound bool    `json:"is_carving_found,omitempty"` // Opsional tantangan ukiran 360
+}
+
+// CheckInResponse rincian hasil validasi check-in GPS
+type CheckInResponse struct {
+	DestinationID   string    `json:"destination_id"`
+	DestinationName string    `json:"destination_name"`
+	DistanceMeters  float64   `json:"distance_meters"`
+	IsWithinRadius  bool      `json:"is_within_radius"`
+	CheckedInAt     time.Time `json:"checked_in_at"`
+	BadgeEarned     string    `json:"badge_earned"`
+	TotalStamps     int       `json:"total_stamps"`
+	MaxStamps       int       `json:"max_stamps"`
+}
+
+// IconicSpotItem data titik ikonik paspor digital Minang
+type IconicSpotItem struct {
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Regency     string     `json:"regency"`
+	Latitude    float64    `json:"latitude"`
+	Longitude   float64    `json:"longitude"`
+	BadgeName   string     `json:"badge_name"`
+	IsCompleted bool       `json:"is_completed"`
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+}
+
+// PassportSummaryResponse rekap stempel paspor digital wisatawan
+type PassportSummaryResponse struct {
+	UserID                   string           `json:"user_id"`
+	TotalStamps              int              `json:"total_stamps"`
+	RequiredStamps           int              `json:"required_stamps"`
+	CompletionPercentage     float64          `json:"completion_percentage"`
+	IsEligibleForCertificate bool             `json:"is_eligible_for_certificate"`
+	Spots                    []IconicSpotItem `json:"spots"`
+}
+
+// CertificateRequest permintaan terbit sertifikat digital gubernur
+type CertificateRequest struct {
+	UserID   string `json:"user_id"`
+	FullName string `json:"full_name"`
+}
+
+// CertificateResponse sertifikat digital resmi gubernur Sumbar
+type CertificateResponse struct {
+	CertificateID     string    `json:"certificate_id"`
+	RecipientName     string    `json:"recipient_name"`
+	IssuedAt          time.Time `json:"issued_at"`
+	TotalSpotsVisited int       `json:"total_spots_visited"`
+	SignatoryTitle    string    `json:"signatory_title"`
+	SignatoryName     string    `json:"signatory_name"`
+	VerificationURL   string    `json:"verification_url"`
+	QRCodeURL         string    `json:"qr_code_url"`
+	PDFDownloadURL    string    `json:"pdf_download_url"`
+}
+
+// DisparAnalyticsSummary rekap analitik Dispar Sumbar & satgas
+type DisparAnalyticsSummary struct {
+	TotalVisits               int                    `json:"total_visits"`
+	TotalQRScans              int                    `json:"total_qr_scans"`
+	TotalEscrowTurnover       float64                `json:"total_escrow_turnover"`
+	TotalUMKMPartners         int                    `json:"total_umkm_partners"`
+	RegencyDensityHeatmap     []RegencyDensityItem   `json:"regency_density_heatmap"`
+	TopDestinations           []TopDestinationMetric `json:"top_destinations"`
+	MitraCategoryDistribution map[string]int         `json:"mitra_category_distribution"`
+}
+
+// RegencyDensityItem kepadatan per 19 kab/kota di Sumbar
+type RegencyDensityItem struct {
+	RegencyName  string `json:"regency_name"`
+	Occupancy    string `json:"occupancy"` // "tinggi", "sedang", "normal"
+	ActiveGuests int    `json:"active_guests"`
+}
+
+// TopDestinationMetric metrik kunjungan per destinasi
+type TopDestinationMetric struct {
+	DestinationID   string `json:"destination_id"`
+	DestinationName string `json:"destination_name"`
+	Regency         string `json:"regency"`
+	TotalCheckIns   int    `json:"total_checkins"`
+}
+
+// NewTour merepresentasikan tabel new_tour (ERD Revisi: Meja Kurasi Usulan Destinasi Wisatawan)
+type NewTour struct {
+	ID                      string   `json:"id"`
+	UserID                  string   `json:"user_id"`
+	Name                    string   `json:"name"`
+	CategoryID              string   `json:"category_id"`
+	Category                string   `json:"category"`
+	CityRegency             string   `json:"city_regency"`
+	Description             string   `json:"description"`
+	Latitude                float64  `json:"latitude"`
+	Longitude               float64  `json:"longitude"`
+	TipsMenjaga             string   `json:"tips_menjaga"`
+	Facilities              []string `json:"facilities,omitempty"`
+	EstimatedPrice          string   `json:"estimated_price,omitempty"`
+	PhotoURL                string   `json:"photo_url,omitempty"`
+	IsSensitive             bool     `json:"is_sensitive"`
+	Status                  string   `json:"status"` // pending, approved, rejected
+	SubmitterName           string   `json:"submitter_name"`
+	SubmitterPhone          string   `json:"submitter_phone"`
+	AdminNotes              string   `json:"admin_notes,omitempty"`
+	MergedIntoDestinationID string   `json:"merged_into_destination_id,omitempty"`
+	MergedRole              string   `json:"merged_role,omitempty"`
+	CreatedAt               string   `json:"created_at"`
+}
+
+// DestinationContributor kredit pengusul/kontributor pada hasil kurasi kolaboratif new_tour
+type DestinationContributor struct {
+	Name         string `json:"name"`
+	Phone        string `json:"phone,omitempty"`
+	Role         string `json:"role"` // Pengusul Utama | Kontributor Foto | Kontributor Data & Tips | Pengusul Bersama
+	SubmissionID string `json:"submission_id"`
+}
+
+// GetDefaultNewTours mengembalikan seeder awal tabel new_tour (Sinkron UgcSubmissionsSubTab.tsx)
+func GetDefaultNewTours() []NewTour {
+	return []NewTour{
+		{
+			ID:             "nt-001",
+			UserID:         "usr-tourist-01",
+			Name:           "Sarasah Murai Tersembunyi",
+			CategoryID:     "cat-hidden-gem",
+			Category:       "Hidden Gem",
+			CityRegency:    "Kab. Lima Puluh Kota",
+			Description:    "Air terjun tujuh tingkat di pelosok hutan Harau dengan kolam alami nan jernih berbatu lumut hijau.",
+			Latitude:       -0.0984,
+			Longitude:      100.6812,
+			TipsMenjaga:    "Wajib membawa kantong sampah sendiri, dilarang menyalakan api unggun sembarangan, dan lapor ke posko Pokdarwis.",
+			Facilities:     []string{"Jalur Trekking", "Pemandu Lokal", "Spot Foto Alami"},
+			EstimatedPrice: "Rp 15.000 / orang",
+			PhotoURL:       "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=800&q=80",
+			IsSensitive:    true,
+			Status:         "pending",
+			SubmitterName:  "Rian Pratama",
+			SubmitterPhone: "6281377889901",
+			CreatedAt:      "2026-11-22T14:00:00Z",
+		},
+		{
+			ID:             "nt-002",
+			UserID:         "usr-tourist-02",
+			Name:           "Puncak Gagoan Paninggahan",
+			CategoryID:     "cat-alam-geopark",
+			Category:       "Alam & Geopark",
+			CityRegency:    "Kab. Solok",
+			Description:    "Tebing batu karang alami dengan panorama 360 derajat ke hamparan biru Danau Singkarak.",
+			Latitude:       -0.6341,
+			Longitude:      100.5124,
+			TipsMenjaga:    "Jangan melewati garis pengaman tebing saat angin kencang dan bawa kembali seluruh botol minum.",
+			Facilities:     []string{"Area Parkir", "Gazebo / Pondok", "Spot Foto Alami", "Warung Kuliner"},
+			EstimatedPrice: "Rp 10.000 / orang",
+			PhotoURL:       "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80",
+			IsSensitive:    false,
+			Status:         "pending",
+			SubmitterName:  "Nur Aisyah",
+			SubmitterPhone: "6281299887766",
+			CreatedAt:      "2026-11-23T11:30:00Z",
+		},
+		{
+			ID:             "nt-003",
+			UserID:         "usr-tourist-04",
+			Name:           "Air Terjun Sarasah Murai",
+			CategoryID:     "cat-hidden-gem",
+			Category:       "Hidden Gem",
+			CityRegency:    "Kab. Lima Puluh Kota",
+			Description:    "Air terjun alami di lembah Harau dengan cahaya matahari pagi menembus tebing, sangat bagus untuk fotografi alam.",
+			Latitude:       -0.0987,
+			Longitude:      100.6815,
+			TipsMenjaga:    "Gunakan sandal gunung anti-selip karena batu lumut licin dan jangan memetik anggrek hutan di sekitar tebing.",
+			Facilities:     []string{"Area Parkir", "Gazebo / Pondok", "Spot Foto Alami"},
+			EstimatedPrice: "Rp 15.000 / orang",
+			PhotoURL:       "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=900&q=80",
+			IsSensitive:    true,
+			Status:         "pending",
+			SubmitterName:  "Siti Rahma",
+			SubmitterPhone: "6282177665544",
+			CreatedAt:      "2026-11-24T08:45:00Z",
+		},
+	}
+}
+
+// SosNewsItem merepresentasikan Berita Wisata & Bencana Sumatera Barat (sumbarkita.id & sumbar.antaranews.com)
+type SosNewsItem struct {
+	ID           string   `json:"id"`
+	Category     string   `json:"category"`      // Bencana & Vulkanologi | Cuaca & Bahari | Akses Wisata | Info Jalur & Bencana
+	Severity     string   `json:"severity"`      // INFO WISATA | WASPADA | SIAGA HUJAN | DARURAT
+	Title        string   `json:"title"`
+	Region       string   `json:"region"`
+	Summary      string   `json:"summary"`
+	Advice       string   `json:"advice"`
+	Source       string   `json:"source"`        // Sumbarkita.id | ANTARA Sumbar (sumbar.antaranews.com) | BMKG & BPBD Sumbar
+	PortalDomain string   `json:"portal_domain"` // sumbarkita.id | sumbar.antaranews.com | dispar.sumbarprov.go.id
+	SourceURL    string   `json:"source_url"`
+	ImageURL     string   `json:"image_url,omitempty"`
+	Author       string   `json:"author,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
+	IsPublished  bool     `json:"is_published"`
+	PublishedAt  string   `json:"published_at"`
+}
+
+

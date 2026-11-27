@@ -1,0 +1,106 @@
+package destination
+
+import (
+	"time"
+
+	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
+)
+
+// SpatialFilterParams parameter filter direktori destinasi dan koordinat GPS pengguna
+type SpatialFilterParams struct {
+	CategoryID         string  `form:"category_id"`
+	Category           string  `form:"category"`
+	CityRegency        string  `form:"city_regency"`
+	CrowdLevel         string  `form:"crowd_level"`
+	Signal             string  `form:"signal"`
+	SearchQuery        string  `form:"q"`
+	VerificationStatus string  `form:"verification_status"`
+	IncludePending     bool    `form:"include_pending"`
+	HasUserGPS         bool    `form:"-"`
+	UserLat            float64 `form:"lat"`
+	UserLng            float64 `form:"lng"`
+}
+
+// CategoriesResponse respon daftar 5 kategori induk master WISGO (Poin 6)
+type CategoriesResponse struct {
+	Status     string            `json:"status"`
+	Total      int               `json:"total"`
+	Categories []models.Category `json:"categories"`
+}
+
+// SyncTariffsPayload payload sinkronisasi tabel tarif resmi Perda dari CMS Web Admin TS (FS-1)
+type SyncTariffsPayload struct {
+	Tariffs         []models.OfficialTariff `json:"tariffs"`
+	OfficialTariffs []models.OfficialTariff `json:"official_tariffs"`
+}
+
+// OfflineBundleResponse struktur paket offline bundle v2 (Flutter Hive / SQLite Ready)
+type OfflineBundleResponse struct {
+	BundleVersion        string                       `json:"bundle_version"`
+	GeneratedAt          string                       `json:"generated_at"`
+	LocalStorageSDK      string                       `json:"local_storage_sdk"`
+	OfflineBanner        string                       `json:"offline_banner"`
+	Destination          *models.Destination          `json:"destination"`
+	Scenes360            []models.Scene360            `json:"scenes_360"`
+	MicroMap             *models.ScenicMicroMap       `json:"micro_map"`
+	AudioTriggers        []models.AudioTriggerPoint   `json:"audio_triggers"`
+	EmergencyContacts     []models.EmergencyContact     `json:"emergency_contacts"`
+	EmergencyCallProtocol *models.EmergencyCallProtocol `json:"emergency_call_protocol"`
+}
+
+// TariffsResponse respon rincian tarif resmi Perda destinasi
+type TariffsResponse struct {
+	DestinationID   string                 `json:"destination_id"`
+	DestinationName string                 `json:"destination_name"`
+	CityRegency     string                 `json:"city_regency"`
+	Tariffs         []models.OfficialTariff `json:"tariffs"`
+}
+
+// CreateHiddenGemInput payload kontribusi destinasi hidden gem oleh wisatawan (BE-1 Pilar 2 & 6)
+type CreateHiddenGemInput struct {
+	UserID         string  `json:"user_id,omitempty"`
+	Name           string  `json:"name" binding:"required"`
+	CityRegency    string  `json:"city_regency"`
+	Description    string  `json:"description"`
+	Latitude       float64 `json:"latitude"`
+	Longitude      float64 `json:"longitude"`
+	ElevationM     int     `json:"elevation_m,omitempty"`
+	CoverImage     string  `json:"cover_image,omitempty"`
+	CrowdLevel     string  `json:"crowd_level,omitempty"`
+	TipsMenjaga    string  `json:"tips_menjaga"`    // Edukasi kelestarian alam hidden gem
+	TipsAdat       string  `json:"tips_adat"`       // Etika kearifan lokal Minangkabau
+	VehicleAccess  string  `json:"vehicle_access"`  // Mobil OK, Hanya Motor, Jalan Kaki
+	TrekkingLevel  string  `json:"trekking_level"`  // Datar / Mudah, Sedang, Curam / Ekstrem
+	CellularSignal string  `json:"cellular_signal"` // 4G Kuat, Sinyal Lemah, Blank Spot
+	Facilities     string  `json:"facilities"`      // Terbatas, Belum Ada
+	GuideNeed      string  `json:"guide_need"`      // Wajib Pemandu, Disarankan, Mandiri
+	Contributor    string  `json:"contributor,omitempty"`
+}
+
+// VerifyDestinationRequest payload verifikasi persetujuan admin untuk hidden gem wisatawan
+type VerifyDestinationRequest struct {
+	Status     string `json:"status" binding:"required"` // "verified", "approved", "rejected"
+	AdminNotes string `json:"admin_notes,omitempty"`
+}
+
+// RejectNewTourRequest payload penolakan usulan destinasi (new_tour) dengan notifikasi ke pengusul
+type RejectNewTourRequest struct {
+	Reason     string `json:"reason"`
+	AdminNotes string `json:"admin_notes"`
+}
+
+// MergeNewToursInput payload penggabungan usulan duplikat new_tour (pilih data terbaik + foto terbaik)
+type MergeNewToursInput struct {
+	SubmissionIDs           []string         `json:"submission_ids"`
+	Submissions             []models.NewTour `json:"submissions,omitempty"`
+	PrimaryDataSubmissionID string           `json:"primary_data_submission_id"`
+	CoverPhotoSubmissionID  string           `json:"cover_photo_submission_id"`
+	CustomName              string           `json:"custom_name,omitempty"`
+	CustomDescription       string           `json:"custom_description,omitempty"`
+	CustomTips              string           `json:"custom_tips,omitempty"`
+}
+
+// NowTimestamp helper string waktu
+func NowTimestamp() string {
+	return time.Now().Format(time.RFC3339)
+}

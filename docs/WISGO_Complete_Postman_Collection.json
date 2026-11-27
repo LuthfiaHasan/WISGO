@@ -1,0 +1,1795 @@
+{
+  "info": {
+    "_postman_id": "wisgo-master-api-collection",
+    "description": "Koleksi lengkap seluruh 48+ endpoint WISGO (Rancak.in): BE-1 (Core, 360, Spasial, Shunlu, Pungli, Gaode, Budaya, Benchmark) dan BE-2 (Auth OTP, Itinerary, Group Room, Mitra Nagari, Escrow, Bot WA 1/0, Paspor Digital, Analitik Dispar).",
+    "name": "WISGO (Rancak.in) - Master API Collection (BE-1 & BE-2)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. Infrastruktur & Health Check",
+      "item": [
+        {
+          "name": "Health Check Server",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "01. [BE-2] Autentikasi & Profil Pengguna",
+      "item": [
+        {
+          "name": "Kirim Kode OTP 4 Digit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"6281234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/request-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "request-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verifikasi Kode OTP & Cetak JWT",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"6281234567890\",\n  \"otp_code\": \"1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Daftar Tempat Favorit Pengguna",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/saved?user_id=usr-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "saved"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle Simpan Tempat Favorit (Body JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"dest-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/saved",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "saved"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle Simpan Tempat Favorit (URL Param)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/saved/dest-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "saved",
+                "dest-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verifikasi OTP - Pilihan Login: Input Wisata (Aktor Wisatawan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"6281234567890\",\n  \"otp_code\": \"1234\",\n  \"login_choice\": \"wisata\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verifikasi OTP - Pilihan Login: Input Event (Aktor Vendor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"6281299998888\",\n  \"otp_code\": \"1234\",\n  \"login_choice\": \"event\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. [BE-2] Itinerary Cerdas & Auto Generate",
+      "item": [
+        {
+          "name": "Auto Generate Itinerary Pintar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"duration_days\": 3,\n  \"traveler_type\": \"family\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/itineraries/auto-generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "itineraries",
+                "auto-generate"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Riwayat Rencana Perjalanan Pengguna",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/itineraries?user_id=usr-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "itineraries"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Simpan Rencana Perjalanan Manual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"title\": \"Trip Padang-Bukittinggi Seru\",\n  \"start_date\": \"2026-12-01T08:00:00Z\",\n  \"end_date\": \"2026-12-03T18:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/itineraries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "itineraries"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. [BE-2] Private Group Room & Rombongan",
+      "item": [
+        {
+          "name": "Buat Group Room Baru",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leader_id\": \"usr-001\",\n  \"title\": \"Rombongan Keluarga Padang\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detail Group Room & Anggota",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups",
+                "RANCAK-MINANG-88"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Gabung ke Group Room via Link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-002\",\n  \"user_name\": \"Siti Nurhaliza\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/join",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups",
+                "RANCAK-MINANG-88",
+                "join"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Voting Destinasi Rombongan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"dest-001\",\n  \"vote_type\": \"upvote\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups",
+                "RANCAK-MINANG-88",
+                "vote"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rekapitulasi Voting Live",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/results",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups",
+                "RANCAK-MINANG-88",
+                "results"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kalkulator Split-Bill Rombongan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"total_amount\": 1200000,\n  \"description\": \"Sewa HiAce Bukittinggi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/split-bill",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups",
+                "RANCAK-MINANG-88",
+                "split-bill"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ping Lokasi Radar Anggota",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"latitude\": -0.3051,\n  \"longitude\": 100.3695\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/radar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups",
+                "RANCAK-MINANG-88",
+                "radar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Feed Live Radar Rombongan",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/radar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "groups",
+                "RANCAK-MINANG-88",
+                "radar"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. [BE-2] Mitra Nagari, Quick Booking & Escrow",
+      "item": [
+        {
+          "name": "Katalog Mitra Nagari Minang (+ Level Pedas)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/partners?category=kuliner&spicy_level=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partners"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detail Profil Mitra Nagari",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/partners/ptr-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "partners",
+                "ptr-01"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pesan via Quick Drawer 360 (Kunci Escrow)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"partner_id\": \"ptr-01\",\n  \"total_amount\": 250000,\n  \"booking_date\": \"2026-11-20T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bookings/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Webhook Simulator Bot WhatsApp Mitra (1 Terima / 0 Tolak)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_id\": \"bkg-001\",\n  \"action\": \"1\",\n  \"sender_phone\": \"6281234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bookings/wa-webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "wa-webhook"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ambil E-Ticket QR Setelah Konfirmasi",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bookings/bkg-001/ticket-qr",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "bkg-001",
+                "ticket-qr"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Scan QR oleh Mitra untuk Cairkan Dana Escrow",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_code_ticket\": \"QR-RANCAK-TKT-bkg-001\",\n  \"partner_id\": \"ptr-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/escrow/scan-redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "escrow",
+                "scan-redeem"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kurs Konversi MYR / IDR (Wisatawan Malaysia)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/escrow/currency/myr-rate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "escrow",
+                "currency",
+                "myr-rate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. [BE-2] Komunitas, Hidden Gem & Cari Barengan",
+      "item": [
+        {
+          "name": "Ajukan Tempat Baru (Wajib Tips & Masking GPS)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"name\": \"Lubuak Rantiang Hidden Lagoon\",\n  \"category\": \"Alam\",\n  \"latitude\": -0.85,\n  \"longitude\": 100.42,\n  \"tips_menjaga\": \"Jangan buang sampah dan patuhi aturan nagari\",\n  \"is_sensitive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/community/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "places"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Daftar Tempat Komunitas dalam Antrean",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/community/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "places"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Papan Cari Barengan (Shared Trips)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/community/shared-trips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "shared-trips"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buat Postingan Cari Barengan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"title\": \"Patungan Sewa Avanza ke Lembah Harau\",\n  \"destination_route\": \"Padang - Harau\",\n  \"max_capacity\": 4,\n  \"price_per_seat\": 150000,\n  \"trip_date\": \"2026-11-25T07:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/community/shared-trips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "community",
+                "shared-trips"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. [BE-2] Gamifikasi, Paspor Minang & Analitik Dispar",
+      "item": [
+        {
+          "name": "Check-in GPS Validasi Anti-Fake GPS (<=200m)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"dest-002\",\n  \"latitude\": -0.3051,\n  \"longitude\": 100.3695\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gamification/checkin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gamification",
+                "checkin"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rekap Stempel Paspor Digital Minang",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gamification/passport?user_id=usr-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gamification",
+                "passport"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cetak Sertifikat Digital Resmi Gubernur",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"usr-001\",\n  \"full_name\": \"Rizky Pratama\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/gamification/certificate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gamification",
+                "certificate"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dashboard Eksekutif Dispar Sumbar",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/dispar/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "dispar",
+                "summary"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. [BE-1] Destinasi, Tarif Perda & Offline Bundle",
+      "item": [
+        {
+          "name": "Direktori 20 Destinasi (+ Spasial Kelokan 1.32x)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations?category=alam&lat=-0.9471&lng=100.4172",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detail Destinasi Lengkap (4 Statistik & 5 Medan)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/dest-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "dest-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Tabel Tarif Resmi Perda / Nagari",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/dest-001/tariffs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "dest-001",
+                "tariffs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unduh Offline Bundle JSON v2",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/dest-001/offline-bundle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "dest-001",
+                "offline-bundle"
+              ]
+            }
+          }
+        },
+        {
+          "name": "CMS Tambah Destinasi Baru (Auth Dispar/Pokdarwis)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Puncak Gagoan Solok\",\n  \"category\": \"Alam\",\n  \"city_regency\": \"Kab. Solok\",\n  \"latitude\": -0.65,\n  \"longitude\": 100.58\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "CMS Update Destinasi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lembah Harau & Geopark Tebing Granit\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/dest-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "dest-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Wisatawan: Ajukan Destinasi Wisata Hidden Gem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenTourist}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Air Terjun Sarasah Barasok\",\n  \"category\": \"Hidden Gem\",\n  \"city_regency\": \"Kab. Lima Puluh Kota\",\n  \"description\": \"Air terjun alami tersembunyi dengan formasi tebing karst megah.\",\n  \"latitude\": -0.1582,\n  \"longitude\": 100.6723,\n  \"ticket_price\": 10000,\n  \"road_condition\": \"Jalan Tanah & Setapak\",\n  \"vehicle_accessibility\": \"Hanya Motor / Trail\",\n  \"cellular_signal\": \"Edge / SOS Sinyal Hilang\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/hidden-gem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "hidden-gem"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: Verifikasi / Setujui Destinasi Hidden Gem",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/destinations/dest-021/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "destinations",
+                "dest-021",
+                "verify"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. [BE-1] Kanvas Tur 360 & CMS Studio 4-Pin",
+      "item": [
+        {
+          "name": "Ambil Scene 360 Aerial-to-Ground & Pin",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/dest-001/scenes-360",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "dest-001",
+                "scenes-360"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ambil Pin Hotspot Spesifik Scene",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scenes-360/scene-harau-aerial-01/hotspots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scenes-360",
+                "scene-harau-aerial-01",
+                "hotspots"
+              ]
+            }
+          }
+        },
+        {
+          "name": "CMS Unggah Scene 360 Baru",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"title\": \"Panorama Udara 200m Harau\",\n  \"type\": \"aerial\",\n  \"panorama_url\": \"https://cdn.rancak.in/360/harau-aerial-200m.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scenes-360",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scenes-360"
+              ]
+            }
+          }
+        },
+        {
+          "name": "CMS Pasang Pin Hotspot 4 Warna (Pitch/Yaw)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Istano Basa Pagaruyung\",\n  \"type\": \"navigasi\",\n  \"pitch\": 12.5,\n  \"yaw\": 180.0,\n  \"target_ref\": \"dest-004\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scenes-360/scene-harau-aerial-01/hotspots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scenes-360",
+                "scene-harau-aerial-01",
+                "hotspots"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. [BE-1] Spasial, Shunlu, Hazard & SOS",
+      "item": [
+        {
+          "name": "Pencarian Koridor Searah Rute (Shunlu Detour)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin_lat\": -0.9471,\n  \"origin_lng\": 100.4172,\n  \"destination_lat\": -0.3051,\n  \"destination_lng\": 100.3692,\n  \"category\": \"rm_padang\",\n  \"max_detour_min\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/spatial/shunlu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "spatial",
+                "shunlu"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Peta Mikro Internal Kawasan (GeoJSON Walkway)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/dest-001/micro-map",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "destinations",
+                "dest-001",
+                "micro-map"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pemicu Audio Narasi GPS (<=15 Meter)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"user_lat\": -0.1025,\n  \"user_lng\": 100.6725\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/spatial/audio-trigger-check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "spatial",
+                "audio-trigger-check"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Radar Peringatan Bahaya Jalur Ekstrem",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hazards/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hazards",
+                "active"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pancaran Sinyal Darurat SOS GPS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"caller_name\": \"Pak Hendra\",\n  \"caller_phone\": \"081234567890\",\n  \"latitude\": -0.75,\n  \"longitude\": 100.35,\n  \"situation\": \"Mobil mogok di tanjakan Sitinjau Lauik\",\n  \"need_sar\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hazards/sos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hazards",
+                "sos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pencarian Destinasi Terdekat (Spatial Nearby)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/spatial/nearby?lat=-0.9471&lng=100.4172&radius=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "spatial",
+                "nearby"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Optimasi Urutan Kunjungan (Route TSP Efisien)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination_ids\": [\"dest-001\", \"dest-002\", \"dest-004\"],\n  \"start_lat\": -0.9471,\n  \"start_lng\": 100.4172\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/optimize-tsp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "routes",
+                "optimize-tsp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kirim Telemetri GPS (Anti Dwell Time Palsu)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"dwell_time_minutes\": 35,\n  \"device_id\": \"dev-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/spatial/navigation-telemetry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "spatial",
+                "navigation-telemetry"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. [BE-1] Smart QR Plang & Lapor Pungli",
+      "item": [
+        {
+          "name": "Scan Resolusi Plang Smart QR Fisik",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qr/QR-SMBR-LPK-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qr",
+                "QR-SMBR-LPK-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kirim Laporan Pungli Anonim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"charged_amount_idr\": 20000,\n  \"incident_category\": \"parkir_liar\",\n  \"description\": \"Diminta parkir 20rb tanpa karcis resmi Perda\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pungli/report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pungli",
+                "report"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Daftar Tiket Aduan Satgas Saber Pungli",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pungli/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pungli",
+                "reports"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Tindak Lanjut Status Aduan Pungli",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Diverifikasi\",\n  \"action_notes\": \"Petugas Satgas telah meluncur ke lokasi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pungli/reports/pungli-001/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pungli",
+                "reports",
+                "pungli-001",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. [BE-1] Budaya Minang & Gaode Ranking",
+      "item": [
+        {
+          "name": "Leaderboard Gaode Behavior-Based Ranking",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rankings/gaode",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rankings",
+                "gaode"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kamus Audio Minang (Kato Nan Ampek)",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/culture/audio-phrases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "culture",
+                "audio-phrases"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kalender Acara Tradisi & Hari Pakan Nagari",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/culture/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "culture",
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vendor: Input Event Budaya / Hari Pakan Nagari",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenVendor}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Festival Tabuik Pariaman 2026\",\n  \"event_type\": \"Festival Budaya\",\n  \"nagari_location\": \"Pantai Gandoriah\",\n  \"city_regency\": \"Kota Pariaman\",\n  \"schedule_rule\": \"Setiap 10 Muharram (Puncak Hoyak Tabuik)\",\n  \"next_event_date\": \"2026-07-25\",\n  \"latitude\": -0.6264,\n  \"longitude\": 100.119,\n  \"highlight_item\": \"Prosesi Hoyak Tabuik setinggi 12 meter dibuang ke laut saat matahari terbenam.\",\n  \"cultural_etiquette\": \"Hormati jalannya prosesi arak-arakan dan jaga kebersihan pantai.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/culture/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "culture",
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: CRUD Event (Create Event Budaya Resmi)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Pacu Terbang Itik Payakumbuh\",\n  \"event_type\": \"Tradisi Adat\",\n  \"nagari_location\": \"Gelanggang Aur Kuning\",\n  \"city_regency\": \"Kota Payakumbuh\",\n  \"schedule_rule\": \"Setiap Minggu Ke-2 & Ke-4\",\n  \"next_event_date\": \"2026-12-10\",\n  \"latitude\": -0.2248,\n  \"longitude\": 100.63,\n  \"highlight_item\": \"Perlombaan itik terbang melintasi jarak 800 meter hingga 1 km.\",\n  \"cultural_etiquette\": \"Tidak bersorak saat itik dilepaskan agar fokus terbang lurus.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/culture/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "culture",
+                "events"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: CRUD Event (Update Event Budaya)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Pacu Terbang Itik Payakumbuh Grand Prix\",\n  \"schedule_rule\": \"Final Tahunan Setiap Akhir Tahun\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/culture/events/cult-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "culture",
+                "events",
+                "cult-001"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Dispar: CRUD Event (Delete Event Budaya)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/culture/events/cult-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "culture",
+                "events",
+                "cult-001"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. [BE-1] System Core, Benchmark & Cache",
+      "item": [
+        {
+          "name": "Katalog Kontrak 24 Endpoint BE-1",
+          "request": {
+            "method": "GET",
+            "header": null,
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/system/contracts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "contracts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Live Benchmark Latensi SLA <100ms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/system/benchmark",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "system",
+                "benchmark"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Manual Cache Flush Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdminDispar}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/cache/flush",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "cache",
+                "flush"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "type": "string",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "tokenAdminDispar",
+      "type": "string",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+    },
+    {
+      "key": "tokenPokdarwis",
+      "type": "string",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXBva2Rhcndpcy0wMSIsIm5hbWUiOiJVZGEgWnVsIChQb2tkYXJ3aXMgTmFnYXJpKSIsInJvbGUiOiJwb2tkYXJ3aXMifQ.rancakin_sig_pokdarwis"
+    },
+    {
+      "key": "tokenTourist",
+      "type": "string",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXRvdXJpc3QtMDEiLCJuYW1lIjoiUml6a3kgUHJhdGFtYSAoV2lzYXRhd2FuKSIsInJvbGUiOiJ0b3VyaXN0In0.rancakin_sig_tourist"
+    },
+    {
+      "key": "tokenVendor",
+      "type": "string",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXZlbmRvci0wMSIsIm5hbWUiOiJTYW5nZ2FyIEJ1ZGF5YSBNaW5hbmcgKFZlbmRvcikiLCJyb2xlIjoidmVuZG9yIn0.rancakin_sig_vendor"
+    }
+  ]
+}

@@ -1,0 +1,327 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #F6F3EC;
+  --cream-subtle: #EDE8DD;
+  --cream-100: #F6F3EC;
+  --forest: #234B24;
+  --brush: #2F663E;
+  --sage: #DFECE2;
+  --sage-border: #D5E2D7;
+  --warm-border: #E5DEC9;
+  --terracotta: #F26B4B;
+  --coral-tint: #FDF2E9;
+  --green-800: #234B24;
+  --green-500: #1E9E5A;
+  --ink: #1B1F1A;
+  --ink-900: #1B1F1A;
+  --muted: #5A6B5D;
+  --coral-500: #F26B4B;
+  --orange-500: #E85D1A;
+  --indigo-500: #5B6AE8;
+  --sage-100: #E4E9DA;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visually hidden helper from modern-web-guidance (forms & sortable-table) */
+.visually-hidden {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Focus-visible accessibility ring */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible,
+.table-wrapper:focus-visible {
+  outline: 3px solid var(--green-800);
+  outline-offset: 2px;
+}
+
+/* Prevent parent Tailwind space-y-* from shifting fixed full-screen modal overlays */
+.fixed.inset-0 {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Native <dialog> modal scroll containment (dialog guide) */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgba(27, 31, 26, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+/* Tabbed interface styling (tabs guide) - scoped to avoid overriding card/pill button tabs */
+[role="tab"] {
+  position: relative;
+}
+
+[role="tab"].tab-underline[aria-selected="true"] {
+  color: var(--green-800);
+}
+
+[role="tab"].tab-underline[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  border-block-end: 3px solid var(--coral-500);
+}
+
+/* Clean & Elegant design system utilities */
+.card-clean {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  border: 1px solid rgba(35, 75, 36, 0.08);
+  box-shadow: 0 4px 24px rgba(35, 75, 36, 0.04);
+}
+
+.pill-subtab-active {
+  background-color: #234B24;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(35, 75, 36, 0.15);
+}
+
+.pill-subtab-inactive {
+  background-color: #FFFFFF;
+  color: #4A5248;
+  border: 1px solid rgba(35, 75, 36, 0.12);
+}
+.pill-subtab-inactive:hover {
+  background-color: rgba(35, 75, 36, 0.05);
+  color: #234B24;
+}
+
+/* Custom smooth scrollbar for dark green Sidebar */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Responsive & Sortable Data Table (responsive-table & sortable-table guides) */
+.table-wrapper {
+  overflow: auto;
+  max-inline-size: 100%;
+  max-block-size: min(740px, 80vh);
+  container-type: inline-size;
+}
+
+.wisgo-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  min-inline-size: 980px;
+  --label-2: "Wilayah & Kategori";
+  --label-3: "4 Statistik Keputusan";
+  --label-4: "4 Indikator Medan";
+  --label-5: "Standar Tarif Perda";
+  --label-6: "Edukasi & Adat";
+  --label-7: "Tindakan";
+}
+
+.wisgo-table thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+}
+
+.wisgo-table thead th:has(> button) {
+  padding: 0;
+}
+
+.wisgo-table thead th > button {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.wisgo-table thead th > button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.wisgo-table tbody th {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  background-color: #FFFFFF;
+}
+
+.wisgo-table tbody tr:hover th {
+  background-color: #FAF8F3;
+}
+
+@container (width < 640px) {
+  .wisgo-table {
+    min-inline-size: 100%;
+  }
+
+  .wisgo-table,
+  .wisgo-table thead,
+  .wisgo-table tbody,
+  .wisgo-table tr,
+  .wisgo-table th,
+  .wisgo-table td {
+    display: block;
+  }
+
+  .wisgo-table thead {
+    display: none;
+  }
+
+  .wisgo-table tbody tr {
+    margin-block-end: 1rem;
+    border: 1px solid #CFD8BE;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #FFFFFF;
+  }
+
+  .wisgo-table tbody th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background: var(--sage-100);
+  }
+
+  .wisgo-table td:nth-child(2)::before {
+    content: var(--label-2) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .wisgo-table td:nth-child(3)::before {
+    content: var(--label-3) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .wisgo-table td:nth-child(4)::before {
+    content: var(--label-4) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .wisgo-table td:nth-child(5)::before {
+    content: var(--label-5) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .wisgo-table td:nth-child(6)::before {
+    content: var(--label-6) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+
+  .wisgo-table td:nth-child(7)::before {
+    content: var(--label-7) ": ";
+    font-weight: 700;
+    display: block;
+    font-size: 0.75rem;
+    color: #4A5248;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Print stylesheet khusus untuk Cetak Plang Smart QR & Laporan Eksekutif Dispar */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #smart-qr-placard-print,
+  #smart-qr-placard-print *,
+  #executive-report-print,
+  #executive-report-print * {
+    visibility: visible;
+  }
+  #smart-qr-placard-print {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 24px;
+    box-shadow: none !important;
+    background: #F6F3EC !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #executive-report-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px 32px;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

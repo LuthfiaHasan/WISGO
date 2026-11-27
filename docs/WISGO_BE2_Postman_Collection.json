@@ -1,0 +1,767 @@
+{
+	"info": {
+		"_postman_id": "wisgo-be2-api-collection",
+		"name": "WISGO (Rancak.in) - BE-2 Backend API",
+		"description": "Koleksi lengkap 24 endpoint BE-2: Autentikasi, Itinerary Cerdas, Private Group Room, Mitra Nagari Minang, Transaksi Escrow, Bot WA 1/0, Gamifikasi Paspor Minang & Analitik Dispar.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "01. Autentikasi & Profil Pengguna",
+			"item": [
+				{
+					"name": "Kirim Kode OTP 4 Kotak",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone_number\": \"6281234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/request-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"request-otp"
+							]
+						}
+					}
+				},
+				{
+					"name": "Verifikasi Kode OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone_number\": \"6281234567890\",\n  \"otp_code\": \"1234\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/verify-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"verify-otp"
+							]
+						}
+					}
+				},
+				{
+					"name": "Ambil Daftar Tempat Tersimpan",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/saved?user_id=usr-001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"saved"
+							],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "usr-001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Toggle Simpan / Hapus Tempat Favorit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"dest-01\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/saved",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"saved"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "02. Trip Planner & Private Group Room (Pilar 4)",
+			"item": [
+				{
+					"name": "Auto-Generate Itinerary 7 Hari Pintar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"duration_days\": 3,\n  \"arrival_point\": \"BIM\",\n  \"traveler_type\": \"family\",\n  \"preferences\": [\"nature\", \"culinary\", \"culture\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/itineraries/auto-generate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"itineraries",
+								"auto-generate"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Private Group Room (Kode RANCAK-XXXX & WA Link)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"leader_id\": \"usr-001\",\n  \"title\": \"Rombongan Tour Ranah Minang\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups"
+							]
+						}
+					}
+				},
+				{
+					"name": "Ambil Info Group Room",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups",
+								"RANCAK-MINANG-88"
+							]
+						}
+					}
+				},
+				{
+					"name": "Gabung ke Group Room via Link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-002\",\n  \"full_name\": \"Fatimah Azzahra\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/join",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups",
+								"RANCAK-MINANG-88",
+								"join"
+							]
+						}
+					}
+				},
+				{
+					"name": "Submit Live Voting Destinasi Rombongan",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"dest-01\",\n  \"vote_type\": \"upvote\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/vote",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups",
+								"RANCAK-MINANG-88",
+								"vote"
+							]
+						}
+					}
+				},
+				{
+					"name": "Rekapitulasi Persentase Voting Live",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/results",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups",
+								"RANCAK-MINANG-88",
+								"results"
+							]
+						}
+					}
+				},
+				{
+					"name": "Kalkulator Split-Bill Rombongan",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"total_amount\": 1200000,\n  \"description\": \"Sewa Mobil HiAce Padang - Bukittinggi 2 Hari\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/split-bill",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups",
+								"RANCAK-MINANG-88",
+								"split-bill"
+							]
+						}
+					}
+				},
+				{
+					"name": "Ping Lokasi Anggota (Group Live Radar)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"latitude\": -0.3051,\n  \"longitude\": 100.3695\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/radar-ping",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups",
+								"RANCAK-MINANG-88",
+								"radar-ping"
+							]
+						}
+					}
+				},
+				{
+					"name": "Pantau Feed Lokasi Rombongan (Group Radar)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups/RANCAK-MINANG-88/radar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"groups",
+								"RANCAK-MINANG-88",
+								"radar"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "03. Mitra Nagari & Transaksi Escrow (Pilar 5)",
+			"item": [
+				{
+					"name": "Katalog 5 Kategori Mitra (Filter Kuliner Pedas 5)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/partners?category=kuliner&spicy_level=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"partners"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "kuliner"
+								},
+								{
+									"key": "spicy_level",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Detail Profil Mitra & Paket Tarif",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/partners/detail?id=ptr-01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"partners",
+								"detail"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "ptr-01"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Quick Booking Drawer 360° (Dana Masuk Escrow)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"partner_id\": \"ptr-01\",\n  \"user_id\": \"usr-001\",\n  \"total_amount\": 250000,\n  \"currency\": \"IDR\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"create"
+							]
+						}
+					}
+				},
+				{
+					"name": "Simulator Webhook Bot WA Mitra (Balas 1 Terima)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"booking_id\": \"BOOK-TEST-001\",\n  \"action\": \"1\",\n  \"notes\": \"Kamar Homestay Rumah Gadang siap disiapkan\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/wa-webhook",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"wa-webhook"
+							]
+						}
+					}
+				},
+				{
+					"name": "Ambil QR E-Ticket (Setelah Dikonfirmasi)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/bookings/ticket-qr?id=BOOK-TEST-001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"ticket-qr"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "BOOK-TEST-001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Scan QR E-Ticket Cairkan Dana Escrow ke Rekening Mitra",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"partner_id\": \"ptr-01\",\n  \"qr_code_ticket\": \"QR-TICKET-BOOK-TEST-001\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/escrow/scan-redeem",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"escrow",
+								"scan-redeem"
+							]
+						}
+					}
+				},
+				{
+					"name": "Kurs Konversi MYR ke IDR (Wisatawan Malaysia)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/escrow/currency/myr-rate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"escrow",
+								"currency",
+								"myr-rate"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "04. Komunitas & Cari Barengan (Pilar 6)",
+			"item": [
+				{
+					"name": "Usulkan Tempat Baru (Wajib Tips + Masking Radius)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"name\": \"Air Terjun Lubuk Hitam\",\n  \"category\": \"hidden_gem\",\n  \"city_regency\": \"Kota Padang\",\n  \"description\": \"Air terjun 3 tingkat alami di kawasan Teluk Kabung.\",\n  \"latitude\": -1.0422,\n  \"longitude\": 100.4183,\n  \"tips_menjaga\": \"Wajib bawa pulang sampah dan dilarang menyalakan api unggun.\",\n  \"is_sensitive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/community/places",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"community",
+								"places"
+							]
+						}
+					}
+				},
+				{
+					"name": "Feed Papan Cari Barengan Patungan Transport",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/community/shared-trips",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"community",
+								"shared-trips"
+							]
+						}
+					}
+				},
+				{
+					"name": "Publikasi Cari Barengan Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"title\": \"Patungan Sewa Perahu Pulau Pasumpahan & Sironjong\",\n  \"destination_route\": \"Dermaga Bungus -> Pasumpahan -> Sironjong\",\n  \"departure_date\": \"2026-11-20T08:00:00Z\",\n  \"available_seats\": 4,\n  \"cost_per_person\": 75000,\n  \"contact_wa\": \"6281234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/community/shared-trips",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"community",
+								"shared-trips"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "05. Gamifikasi Paspor & Analitik Dispar (Pilar 6 & 8)",
+			"item": [
+				{
+					"name": "Check-In Valid (Jam Gadang <= 200m)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"spot-jam-gadang\",\n  \"latitude\": -0.3051,\n  \"longitude\": 100.3695\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gamification/checkin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"gamification",
+								"checkin"
+							]
+						}
+					}
+				},
+				{
+					"name": "Check-In Ditolak (Anti-Fake GPS > 200m)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"spot-jam-gadang\",\n  \"latitude\": -0.9634,\n  \"longitude\": 100.3547\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gamification/checkin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"gamification",
+								"checkin"
+							]
+						}
+					}
+				},
+				{
+					"name": "Rekap Stempel Paspor Digital Minang (10 Titik)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gamification/passport?user_id=usr-001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"gamification",
+								"passport"
+							],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "usr-001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Terbitkan Sertifikat Digital Gubernur Sumbar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"usr-001\",\n  \"full_name\": \"Rahmat Hidayat (Wisatawan Teladan)\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gamification/certificate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"gamification",
+								"certificate"
+							]
+						}
+					}
+				},
+				{
+					"name": "Ringkasan Analitik Dispar (Heatmap 19 Kab/Kota & Escrow)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/analytics/dispar/summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"analytics",
+								"dispar",
+								"summary"
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

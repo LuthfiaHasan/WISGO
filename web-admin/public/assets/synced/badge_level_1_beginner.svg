@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120" fill="none">
+  <defs>
+    <filter id="badgeShadow1" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#142618" flood-opacity="0.18"/>
+    </filter>
+    <linearGradient id="bgGrad1" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+    <linearGradient id="ribbonGrad1" x1="15" y1="90" x2="85" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E9E5A"/>
+      <stop offset="100%" stop-color="#234B24"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield Badge Base -->
+  <path d="M50 8 L85 22 C85 60 50 86 50 86 C50 86 15 60 15 22 Z" fill="url(#bgGrad1)" stroke="#64748B" stroke-width="3" filter="url(#badgeShadow1)"/>
+  <circle cx="50" cy="46" r="24" fill="#FFFFFF" stroke="#94A3B8" stroke-width="2"/>
+  <!-- Compass / Beginner Icon -->
+  <circle cx="50" cy="46" r="16" stroke="#234B24" stroke-width="2"/>
+  <polygon points="50,34 54,45 50,43 46,45" fill="#F26B4B"/>
+  <polygon points="50,58 54,47 50,49 46,47" fill="#234B24"/>
+  <circle cx="50" cy="46" r="2.5" fill="#FFFFFF"/>
+  <!-- Ribbon Level 1 -->
+  <rect x="18" y="90" width="64" height="20" rx="10" fill="url(#ribbonGrad1)" stroke="#FFFFFF" stroke-width="1.5"/>
+  <text x="50" y="104" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">LEVEL 1</text>
+</svg>
