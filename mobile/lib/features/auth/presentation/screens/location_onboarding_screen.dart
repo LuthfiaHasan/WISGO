@@ -249,6 +249,43 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
               },
             ),
           ),
+          // 4. Tombol Lewati (Pojok Kanan Atas — Paling Atas di Stack agar Selalu Bisa Diketuk)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10, right: 18),
+                child: Material(
+                  color: AppColors.cream.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(999),
+                  child: InkWell(
+                    onTap: _goToBeranda,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 44, minWidth: 68),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: AppColors.sageBorder.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Lewati',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.forest,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

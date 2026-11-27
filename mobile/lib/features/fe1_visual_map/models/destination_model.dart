@@ -552,3 +552,69 @@ class TraditionalAttireModel {
   });
 }
 
+/// Berita Wisata & Bencana Sumatera Barat (sumbarkita.id & sumbar.antaranews.com)
+class SumbarNewsModel {
+  final String id;
+  final String category; // Bencana & Vulkanologi, Cuaca & Bahari, Akses Wisata, Info Jalur & Bencana
+  final String severity; // INFO WISATA, WASPADA, SIAGA HUJAN, DARURAT
+  final String title;
+  final String region;
+  final String summary;
+  final String advice;
+  final String source;
+  final String portalDomain; // sumbarkita.id | sumbar.antaranews.com
+  final String sourceUrl;
+  final String publishedAt;
+  final bool isPublished;
+
+  const SumbarNewsModel({
+    required this.id,
+    required this.category,
+    required this.severity,
+    required this.title,
+    required this.region,
+    required this.summary,
+    required this.advice,
+    required this.source,
+    required this.portalDomain,
+    required this.sourceUrl,
+    this.publishedAt = '',
+    this.isPublished = true,
+  });
+
+  factory SumbarNewsModel.fromJson(Map<String, dynamic> json) {
+    final rawSource = json['source'] as String? ?? 'Sumbarkita.id';
+    final rawUrl = json['source_url'] as String? ?? '';
+    String domain = json['portal_domain'] as String? ?? '';
+    if (domain.isEmpty) {
+      final low = '$rawSource $rawUrl'.toLowerCase();
+      if (low.contains('sumbarkita')) {
+        domain = 'sumbarkita.id';
+      } else if (low.contains('antara')) {
+        domain = 'sumbar.antaranews.com';
+      } else {
+        domain = 'dispar.sumbarprov.go.id';
+      }
+    }
+    return SumbarNewsModel(
+      id: json['id'] as String? ?? '',
+      category: json['category'] as String? ?? 'Info Jalur & Bencana',
+      severity: json['severity'] as String? ?? 'INFO WISATA',
+      title: json['title'] as String? ?? '',
+      region: json['region'] as String? ?? 'Sumatera Barat',
+      summary: json['summary'] as String? ?? '',
+      advice: json['advice'] as String? ?? '',
+      source: rawSource,
+      portalDomain: domain,
+      sourceUrl: rawUrl.isNotEmpty
+          ? rawUrl
+          : (domain == 'sumbar.antaranews.com'
+              ? 'https://sumbar.antaranews.com/'
+              : 'https://sumbarkita.id/'),
+      publishedAt: json['published_at'] as String? ?? 'Hari ini',
+      isPublished: json['is_published'] as bool? ?? true,
+    );
+  }
+}
+
+

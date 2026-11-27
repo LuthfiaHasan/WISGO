@@ -357,4 +357,17 @@ func seedBE1ModulesToDB(db *sql.DB) {
 			pr.ChargedAmountIDR, pr.OfficialPerdaPriceIDR, pr.OverchargeAmountIDR,
 			pr.PhotoEvidence, pr.UploadFormat, pr.Latitude, pr.Longitude, pr.Description, pr.Status, pr.SatgasNotes)
 	}
+
+	// 7. Meja Kurasi Usulan Destinasi Wisatawan (Tabel new_tour)
+	log.Println("Menyinkronkan seeder new_tour (Meja Kurasi Usulan Destinasi Wisatawan)...")
+	for _, nt := range models.GetDefaultNewTours() {
+		_, _ = db.Exec(`
+			INSERT INTO new_tour (
+				id, user_id, name, category_id, city_regency, description,
+				latitude, longitude, tips_menjaga, is_sensitive, status, created_at
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+			ON CONFLICT (id) DO NOTHING;
+		`, nt.ID, nt.UserID, nt.Name, nt.CategoryID, nt.CityRegency, nt.Description,
+			nt.Latitude, nt.Longitude, nt.TipsMenjaga, nt.IsSensitive, nt.Status)
+	}
 }

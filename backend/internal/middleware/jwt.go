@@ -1,14 +1,63 @@
 package middleware
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/common"
 )
+
+const DefaultJWTSecret = "wisgo-sumbar-jwt-secret-2026"
+
+func getJWTSecret() string {
+	if s := strings.TrimSpace(os.Getenv("JWT_SECRET")); s != "" {
+		return s
+	}
+	return DefaultJWTSecret
+}
+
+// SignHMACToken menandatangani klaim JWT menggunakan algoritma standar HMAC-SHA256 (HS256)
+func SignHMACToken(claims map[string]interface{}, secret string) (string, error) {
+	if strings.TrimSpace(secret) == "" {
+		secret = getJWTSecret()
+	}
+	headerBytes, _ := json.Marshal(map[string]string{"alg": "HS256", "typ": "JWT"})
+	payloadBytes, err := json.Marshal(claims)
+	if err != nil {
+		return "", err
+	}
+	headerSeg := base64.RawURLEncoding.EncodeToString(headerBytes)
+	payloadSeg := base64.RawURLEncoding.EncodeToString(payloadBytes)
+	signingInput := headerSeg + "." + payloadSeg
+
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(signingInput))
+	sigSeg := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+	return fmt.Sprintf("%s.%s", signingInput, sigSeg), nil
+}
+
+func verifyHMACSignature(signingInput, sigSegment, secret string) bool {
+	if strings.TrimSpace(secret) == "" {
+		secret = getJWTSecret()
+	}
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(signingInput))
+	expectedSig := mac.Sum(nil)
+
+	actualSig, err := decodeBase64Segment(sigSegment)
+	if err != nil {
+		return false
+	}
+	return hmac.Equal(actualSig, expectedSig)
+}
 
 // Preset Token JWT Bersama untuk Pengujian (BE-1, BE-2, FE-1, FE-2, FS-1)
 // Kompatibel 100% dengan standar kontrak JWT WISGO
@@ -88,18 +137,33 @@ func ResolveTokenRole(token string) (role string, userID string, valid bool) {
 		}
 	}
 
-	// 3. Cek format JWT 3-segmen standar (header.payload.signature) termasuk token Web Admin FS-1 (.wisgo-komando-sig-2026)
+	// 3. Cek format JWT 3-segmen standar (header.payload.signature)
+	// Mendukung verifikasi kriptografi HMAC-SHA256 (JWT_SECRET) maupun signature ekosistem WISGO (.wisgo_sig_ / .rancakin_sig_)
 	parts := strings.Split(token, ".")
-	if len(parts) == 3 && (strings.HasPrefix(parts[2], "rancakin_sig_") ||
-		strings.HasPrefix(parts[2], "wisgo_sig_") ||
-		strings.HasPrefix(parts[2], "wisgo-komando-sig")) {
-		if payloadBytes, err := decodeBase64Segment(parts[1]); err == nil {
-			var claims map[string]interface{}
-			if err := json.Unmarshal(payloadBytes, &claims); err == nil {
-				r, _ := claims["role"].(string)
-				sub, _ := claims["sub"].(string)
-				if r != "" {
-					return normalizeRole(r), sub, true
+	if len(parts) == 3 {
+		signingInput := parts[0] + "." + parts[1]
+		isValidSig := strings.HasPrefix(parts[2], "rancakin_sig_") ||
+			strings.HasPrefix(parts[2], "wisgo_sig_") ||
+			strings.HasPrefix(parts[2], "wisgo-komando-sig") ||
+			verifyHMACSignature(signingInput, parts[2], getJWTSecret())
+
+		if isValidSig {
+			if payloadBytes, err := decodeBase64Segment(parts[1]); err == nil {
+				var claims map[string]interface{}
+				if err := json.Unmarshal(payloadBytes, &claims); err == nil {
+					// Validasi klaim masa berlaku token (exp) jika disertakan
+					if expVal, hasExp := claims["exp"]; hasExp {
+						if expFloat, ok := expVal.(float64); ok && expFloat > 0 {
+							if int64(expFloat) < time.Now().Unix() {
+								return "", "", false
+							}
+						}
+					}
+					r, _ := claims["role"].(string)
+					sub, _ := claims["sub"].(string)
+					if r != "" {
+						return normalizeRole(r), sub, true
+					}
 				}
 			}
 		}

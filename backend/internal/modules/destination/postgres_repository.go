@@ -307,13 +307,79 @@ func (r *postgresRepository) UpdateCMS(id string, payload models.Destination) (*
 	if payload.CrowdLevel != "" {
 		d.CrowdLevel = payload.CrowdLevel
 	}
+	if payload.CoverImage != "" {
+		d.CoverImage = payload.CoverImage
+	}
+	if payload.Latitude != 0 {
+		d.Latitude = payload.Latitude
+	}
+	if payload.Longitude != 0 {
+		d.Longitude = payload.Longitude
+	}
+	if payload.EstimatedCost > 0 {
+		d.EstimatedCost = payload.EstimatedCost
+	}
+	if payload.OpeningHours != "" {
+		d.OpeningHours = payload.OpeningHours
+	}
 	d.UpdatedAt = time.Now()
 
 	_, _ = r.db.Exec(`
 		UPDATE destinations
-		SET name = $1, category_id = $2, category = $3, city_regency = $4, description = $5, crowd_level = $6, updated_at = $7
-		WHERE id = $8;
-	`, d.Name, d.CategoryID, d.Category, d.CityRegency, d.Description, d.CrowdLevel, d.UpdatedAt, d.ID)
+		SET name = $1, category_id = $2, category = $3, city_regency = $4, description = $5,
+		    crowd_level = $6, cover_image = $7, latitude = $8, longitude = $9,
+		    estimated_cost = $10, opening_hours = $11, updated_at = $12
+		WHERE id = $13;
+	`, d.Name, d.CategoryID, d.Category, d.CityRegency, d.Description,
+		d.CrowdLevel, d.CoverImage, d.Latitude, d.Longitude,
+		d.EstimatedCost, d.OpeningHours, d.UpdatedAt, d.ID)
+
+	if payload.MedanIndicator != nil {
+		mID := payload.MedanIndicator.ID
+		if mID == "" {
+			mID = fmt.Sprintf("med-%s", d.ID)
+		}
+		sig := payload.MedanIndicator.CellularSignal
+		if sig == "" {
+			sig = "4G Kuat"
+		}
+		_, _ = r.db.Exec(`
+			INSERT INTO indikator_medan (id, destination_id, vehicle_access, trekking_level, cellular_signal, facilities, guide_need)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			ON CONFLICT (destination_id) DO UPDATE SET
+				vehicle_access = EXCLUDED.vehicle_access,
+				trekking_level = EXCLUDED.trekking_level,
+				cellular_signal = EXCLUDED.cellular_signal,
+				facilities = EXCLUDED.facilities,
+				guide_need = EXCLUDED.guide_need;
+		`, mID, d.ID, payload.MedanIndicator.VehicleAccess, payload.MedanIndicator.TrekkingLevel,
+			sig, payload.MedanIndicator.Facilities, payload.MedanIndicator.GuideNeed)
+		d.MedanIndicator = payload.MedanIndicator
+	}
+
+	if len(payload.Tips) > 0 {
+		_, _ = r.db.Exec(`DELETE FROM aturan_destinasi WHERE destination_id = $1;`, d.ID)
+		for idx, tip := range payload.Tips {
+			tID := tip.ID
+			if tID == "" {
+				tID = fmt.Sprintf("art-%s-%d", d.ID, idx+1)
+			}
+			content := tip.Content
+			if content == "" {
+				content = tip.Aturan
+			}
+			catID := tip.CategoryID
+			if catID == "" {
+				catID = "cat_rul_alam"
+			}
+			_, _ = r.db.Exec(`
+				INSERT INTO aturan_destinasi (id, destination_id, category_id, title, content)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content;
+			`, tID, d.ID, catID, tip.Title, content)
+		}
+		d.Tips = payload.Tips
+	}
 
 	_, _ = r.fallback.UpdateCMS(id, payload)
 	return d, nil
@@ -504,4 +570,123 @@ func (r *postgresRepository) SaveOfflineBundle(destID, version string, payloadJS
 		`, bundleID, destID, version, fmt.Sprintf("https://cdn.wisgo.sumbarprov.go.id/tiles/%s.mbtiles", destID), string(payloadJSON))
 	}
 }
+
+func (r *postgresRepository) ListNewTours(statusFilter string) []models.NewTour {
+	rows, err := r.db.Query(`
+		SELECT id, COALESCE(user_id, 'usr-tourist-01'), name, COALESCE(category_id, 'cat-hidden-gem'),
+		       city_regency, COALESCE(description, ''), latitude, longitude,
+		       COALESCE(tips_menjaga, ''), COALESCE(is_sensitive, FALSE), COALESCE(status, 'pending'),
+		       COALESCE(created_at::text, NOW()::text)
+		FROM new_tour
+		ORDER BY created_at DESC;
+	`)
+	if err != nil {
+		return r.fallback.ListNewTours(statusFilter)
+	}
+	defer rows.Close()
+
+	fallbackMap := make(map[string]models.NewTour)
+	for _, fb := range r.fallback.ListNewTours("") {
+		fallbackMap[strings.ToLower(fb.ID)] = fb
+	}
+
+	st := strings.ToLower(strings.TrimSpace(statusFilter))
+	var list []models.NewTour
+	for rows.Next() {
+		var n models.NewTour
+		if err := rows.Scan(
+			&n.ID, &n.UserID, &n.Name, &n.CategoryID,
+			&n.CityRegency, &n.Description, &n.Latitude, &n.Longitude,
+			&n.TipsMenjaga, &n.IsSensitive, &n.Status, &n.CreatedAt,
+		); err == nil {
+			n.Category = mapCategoryIDToName(n.CategoryID)
+			if fb, ok := fallbackMap[strings.ToLower(n.ID)]; ok {
+				n.Facilities = fb.Facilities
+				n.EstimatedPrice = fb.EstimatedPrice
+				n.PhotoURL = fb.PhotoURL
+				n.SubmitterName = fb.SubmitterName
+				n.SubmitterPhone = fb.SubmitterPhone
+				n.AdminNotes = fb.AdminNotes
+				n.MergedIntoDestinationID = fb.MergedIntoDestinationID
+				n.MergedRole = fb.MergedRole
+			} else {
+				n.Facilities = []string{"Jalur Trekking", "Spot Foto Alami"}
+				n.EstimatedPrice = "Rp 10.000 / orang"
+				n.PhotoURL = "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?auto=format&fit=crop&w=900&q=80"
+				n.SubmitterName = "Wisatawan Komunitas WISGO"
+				n.SubmitterPhone = "6281234567890"
+			}
+			if st != "" && st != "all" && strings.ToLower(n.Status) != st {
+				continue
+			}
+			list = append(list, n)
+		}
+	}
+
+	if len(list) == 0 {
+		return r.fallback.ListNewTours(statusFilter)
+	}
+	return list
+}
+
+func (r *postgresRepository) UpsertNewTour(tour models.NewTour) models.NewTour {
+	saved := r.fallback.UpsertNewTour(tour)
+	_, _ = r.db.Exec(`
+		INSERT INTO new_tour (
+			id, user_id, name, category_id, city_regency, description,
+			latitude, longitude, tips_menjaga, is_sensitive, status, created_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6,
+			$7, $8, $9, $10, $11, NOW()
+		) ON CONFLICT (id) DO UPDATE SET
+			name = EXCLUDED.name,
+			category_id = EXCLUDED.category_id,
+			city_regency = EXCLUDED.city_regency,
+			description = EXCLUDED.description,
+			latitude = EXCLUDED.latitude,
+			longitude = EXCLUDED.longitude,
+			tips_menjaga = EXCLUDED.tips_menjaga,
+			is_sensitive = EXCLUDED.is_sensitive,
+			status = EXCLUDED.status;
+	`, saved.ID, saved.UserID, saved.Name, saved.CategoryID, saved.CityRegency,
+		saved.Description, saved.Latitude, saved.Longitude, saved.TipsMenjaga,
+		saved.IsSensitive, saved.Status)
+	return saved
+}
+
+func (r *postgresRepository) ApproveNewTourToDestination(id string) (*models.Destination, *models.NewTour, error) {
+	dest, tour, err := r.fallback.ApproveNewTourToDestination(id)
+	if err != nil {
+		return nil, nil, err
+	}
+	_, _ = r.db.Exec(`UPDATE new_tour SET status = 'approved' WHERE LOWER(id) = LOWER($1);`, id)
+	if dest != nil {
+		_ = r.CreateCMS(*dest)
+	}
+	return dest, tour, nil
+}
+
+func (r *postgresRepository) RejectNewTour(id string, reason string) (*models.NewTour, error) {
+	tour, err := r.fallback.RejectNewTour(id, reason)
+	if err != nil {
+		return nil, err
+	}
+	_, _ = r.db.Exec(`UPDATE new_tour SET status = 'rejected' WHERE LOWER(id) = LOWER($1);`, id)
+	return tour, nil
+}
+
+func (r *postgresRepository) MergeNewToursToDestination(req MergeNewToursInput) (*models.Destination, []models.NewTour, error) {
+	dest, tours, err := r.fallback.MergeNewToursToDestination(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, t := range tours {
+		_, _ = r.db.Exec(`UPDATE new_tour SET status = 'approved' WHERE LOWER(id) = LOWER($1);`, t.ID)
+	}
+	if dest != nil {
+		_ = r.CreateCMS(*dest)
+	}
+	return dest, tours, nil
+}
+
 

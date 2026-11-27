@@ -406,4 +406,60 @@ func TestDestinationSuite(t *testing.T) {
 			t.Fatalf("expected 201 Created for hidden gem with user_id, got %d: %s", recUser.Code, recUser.Body.String())
 		}
 	})
+
+	t.Run("TC-14: Meja Kurasi Usulan Destinasi Wisatawan (Tabel new_tour: List, Create, Approve, Reject & Merge)", func(t *testing.T) {
+		// 1. GET /api/v1/destinations/new-tours
+		reqList := httptest.NewRequest(http.MethodGet, "/api/v1/destinations/new-tours", nil)
+		recList := httptest.NewRecorder()
+		r.ServeHTTP(recList, reqList)
+		if recList.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on GET /destinations/new-tours, got %d", recList.Code)
+		}
+
+		// 2. POST /api/v1/destinations/new-tours
+		createBody := []byte(`{
+			"name": "Air Terjun Sarasah Barasok",
+			"category": "Hidden Gem",
+			"city_regency": "Kab. Lima Puluh Kota",
+			"description": "Air terjun bertingkat dengan kabut embun pagi di lembah Harau.",
+			"latitude": -0.1012,
+			"longitude": 100.6731,
+			"tips_menjaga": "Jangan membuang plastik dan tetap di jalur setapak Pokdarwis.",
+			"submitter_name": "Ilham Fathoni",
+			"submitter_phone": "6281234567890",
+			"is_sensitive": true
+		}`)
+		reqCreate := httptest.NewRequest(http.MethodPost, "/api/v1/destinations/new-tours", bytes.NewBuffer(createBody))
+		reqCreate.Header.Set("Content-Type", "application/json")
+		recCreate := httptest.NewRecorder()
+		r.ServeHTTP(recCreate, reqCreate)
+		if recCreate.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created on POST /destinations/new-tours, got %d: %s", recCreate.Code, recCreate.Body.String())
+		}
+
+		// 3. PUT /api/v1/admin/new-tours/nt-002/approve -> mempromosikan ke destinations
+		reqApprove := httptest.NewRequest(http.MethodPut, "/api/v1/admin/new-tours/nt-002/approve", nil)
+		reqApprove.Header.Set("Authorization", "Bearer "+middleware.TokenAdminDispar)
+		recApprove := httptest.NewRecorder()
+		r.ServeHTTP(recApprove, reqApprove)
+		if recApprove.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on PUT /admin/new-tours/nt-002/approve, got %d: %s", recApprove.Code, recApprove.Body.String())
+		}
+
+		// 4. POST /api/v1/admin/new-tours/merge -> menggabungkan nt-001 dan nt-003
+		mergeBody := []byte(`{
+			"submission_ids": ["nt-001", "nt-003"],
+			"primary_data_submission_id": "nt-001",
+			"cover_photo_submission_id": "nt-003",
+			"custom_name": "Air Terjun Sarasah Murai Harau"
+		}`)
+		reqMerge := httptest.NewRequest(http.MethodPost, "/api/v1/admin/new-tours/merge", bytes.NewBuffer(mergeBody))
+		reqMerge.Header.Set("Authorization", "Bearer "+middleware.TokenAdminDispar)
+		reqMerge.Header.Set("Content-Type", "application/json")
+		recMerge := httptest.NewRecorder()
+		r.ServeHTTP(recMerge, reqMerge)
+		if recMerge.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on POST /admin/new-tours/merge, got %d: %s", recMerge.Code, recMerge.Body.String())
+		}
+	})
 }

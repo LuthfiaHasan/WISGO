@@ -234,6 +234,8 @@ function seedFreshV3Tables(): void {
   safeSetLocalStorage(DB_KEYS.REVIEW_SETTINGS, JSON.stringify({ min_character_limit: 30 }));
   safeSetLocalStorage(DB_KEYS.REGENCY_HEATMAP, JSON.stringify(SEED_REGENCY_HEATMAP));
   safeSetLocalStorage(DB_KEYS.SYSTEM_BENCHMARK, JSON.stringify(INITIAL_SYSTEM_BENCHMARK));
+  safeSetLocalStorage(DB_KEYS.SOS_NEWS, JSON.stringify(SEED_SOS_NEWS));
+  safeSetLocalStorage(DB_KEYS.SHUNLU_POIS, JSON.stringify(SEED_SHUNLU_POIS));
 }
 
 export function initializeAndMigrateDatabase(forceReset = false): void {

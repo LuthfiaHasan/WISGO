@@ -40,6 +40,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/hazards/alerts", h.GetLiveHazardAlerts)
 	rg.GET("/spatial/nearby", h.GetNearbyDestinations)
 	rg.GET("/spatial/emergency-contacts", h.GetEmergencyContacts)
+	rg.GET("/spatial/news", h.GetSosNews)
+	rg.GET("/hazards/news", h.GetSosNews)
+	rg.POST("/spatial/news/sync-portals", h.rateLimiter.Protect("news_rss_sync"), h.SyncLivePortalNews)
 	rg.POST("/routes/optimize-tsp", h.PostOptimizeTSP)
 
 	// Rate-limited endpoints (Anti-Spam Token Bucket)
@@ -55,6 +58,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/spatial/emergency-contacts", adminAuth, h.UpsertEmergencyContactAdmin)
 	rg.PUT("/spatial/emergency-contacts/:id", adminAuth, h.UpsertEmergencyContactAdmin)
 	rg.DELETE("/spatial/emergency-contacts/:id", adminAuth, h.DeleteEmergencyContactAdmin)
+	rg.POST("/spatial/news", adminAuth, h.UpsertSosNewsAdmin)
+	rg.PUT("/spatial/news/:id", adminAuth, h.UpsertSosNewsAdmin)
+	rg.DELETE("/spatial/news/:id", adminAuth, h.DeleteSosNewsAdmin)
 
 	admin := rg.Group("/admin")
 	admin.Use(adminAuth)
@@ -357,6 +363,66 @@ func (h *Handler) DeleteEmergencyContactAdmin(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "deleted", "id": id})
 }
+
+// GetSosNews GET /api/v1/spatial/news & GET /api/v1/hazards/news
+func (h *Handler) GetSosNews(c *gin.Context) {
+	portal := c.Query("portal")
+	category := c.Query("category")
+	onlyPub := c.Query("include_archived") != "true"
+	if c.Query("refresh") == "true" {
+		_, _ = h.service.SyncLivePortalNews()
+	}
+	news := h.service.GetSosNews(portal, category, onlyPub)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "ok",
+		"sources": []string{"sumbarkita.id", "sumbar.antaranews.com"},
+		"total":   len(news),
+		"news":    news,
+	})
+}
+
+// SyncLivePortalNews POST /api/v1/spatial/news/sync-portals
+func (h *Handler) SyncLivePortalNews(c *gin.Context) {
+	news, liveFetched := h.service.SyncLivePortalNews()
+	c.JSON(http.StatusOK, gin.H{
+		"status":            "synced",
+		"sources":           []string{"sumbarkita.id", "sumbar.antaranews.com"},
+		"live_rss_fetched":  liveFetched,
+		"total":             len(news),
+		"news":              news,
+	})
+}
+
+// UpsertSosNewsAdmin POST /api/v1/spatial/news & PUT /api/v1/spatial/news/:id
+func (h *Handler) UpsertSosNewsAdmin(c *gin.Context) {
+	var input models.SosNewsItem
+	if err := c.ShouldBindJSON(&input); err != nil || strings.TrimSpace(input.Title) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Field 'title' dan 'summary' wajib diisi untuk menerbitkan Berita Wisata & Bencana Sumbar.",
+		})
+		return
+	}
+	if idParam := strings.TrimSpace(c.Param("id")); idParam != "" {
+		input.ID = idParam
+	}
+	saved := h.service.UpsertSosNews(input)
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+		"news":   saved,
+	})
+}
+
+// DeleteSosNewsAdmin DELETE /api/v1/spatial/news/:id
+func (h *Handler) DeleteSosNewsAdmin(c *gin.Context) {
+	id := c.Param("id")
+	if err := h.service.DeleteSosNews(id); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "Berita tidak ditemukan."})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "deleted", "id": id})
+}
+
 
 func parseGPS(c *gin.Context) (bool, float64, float64) {
 	latStr := c.Query("lat")

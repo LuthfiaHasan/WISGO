@@ -1,12 +1,35 @@
 import 'package:flutter/material.dart';
+import '../../../../core/network/api_config.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/wisgo_facility_icon.dart';
+import '../../../fair_price/data/models/fair_price_tariff_model.dart';
+
+class _SubmittedLocationRecord {
+  final String normalizedName;
+  final String displayName;
+  final String proposer;
+  final String gpsKey;
+
+  const _SubmittedLocationRecord({
+    required this.normalizedName,
+    required this.displayName,
+    required this.proposer,
+    required this.gpsKey,
+  });
+}
 
 /// Formulir Usulan Destinasi Wisata Baru (Hidden Gem)
-/// Desain bersih & rapi sesuai standar UI/UX WisGo
+/// - Aturan 1 Lokasi = 1 Pengusul (anti-duplikasi nama / titik GPS)
+/// - Atribusi penyedia resmi: Provided by WISGO
 class UsulDestinasiSheet extends StatefulWidget {
   final Function(String name)? onSubmitSuccess;
 
   const UsulDestinasiSheet({super.key, this.onSubmitSuccess});
+
+  /// Registry lokal lokasi yang sudah pernah diajukan (1 lokasi hanya boleh disubmit 1 orang)
+  static final List<_SubmittedLocationRecord> _submittedLocations = [];
+
+  static void clearSubmittedRegistryForTest() => _submittedLocations.clear();
 
   @override
   State<UsulDestinasiSheet> createState() => _UsulDestinasiSheetState();
@@ -16,8 +39,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
   // Controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
-  final TextEditingController _proposerController =
-      TextEditingController(text: 'Ahmad Fauzi (Wisatawan)');
+  late final TextEditingController _proposerController;
   final TextEditingController _ownerWhatsAppController =
       TextEditingController(text: '+62 812-7578-953');
   final TextEditingController _gpsController =
@@ -25,6 +47,19 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
   final TextEditingController _feeInfoController = TextEditingController(
     text: 'Karcis Masuk: Rp 5.000 / orang, Parkir Motor: Rp 2.000, Mobil: Rp 5.000',
   );
+
+  String? _duplicateError;
+
+  @override
+  void initState() {
+    super.initState();
+    final loggedName = ApiConfig.currentUser?.fullName.trim();
+    _proposerController = TextEditingController(
+      text: (loggedName != null && loggedName.isNotEmpty)
+          ? loggedName
+          : 'Wisatawan WISGO',
+    );
+  }
 
   String _selectedRegion = 'Kab. Lima Puluh Kota';
   String _selectedCategory = 'Air Terjun';
@@ -112,6 +147,85 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
     });
   }
 
+  String _normalizeLocationName(String input) {
+    return input.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  String _normalizeGpsKey(String input) {
+    final parts = input.split(',');
+    if (parts.length != 2) return input.trim();
+    final lat = double.tryParse(parts[0].trim());
+    final lng = double.tryParse(parts[1].trim());
+    if (lat == null || lng == null) return input.trim();
+    // Bulatkan ke 3 desimal (~110m radius) untuk deteksi duplikat titik lokasi yang sama
+    return '${lat.toStringAsFixed(3)},${lng.toStringAsFixed(3)}';
+  }
+
+  String? _checkDuplicateLocation(String rawName, String rawGps) {
+    final normName = _normalizeLocationName(rawName);
+    final gpsKey = _normalizeGpsKey(rawGps);
+
+    // 1. Cek terhadap katalog destinasi resmi WISGO
+    for (final existing in kAllSumbarDestinations) {
+      final catalogName = _normalizeLocationName(existing.title);
+      if (catalogName == normName ||
+          (normName.length >= 6 &&
+              (catalogName.contains(normName) || normName.contains(catalogName)))) {
+        return 'Lokasi "${existing.title}" sudah terdaftar resmi (Provided by WISGO). Satu lokasi hanya dapat diajukan 1 kali.';
+      }
+    }
+
+    // 2. Cek terhadap usulan yang sudah pernah disubmit pengguna sebelumnya
+    for (final submitted in UsulDestinasiSheet._submittedLocations) {
+      if (submitted.normalizedName == normName ||
+          (gpsKey.isNotEmpty && submitted.gpsKey == gpsKey)) {
+        return 'Lokasi "${submitted.displayName}" sudah disubmit oleh ${submitted.proposer} (Provided by WISGO). Satu lokasi hanya dapat disubmit oleh 1 orang.';
+      }
+    }
+    return null;
+  }
+
+  void _handleSubmitProposal() {
+    final rawName = _nameController.text.trim();
+    final name = rawName.isNotEmpty ? rawName : 'Sarasah Murai Indah';
+    final gpsRaw = _gpsController.text.trim();
+    final proposer = _proposerController.text.trim().isNotEmpty
+        ? _proposerController.text.trim()
+        : 'Wisatawan WISGO';
+
+    final duplicateMessage = _checkDuplicateLocation(name, gpsRaw);
+    if (duplicateMessage != null) {
+      setState(() => _duplicateError = duplicateMessage);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            duplicateMessage,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: AppColors.terracotta,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    UsulDestinasiSheet._submittedLocations.add(
+      _SubmittedLocationRecord(
+        normalizedName: _normalizeLocationName(name),
+        displayName: name,
+        proposer: proposer,
+        gpsKey: _normalizeGpsKey(gpsRaw),
+      ),
+    );
+
+    Navigator.pop(context);
+    if (widget.onSubmitSuccess != null) {
+      widget.onSubmitSuccess!('$name (Provided by WISGO)');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -194,33 +308,82 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
               children: [
-                // Info Badge
+                // Info Badge: Aturan 1 Lokasi = 1 Pengusul + Provided by WISGO
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.warningBg,
+                    color: AppColors.sage,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
+                    border: Border.all(color: AppColors.sageBorder),
                   ),
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.info_outline_rounded, color: AppColors.warningDark, size: 18),
+                      Icon(Icons.verified_rounded, color: AppColors.forest, size: 18),
                       SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          'Usulan destinasi hidden gem akan diverifikasi oleh Dinas Pariwisata Sumbar sebelum resmi tampil di katalog umum.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.warningDark,
-                            height: 1.4,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Provided by WISGO • 1 Lokasi = 1 Pengusul',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.forest,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Setiap titik wisata hanya dapat disubmit oleh 1 orang dan diverifikasi resmi oleh tim WISGO & Dinas Pariwisata Sumbar.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.ink,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
+                if (_duplicateError != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.dangerBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: AppColors.danger,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _duplicateError!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
 
                 // Form Container
@@ -471,7 +634,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                       ),
                       const SizedBox(height: 16),
 
-                      // 8. Kategori Wisata
+                      // 8. Kategori Wisata (Pil Frosted-Glass Lembut + Ikon 3D)
                       _buildFieldHeader('Kategori Wisata Alam', Icons.category_rounded),
                       const SizedBox(height: 8),
                       Wrap(
@@ -479,33 +642,75 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                         runSpacing: 8,
                         children: _categories.map((cat) {
                           final isSelected = cat == _selectedCategory;
-                          return ChoiceChip(
-                            label: Text(
-                              cat,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isSelected ? Colors.white : AppColors.ink,
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => setState(() => _selectedCategory = cat),
+                              borderRadius: BorderRadius.circular(999),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.sage.withValues(alpha: 0.9)
+                                      : AppColors.cream,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.brush.withValues(alpha: 0.55)
+                                        : AppColors.warmBorder,
+                                    width: isSelected ? 1.2 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      resolveNatureCategoryAsset(cat),
+                                      width: 18,
+                                      height: 18,
+                                      fit: BoxFit.contain,
+                                      filterQuality: FilterQuality.medium,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.terrain_rounded,
+                                        size: 14,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      cat,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: isSelected
+                                            ? AppColors.forest
+                                            : AppColors.ink,
+                                      ),
+                                    ),
+                                    if (isSelected) ...[
+                                      const SizedBox(width: 5),
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 14,
+                                        color: AppColors.brush,
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
-                            selected: isSelected,
-                            selectedColor: AppColors.forest,
-                            backgroundColor: AppColors.cream,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            side: BorderSide(
-                              color: isSelected ? AppColors.forest : AppColors.sageBorder,
-                            ),
-                            onSelected: (selected) {
-                              if (selected) setState(() => _selectedCategory = cat);
-                            },
                           );
                         }).toList(),
                       ),
                       const SizedBox(height: 16),
 
-                      // 9. Fasilitas & Informasi Tiket
+                      // 9. Fasilitas yang Tersedia di Lokasi (8 Ikon 3D Clay + Pil Lembut Tanpa Tumpang Tindih)
                       _buildFieldHeader(
                         'Fasilitas yang Tersedia di Lokasi',
                         Icons.check_circle_outline_rounded,
@@ -519,38 +724,70 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                           final IconData facIcon = fac['icon'] as IconData;
                           final bool isChecked = _selectedFacilities.contains(facName);
 
-                          return FilterChip(
-                            avatar: Icon(
-                              facIcon,
-                              size: 14,
-                              color: isChecked ? Colors.white : AppColors.forest,
-                            ),
-                            label: Text(
-                              facName,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isChecked ? Colors.white : AppColors.ink,
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isChecked) {
+                                    _selectedFacilities.remove(facName);
+                                  } else {
+                                    _selectedFacilities.add(facName);
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(999),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isChecked
+                                      ? AppColors.sage.withValues(alpha: 0.9)
+                                      : AppColors.cream,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isChecked
+                                        ? AppColors.brush.withValues(alpha: 0.55)
+                                        : AppColors.warmBorder,
+                                    width: isChecked ? 1.2 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    WisgoFacilityIcon(
+                                      facilityName: facName,
+                                      size: 19,
+                                      fallbackIcon: facIcon,
+                                    ),
+                                    const SizedBox(width: 7),
+                                    Text(
+                                      facName,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isChecked
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: isChecked
+                                            ? AppColors.forest
+                                            : AppColors.ink,
+                                      ),
+                                    ),
+                                    if (isChecked) ...[
+                                      const SizedBox(width: 5),
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 14,
+                                        color: AppColors.brush,
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
-                            selected: isChecked,
-                            selectedColor: AppColors.forest,
-                            backgroundColor: AppColors.cream,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            side: BorderSide(
-                              color: isChecked ? AppColors.forest : AppColors.sageBorder,
-                            ),
-                            onSelected: (selected) {
-                              setState(() {
-                                if (selected) {
-                                  _selectedFacilities.add(facName);
-                                } else {
-                                  _selectedFacilities.remove(facName);
-                                }
-                              });
-                            },
                           );
                         }).toList(),
                       ),
@@ -591,20 +828,47 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
                 ),
                 const SizedBox(height: 16),
 
+                // Atribusi Resmi Provider
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.warmBorder),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.shield_outlined, size: 16, color: AppColors.forest),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Atribusi Pengelolaan Resmi',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Provided by WISGO',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.forest,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
                 // Tombol Kirim Usulan
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      final name = _nameController.text.trim().isNotEmpty
-                          ? _nameController.text.trim()
-                          : 'Sarasah Murai Indah';
-                      Navigator.pop(context);
-                      if (widget.onSubmitSuccess != null) {
-                        widget.onSubmitSuccess!(name);
-                      }
-                    },
+                    onPressed: _handleSubmitProposal,
                     icon: const Icon(Icons.send_rounded, size: 16),
                     label: const Text(
                       'Kirimkan Usulan Destinasi',
@@ -622,7 +886,7 @@ class _UsulDestinasiSheetState extends State<UsulDestinasiSheet> {
 
                 const Center(
                   child: Text(
-                    'Destinasi baru akan resmi dipublikasikan setelah divalidasi oleh Tim Dispar.',
+                    'Destinasi baru akan resmi dipublikasikan dengan label Provided by WISGO setelah divalidasi.',
                     style: TextStyle(fontSize: 11, color: AppColors.muted),
                     textAlign: TextAlign.center,
                   ),

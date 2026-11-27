@@ -229,6 +229,7 @@ class CheckInActivity {
   final String note;
   final IconData icon;
   final Color iconColor;
+  final String? imageAsset;
 
   const CheckInActivity({
     required this.id,
@@ -240,7 +241,35 @@ class CheckInActivity {
     required this.note,
     this.icon = Icons.pin_drop_rounded,
     this.iconColor = AppColors.success,
+    this.imageAsset,
   });
+
+  /// Mengembalikan path aset gambar lokal yang paling sesuai dengan destinasi.
+  String get resolvedImageAsset =>
+      imageAsset ?? resolveAssetForDestination(destinationTitle);
+
+  static String resolveAssetForDestination(String title) {
+    final q = title.toLowerCase();
+    if (q.contains('pagaruyung') || q.contains('istano')) {
+      return 'assets/images/activity_pagaruyung.jpg';
+    }
+    if (q.contains('lembah anai') || q.contains('anai') || q.contains('air terjun')) {
+      return 'assets/images/activity_lembah_anai.jpg';
+    }
+    if (q.contains('kelok 9') || q.contains('kelok sembilan')) {
+      return 'assets/images/activity_kelok9.jpg';
+    }
+    if (q.contains('pariangan') || q.contains('nagari tuo')) {
+      return 'assets/images/activity_pariangan.jpg';
+    }
+    if (q.contains('mandeh') || q.contains('pantai') || q.contains('pulau')) {
+      return 'assets/images/splash_bg_3.jpg';
+    }
+    if (q.contains('harau') || q.contains('sarasah')) {
+      return 'assets/images/splash_bg_2.jpg';
+    }
+    return 'assets/images/splash_bg_1.jpg';
+  }
 }
 
 /// Hasil Eksekusi Check-In

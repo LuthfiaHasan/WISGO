@@ -299,6 +299,7 @@ class GamificationService extends ChangeNotifier {
         note: 'Check-in GPS Terverifikasi (<500m) • Progres Tantangan 4/10',
         icon: Icons.pin_drop_rounded,
         iconColor: AppColors.success,
+        imageAsset: 'assets/images/activity_pagaruyung.jpg',
       ),
       CheckInActivity(
         id: 'act-2',
@@ -310,6 +311,7 @@ class GamificationService extends ChangeNotifier {
         note: 'Jalur Rawan Berhasil Dilewati dengan Aman • Audio Guide Aktif',
         icon: Icons.hiking_rounded,
         iconColor: AppColors.pinNavigasiBiru,
+        imageAsset: 'assets/images/activity_lembah_anai.jpg',
       ),
       CheckInActivity(
         id: 'act-3',
@@ -321,6 +323,7 @@ class GamificationService extends ChangeNotifier {
         note: 'Membuka Lencana Resmi Penakluk Kelok 9',
         icon: Icons.military_tech_rounded,
         iconColor: AppColors.warning,
+        imageAsset: 'assets/images/activity_kelok9.jpg',
       ),
       CheckInActivity(
         id: 'act-4',
@@ -332,6 +335,7 @@ class GamificationService extends ChangeNotifier {
         note: 'Check-in di Desa Wisata Tertua • Pemandu Adat Terhubung',
         icon: Icons.storefront_rounded,
         iconColor: AppColors.goldMinang,
+        imageAsset: 'assets/images/activity_pariangan.jpg',
       ),
     ];
   }

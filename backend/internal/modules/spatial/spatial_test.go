@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/middleware"
+	"github.com/LuthfiaHasan/WISGO/backend/internal/models"
 	"github.com/LuthfiaHasan/WISGO/backend/internal/modules/destination"
 )
 
@@ -332,6 +333,52 @@ func TestSpatialSuite(t *testing.T) {
 		}
 		if res.EmergencyCall.BPBDSumbar != "(0751) 890721" {
 			t.Fatalf("expected BPBD Sumbar (0751) 890721, got %s", res.EmergencyCall.BPBDSumbar)
+		}
+	})
+
+	t.Run("TC-S4-14: GET & POST /api/v1/spatial/news menyajikan Berita Wisata & Bencana Sumatera Barat (sumbarkita.id & sumbar.antaranews.com)", func(t *testing.T) {
+		// 1. GET semua berita wisata & bencana Sumbar
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/spatial/news", nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on GET /spatial/news, got %d: %s", rec.Code, rec.Body.String())
+		}
+
+		var res struct {
+			Status  string              `json:"status"`
+			Sources []string            `json:"sources"`
+			Total   int                 `json:"total"`
+			News    []models.SosNewsItem `json:"news"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
+			t.Fatalf("failed to parse news response: %v", err)
+		}
+		if res.Total < 6 {
+			t.Fatalf("expected at least 6 Sumbar news articles from sumbarkita.id and sumbar.antaranews.com, got %d", res.Total)
+		}
+
+		hasSumbarkita := false
+		hasAntaraSumbar := false
+		for _, item := range res.News {
+			if item.PortalDomain == "sumbarkita.id" {
+				hasSumbarkita = true
+			}
+			if item.PortalDomain == "sumbar.antaranews.com" {
+				hasAntaraSumbar = true
+			}
+		}
+		if !hasSumbarkita || !hasAntaraSumbar {
+			t.Fatalf("expected both sumbarkita.id (%v) and sumbar.antaranews.com (%v) news articles", hasSumbarkita, hasAntaraSumbar)
+		}
+
+		// 2. Filter portal=sumbarkita.id
+		reqSK := httptest.NewRequest(http.MethodGet, "/api/v1/spatial/news?portal=sumbarkita.id", nil)
+		recSK := httptest.NewRecorder()
+		r.ServeHTTP(recSK, reqSK)
+		if recSK.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK on portal filter, got %d", recSK.Code)
 		}
 	})
 }

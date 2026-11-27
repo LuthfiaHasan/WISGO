@@ -922,6 +922,12 @@ export type SosNewsCategory =
 
 export type SosNewsSeverity = 'INFO WISATA' | 'WASPADA' | 'SIAGA HUJAN' | 'DARURAT';
 
+export type SosNewsPortalDomain =
+  | 'sumbarkita.id'
+  | 'sumbar.antaranews.com'
+  | 'dispar.sumbarprov.go.id'
+  | string;
+
 export interface SosNewsItem {
   id: string;
   category: SosNewsCategory;
@@ -931,6 +937,10 @@ export interface SosNewsItem {
   summary: string;
   advice: string;
   source: string;
+  portal_domain?: SosNewsPortalDomain;
+  source_url?: string;
+  author?: string;
+  tags?: string[];
   is_published: boolean;
   published_at: string;
 }

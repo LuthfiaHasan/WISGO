@@ -13,8 +13,9 @@ import (
 
 // Handler menangani request HTTP untuk domain Direktori Destinasi, Spasial, Offline Bundle, dan CMS Admin
 type Handler struct {
-	service Service
-	cache   *middleware.InMemoryTTLCache
+	service     Service
+	cache       *middleware.InMemoryTTLCache
+	rateLimiter *middleware.TokenBucketRateLimiter
 }
 
 // NewHandler membuat instance handler baru
@@ -23,6 +24,19 @@ func NewHandler(service Service, cache *middleware.InMemoryTTLCache) *Handler {
 		service: service,
 		cache:   cache,
 	}
+}
+
+// WithRateLimiter memasang Token Bucket Rate Limiter anti-spam pada endpoint usulan destinasi publik
+func (h *Handler) WithRateLimiter(rl *middleware.TokenBucketRateLimiter) *Handler {
+	h.rateLimiter = rl
+	return h
+}
+
+func (h *Handler) protectRateLimit(action string) gin.HandlerFunc {
+	if h.rateLimiter != nil {
+		return h.rateLimiter.Protect(action)
+	}
+	return func(c *gin.Context) { c.Next() }
 }
 
 // RegisterRoutes mendaftarkan seluruh endpoint destinasi ke Gin RouterGroup
@@ -37,8 +51,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/destinations/:id/tariffs", h.GetDestinationTariffs)
 	rg.GET("/destinations/:id/offline-bundle", h.GetOfflineBundle)
 
-	// Wisatawan (Role: tourist): Input Wisata Hidden Gem (BE-1 Pilar 2 & 6)
-	rg.POST("/destinations/hidden-gem", h.CreateHiddenGemTourist)
+	// Wisatawan (Role: tourist): Input Wisata Hidden Gem (BE-1 Pilar 2 & 6 — Dilindungi Rate Limiter)
+	rg.POST("/destinations/hidden-gem", h.protectRateLimit("ugc_hidden_gem"), h.CreateHiddenGemTourist)
 
 	// CMS Admin (Diproteksi Middleware JWT RBAC)
 	cmsDisparOrPokdarwis := middleware.RequireRoles("admin_dispar", "pokdarwis")
@@ -59,6 +73,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/admin/destinations/pending", cmsDisparOrPokdarwis, h.GetPendingDestinationsAdmin)
 	rg.PATCH("/admin/destinations/:id/verify", cmsDisparOrPokdarwis, h.VerifyDestinationAdmin)
 	rg.PUT("/admin/destinations/:id/verify", cmsDisparOrPokdarwis, h.VerifyDestinationAdmin)
+
+	// Meja Kurasi Usulan Destinasi Wisatawan (Tabel new_tour — Sinkron UgcSubmissionsSubTab.tsx & Mobile)
+	rg.GET("/destinations/new-tours", h.GetNewTours)
+	rg.POST("/destinations/new-tours", h.protectRateLimit("ugc_new_tour"), h.CreateNewTour)
+	rg.POST("/destinations/propose", h.protectRateLimit("ugc_new_tour"), h.CreateNewTour)
+	rg.GET("/admin/new-tours", cmsDisparOrPokdarwis, h.GetNewTours)
+	rg.POST("/admin/new-tours", cmsDisparOrPokdarwis, h.CreateNewTour)
+	rg.PUT("/admin/new-tours/:id/approve", cmsDisparOrPokdarwis, h.ApproveNewTourAdmin)
+	rg.POST("/admin/new-tours/:id/approve", cmsDisparOrPokdarwis, h.ApproveNewTourAdmin)
+	rg.PUT("/admin/new-tours/:id/reject", cmsDisparOrPokdarwis, h.RejectNewTourAdmin)
+	rg.POST("/admin/new-tours/:id/reject", cmsDisparOrPokdarwis, h.RejectNewTourAdmin)
+	rg.POST("/admin/new-tours/merge", cmsDisparOrPokdarwis, h.MergeNewToursAdmin)
 }
 
 func parseGPS(c *gin.Context) (bool, float64, float64) {
@@ -421,3 +447,131 @@ func (h *Handler) GetCategories(c *gin.Context) {
 	resp := h.service.GetCategories()
 	c.JSON(http.StatusOK, resp)
 }
+
+// GetNewTours GET /api/v1/destinations/new-tours & GET /api/v1/admin/new-tours
+func (h *Handler) GetNewTours(c *gin.Context) {
+	statusFilter := c.Query("status")
+	list := h.service.ListNewTours(statusFilter)
+	pendingCount := 0
+	approvedCount := 0
+	rejectedCount := 0
+	for _, n := range list {
+		switch strings.ToLower(n.Status) {
+		case "approved":
+			approvedCount++
+		case "rejected":
+			rejectedCount++
+		default:
+			pendingCount++
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status":         "success",
+		"table":          "new_tour",
+		"total":          len(list),
+		"pending_count":  pendingCount,
+		"approved_count": approvedCount,
+		"rejected_count": rejectedCount,
+		"new_tours":      list,
+	})
+}
+
+// CreateNewTour POST /api/v1/destinations/new-tours & POST /api/v1/destinations/propose
+func (h *Handler) CreateNewTour(c *gin.Context) {
+	var input models.NewTour
+	if err := c.ShouldBindJSON(&input); err != nil || strings.TrimSpace(input.Name) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"code":    "INVALID_NEW_TOUR_PAYLOAD",
+			"message": "Field 'name' dan 'tips_menjaga' wajib diisi untuk mengusulkan destinasi baru.",
+		})
+		return
+	}
+
+	created, err := h.service.CreateNewTour(input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	if h.cache != nil {
+		h.cache.FlushAll()
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"status":   "success",
+		"message":  "Usulan destinasi berhasil disimpan ke tabel new_tour dan masuk antrean Meja Kurasi Dispar Sumbar.",
+		"new_tour": created,
+	})
+}
+
+// ApproveNewTourAdmin PUT/POST /api/v1/admin/new-tours/:id/approve
+func (h *Handler) ApproveNewTourAdmin(c *gin.Context) {
+	id := c.Param("id")
+	dest, tour, err := h.service.ApproveNewTour(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	if h.cache != nil {
+		h.cache.FlushAll()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":      "approved",
+		"message":     fmt.Sprintf("Usulan '%s' oleh %s disetujui & resmi terbit di Direktori Destinasi.", dest.Name, tour.SubmitterName),
+		"destination": dest,
+		"new_tour":    tour,
+	})
+}
+
+// RejectNewTourAdmin PUT/POST /api/v1/admin/new-tours/:id/reject
+func (h *Handler) RejectNewTourAdmin(c *gin.Context) {
+	id := c.Param("id")
+	var req RejectNewTourRequest
+	_ = c.ShouldBindJSON(&req)
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		reason = strings.TrimSpace(req.AdminNotes)
+	}
+
+	tour, err := h.service.RejectNewTour(id, reason)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":   "rejected",
+		"message":  fmt.Sprintf("Usulan '%s' ditolak dan notifikasi alasan penolakan dikirim ke pengusul.", tour.Name),
+		"new_tour": tour,
+	})
+}
+
+// MergeNewToursAdmin POST /api/v1/admin/new-tours/merge
+func (h *Handler) MergeNewToursAdmin(c *gin.Context) {
+	var req MergeNewToursInput
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Payload JSON penggabungan usulan tidak valid."})
+		return
+	}
+
+	dest, tours, err := h.service.MergeNewTours(req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	if h.cache != nil {
+		h.cache.FlushAll()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":       "merged_and_approved",
+		"message":      fmt.Sprintf("Destinasi '%s' resmi diterbitkan dari penggabungan %d usulan komunitas!", dest.Name, len(tours)),
+		"destination":  dest,
+		"merged_tours": tours,
+	})
+}
+
