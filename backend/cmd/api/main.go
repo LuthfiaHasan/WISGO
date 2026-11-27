@@ -30,8 +30,10 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.SecurityHeadersAndGuardMiddleware())
 
 	db := database.GetDB()
+	r.Use(middleware.TelemetryAuditMiddleware(db))
 
 	// Health Check
 	r.GET("/health", func(c *gin.Context) {
@@ -68,7 +70,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 		destRepo = destination.NewRepository()
 	}
 	destService := destination.NewService(destRepo)
-	destHandler := destination.NewHandler(destService, cache)
+	destHandler := destination.NewHandler(destService, cache).WithRateLimiter(rateLimiter)
 	destHandler.RegisterRoutes(v1)
 
 	// Modul D2: Tur Imersif 360° Aerial-to-Ground & CMS Studio 4-Pin (Pilar 1)

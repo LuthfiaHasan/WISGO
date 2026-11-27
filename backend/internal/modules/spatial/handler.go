@@ -42,7 +42,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/spatial/emergency-contacts", h.GetEmergencyContacts)
 	rg.GET("/spatial/news", h.GetSosNews)
 	rg.GET("/hazards/news", h.GetSosNews)
-	rg.POST("/spatial/news/sync-portals", h.SyncLivePortalNews)
+	rg.POST("/spatial/news/sync-portals", h.rateLimiter.Protect("news_rss_sync"), h.SyncLivePortalNews)
 	rg.POST("/routes/optimize-tsp", h.PostOptimizeTSP)
 
 	// Rate-limited endpoints (Anti-Spam Token Bucket)
