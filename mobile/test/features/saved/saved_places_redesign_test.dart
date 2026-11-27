@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rancakin_mobile/features/auth/services/auth_session.dart';
 import 'package:rancakin_mobile/features/saved/presentation/screens/saved_places_screen.dart';
+import 'package:rancakin_mobile/features/saved/services/destination_review_store.dart';
 
 void main() {
   testWidgets('SavedPlacesScreen displays facilities on initial card without fee table', (tester) async {
@@ -73,7 +75,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Rincian Biaya Resmi'), findsOneWidget);
 
-    // Switch to Ulasan tab and verify Tambah Ulasan button works
+    // Switch to Ulasan tab: verify locked before visit/Open Trip, then unlocked after Open Trip completion
+    await tester.tap(find.textContaining('Ulasan ('));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Ulasan Terkunci'), findsOneWidget);
+    expect(find.text('Tambah Ulasan'), findsNothing);
+
+    AuthSession.instance.setAuthenticatedUser(
+      name: 'Wisatawan Uji',
+      phone: '081234567890',
+    );
+    DestinationReviewStore.instance
+        .unlockFromCompletedOpenTrip('Air Terjun Lubuk Hitam');
+    await tester.pumpAndSettle();
+    // Re-open Ulasan tab or rebuild to see unlocked state
+    await tester.tap(find.text('Panduan'));
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Ulasan ('));
     await tester.pumpAndSettle();
     expect(find.text('Tambah Ulasan'), findsOneWidget);

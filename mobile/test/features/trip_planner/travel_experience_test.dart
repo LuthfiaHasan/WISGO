@@ -132,15 +132,16 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TripPlannerDetailSheet(trip: trip),
+            body: TripPlannerDetailSheet(trip: trip, isOrganizerMode: true),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('RUNDOWN PERJALANAN (MANUAL)'), findsOneWidget);
+      expect(find.text('RUNDOWN PERJALANAN'), findsOneWidget);
       expect(find.text('Tambah Jam & Kegiatan Rundown'), findsOneWidget);
       expect(find.text(trip.itinerary.first.activity), findsOneWidget);
+      expect(find.textContaining('('), findsNothing);
     });
   });
 }

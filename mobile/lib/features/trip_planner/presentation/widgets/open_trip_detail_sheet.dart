@@ -118,13 +118,13 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
         // Fallback offline / mock default participants
         if (_participants.isEmpty && _currentTrip.quotaFilled > 0) {
           _participants = [
-            const OpenTripParticipant(
+            OpenTripParticipant(
               userId: 'usr-peserta-01',
               fullName: 'Budi Santoso',
               phoneNumber: '0812-2222-3333',
               joinedAt: 'Kemarin, 14.30 WIB',
             ),
-            const OpenTripParticipant(
+            OpenTripParticipant(
               userId: 'usr-peserta-02',
               fullName: 'Siti Rahmawati',
               phoneNumber: '0813-8888-9999',
@@ -668,7 +668,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               ),
                               const SizedBox(height: 10),
                               const Text(
-                                'Termasuk dalam Harga (Include):',
+                                'Sudah Termasuk',
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
@@ -694,7 +694,7 @@ class _OpenTripDetailSheetState extends State<OpenTripDetailSheet> {
                               )),
                               const SizedBox(height: 8),
                               const Text(
-                                'Tidak Termasuk dalam Harga (Exclude):',
+                                'Tidak Termasuk',
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,

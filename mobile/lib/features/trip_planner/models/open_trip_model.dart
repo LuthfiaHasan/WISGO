@@ -1,6 +1,47 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
+/// Peran pengguna aktif pada fitur Trip Go (Wisatawan/Peserta vs Penyelenggara/Host)
+enum TripGoRole {
+  participant,
+  organizer,
+}
+
+/// Status verifikasi admin untuk pengajuan Open Trip baru oleh penyelenggara
+enum TripVerificationStatus {
+  pendingAdmin,
+  approved,
+  rejected,
+}
+
+/// Bridge notifikasi status verifikasi Admin (Disetujui / Ditolak) ke Pusat Notifikasi
+class OrganizerNotificationBridge {
+  OrganizerNotificationBridge._();
+  static final ValueNotifier<Map<String, dynamic>?> latestNotif =
+      ValueNotifier<Map<String, dynamic>?>(null);
+
+  static void emit({
+    required String tripId,
+    required String tripTitle,
+    required bool approved,
+    String reason = '',
+  }) {
+    latestNotif.value = {
+      'id': 'notif_admin_${tripId}_${DateTime.now().millisecondsSinceEpoch}',
+      'title': approved
+          ? 'Open Trip Disetujui Admin ✓'
+          : 'Pengajuan Open Trip Ditolak',
+      'message': approved
+          ? 'Selamat! "$tripTitle" telah diverifikasi Admin WISGO. Menu Manajemen Penyelenggara kini aktif.'
+          : 'Pengajuan "$tripTitle" ditolak Admin: ${reason.isEmpty ? 'Dokumen KTP/Lisensi perlu diperbaiki.' : reason}',
+      'time': 'Baru saja',
+      'isRead': false,
+      'type': approved ? 'opentrip' : 'admin_rejected',
+      'tripId': tripId,
+    };
+  }
+}
+
 /// Model Penyelenggara Terverifikasi (Item 2 Spesifikasi Trip Go)
 class VerifiedOrganizer {
   final String id;
@@ -248,27 +289,136 @@ String determineCategoryForDestination(String destinationName) {
   return 'Alam & Geopark';
 }
 
-/// Model Peserta Terdaftar pada Open Trip (Item BE-2)
+/// Model Peserta Terdaftar beserta Kelengkapan Data & Persiapan untuk Penyelenggara
 class OpenTripParticipant {
   final String userId;
+  final String bookingCode;
   final String fullName;
   final String phoneNumber;
+  final String emergencyContact;
+  final int seatCount;
+  final String paymentMethod;
+  final int totalPaid;
+  final String specialNotes;
   final String joinedAt;
+  bool isScheduleReady;
+  int readinessDone;
+  int readinessTotal;
+  int packingDone;
+  int packingTotal;
+  bool isFinalized;
+  bool isCheckedInAtMeetingPoint;
 
-  const OpenTripParticipant({
+  OpenTripParticipant({
     required this.userId,
+    this.bookingCode = 'TRIP-RESMI',
     required this.fullName,
     required this.phoneNumber,
+    this.emergencyContact = '-',
+    this.seatCount = 1,
+    this.paymentMethod = 'WISGO_PAY',
+    this.totalPaid = 135000,
+    this.specialNotes = '',
     required this.joinedAt,
+    this.isScheduleReady = false,
+    this.readinessDone = 0,
+    this.readinessTotal = 6,
+    this.packingDone = 0,
+    this.packingTotal = 10,
+    this.isFinalized = false,
+    this.isCheckedInAtMeetingPoint = false,
   });
 
   factory OpenTripParticipant.fromJson(Map<String, dynamic> json) {
     return OpenTripParticipant(
       userId: json['user_id']?.toString() ?? '',
+      bookingCode: json['booking_code']?.toString() ?? 'TRIP-RESMI',
       fullName: json['full_name']?.toString() ?? 'Peserta',
       phoneNumber: json['phone_number']?.toString() ?? '',
+      emergencyContact: json['emergency_contact']?.toString() ?? '-',
+      seatCount: (json['seat_count'] as num?)?.toInt() ?? 1,
+      paymentMethod: json['payment_method']?.toString() ?? 'WISGO_PAY',
+      totalPaid: (json['total_paid'] as num?)?.toInt() ?? 135000,
+      specialNotes: json['special_notes']?.toString() ?? '',
       joinedAt: json['joined_at']?.toString() ?? '',
     );
+  }
+}
+
+/// Model Ulasan & Rating untuk Penyelenggara setelah Open Trip selesai
+class OrganizerReview {
+  final String id;
+  final String organizerId;
+  final String organizerName;
+  final String tripTitle;
+  final String reviewerName;
+  final int rating;
+  final String comment;
+  final List<String> tags;
+  final DateTime createdAt;
+
+  const OrganizerReview({
+    required this.id,
+    required this.organizerId,
+    required this.organizerName,
+    required this.tripTitle,
+    required this.reviewerName,
+    required this.rating,
+    required this.comment,
+    this.tags = const [],
+    required this.createdAt,
+  });
+}
+
+/// Store terpusat untuk Rating, Ulasan & Pencapaian Akun Penyelenggara
+class OrganizerRatingStore extends ChangeNotifier {
+  OrganizerRatingStore._();
+  static final OrganizerRatingStore instance = OrganizerRatingStore._();
+
+  final List<OrganizerReview> _reviews = [
+    OrganizerReview(
+      id: 'rev-init-1',
+      organizerId: 'ORG-01',
+      organizerName: 'Rahmat Hidayat (Guide Nagari)',
+      tripTitle: 'Jelajah Lembah Harau & Air Terjun Sarasah Bunta',
+      reviewerName: 'Nadia Putri',
+      rating: 5,
+      comment:
+          'Pemandunya sangat ramah, tepat waktu di titik kumpul, dan penjelasan sejarah Lembah Harau sangat menarik!',
+      tags: const ['Tepat Waktu', 'Pemandu Ramah', 'Rute Aman'],
+      createdAt: DateTime(2026, 11, 20),
+    ),
+  ];
+
+  int _completedTripsAsOrganizer = 1;
+
+  List<OrganizerReview> get allReviews => List.unmodifiable(_reviews);
+  int get completedTripsAsOrganizer => _completedTripsAsOrganizer;
+
+  List<OrganizerReview> reviewsForOrganizer(String organizerId) =>
+      _reviews.where((r) => r.organizerId == organizerId).toList();
+
+  double averageRatingForOrganizer(String organizerId, double fallback) {
+    final list = reviewsForOrganizer(organizerId);
+    if (list.isEmpty) return fallback;
+    final sum = list.fold<int>(0, (acc, r) => acc + r.rating);
+    return double.parse((sum / list.length).toStringAsFixed(2));
+  }
+
+  double get overallAccountRating {
+    if (_reviews.isEmpty) return 4.95;
+    final sum = _reviews.fold<int>(0, (acc, r) => acc + r.rating);
+    return double.parse((sum / _reviews.length).toStringAsFixed(2));
+  }
+
+  void markOrganizerTripCompleted() {
+    _completedTripsAsOrganizer++;
+    notifyListeners();
+  }
+
+  void addReview(OrganizerReview review) {
+    _reviews.insert(0, review);
+    notifyListeners();
   }
 }
 
@@ -330,6 +480,18 @@ class OpenTripItem {
   final String communicationChannel;
   final String whatsappGroupLink;
 
+  // ROLE & VERIFICATION LIFECYCLE STATE
+  TripVerificationStatus verificationStatus;
+  String difficultyLevel; // 'Easy' | 'Medium' | 'Hard'
+  String? adminRejectionReason;
+  final bool isCreatedByCurrentUser;
+  bool isCurrentUserJoined;
+  bool isScheduleReviewed;
+  bool isReadinessFinalized;
+  bool isTripCompleted;
+  bool hasReviewedOrganizer;
+  final List<OpenTripParticipant> participants;
+
   OpenTripItem({
     required this.id,
     this.userId = 'usr-host-01',
@@ -367,22 +529,67 @@ class OpenTripItem {
     this.communicationChannel =
         'Forum Diskusi & Chat Komunikasi Smart Trip Planner (In-App)',
     this.whatsappGroupLink = '',
-  })  : destinationDescription = destinationDescription ??
+    this.verificationStatus = TripVerificationStatus.approved,
+    this.difficultyLevel = 'Medium',
+    this.adminRejectionReason,
+    this.isCreatedByCurrentUser = false,
+    this.isCurrentUserJoined = false,
+    this.isScheduleReviewed = false,
+    this.isReadinessFinalized = false,
+    this.isTripCompleted = false,
+    this.hasReviewedOrganizer = false,
+    List<OpenTripParticipant>? participants,
+  })  : participants = participants ??
+            [
+              OpenTripParticipant(
+                userId: 'usr-p1',
+                bookingCode: 'TRIP-84210',
+                fullName: 'Siti Rahma',
+                phoneNumber: '0813-6542-1120',
+                emergencyContact: '0812-6611-8890 (Ibu Rahma)',
+                seatCount: 1,
+                paymentMethod: 'QRIS',
+                totalPaid: pricePerPerson,
+                specialNotes: 'Tidak ada alergi makanan',
+                joinedAt: '25 Nov 2026',
+                isScheduleReady: true,
+                readinessDone: 6,
+                readinessTotal: 6,
+                packingDone: 10,
+                packingTotal: 10,
+                isFinalized: true,
+              ),
+              OpenTripParticipant(
+                userId: 'usr-p2',
+                bookingCode: 'TRIP-84219',
+                fullName: 'Doni Pratama',
+                phoneNumber: '0852-7410-3398',
+                emergencyContact: '0811-6620-4411 (Ayah Doni)',
+                seatCount: 2,
+                paymentMethod: 'WISGO_PAY',
+                totalPaid: pricePerPerson * 2,
+                specialNotes: 'Bawa kamera & tripod, butuh jaket ukuran L',
+                joinedAt: '26 Nov 2026',
+                isScheduleReady: true,
+                readinessDone: 4,
+                readinessTotal: 6,
+                packingDone: 7,
+                packingTotal: 10,
+                isFinalized: false,
+              ),
+            ],
+        destinationDescription = destinationDescription ??
             'Kawasan cagar alam Lembah Harau dengan formasi tebing batuan vertikal 100-300 meter, akses jalan aspal datar yang mudah dijangkau, serta kolam alami air terjun Sarasah Bunta yang sejuk.',
         includes = includes ??
             const [
-              'Tiket Masuk Resmi Kawasan (Perda Terpantau)',
-              'Pemandu Lokal Berlisensi HPI / Pokdarwis',
-              'Air Mineral & Buah Segar Lokal',
-              'Asuransi Keselamatan Rekreasi Nagari',
-              'Retribusi Parkir Resmi & Kebersihan Terkelola',
+              'Tiket masuk wisata',
+              'Pemandu perjalanan',
+              'Air mineral & P3K',
             ],
         excludes = excludes ??
             const [
-              'Pengeluaran Pribadi & Cinderamata',
-              'Makan di Luar Jadwal Rundown',
-              'Sewa Perlengkapan Pribadi / Ojek Tambahan',
-              'Transportasi Mandiri Menuju Titik Kumpul',
+              'Pengeluaran pribadi',
+              'Transportasi menuju titik kumpul',
             ],
         category = category ?? determineCategoryForDestination(singleDestination);
 
@@ -479,7 +686,7 @@ final List<OpenTripItem> kMockOpenTrips = [
     returnDate: 'Minggu, 29 Nov 2026',
     departureTime: '06.00 WIB',
     duration: '2 Hari 1 Malam',
-    meetingPointName: 'Rest Area Simpang Harau (Depan Kantor Nagari)',
+    meetingPointName: 'Rest Area Simpang Harau',
     meetingPointAddress: 'Jl. Raya Payakumbuh-Harau KM 8, Kab. Lima Puluh Kota',
     meetingPointLat: -0.1132,
     meetingPointLng: 100.6721,
@@ -489,18 +696,18 @@ final List<OpenTripItem> kMockOpenTrips = [
     quotaFilled: 5,
     organizer: const VerifiedOrganizer(
       id: 'ORG-01',
-      name: 'Rahmat Hidayat (Guide Berlisensi Nagari)',
-      licenseNumber: 'HPI-SB-2024-0412 (Pemandu Wisata Muda)',
-      specialCompetency: 'Sertifikasi P3K & Wilderness First Aid BNSP',
-      ktpStatus: 'Terverifikasi e-KTP Dukcapil RI',
-      ktpUploadStatus: 'Dokumen KTP Terunggah & Tervalidasi',
-      faceVerificationStatus: 'Verifikasi Wajah / Liveness Biometrik Lolos (99.2%)',
+      name: 'Rahmat Hidayat',
+      licenseNumber: 'HPI-SB-2024-0412',
+      specialCompetency: 'Sertifikasi P3K & Pemandu Wisata Alam',
+      ktpStatus: 'KTP Terverifikasi',
+      ktpUploadStatus: 'Foto KTP Tervalidasi',
+      faceVerificationStatus: 'Autentikasi Wajah Tervalidasi',
       rating: 4.95,
       completedTrips: 38,
       phone: '0812-7578-953',
-      socialMedia: '@rahmathidayat_guide (Instagram)',
-      experienceYears: '4+ Tahun Pengalaman Pemandu Wisata Alam',
-      organizationName: 'Komunitas Pemandu Harau Geopark',
+      socialMedia: '@rahmathidayat_guide',
+      experienceYears: '4 Tahun Pengalaman Pemandu Wisata Alam',
+      organizationName: 'Komunitas Pemandu Harau',
     ),
     offlineRules: const [
       OfflineTripRule(
@@ -714,7 +921,7 @@ final List<OpenTripItem> kMockOpenTrips = [
     itinerary: [
       TripItineraryStep(
         time: '06.00 - 06.30 WIB',
-        activity: 'Kumpul & Presensi di Titik Kumpul (Google Maps)',
+        activity: 'Kumpul & Presensi di Titik Kumpul',
         location: 'Rest Area Simpang Harau',
         notes: 'Cek kehadiran peserta, pembagian name-tag & snack pagi.',
         status: 'Akan Datang',
@@ -731,7 +938,7 @@ final List<OpenTripItem> kMockOpenTrips = [
       TripItineraryStep(
         time: '07.45 - 11.30 WIB',
         activity: 'Eksplorasi Tebing & Sarasah Bunta',
-        location: 'Lembah Harau (Sarasah Bunta)',
+        location: 'Kawasan Lembah Harau & Sarasah Bunta',
         notes: 'Trekking santai, foto tebing vertikal, dan berenang air terjun.',
         status: 'Akan Datang',
         icon: Icons.landscape_rounded,
@@ -796,18 +1003,18 @@ final List<OpenTripItem> kMockOpenTrips = [
     whatsappGroupLink: 'https://chat.whatsapp.com/WisgoHarauTrip2026',
   ),
 
-  // TRIP 2: Kawasan Mandeh (Alam & Geopark)
+  // TRIP 2: Kawasan Mandeh
   OpenTripItem(
     id: 'TRIP-MANDEH-02',
-    title: 'Island Hopping & Snorkeling Eksotis Kawasan Mandeh',
-    singleDestination: 'Kawasan Mandeh (Raja Ampat Minang)',
+    title: 'Island Hopping & Snorkeling Kawasan Mandeh',
+    singleDestination: 'Kawasan Bahari Mandeh',
     category: 'Alam & Geopark',
     coverUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
     departureDate: 'Minggu, 29 Nov 2026',
     returnDate: 'Minggu, 29 Nov 2026',
     departureTime: '07.00 WIB',
-    duration: '1 Hari (Full Day Trip)',
-    meetingPointName: 'Dermaga TPI Tarusan / Carocok Anau',
+    duration: '1 Hari',
+    meetingPointName: 'Dermaga TPI Tarusan',
     meetingPointAddress: 'Kec. Koto XI Tarusan, Kab. Pesisir Selatan',
     meetingPointLat: -1.2144,
     meetingPointLng: 100.4182,
@@ -817,18 +1024,18 @@ final List<OpenTripItem> kMockOpenTrips = [
     quotaFilled: 7,
     organizer: const VerifiedOrganizer(
       id: 'ORG-02',
-      name: 'Kapten Hendra Saputra',
-      licenseNumber: 'SK-DISHUB-SB-0988 (Nahkoda Wisata Laut)',
-      ktpStatus: 'Terverifikasi e-KTP & Koperasi Bahari Tarusan',
+      name: 'Hendra Saputra',
+      licenseNumber: 'SK-DISHUB-SB-0988',
+      ktpStatus: 'KTP Terverifikasi',
       rating: 4.92,
       completedTrips: 52,
       phone: '0813-6622-4411',
-      organizationName: 'Paguyuban Speedboat Bahari Mandeh',
+      organizationName: 'Paguyuban Bahari Mandeh',
     ),
     offlineRules: const [
       OfflineTripRule(
-        title: 'Wajib Menggunakan Life Jacket (Pelampung)',
-        ruleDescription: 'Seluruh peserta wajib memakai pelampung keselamatan selama berada di atas boat laut.',
+        title: 'Wajib Menggunakan Pelampung',
+        ruleDescription: 'Seluruh peserta wajib memakai pelampung keselamatan selama berada di atas kapal.',
         iconCode: 'life_jacket',
       ),
       OfflineTripRule(
@@ -941,8 +1148,8 @@ final List<OpenTripItem> kMockOpenTrips = [
     departureDate: 'Sabtu, 5 Des 2026',
     returnDate: 'Sabtu, 5 Des 2026',
     departureTime: '06.30 WIB',
-    duration: '1 Hari (Day Trip)',
-    meetingPointName: 'Jam Gadang Bukittinggi (Sisi Barat Plaza)',
+    duration: '1 Hari',
+    meetingPointName: 'Pelataran Jam Gadang Bukittinggi',
     meetingPointAddress: 'Pusat Kota Bukittinggi, Sumatera Barat',
     meetingPointLat: -0.3051,
     meetingPointLng: 100.3694,
@@ -952,13 +1159,13 @@ final List<OpenTripItem> kMockOpenTrips = [
     quotaFilled: 4,
     organizer: const VerifiedOrganizer(
       id: 'ORG-03',
-      name: 'Fandi Kurniawan (FASI Agam)',
-      licenseNumber: 'FASI-PL-2023-019 (Pilot Tandem Paralayang)',
-      ktpStatus: 'Terverifikasi e-KTP & Disparpora Agam',
+      name: 'Fandi Kurniawan',
+      licenseNumber: 'FASI-PL-2023-019',
+      ktpStatus: 'KTP Terverifikasi',
       rating: 4.88,
       completedTrips: 29,
       phone: '0852-9988-1122',
-      organizationName: 'Lawang Adventure & Culture Guide',
+      organizationName: 'Komunitas Pemandu Lawang',
     ),
     offlineRules: const [
       OfflineTripRule(
@@ -1032,7 +1239,7 @@ final List<OpenTripItem> kMockOpenTrips = [
     departureDate: 'Minggu, 6 Des 2026',
     returnDate: 'Minggu, 6 Des 2026',
     departureTime: '08.00 WIB',
-    duration: '1 Hari (Full Day Culture Trip)',
+    duration: '1 Hari',
     meetingPointName: 'Stasiun Kereta Api Padang Panjang',
     meetingPointAddress: 'Jl. Sutan Syahrir No. 1, Kota Padang Panjang',
     meetingPointLat: -0.4632,
@@ -1043,13 +1250,13 @@ final List<OpenTripItem> kMockOpenTrips = [
     quotaFilled: 8,
     organizer: const VerifiedOrganizer(
       id: 'ORG-04',
-      name: 'Mak Katik Sutan Marajo (Budayawan Nagari)',
-      licenseNumber: 'SK-BUDAYA-TD-2022-005 (Pamong Budaya Luhak Nan Tuo)',
-      ktpStatus: 'Terverifikasi e-KTP & Lembaga Kerapatan Adat',
+      name: 'Mak Katik Sutan Marajo',
+      licenseNumber: 'SK-BUDAYA-TD-2022-005',
+      ktpStatus: 'KTP Terverifikasi',
       rating: 4.98,
       completedTrips: 64,
       phone: '0812-3344-7788',
-      organizationName: 'Lembaga Pelestari Warisan Adat Pagaruyung',
+      organizationName: 'Komunitas Pemandu Budaya Pagaruyung',
     ),
     offlineRules: const [
       OfflineTripRule(
@@ -1123,7 +1330,7 @@ final List<OpenTripItem> kMockOpenTrips = [
     departureDate: 'Sabtu, 12 Des 2026',
     returnDate: 'Sabtu, 12 Des 2026',
     departureTime: '07.30 WIB',
-    duration: '1 Hari (Day Trip)',
+    duration: '1 Hari',
     meetingPointName: 'Pos Registrasi Pokdarwis Nyarai Lubuk Alung',
     meetingPointAddress: 'Nagari Salibutan, Kec. Lubuk Alung, Kab. Padang Pariaman',
     meetingPointLat: -0.6812,
@@ -1134,13 +1341,13 @@ final List<OpenTripItem> kMockOpenTrips = [
     quotaFilled: 6,
     organizer: const VerifiedOrganizer(
       id: 'ORG-05',
-      name: 'Ritno Kurniawan (Inisiator Ekowisata Nyarai)',
-      licenseNumber: 'HPI-SB-2021-0088 (Pemandu Ekowisata Utama)',
-      ktpStatus: 'Terverifikasi e-KTP & Pokdarwis Nyarai',
+      name: 'Ritno Kurniawan',
+      licenseNumber: 'HPI-SB-2021-0088',
+      ktpStatus: 'KTP Terverifikasi',
       rating: 4.96,
       completedTrips: 76,
       phone: '0812-6677-8899',
-      organizationName: 'Lembaga Pengelola Hutan Nagari Gamaran',
+      organizationName: 'Pokdarwis Ekowisata Nyarai',
     ),
     offlineRules: const [
       OfflineTripRule(
@@ -1225,13 +1432,13 @@ final List<OpenTripItem> kMockOpenTrips = [
     quotaFilled: 9,
     organizer: const VerifiedOrganizer(
       id: 'ORG-06',
-      name: 'Ustadz Ilham Siddiq, M.Ag',
-      licenseNumber: 'SK-MUI-SB-2023-0144 (Pemandu Wisata Religi Minang)',
-      ktpStatus: 'Terverifikasi e-KTP & Pengurus Masjid Raya',
+      name: 'Ustadz Ilham Siddiq',
+      licenseNumber: 'SK-MUI-SB-2023-0144',
+      ktpStatus: 'KTP Terverifikasi',
       rating: 4.97,
       completedTrips: 45,
       phone: '0813-7788-9900',
-      organizationName: 'Dewan Kemakmuran Masjid Raya Sumatera Barat',
+      organizationName: 'Pengurus Masjid Raya Sumatera Barat',
     ),
     offlineRules: const [
       OfflineTripRule(
@@ -1300,8 +1507,8 @@ final List<OpenTripItem> kMockOpenTrips = [
     departureDate: 'Sabtu, 19 Des 2026',
     returnDate: 'Sabtu, 19 Des 2026',
     departureTime: '11.00 WIB',
-    duration: '1 Hari (Gourmet Trip)',
-    meetingPointName: 'Depan Janjang 40 (Tangga Pasar Bawah - Pasar Ateh)',
+    duration: '1 Hari',
+    meetingPointName: 'Depan Janjang 40 Pasar Ateh',
     meetingPointAddress: 'Kawasan Pasar Ateh, Benteng Pasar Ateh, Kota Bukittinggi',
     meetingPointLat: -0.3042,
     meetingPointLng: 100.3698,
@@ -1311,9 +1518,9 @@ final List<OpenTripItem> kMockOpenTrips = [
     quotaFilled: 7,
     organizer: const VerifiedOrganizer(
       id: 'ORG-07',
-      name: 'Uni Desi Nasi Kapau (Pakar Kuliner Nagari)',
-      licenseNumber: 'SK-DISPERINDAG-KTB-2022-019 (Kurator Kuliner Tradisi)',
-      ktpStatus: 'Terverifikasi e-KTP & Koperasi Pedagang Pasar Ateh',
+      name: 'Uni Desi',
+      licenseNumber: 'SK-DISPERINDAG-KTB-2022-019',
+      ktpStatus: 'KTP Terverifikasi',
       rating: 4.99,
       completedTrips: 88,
       phone: '0812-5544-3322',

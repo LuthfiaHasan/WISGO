@@ -6,10 +6,8 @@ import '../../../core/widgets/wisgo_facility_icon.dart';
 import '../../../core/widgets/crowd_badge.dart';
 import '../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../fair_price/presentation/widgets/fair_price_barometer_table.dart';
-import '../../trip_planner/models/weather_model.dart';
-import '../../trip_planner/presentation/widgets/destination_weather_sheet.dart';
+import '../../saved/services/destination_review_store.dart';
 import '../models/destination_model.dart';
-import '../virtual_tour_360/virtual_tour_360_screen.dart';
 
 /// Halaman Panduan & Detail Lengkap Destinasi (FE-1)
 /// Tampilan clean, terstruktur dalam 3 tab (Panduan, Tarif & Fasilitas, Ulasan)
@@ -21,7 +19,7 @@ class DestinationDetailScreen extends StatefulWidget {
   final bool initialBookmarked;
   final VoidCallback? onToggleBookmark;
   final VoidCallback? onOpenBarometer;
-  final VoidCallback? onOpenLeaderboard;
+  final int initialSection;
 
   const DestinationDetailScreen({
     super.key,
@@ -31,7 +29,7 @@ class DestinationDetailScreen extends StatefulWidget {
     this.initialBookmarked = false,
     this.onToggleBookmark,
     this.onOpenBarometer,
-    this.onOpenLeaderboard,
+    this.initialSection = 0,
   });
 
   @override
@@ -43,7 +41,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   bool _isSavedOffline = false;
   late bool _isBookmarked;
   int _selectedSection = 0; // 0: Panduan, 1: Tarif & Fasilitas, 2: Ulasan
-  late DestinationWeather _weather;
   late SavedDestinationModel _matchedPlace;
   late List<UserReview> _reviews;
   int _extraReviewsCount = 0;
@@ -51,6 +48,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedSection = widget.initialSection.clamp(0, 2);
     _isBookmarked = widget.initialBookmarked;
     _matchedPlace = widget.fullData ??
         kAllSumbarDestinations.firstWhere(
@@ -59,17 +57,10 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               ),
           orElse: () => kAllSumbarDestinations[1],
         );
-    _reviews = List<UserReview>.from(_matchedPlace.reviews);
-    _weather = DestinationWeather.getForDestination(widget.destination.name);
-    _loadLiveWeather();
-  }
-
-  Future<void> _loadLiveWeather() async {
-    final live = await DestinationWeather.fetchLiveFromWeatherApi(
-      destinationName: widget.destination.name,
-    );
-    if (!mounted) return;
-    setState(() => _weather = live);
+    _reviews = DestinationReviewStore.instance
+        .reviewsForDestination(_matchedPlace);
+    _extraReviewsCount = DestinationReviewStore.instance
+        .extraCountFor(_matchedPlace.id);
   }
 
   IconData _getFacilityIcon(String facility) {
@@ -186,10 +177,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Quick Action Pills (Tur 360°, Cuaca Live, Peringkat / Offline)
-                  _buildQuickActionStrip(context, dest),
-                  const SizedBox(height: 16),
-
                   // Segmented Switcher: Panduan | Tarif & Fasilitas | Ulasan
                   _buildSectionSwitcher(),
                   const SizedBox(height: 18),
@@ -386,112 +373,6 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildQuickActionStrip(BuildContext context, DestinationModel dest) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildQuickActionPill(
-            icon: Icons.view_in_ar_rounded,
-            label: 'Tur 360°',
-            accent: AppColors.forest,
-            bg: AppColors.sage,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => VirtualTour360Screen(destination: dest),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildQuickActionPill(
-            icon: _weather.conditionIcon,
-            label: '${_weather.currentTemp}°C Live',
-            accent: AppColors.info,
-            bg: AppColors.infoBg,
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => DestinationWeatherSheet(
-                  destinationName: dest.name,
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildQuickActionPill(
-            icon: widget.onOpenLeaderboard != null
-                ? Icons.leaderboard_rounded
-                : Icons.verified_outlined,
-            label: widget.onOpenLeaderboard != null ? 'Peringkat' : 'Tarif Resmi',
-            accent: AppColors.goldMinang,
-            bg: AppColors.warningBg,
-            onTap: widget.onOpenLeaderboard ??
-                () => setState(() => _selectedSection = 1),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickActionPill({
-    required IconData icon,
-    required String label,
-    required Color accent,
-    required Color bg,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: AppColors.bgCard,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.warmBorder),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: bg,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 14, color: accent),
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -1444,9 +1325,12 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       builder: (_) => _AddDestinationReviewModal(
         destination: _matchedPlace,
         onReviewSubmitted: (newReview) {
+          DestinationReviewStore.instance.addReview(_matchedPlace.id, newReview);
           setState(() {
-            _reviews.insert(0, newReview);
-            _extraReviewsCount++;
+            _reviews = DestinationReviewStore.instance
+                .reviewsForDestination(_matchedPlace);
+            _extraReviewsCount = DestinationReviewStore.instance
+                .extraCountFor(_matchedPlace.id);
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1577,28 +1461,67 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _openAddReviewSheet,
-                  icon: const Icon(Icons.add_a_photo_rounded, size: 16),
-                  label: const Text(
-                    'Tambah Ulasan',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.forest,
-                    foregroundColor: AppColors.cream,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(
+              Builder(
+                builder: (context) {
+                  final canWriteReview = DestinationReviewStore.instance
+                      .canWriteReviewForDestination(_matchedPlace);
+                  if (canWriteReview) {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _openAddReviewSheet,
+                        icon: const Icon(Icons.add_a_photo_rounded, size: 16),
+                        label: const Text(
+                          'Tambah Ulasan',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.forest,
+                          foregroundColor: AppColors.cream,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.creamSubtle,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.warmBorder),
                     ),
-                  ),
-                ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lock_outline_rounded,
+                          size: 18,
+                          color: AppColors.muted,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Ulasan Terkunci — Selesaikan kunjungan (Check-In GPS) atau selesaikan Open Trip di destinasi ini terlebih dahulu untuk membuka akses tambah ulasan.',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.muted,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),

@@ -21,9 +21,11 @@ import '../../../proposal/presentation/widgets/usul_destinasi_sheet.dart';
 import '../../../qr_scanner/presentation/widgets/qr_scanner_sheet.dart';
 import '../../../trip_planner/models/open_trip_model.dart';
 import '../../../trip_planner/presentation/widgets/open_trip_card.dart';
-import '../../../trip_planner/presentation/widgets/open_trip_create_sheet.dart';
+import '../../../trip_planner/presentation/widgets/open_trip_organizer_hub_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_go_agreement_dialog.dart';
+import '../../../trip_planner/presentation/widgets/trip_eticket_sheet.dart';
 import '../../../trip_planner/presentation/widgets/trip_planner_detail_sheet.dart';
+import '../../../trip_planner/services/trip_eticket_store.dart';
 import '../../../reports/presentation/widgets/lapor_pungli_sheet.dart';
 import '../../../fe1_visual_map/audio_guide_culture/audio_culture_screen.dart';
 import '../../../fe1_visual_map/destination_detail/destination_detail_screen.dart';
@@ -378,16 +380,86 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   @override
   void dispose() {
     AuthSession.instance.removeListener(_handleAuthSessionChanged);
+    TripETicketStore.instance.removeListener(_handleNewETicket);
+    OrganizerNotificationBridge.latestNotif
+        .removeListener(_handleAdminVerificationNotif);
     _exploreScrollController?.dispose();
     _petaScrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
+  void _handleNewETicket() {
+    final ticket = TripETicketStore.instance.lastIssuedTicket;
+    if (ticket == null || !mounted) return;
+    final notifId = 'notif_eticket_${ticket.bookingCode}';
+    final exists = _appNotifications.any((n) => n['id'] == notifId);
+    if (exists) return;
+    setState(() {
+      _appNotifications.insert(0, {
+        'id': notifId,
+        'title': 'e-Tiket Trip Go Terbit: ${ticket.bookingCode}',
+        'message':
+            '${ticket.tripTitle} (${ticket.departureDate} • ${ticket.departureTime}) — Ketuk untuk melihat & unduh PDF.',
+        'time': 'Baru saja',
+        'isRead': false,
+        'type': 'eticket',
+        'ticketCode': ticket.bookingCode,
+      });
+
+      final reminderId = 'notif_readiness_${ticket.tripId}';
+      final hasReminder = _appNotifications.any((n) => n['id'] == reminderId);
+      if (!hasReminder) {
+        _appNotifications.insert(0, {
+          'id': reminderId,
+          'title': 'Pengingat Wajib: Validasi Rencana & Persiapan',
+          'message':
+              'Jadwal ${ticket.tripTitle} (${ticket.departureDate} • ${ticket.departureTime}) sudah dekat, namun Rencana & Persiapan belum difinalisasi. Ketuk untuk melengkapi!',
+          'time': 'Pengingat Jadwal',
+          'isRead': false,
+          'type': 'readiness_reminder',
+          'tripId': ticket.tripId,
+        });
+      }
+    });
+  }
+
+  void _syncReadinessReminderNotifications() {
+    if (!mounted) return;
+    setState(() {
+      for (final trip in _activeOpenTrips) {
+        if (trip.isCurrentUserJoined && trip.isReadinessFinalized) {
+          final reminderId = 'notif_readiness_${trip.id}';
+          for (final n in _appNotifications) {
+            if (n['id'] == reminderId) {
+              n['isRead'] = true;
+              n['title'] = 'Validasi Rencana & Persiapan Selesai ✓';
+              n['message'] =
+                  '${trip.title} sudah terfinalisasi (Jadwal, Persiapan & Barang Bawaan siap).';
+            }
+          }
+        }
+      }
+    });
+  }
+
+  void _handleAdminVerificationNotif() {
+    final notif = OrganizerNotificationBridge.latestNotif.value;
+    if (notif == null || !mounted) return;
+    final exists = _appNotifications.any((n) => n['id'] == notif['id']);
+    if (exists) return;
+    setState(() {
+      _appNotifications.insert(0, Map<String, dynamic>.from(notif));
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     AuthSession.instance.addListener(_handleAuthSessionChanged);
+    TripETicketStore.instance.addListener(_handleNewETicket);
+    OrganizerNotificationBridge.latestNotif
+        .addListener(_handleAdminVerificationNotif);
     _activeTabIndex = widget.initialTabIndex;
     _isOfflineMode = widget.initialOfflineMode;
     if (widget.isGuest) {
@@ -2704,9 +2776,38 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     showTripGoGuideSheet(context);
   }
 
+  void _openOrganizerHubModal() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => OpenTripOrganizerHubSheet(
+        allTrips: _activeOpenTrips,
+        onTripCreated: (newTrip) {
+          setState(() {
+            _customOpenTrips ??= List<OpenTripItem>.from(kMockOpenTrips);
+            _customOpenTrips!.insert(0, newTrip);
+          });
+        },
+        onTripsChanged: () => setState(() {}),
+      ),
+    );
+  }
+
   Widget _buildOpenTripView() {
+    final myOrganizerTrips =
+        _activeOpenTrips.where((t) => t.isCreatedByCurrentUser).toList();
+    final hasApprovedOrganizerTrip = myOrganizerTrips
+        .any((t) => t.verificationStatus == TripVerificationStatus.approved);
+    final hasPendingOrganizerTrip = myOrganizerTrips
+        .any((t) => t.verificationStatus == TripVerificationStatus.pendingAdmin);
+
+    final publicApprovedTrips = _activeOpenTrips
+        .where((t) => t.verificationStatus == TripVerificationStatus.approved)
+        .toList();
+
     final q = _tripGoSearchQuery.trim().toLowerCase();
-    final filteredTrips = _activeOpenTrips.where((t) {
+    final filteredTrips = publicApprovedTrips.where((t) {
       final catMatch = _openTripFilterCategory == 'Semua' ||
           t.category == _openTripFilterCategory;
       if (!catMatch) return false;
@@ -2717,9 +2818,11 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           t.category.toLowerCase().contains(q);
     }).toList();
 
-    return Column(
+    return Stack(
       children: [
-        // Top Sticky Header: Bersih, Hanya Judul "Trip Go" + Tagline Singkat Menarik + Tombol Panduan
+        Column(
+          children: [
+        // Top Sticky Header: Bersih, Judul "Trip Go" + Tagline + Panduan
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -2801,7 +2904,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                             const Icon(Icons.groups_rounded, size: 14, color: AppColors.forest),
                             const SizedBox(width: 4),
                             Text(
-                              '${_activeOpenTrips.length} Aktif',
+                              '${publicApprovedTrips.length} Aktif',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
@@ -2809,6 +2912,30 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message: 'Atur & Kelola Open Trip',
+                        child: InkWell(
+                          mouseCursor: SystemMouseCursors.click,
+                          onTap: _openOrganizerHubModal,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.forest,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.sageBorder),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.manage_accounts_rounded,
+                              size: 16,
+                              color: AppColors.cream,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -2829,12 +2956,12 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           ),
         ),
 
-        // Scrollable Body
+        // Scrollable Body: Langsung Jadwal Trip Go Terbuka + Tombol Open Trip di bawah (seperti Usul Wisata di Beranda)
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 116),
             children: [
-              // Pencarian Trip Go (Menggantikan strip Escrow yang duplikat)
+              // Pencarian Trip Go
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
@@ -2907,7 +3034,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
               const SizedBox(height: 14),
 
-              // 2. DAFTAR KARTU OPEN TRIP MODERN (Item 4)
+              // Daftar Kartu Open Trip
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -2916,13 +3043,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                       'Jadwal Trip Go Terbuka (${filteredTrips.length})',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   const Text(
                     '1 Destinasi Tunggal',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.muted,
+                    ),
                   ),
                 ],
               ),
@@ -2938,8 +3073,9 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   ),
                   child: const Center(
                     child: Text(
-                      'Belum ada Trip Go untuk kategori ini.',
-                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                      'Belum ada Trip Go untuk pencarian atau kategori ini.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.4),
                     ),
                   ),
                 )
@@ -2947,155 +3083,96 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                 ...filteredTrips.map((trip) {
                   return OpenTripCard(
                     trip: trip,
-                    onTripUpdated: () => setState(() {}),
+                    isOrganizerView: false,
+                    onTripUpdated: _syncReadinessReminderNotifications,
                     onTripDeleted: (deletedId) {
                       setState(() {
                         _activeOpenTrips.removeWhere((t) => t.id == deletedId);
                       });
                     },
                     onOpenDestination360: () {
-                      final matched =
-                          _findDestinationForTrip(trip.singleDestination);
+                      final matched = _findDestinationForTrip(trip.singleDestination);
                       _open360AndDenahModal(matched);
                     },
                     onOpenDestinationReviews: () {
-                      final matched =
-                          _findDestinationForTrip(trip.singleDestination);
-                      _openDestinationDetailModal(matched);
+                      final matched = _findDestinationForTrip(trip.singleDestination);
+                      _openDestinationDetailModal(matched, initialSection: 2);
                     },
                   );
                 }),
 
-              const SizedBox(height: 6),
-
-              // 3. Tombol Tambah Open Trip Baru (1 Destinasi Tunggal & Kategori Otomatis)
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => OpenTripCreateSheet(
-                        onTripCreated: (newTrip) {
-                          setState(() {
-                            _customOpenTrips ??= List<OpenTripItem>.from(kMockOpenTrips);
-                            _customOpenTrips!.insert(0, newTrip);
-                          });
-                        },
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text(
-                    '+ Buat Jadwal Trip Go Baru (1 Destinasi Tunggal)',
-                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.forest,
-                    side: const BorderSide(color: AppColors.forest, width: 1.2),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // 4. Feature Card: Smart Trip Planner (5 Fitur Terintegrasi)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.forest, AppColors.brush],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.forest.withValues(alpha: 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.20),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.auto_awesome_rounded, size: 13, color: AppColors.cream),
-                              SizedBox(width: 4),
-                              Text(
-                                'Smart Trip Planner',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.cream,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.alt_route_rounded, color: AppColors.sage, size: 22),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Perencanaan Perjalanan Terstruktur & Komunikasi Tim',
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '1. Checklist Perjalanan untuk memastikan kebutuhan siap.\n'
-                      '2. Pembagian Jobdesk oleh penyelenggara ke anggota.\n'
-                      '3. Checklist Persiapan Barang Bawaan (Packing List).\n'
-                      '4. Informasi Itinerary tersusun jelas jam-demi-jam.\n'
-                      '5. Komunikasi & Obrolan Tim dalam satu perjalanan.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.90),
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    ElevatedButton.icon(
-                      onPressed: _openTripPlannerModal,
-                      icon: const Icon(Icons.calendar_today_rounded, size: 15),
-                      label: const Text(
-                        'Buka Smart Trip Planner & Koordinasi Tim',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cream,
-                        foregroundColor: AppColors.forest,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
+          ),
+        ),
+      ],
+    ),
+
+        // Floating Action Button "+ Open Trip" (seragam 1:1 dengan "+ Usul Wisata" di Beranda)
+        Positioned(
+          bottom: MediaQuery.paddingOf(context).bottom + 78,
+          right: 16,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.forest.withValues(alpha: 0.24),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Material(
+                  color: AppColors.forest.withValues(alpha: 0.78),
+                  child: InkWell(
+                    mouseCursor: SystemMouseCursors.click,
+                    onTap: _openOrganizerHubModal,
+                    borderRadius: BorderRadius.circular(18),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.30),
+                          width: 1.1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.add_rounded,
+                            size: 18,
+                            color: AppColors.cream,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            hasApprovedOrganizerTrip
+                                ? 'Open Trip (${myOrganizerTrips.length})'
+                                : (hasPendingOrganizerTrip
+                                    ? 'Open Trip (Pending)'
+                                    : 'Open Trip'),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.cream,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -4373,6 +4450,21 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                   iconColor = AppColors.forest;
                                   iconBg = AppColors.successBorder;
                                   break;
+                                case 'admin_rejected':
+                                  notifIcon = Icons.gpp_bad_rounded;
+                                  iconColor = AppColors.danger;
+                                  iconBg = AppColors.dangerBg;
+                                  break;
+                                case 'eticket':
+                                  notifIcon = Icons.confirmation_number_rounded;
+                                  iconColor = AppColors.forest;
+                                  iconBg = AppColors.sage;
+                                  break;
+                                case 'readiness_reminder':
+                                  notifIcon = Icons.assignment_late_rounded;
+                                  iconColor = AppColors.warningDark;
+                                  iconBg = AppColors.warningBg;
+                                  break;
                                 case 'passport':
                                   notifIcon = Icons.verified_rounded;
                                   iconColor = AppColors.info;
@@ -4423,6 +4515,32 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           orElse: () => _budayaFestivals.first,
                                         );
                                         _openFestivalDetailModal(matched);
+                                      } else if (type == 'opentrip' ||
+                                          type == 'admin_rejected') {
+                                        _openOrganizerHubModal();
+                                      } else if (type == 'eticket' && notif['ticketCode'] != null) {
+                                        final ticket = TripETicketStore.instance
+                                            .findByCode(notif['ticketCode'] as String);
+                                        if (ticket != null) {
+                                          showTripETicketSheet(context, ticket);
+                                        }
+                                      } else if (type == 'readiness_reminder' && notif['tripId'] != null) {
+                                        final tripId = notif['tripId'] as String;
+                                        final matchedTrip = _activeOpenTrips.firstWhere(
+                                          (t) => t.id == tripId,
+                                          orElse: () => _activeOpenTrips.first,
+                                        );
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (_) => TripPlannerDetailSheet(
+                                            trip: matchedTrip,
+                                            isOrganizerMode: false,
+                                            isJoinedParticipant: true,
+                                            onReadinessFinalized: _syncReadinessReminderNotifications,
+                                          ),
+                                        );
                                       }
                                     },
                                     child: Padding(
@@ -6845,7 +6963,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // ===========================================================================
   // MODAL 2: DETAIL DESTINASI + ULASAN + RINCIAN BIAYA & PEMESANAN (REQUEST 1 & 4)
   // ===========================================================================
-  void _openDestinationDetailModal(SavedDestinationModel place) {
+  void _openDestinationDetailModal(
+    SavedDestinationModel place, {
+    int initialSection = 0,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -6853,15 +6974,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           destination: place.toFe1Destination(),
           fullData: place,
           initialBookmarked: _savedIds.contains(place.id),
+          initialSection: initialSection,
           onToggleBookmark: () {
             _toggleBookmark(place.id);
           },
           onOpenBarometer: () {
             Navigator.pop(pageCtx);
             _openPlaceBarometer(place.baroIndex);
-          },
-          onOpenLeaderboard: () {
-            _openGeodeRankingModal(place);
           },
         ),
       ),
@@ -6893,18 +7012,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           _showAppToast('Laporan Resmi #$ticket berhasil diteruskan ke Satgas!');
         },
       ),
-    );
-  }
-
-  // ===========================================================================
-  // MODAL 6: LAYAR 06 TRIP PLANNER & KAPASITAS ORANG (ITEM 10 & 12)
-  // ===========================================================================
-  void _openTripPlannerModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => TripPlannerDetailSheet(trip: _activeOpenTrips.first),
     );
   }
 
@@ -7011,14 +7118,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  void _openGeodeRankingModal([SavedDestinationModel? dest]) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _GeodeRankingModal(dest: dest),
-    );
-  }
+
 
   // ===========================================================================
   // MODAL 9: PANTAU LOKASI ROMBONGAN (ITEM 17)
@@ -7754,7 +7854,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           value:
                                               '${challenge.currentCheckpoints}/${challenge.targetCheckpoints}',
                                           label: AppLocale.tr('Misi', 'Quests'),
-                                          onTap: _openGeodeRankingModal,
+                                          onTap: _openDigitalPassportModal,
                                         ),
                                       ),
                                       Container(
@@ -7962,70 +8062,34 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _openGeodeRankingModal,
-                                icon: const Icon(
-                                  Icons.leaderboard_rounded,
-                                  size: 16,
-                                ),
-                                label: const Text(
-                                  'Geode Ranking',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFFF3DCAA),
-                                  side: BorderSide(
-                                    color: AppColors.goldSoft
-                                        .withValues(alpha: 0.65),
-                                  ),
-                                  backgroundColor:
-                                      Colors.white.withValues(alpha: 0.06),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 11,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _openDigitalPassportModal,
+                            icon: const Icon(Icons.verified_rounded, size: 16),
+                            label: Text(
+                              AppLocale.tr(
+                                'Paspor Digital',
+                                'Digital Passport',
+                              ),
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _openDigitalPassportModal,
-                                icon: const Icon(Icons.verified_rounded, size: 16),
-                                label: Text(
-                                  AppLocale.tr(
-                                    'Paspor Digital',
-                                    'Digital Passport',
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFD49D4A),
-                                  foregroundColor: const Color(0xFF1F1307),
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 11,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFD49D4A),
+                              foregroundColor: const Color(0xFF1F1307),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 11,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -8034,6 +8098,354 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               ),
 
               const SizedBox(height: 18),
+
+              // 2A. Pencapaian & Rating Penyelenggara Open Trip
+              AnimatedBuilder(
+                animation: OrganizerRatingStore.instance,
+                builder: (context, _) {
+                  final ratingStore = OrganizerRatingStore.instance;
+                  final reviews = ratingStore.allReviews;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 18),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.workspace_premium_rounded, size: 18, color: AppColors.goldMinang),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Pencapaian Penyelenggara',
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.warningBg,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 14, color: AppColors.warning),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${ratingStore.overallAccountRating} (${reviews.length} Ulasan)',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.warningDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.sage,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      '${ratingStore.completedTripsAsOrganizer}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Trip Selesai',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.creamSubtle,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.warmBorder),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      ratingStore.overallAccountRating >= 4.8
+                                          ? 'Pemandu Prima'
+                                          : 'Terverifikasi',
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.ink,
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Lencana Akun',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (reviews.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.cream,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.warmBorder),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Ulasan Terbaru • ${reviews.first.reviewerName}',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.forest,
+                                      ),
+                                    ),
+                                    Text(
+                                      '★ ${reviews.first.rating}.0',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.warningDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  reviews.first.comment,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppColors.ink,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+
+              // 2B. Riwayat e-Tiket Trip Go Saya (Tersimpan & Siap Print PDF)
+              AnimatedBuilder(
+                animation: TripETicketStore.instance,
+                builder: (context, _) {
+                  final tickets = TripETicketStore.instance.tickets;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 18),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.warmBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.confirmation_number_rounded, size: 18, color: AppColors.forest),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Riwayat e-Tiket Trip Go',
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.sage,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '${tickets.length} Tiket',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.forest,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        if (tickets.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.creamSubtle,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.warmBorder),
+                            ),
+                            child: const Text(
+                              'Belum ada e-Tiket Trip Go. Setelah Anda melakukan Daftar & Bayar di Trip Go, e-Tiket resmi akan otomatis tersimpan di sini & di Notifikasi untuk diunduh/print PDF.',
+                              style: TextStyle(fontSize: 11.5, color: AppColors.muted, height: 1.4),
+                            ),
+                          )
+                        else
+                          ...tickets.map((t) => Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.cream,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.sageBorder),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          t.bookingCode,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            color: AppColors.forest,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.successBg,
+                                            borderRadius: BorderRadius.circular(999),
+                                          ),
+                                          child: const Text(
+                                            'LUNAS',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.success,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      t.tripTitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.ink,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${t.departureDate} • ${t.departureTime} • ${t.participantCount} Orang',
+                                      style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: () => showTripETicketSheet(context, t),
+                                            icon: const Icon(Icons.qr_code_2_rounded, size: 15),
+                                            label: const Text(
+                                              'Lihat Tiket',
+                                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: AppColors.forest,
+                                              side: const BorderSide(color: AppColors.sageBorder),
+                                              padding: const EdgeInsets.symmetric(vertical: 6),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            onPressed: () => printOrDownloadTripETicketPdf(context, t),
+                                            icon: const Icon(Icons.picture_as_pdf_rounded, size: 15),
+                                            label: const Text(
+                                              'Print PDF',
+                                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.forest,
+                                              foregroundColor: AppColors.cream,
+                                              elevation: 0,
+                                              padding: const EdgeInsets.symmetric(vertical: 6),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
               // 3. Riwayat Aktivitas (Grid Card 2 Kolom — tampil 2 terbaru, selebihnya di Lihat Semua)
               Padding(
@@ -11185,371 +11597,3 @@ IconData _getFacilityIcon(String name) {
   return Icons.check_circle_outline_rounded;
 }
 
-
-// =============================================================================
-// MODAL GEODE RANKING & PAPAN PERINGKAT SPASIAL (ITEM USE CASE DIAGRAM)
-// =============================================================================
-class _GeodeRankingModal extends StatefulWidget {
-  final SavedDestinationModel? dest;
-  const _GeodeRankingModal({this.dest});
-
-  @override
-  State<_GeodeRankingModal> createState() => _GeodeRankingModalState();
-}
-
-class _GeodeRankingModalState extends State<_GeodeRankingModal> {
-  bool _isGpsCheckedIn = false;
-  bool _isRecalculating = false;
-  int _userGeodeScore = 2500;
-  double _userGeodeDistanceKm = 465.4;
-
-  void _verifyGpsCheckin() {
-    setState(() {
-      _isGpsCheckedIn = true;
-      _userGeodeScore += 250;
-      _userGeodeDistanceKm += 18.5;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('📍 Koordinat Geospasial Terverifikasi (<500m)! Skor Geode bertambah +250 GP.'),
-        backgroundColor: AppColors.forest,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _recalculateGeodeRanking() {
-    setState(() => _isRecalculating = true);
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) {
-        setState(() {
-          _isRecalculating = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Rekalkulasi Geode Ranking Berhasil! Seluruh data titik spasial GPS telah disinkronkan oleh Admin Dispar.'),
-            backgroundColor: AppColors.forest,
-          ),
-        );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final destName = widget.dest?.title ?? 'Kawasan Wisata Sumatera Barat';
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.sageBorder,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.goldMinang, AppColors.warningDark],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.leaderboard_rounded, color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Geode Ranking Penjelajah',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.ink),
-                    ),
-                    Text(
-                      'Papan Peringkat Spasial • Direkalkulasi oleh Admin Dispar',
-                      style: TextStyle(fontSize: 11, color: AppColors.muted),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded, color: AppColors.muted),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // User Geode Status Card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.forest, AppColors.ink],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.forest.withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('POSISI RANKING ANDA', style: TextStyle(fontSize: 11, color: AppColors.sage, fontWeight: FontWeight.w800)),
-                        Text('Peringkat #3 Se-Sumbar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.goldMinang,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        Text('$_userGeodeScore GP', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.goldSoft)),
-                        const Text('Skor Geode', style: TextStyle(fontSize: 11, color: AppColors.sage)),
-                      ],
-                    ),
-                    Container(width: 1, height: 24, color: Colors.white24),
-                    Column(
-                      children: [
-                        Text('${_userGeodeDistanceKm.toStringAsFixed(1)} km', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
-                        const Text('Jarak Geodesik', style: TextStyle(fontSize: 11, color: AppColors.sage)),
-                      ],
-                    ),
-                    Container(width: 1, height: 24, color: Colors.white24),
-                    Column(
-                      children: [
-                        Text(_isGpsCheckedIn ? '10/10' : '9/10', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
-                        const Text('Tertaklukkan', style: TextStyle(fontSize: 11, color: AppColors.sage)),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Tombol Rekalkulasi Geode Ranking
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _isRecalculating ? null : _recalculateGeodeRanking,
-              icon: _isRecalculating
-                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.sync_rounded, size: 16, color: AppColors.forest),
-              label: Text(
-                _isRecalculating ? 'Merekalkulasi Peringkat Geospasial...' : 'Rekalkulasi Geode Ranking Saya',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.forest),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // GPS Proximity Check-in Box (jika dibuka pada destinasi tertentu)
-          if (widget.dest != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _isGpsCheckedIn ? AppColors.successBg : AppColors.warningBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: _isGpsCheckedIn ? AppColors.success : AppColors.warning,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _isGpsCheckedIn ? Icons.check_circle_rounded : Icons.my_location_rounded,
-                    color: _isGpsCheckedIn ? AppColors.success : AppColors.warningDark,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isGpsCheckedIn ? 'Koordinat Spasial Terverifikasi' : 'Check-in Geospasial di Kawasan',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            color: _isGpsCheckedIn ? AppColors.success : AppColors.warningDark,
-                          ),
-                        ),
-                        Text(
-                          _isGpsCheckedIn
-                              ? 'Stempel check-in di $destName (+250 GP)'
-                              : 'Berada di $destName (< 500m geofence)',
-                          style: const TextStyle(fontSize: 11, color: AppColors.muted),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!_isGpsCheckedIn)
-                    ElevatedButton(
-                      onPressed: _verifyGpsCheckin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.forest,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('Check-in', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          const Text(
-            'PAPAN PERINGKAT SPASIAL (TOP 5):',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
-          ),
-          const SizedBox(height: 8),
-
-          // Leaderboard List
-          Expanded(
-            child: ListView(
-              children: [
-                _buildRankRow(1, 'Rangkayo Sutan', '10/10 Destinasi', '520.4 km', '2.950 GP', 'Diamond', false),
-                _buildRankRow(2, 'Pendekar Marapulai', '10/10 Destinasi', '498.1 km', '2.750 GP', 'Diamond', false),
-                _buildRankRow(3, 'Anda (Wisatawan Teladan)', _isGpsCheckedIn ? '10/10 Destinasi' : '9/10 Destinasi', '${_userGeodeDistanceKm.toStringAsFixed(1)} km', '$_userGeodeScore GP', 'Platinum', true),
-                _buildRankRow(4, 'Bundo Penjelajah', '8/10 Destinasi', '412.0 km', '2.200 GP', 'Gold', false),
-                _buildRankRow(5, 'Petualang Singkarak', '7/10 Destinasi', '385.5 km', '1.950 GP', 'Gold', false),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRankRow(int rank, String name, String dest, String dist, String score, String tier, bool isMe) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isMe ? AppColors.creamSubtle : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isMe ? AppColors.goldMinang : AppColors.sageBorder,
-          width: isMe ? 2 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: rank == 1
-                  ? AppColors.goldSoft
-                  : rank == 2
-                      ? const Color(0xFFB0B7BD)
-                      : rank == 3
-                          ? const Color(0xFFCD7F32)
-                          : AppColors.cream,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '#$rank',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                color: rank <= 3 ? Colors.white : AppColors.ink,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
-                          color: isMe ? AppColors.warningDark : AppColors.ink,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isMe) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppColors.goldMinang,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text('Saya', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ],
-                ),
-                Text('$dest • $dist', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(score, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppColors.forest)),
-              Text('Tier $tier', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}

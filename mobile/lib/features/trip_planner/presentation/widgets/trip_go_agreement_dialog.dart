@@ -10,14 +10,14 @@ const List<Map<String, String>> kTripGoGuidelines = [
         'Perjalanan wisata terstruktur dengan 1 destinasi tunggal per-trip bersama penyelenggara lokal yang telah terverifikasi identitas serta lisensinya.',
   },
   {
-    'title': 'Sistem Pembayaran Rekening Penampung (Escrow)',
+    'title': 'Sistem Pembayaran Rekening Penampung',
     'desc':
-        'Seluruh pembayaran masuk terlebih dahulu ke Rekening Penampung (Escrow) resmi melalui Payment Gateway WISGO, dan baru diteruskan kepada penyelenggara setelah perjalanan terlaksana dengan baik.',
+        'Seluruh pembayaran masuk ke rekening penampung resmi WISGO terlebih dahulu dan baru diteruskan ke penyelenggara setelah perjalanan terlaksana.',
   },
   {
-    'title': 'Transparansi Harga Include & Exclude',
+    'title': 'Transparansi Rincian Fasilitas',
     'desc':
-        'Setiap jadwal Trip Go wajib mencantumkan rincian fasilitas yang sudah termasuk (Include) dan tidak termasuk (Exclude) secara jujur sebelum peserta mendaftar.',
+        'Setiap jadwal Trip Go wajib mencantumkan rincian fasilitas yang sudah termasuk dan tidak termasuk secara jelas sebelum peserta mendaftar.',
   },
   {
     'title': 'Komunikasi Terpusat di Chat In-App WISGO',
@@ -42,7 +42,7 @@ const List<Map<String, String>> kTripGoGuidelines = [
   {
     'title': 'Ketentuan Pembatalan & Pengembalian Dana',
     'desc':
-        'Pengajuan pembatalan atau pengembalian dana (refund) diproses melalui sistem WISGO mengikuti batas waktu yang berlaku sebelum tanggal keberangkatan.',
+        'Pengajuan pembatalan atau pengembalian dana diproses melalui sistem WISGO mengikuti batas waktu sebelum tanggal keberangkatan.',
   },
 ];
 

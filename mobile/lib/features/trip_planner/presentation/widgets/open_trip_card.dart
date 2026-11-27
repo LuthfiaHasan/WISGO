@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../saved/services/destination_review_store.dart';
 import '../../models/open_trip_model.dart';
 import 'destination_panorama_sheet.dart';
 import 'destination_weather_sheet.dart';
 import 'google_maps_meeting_point_sheet.dart';
 import 'open_trip_detail_sheet.dart';
 import 'open_trip_payment_sheet.dart';
+import 'organizer_rating_dialog.dart';
 import 'trip_go_agreement_dialog.dart';
 import 'trip_group_chat_sheet.dart';
 import 'trip_planner_detail_sheet.dart';
@@ -19,6 +21,8 @@ class OpenTripCard extends StatefulWidget {
   final ValueChanged<String>? onTripDeleted;
   final VoidCallback? onOpenDestination360;
   final VoidCallback? onOpenDestinationReviews;
+  final bool isOrganizerView;
+  final VoidCallback? onSimulateAdminApprove;
 
   const OpenTripCard({
     super.key,
@@ -27,6 +31,8 @@ class OpenTripCard extends StatefulWidget {
     this.onTripDeleted,
     this.onOpenDestination360,
     this.onOpenDestinationReviews,
+    this.isOrganizerView = false,
+    this.onSimulateAdminApprove,
   });
 
   @override
@@ -206,16 +212,31 @@ class _OpenTripCardState extends State<OpenTripCard> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: isQuotaFull
-                                  ? AppColors.terracotta
-                                  : AppColors.forest.withValues(alpha: 0.92),
+                              color: widget.isOrganizerView
+                                  ? (trip.verificationStatus ==
+                                          TripVerificationStatus.pendingAdmin
+                                      ? AppColors.warning
+                                      : AppColors.success)
+                                  : (trip.isCurrentUserJoined
+                                      ? AppColors.success
+                                      : (isQuotaFull
+                                          ? AppColors.terracotta
+                                          : AppColors.forest
+                                              .withValues(alpha: 0.92))),
                               borderRadius:
                                   BorderRadius.circular(AppRadius.pill),
                             ),
                             child: Text(
-                              isQuotaFull
-                                  ? 'Penuh'
-                                  : 'Sisa $availableQuota Kursi',
+                              widget.isOrganizerView
+                                  ? (trip.verificationStatus ==
+                                          TripVerificationStatus.pendingAdmin
+                                      ? 'Menunggu Admin'
+                                      : 'Terverifikasi ✓')
+                                  : (trip.isCurrentUserJoined
+                                      ? 'Terdaftar ✓'
+                                      : (isQuotaFull
+                                          ? 'Penuh'
+                                          : 'Sisa $availableQuota Kursi')),
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -609,80 +630,420 @@ class _OpenTripCardState extends State<OpenTripCard> {
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 5. Tombol Aksi Utama: Rencana & Persiapan (Poin 9) + Daftar & Bayar (Poin 4)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 42,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) =>
-                                      TripPlannerDetailSheet(trip: trip),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.fact_check_outlined,
-                                size: 15,
+                    // 5. Tombol Aksi Utama sesuai Role (Penyelenggara vs Peserta Terdaftar vs Wisatawan)
+                    if (widget.isOrganizerView) ...[
+                      if (trip.verificationStatus ==
+                          TripVerificationStatus.pendingAdmin) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.warningBg,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            border: Border.all(
+                              color: AppColors.warning.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.hourglass_top_rounded,
+                                size: 16,
+                                color: AppColors.warningDark,
                               ),
-                              label: const Text(
-                                'Persiapan',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Langkah 4: Pengajuan sedang ditinjau Admin WISGO (Data Diri, KTP, Lisensi/Pengalaman). Setelah disetujui, trip tayang ke publik & Anda bisa masuk Langkah 5 (Atur Rencana).',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppColors.warningDark,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.35,
+                                  ),
                                 ),
                               ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.forest,
-                                side: const BorderSide(
-                                  color: AppColors.sageBorder,
-                                  width: 1.3,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.sm),
-                                ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 42,
+                          child: ElevatedButton.icon(
+                            onPressed: widget.onSimulateAdminApprove,
+                            icon: const Icon(Icons.verified_rounded, size: 16),
+                            label: const Text(
+                              'Simulasi ACC Admin (Uji Coba)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.forest,
+                              foregroundColor: AppColors.cream,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: SizedBox(
-                            height: 42,
-                            child: ElevatedButton.icon(
-                              onPressed:
-                                  isQuotaFull ? null : _handleDaftarAndBayar,
-                              icon: const Icon(Icons.payment_rounded, size: 15),
-                              label: Text(
-                                isQuotaFull ? 'Penuh' : 'Daftar & Bayar',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
+                      ] else ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: SizedBox(
+                                height: 42,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (_) => TripPlannerDetailSheet(
+                                        trip: trip,
+                                        isOrganizerMode: true,
+                                        isJoinedParticipant: true,
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.edit_calendar_rounded,
+                                    size: 15,
+                                  ),
+                                  label: const Text(
+                                    'Atur Rencana & Persiapan',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.forest,
+                                    foregroundColor: AppColors.cream,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.sm),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.forest,
-                                foregroundColor: AppColors.cream,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.sm),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              flex: 2,
+                              child: SizedBox(
+                                height: 42,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (_) =>
+                                          TripGroupChatSheet(trip: trip),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.forum_outlined,
+                                    size: 15,
+                                  ),
+                                  label: const Text(
+                                    'Chat Peserta',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.forest,
+                                    side: const BorderSide(
+                                      color: AppColors.sageBorder,
+                                      width: 1.3,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.sm),
+                                    ),
+                                  ),
                                 ),
                               ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ] else if (trip.isCurrentUserJoined) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: SizedBox(
+                              height: 42,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => TripPlannerDetailSheet(
+                                      trip: trip,
+                                      isOrganizerMode: false,
+                                      isJoinedParticipant: true,
+                                      onReadinessFinalized: widget.onTripUpdated,
+                                    ),
+                                  );
+                                },
+                                icon: Icon(
+                                  trip.isReadinessFinalized
+                                      ? Icons.verified_rounded
+                                      : Icons.fact_check_rounded,
+                                  size: 15,
+                                ),
+                                label: Text(
+                                  trip.isReadinessFinalized
+                                      ? 'Siap Berangkat ✓'
+                                      : 'Lengkapi Persiapan',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.success,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            flex: 2,
+                            child: SizedBox(
+                              height: 42,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) =>
+                                        TripGroupChatSheet(trip: trip),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.forum_outlined,
+                                  size: 15,
+                                ),
+                                label: const Text(
+                                  'Buka Chat',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.forest,
+                                  side: const BorderSide(
+                                    color: AppColors.sageBorder,
+                                    width: 1.3,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (trip.isTripCompleted) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: ElevatedButton.icon(
+                            onPressed: trip.hasReviewedOrganizer
+                                ? null
+                                : () async {
+                                    final messenger =
+                                        ScaffoldMessenger.of(context);
+                                    final ok = await showOrganizerRatingDialog(
+                                      context,
+                                      trip: trip,
+                                    );
+                                    if (ok && mounted) {
+                                      setState(() {});
+                                      widget.onTripUpdated?.call();
+                                      messenger.showSnackBar(
+                                        const SnackBar(
+                                          backgroundColor: AppColors.success,
+                                          content: Text(
+                                            'Terima kasih! Rating & ulasan masuk ke Pencapaian Penyelenggara.',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            icon: Icon(
+                              trip.hasReviewedOrganizer
+                                  ? Icons.check_circle_rounded
+                                  : Icons.star_rounded,
+                              size: 16,
+                            ),
+                            label: Text(
+                              trip.hasReviewedOrganizer
+                                  ? 'Penyelenggara Sudah Diulas ✓'
+                                  : 'Beri Rating & Ulasan Penyelenggara',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.warning,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: AppColors.sage,
+                              disabledForegroundColor: AppColors.success,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ] else if (trip.isReadinessFinalized) ...[
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              setState(() => trip.isTripCompleted = true);
+                              OrganizerRatingStore.instance
+                                  .markOrganizerTripCompleted();
+                              DestinationReviewStore.instance
+                                  .unlockFromCompletedOpenTrip(
+                                      trip.singleDestination);
+                              widget.onTripUpdated?.call();
+                            },
+                            icon: const Icon(Icons.flag_rounded, size: 14),
+                            label: const Text(
+                              'Simulasi Trip Selesai (Uji Rating)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.info,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                           ),
                         ),
                       ],
-                    ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 42,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => TripPlannerDetailSheet(
+                                      trip: trip,
+                                      isOrganizerMode: false,
+                                      isJoinedParticipant: false,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.fact_check_outlined,
+                                  size: 15,
+                                ),
+                                label: const Text(
+                                  'Lihat Rencana',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.forest,
+                                  side: const BorderSide(
+                                    color: AppColors.sageBorder,
+                                    width: 1.3,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: SizedBox(
+                              height: 42,
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    isQuotaFull ? null : _handleDaftarAndBayar,
+                                icon: const Icon(Icons.payment_rounded, size: 15),
+                                label: Text(
+                                  isQuotaFull ? 'Penuh' : 'Daftar & Bayar',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.forest,
+                                  foregroundColor: AppColors.cream,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
