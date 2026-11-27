@@ -108,12 +108,33 @@ class _AuthGuardModal extends StatelessWidget {
               style: AppTypography.bodySmall.copyWith(color: AppColors.muted),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.md),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.sage.withValues(alpha: 0.65),
+                  borderRadius: AppRadius.brPill,
+                  border: Border.all(
+                    color: AppColors.sageBorder.withValues(alpha: 0.7),
+                  ),
+                ),
+                child: Text(
+                  'Tersedia via WhatsApp OTP  •  Google  •  Apple',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.forest,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
 
-            // Tombol Masuk dengan Google
+            // Tombol Masuk / Daftar Akun WISGO (buka halaman Login: WhatsApp, Google & Apple)
             WisgoButton(
-              label: 'Masuk dengan Akun Google',
-              icon: const Icon(Icons.g_mobiledata_rounded, size: 22),
+              label: 'Masuk / Daftar Akun WISGO',
+              icon: const Icon(Icons.login_rounded, size: 19),
               variant: WisgoButtonVariant.primary,
               onPressed: () {
                 Navigator.of(context).pop(true);
