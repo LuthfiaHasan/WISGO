@@ -3153,14 +3153,14 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     _buildTripGoRoleButton(
                       role: TripGoRole.participant,
                       icon: Icons.hiking_rounded,
-                      label: 'Wisatawan (Peserta)',
+                      label: 'Trip Wisatawan',
                       badgeCount: myJoinedTrips.length,
                     ),
                     const SizedBox(width: 4),
                     _buildTripGoRoleButton(
                       role: TripGoRole.organizer,
                       icon: Icons.verified_user_rounded,
-                      label: 'Penyelenggara',
+                      label: 'Open Trip',
                       badgeCount: myOrganizerTrips.length,
                     ),
                   ],
