@@ -2804,8 +2804,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           t.category.toLowerCase().contains(q);
     }).toList();
 
-    return Column(
+    return Stack(
       children: [
+        Column(
+          children: [
         // Top Sticky Header: Bersih, Judul "Trip Go" + Tagline + Panduan
         Container(
           width: double.infinity,
@@ -3061,101 +3063,78 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                   );
                 }),
 
-              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ],
+    ),
 
-              // Tombol Bawah "Open Trip" (Penyelenggara) — seragam dengan Usul Wisata di Beranda
-              InkWell(
-                mouseCursor: SystemMouseCursors.click,
-                onTap: _openOrganizerHubModal,
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgCard,
+        // Floating Action Button "+ Open Trip" (seragam 1:1 dengan "+ Usul Wisata" di Beranda)
+        Positioned(
+          bottom: MediaQuery.paddingOf(context).bottom + 78,
+          right: 16,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.forest.withValues(alpha: 0.24),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Material(
+                  color: AppColors.forest.withValues(alpha: 0.78),
+                  child: InkWell(
+                    mouseCursor: SystemMouseCursors.click,
+                    onTap: _openOrganizerHubModal,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.sageBorder, width: 1.2),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.forest,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.verified_user_rounded,
-                          color: AppColors.cream,
-                          size: 21,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.30),
+                          width: 1.1,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  'Open Trip (Penyelenggara)',
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.ink,
-                                  ),
-                                ),
-                                if (hasApprovedOrganizerTrip || hasPendingOrganizerTrip) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 7,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: hasApprovedOrganizerTrip
-                                          ? AppColors.successBg
-                                          : AppColors.warningBg,
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      hasApprovedOrganizerTrip
-                                          ? 'Aktif (${myOrganizerTrips.length})'
-                                          : 'Menunggu Admin',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: hasApprovedOrganizerTrip
-                                            ? AppColors.success
-                                            : AppColors.warningDark,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.add_rounded,
+                            size: 18,
+                            color: AppColors.cream,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            hasApprovedOrganizerTrip
+                                ? 'Open Trip (${myOrganizerTrips.length})'
+                                : (hasPendingOrganizerTrip
+                                    ? 'Open Trip (Pending)'
+                                    : 'Open Trip'),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.cream,
+                              letterSpacing: 0.1,
                             ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'Ajukan trip baru, cek verifikasi admin & kelola data peserta',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                color: AppColors.muted,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: AppColors.forest,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ],
