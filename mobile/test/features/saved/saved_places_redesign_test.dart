@@ -55,37 +55,37 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Terdekat'), findsOneWidget);
 
-    // 4. Tap 'Detail' on Lembah Harau to open detail modal
+    // 4. Tap 'Detail' on Lembah Harau to navigate directly to DestinationDetailScreen (no pop-up sheet)
     final detailButtonFinder = find.widgetWithText(ElevatedButton, 'Detail').first;
     await tester.ensureVisible(detailButtonFinder);
     await tester.pumpAndSettle();
     await tester.tap(detailButtonFinder);
     await tester.pumpAndSettle();
 
-    // Check if the modal title is visible
-    expect(find.text('DETAIL & TIKET'), findsOneWidget);
+    // Verify we landed directly on clean tabbed full guide screen (no WA Vendor button)
+    expect(find.text('Pesan via WhatsApp Vendor'), findsNothing);
+    expect(find.text('Panduan'), findsOneWidget);
+    expect(find.text('Tarif & Fasilitas'), findsOneWidget);
+    expect(find.text('Kesiapan Medan Lapangan'), findsOneWidget);
 
-    // Sticky Booking Button directs to WhatsApp Vendor
-    expect(find.text('Pesan via WhatsApp Vendor'), findsOneWidget);
-
-    // Facilities section is visible in modal
-    await tester.drag(find.byType(ListView).last, const Offset(0, -350));
+    // Switch to Tarif & Fasilitas tab
+    await tester.tap(find.text('Tarif & Fasilitas'));
     await tester.pumpAndSettle();
-    expect(find.text('LINGKUP FASILITAS KAWASAN WISATA'), findsOneWidget);
+    expect(find.text('Rincian Biaya Resmi'), findsOneWidget);
 
-    // Scroll down to see Reviews & Fees
-    await tester.drag(find.byType(ListView).last, const Offset(0, -450));
+    // Switch to Ulasan tab and verify Tambah Ulasan button works
+    await tester.tap(find.textContaining('Ulasan ('));
     await tester.pumpAndSettle();
+    expect(find.text('Tambah Ulasan'), findsOneWidget);
 
-    // - Verified Reviews (REQUEST 1)
-    expect(find.text('ULASAN WISATAWAN TERVERIFIKASI'), findsOneWidget);
-
-    // Scroll down further to see Fees
-    await tester.drag(find.byType(ListView).last, const Offset(0, -400));
+    await tester.tap(find.text('Tambah Ulasan'));
     await tester.pumpAndSettle();
+    expect(find.text('Bagikan Pengalaman Anda'), findsOneWidget);
 
-    // - Official Perda Fees (REQUEST 1 & 4)
-    expect(find.text('RINCIAN BIAYA RESMI'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, 'Sangat asri dan tarif transparan!');
+    await tester.tap(find.text('Kirim Ulasan'));
+    await tester.pumpAndSettle();
+    expect(find.text('"Sangat asri dan tarif transparan!"'), findsOneWidget);
   });
 
   testWidgets('Usul Wisata modal opens and renders without unbounded layout error', (tester) async {

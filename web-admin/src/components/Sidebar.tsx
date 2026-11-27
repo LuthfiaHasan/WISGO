@@ -144,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ? 'justify-center p-2.5'
                   : 'justify-between px-3 py-2.5 gap-2.5'
                 } ${isActive
-                  ? 'bg-[#F6F3EC] text-[#234B24] font-bold shadow-xs'
+                  ? 'bg-[#F6F3EC] text-[#234B24] font-bold shadow-sm'
                   : 'text-white/80 hover:text-white hover:bg-white/8'
                 }`}
             >
@@ -212,7 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-[#F6F3EC] p-1.5 flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#F6F3EC] p-1.5 flex items-center justify-center shrink-0 shadow-sm">
                 <img
                   src="/assets/synced/logo_icon.png"
                   alt="WISGO"
@@ -329,7 +329,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="fixed inset-0 z-50 lg:hidden"
         >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={onCloseMobile}
             aria-hidden="true"
           />
@@ -338,7 +338,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex flex-col min-h-0 flex-1">
               <div className="p-4 border-b border-white/8 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#F6F3EC] p-1.5 flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#F6F3EC] p-1.5 flex items-center justify-center shrink-0 shadow-sm">
                     <img
                       src="/assets/synced/logo_icon.png"
                       alt="WISGO"

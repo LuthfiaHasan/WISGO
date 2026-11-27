@@ -168,14 +168,18 @@ test('8. Adventurer level calculation uses Indonesian badge names and Jejak WISG
   }
 });
 
-test('9. Heatmap codes unique (PPJ & PDP), Group Rooms valid, and System Benchmark complete', () => {
+test('9. Heatmap codes unique (PPJ & PDP), SOS News & Shunlu POIs valid, and System Benchmark complete', () => {
   const codes = dbSeedMod.SEED_REGENCY_HEATMAP.map((r: { code: string }) => r.code);
   assert.equal(new Set(codes).size, codes.length, 'Regency heatmap codes must be unique');
   assert.ok(codes.includes('PPJ') && codes.includes('PDP'));
 
-  assert.ok(destMod.INITIAL_GROUP_ROOMS['WISGO-MINANG-88'], 'WISGO-MINANG-88 room must exist');
-  assert.ok(destMod.INITIAL_GROUP_ROOMS['WISGO-HARAU-07'], 'WISGO-HARAU-07 room must exist');
-  assert.ok(destMod.INITIAL_GROUP_ROOMS['WISGO-MANDEH-12'], 'WISGO-MANDEH-12 room must exist');
+  const sosNews = repoMod.SosNewsRepo.getAll();
+  assert.ok(sosNews.length >= 3, 'Should seed 3 official Sumbar SOS news items');
+  assert.ok(sosNews.some((n: { title: string }) => n.title.includes('Marapi')));
+
+  const shunluPois = repoMod.ShunluPoisRepo.getAll();
+  assert.ok(shunluPois.length >= 8, 'Should seed 8 Shunlu corridor POIs');
+  assert.ok(shunluPois.some((p: { category: string }) => p.category === 'RM Padang'));
 
   const bm = destMod.INITIAL_SYSTEM_BENCHMARK;
   assert.equal(typeof bm.go_engine_latency_ms, 'number');

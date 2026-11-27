@@ -146,7 +146,7 @@ export const TouristReviewsSubTab: React.FC<TouristReviewsSubTabProps> = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <span className="text-[11px] font-extrabold text-[#234B24] uppercase tracking-wider">
             Total Laporan Lapangan
           </span>
@@ -154,7 +154,7 @@ export const TouristReviewsSubTab: React.FC<TouristReviewsSubTabProps> = ({
           <p className="text-[11px] text-[#4A5248] mt-0.5">Teks manual bebas &amp; tag kondisi riil</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <span className="text-[11px] font-extrabold text-[#0D9488] uppercase tracking-wider">
             Laporan Tayang Publik
           </span>
@@ -164,7 +164,7 @@ export const TouristReviewsSubTab: React.FC<TouristReviewsSubTabProps> = ({
           </p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <span className="text-[11px] font-extrabold text-[#B45309] uppercase tracking-wider">
             Ditandai Info Penting
           </span>
@@ -175,7 +175,7 @@ export const TouristReviewsSubTab: React.FC<TouristReviewsSubTabProps> = ({
           <p className="text-[11px] text-[#92400E] mt-0.5">Kondisi jalur/cuaca kritis di lokasi</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#234B24]/10 shadow-sm">
           <span className="text-[11px] font-extrabold text-[#DC2626] uppercase tracking-wider">
             Disembunyikan (Takedown)
           </span>
@@ -209,7 +209,7 @@ export const TouristReviewsSubTab: React.FC<TouristReviewsSubTabProps> = ({
             <button
               type="button"
               onClick={() => setIsSettingOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-[#F6F3EC] text-[#234B24] border border-[#234B24]/20 shadow-xs"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-[#F6F3EC] text-[#234B24] border border-[#234B24]/20 shadow-sm"
             >
               Ubah Batas Karakter
             </button>

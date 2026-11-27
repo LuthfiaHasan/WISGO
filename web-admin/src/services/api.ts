@@ -14,7 +14,6 @@ import {
   EmergencyContact,
   GaodeBehaviorRanking,
   GaodeWeightConfig,
-  GroupRoomPreview,
   HazardAlert,
   HazardSeverity,
   MinangPhrase,
@@ -30,7 +29,7 @@ import {
   SosStatus,
   SystemBenchmarkMetrics,
 } from '../types/contract';
-import { INITIAL_GROUP_ROOMS, toDestinationSlug } from '../data/mockDestinations';
+import { toDestinationSlug } from '../data/mockDestinations';
 import {
   ChallengesRepo,
   CulturalEventsRepo,
@@ -53,7 +52,6 @@ import {
 
 const TOKEN_STORAGE_KEY = 'wisgo_admin_jwt';
 const USER_STORAGE_KEY = 'wisgo_admin_user';
-const GROUPS_STORAGE_KEY = 'wisgo_v3_group_rooms';
 
 export const DEFAULT_GAODE_CONFIG: GaodeWeightConfig = DEFAULT_GAODE_WEIGHTS;
 
@@ -723,59 +721,7 @@ export async function fetchRegencyHeatmap(): Promise<RegencyHeatmapData[]> {
 }
 
 // ============================================================================
-// 6. GROUP INVITE PUBLIK (/join)
-// ============================================================================
-export async function fetchGroupRoom(groupCode: string): Promise<GroupRoomPreview | null> {
-  const code = groupCode.trim().toUpperCase();
-  try {
-    const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
-    const groups: Record<string, GroupRoomPreview> = raw
-      ? { ...INITIAL_GROUP_ROOMS, ...JSON.parse(raw) }
-      : { ...INITIAL_GROUP_ROOMS };
-    if (groups[code]) return groups[code];
-    return null;
-  } catch {
-    return INITIAL_GROUP_ROOMS[code] || null;
-  }
-}
-
-export async function voteGroupItem(
-  groupCode: string,
-  itemId: string
-): Promise<GroupRoomPreview | null> {
-  const code = groupCode.trim().toUpperCase();
-  const current = await fetchGroupRoom(code);
-  if (!current) return null;
-
-  const updatedVoting = current.voting_items.map((item) =>
-    item.id === itemId ? { ...item, votes_count: item.votes_count + 1 } : item
-  );
-  const maxVotes = Math.max(...updatedVoting.map((v) => v.votes_count));
-  const normalizedVoting = updatedVoting.map((v) => ({
-    ...v,
-    is_winner: v.votes_count === maxVotes && maxVotes > 0,
-  }));
-
-  const updatedGroup: GroupRoomPreview = {
-    ...current,
-    voting_items: normalizedVoting,
-  };
-
-  try {
-    const raw = localStorage.getItem(GROUPS_STORAGE_KEY);
-    const groups: Record<string, GroupRoomPreview> = raw
-      ? { ...INITIAL_GROUP_ROOMS, ...JSON.parse(raw) }
-      : { ...INITIAL_GROUP_ROOMS };
-    groups[code] = updatedGroup;
-    localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
-  } catch {
-    // ignore
-  }
-  return updatedGroup;
-}
-
-// ============================================================================
-// 7. SYSTEM HEALTH & BENCHMARK (Komplet Nol Undefined)
+// 6. SYSTEM HEALTH & BENCHMARK (Komplet Nol Undefined)
 // ============================================================================
 export async function fetchSystemBenchmark(): Promise<SystemBenchmarkMetrics> {
   return SystemBenchmarkRepo.get();

@@ -40,18 +40,54 @@ class ActivityTimelineCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon Box
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: activity.iconColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: activity.iconColor.withValues(alpha: 0.25),
-                    ),
+                // Thumbnail Foto Destinasi Asli + Badge Ikon Kecil
+                SizedBox(
+                  width: 58,
+                  height: 58,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset(
+                          activity.resolvedImageAsset,
+                          width: 58,
+                          height: 58,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: activity.iconColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: activity.iconColor.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Icon(activity.icon, color: activity.iconColor, size: 22),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: -3,
+                        bottom: -3,
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.warmBorder),
+                          ),
+                          child: Icon(
+                            activity.icon,
+                            color: activity.iconColor,
+                            size: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Icon(activity.icon, color: activity.iconColor, size: 22),
                 ),
                 const SizedBox(width: 12),
 

@@ -419,7 +419,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
               </span>
             </div>
             <p className="text-xs text-[#E4E9DA] mt-0.5 leading-relaxed">
-              Sistem pembayaran Escrow di dalam aplikasi <strong>HANYA berlaku untuk Trip Go</strong> (1 destinasi tunggal per perjalanan dengan kategori otomatis). Mitra UMKM biasa menggunakan <strong>Direct P2P WhatsApp (0% komisi)</strong>.
+              Sistem pembayaran Escrow di dalam aplikasi <strong>HANYA berlaku untuk Trip Go</strong> (1 destinasi tunggal per perjalanan dengan kategori otomatis &amp; <strong>Grup Chat In-App 100% tanpa WhatsApp</strong>). Mitra UMKM biasa menggunakan <strong>Direct P2P WhatsApp (0% komisi)</strong>.
             </p>
           </div>
         </div>
@@ -540,7 +540,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
               <button
                 type="button"
                 onClick={handleOpenCreateTrip}
-                className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition"
+                className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition"
               >
                 <Plus className="w-4 h-4 text-[#F26B4B]" />
                 <span>Buat Trip Go Baru</span>
@@ -641,7 +641,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
 
                     {/* Ketua & Kuota */}
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 rounded-xl bg-white border border-[#234B24]/8 shadow-2xs">
+                      <div className="p-2.5 rounded-xl bg-white border border-[#234B24]/8 shadow-sm">
                         <span className="text-[10px] font-bold text-[#767676] block">
                           Ketua Trip Go
                         </span>
@@ -649,7 +649,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                           {trip.trip_leader_name}
                         </strong>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-white border border-[#234B24]/8 shadow-2xs">
+                      <div className="p-2.5 rounded-xl bg-white border border-[#234B24]/8 shadow-sm">
                         <span className="text-[10px] font-bold text-[#767676] block">Sisa Kuota</span>
                         <strong className="text-[#1E9E5A] block mt-0.5">
                           {trip.available_seats} Kursi Tersedia
@@ -720,7 +720,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                             onClick={() =>
                               handleUpdateTripEscrow(trip.id, 'DICAIRKAN_KE_PENYELENGGARA')
                             }
-                            className="flex-1 py-1 px-2 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white text-[10px] font-bold transition text-center shadow-2xs"
+                            className="flex-1 py-1 px-2 rounded-lg bg-[#234B24] hover:bg-[#1B3B1C] text-white text-[10px] font-bold transition text-center shadow-sm"
                           >
                             Cairkan Escrow
                           </button>
@@ -758,7 +758,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                     <button
                       type="button"
                       onClick={() => setSelectedPlannerTrip(trip)}
-                      className="w-full min-h-[42px] px-4 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3B1C] transition duration-200 flex items-center justify-center gap-2 shadow-xs"
+                      className="w-full min-h-[42px] px-4 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3B1C] transition duration-200 flex items-center justify-center gap-2 shadow-sm"
                     >
                       <ListChecks className="w-4 h-4 text-[#F26B4B]" />
                       <span>Detail Trip Planner &amp; Chat ({chatCount})</span>
@@ -798,7 +798,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                   <tr className="bg-[#F6F3EC] border-b border-[#CFD8BE] text-[#4A5248] font-extrabold uppercase tracking-wider">
                     <th className="py-3.5 px-4">Nama Penyelenggara</th>
                     <th className="py-3.5 px-4">Komunitas / Asosiasi Pokdarwis</th>
-                    <th className="py-3.5 px-4">Nomor WhatsApp</th>
+                    <th className="py-3.5 px-4">Kontak Darurat Host (Internal)</th>
                     <th className="py-3.5 px-4 text-center">Dokumen Legalitas</th>
                     <th className="py-3.5 px-4 text-center">Status Verifikasi</th>
                     <th className="py-3.5 px-4 text-center min-w-[160px]">Tindakan Admin</th>
@@ -871,7 +871,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                             <button
                               type="button"
                               onClick={() => handleUpdateOrganizerStatus(org.id, 'Terverifikasi')}
-                              className="px-3 py-1 rounded-lg bg-[#1E9E5A] hover:bg-[#166534] text-white font-bold text-xs transition shadow-2xs"
+                              className="px-3 py-1 rounded-lg bg-[#1E9E5A] hover:bg-[#166534] text-white font-bold text-xs transition shadow-sm"
                             >
                               Setujui
                             </button>
@@ -1054,7 +1054,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
               </label>
               <button
                 type="submit"
-                className="flex-1 min-h-[42px] px-4 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C] transition flex items-center justify-center gap-1.5 shadow-xs"
+                className="flex-1 min-h-[42px] px-4 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C] transition flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Plus className="w-4 h-4" />
                 <span>Tambah Item</span>
@@ -1134,7 +1134,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
           <div className="bg-white rounded-3xl border border-[#CFD8BE] shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
             <div className="p-5 bg-[#234B24] text-[#F6F3EC] flex items-center justify-between">
@@ -1271,7 +1271,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#1B1F1A] mb-1">WhatsApp Host *</label>
+                  <label className="block font-bold text-[#1B1F1A] mb-1">Kontak Darurat Host (Internal Admin · Non-Publik)</label>
                   <input
                     type="tel"
                     required
@@ -1372,7 +1372,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="min-h-[42px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold inline-flex items-center gap-2 shadow-xs"
+                  className="min-h-[42px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold inline-flex items-center gap-2 shadow-sm"
                 >
                   <Save className="w-4 h-4 text-[#F26B4B]" />
                   <span>{editingTrip ? 'Simpan Perubahan' : 'Terbitkan Trip Go'}</span>
@@ -1387,7 +1387,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
       {/* MODAL DETAIL TRIP PLANNER & FORUM CHAT IN-APP (5 FITUR FE-2)         */}
       {/* ==================================================================== */}
       {selectedPlannerTrip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl border border-[#CFD8BE] shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
             <div className="p-5 border-b border-[#234B24]/10 bg-[#F6F3EC] flex items-center justify-between">
               <div>
@@ -1667,18 +1667,18 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
 
       {/* MODAL 7 POIN VERIFIKASI PENYELENGGARA */}
       {selectedOrganizerFor7Points && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl border border-[#CFD8BE] shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
             <div className="p-5 border-b border-[#234B24]/10 bg-[#F6F3EC] flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-[#166534] px-2 py-0.5 rounded bg-emerald-100 border border-emerald-300">
-                  7 Poin Legalitas Penyelenggara Trip Go
+                  5 Info Publik + 2 Validasi KYC Internal (e-KTP &amp; Wajah)
                 </span>
                 <h3 className="text-base font-extrabold text-[#1B1F1A] mt-1">
                   {selectedOrganizerFor7Points.name}
                 </h3>
                 <p className="text-xs text-[#4A5248]">
-                  {selectedOrganizerFor7Points.agency_name} • WhatsApp: +
+                  {selectedOrganizerFor7Points.agency_name} • Kontak Internal: +
                   {selectedOrganizerFor7Points.phone_number}
                 </p>
               </div>

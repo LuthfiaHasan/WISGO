@@ -29,6 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isButtonPressed = false;
   bool _isGoogleLoading = false;
   bool _isGoogleButtonPressed = false;
+  bool _isAppleLoading = false;
+  bool _isAppleButtonPressed = false;
 
   @override
   void initState() {
@@ -108,8 +110,206 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleGoogleSignIn() {
-    if (_isGoogleLoading) return;
+    if (_isGoogleLoading || _isAppleLoading) return;
     _showGoogleAccountPickerSheet();
+  }
+
+  void _handleAppleSignIn() {
+    if (_isAppleLoading || _isGoogleLoading) return;
+    _showAppleAccountPickerSheet();
+  }
+
+  void _showAppleAccountPickerSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 26),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.warmBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1D1D1F),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.apple,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Masuk dengan Apple ID',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Lanjutkan ke WISGO secara aman & privat',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.muted),
+                      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Divider(height: 1, color: AppColors.warmBorder),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.bgCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.warmBorder),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildGoogleAccountTile(
+                        name: 'Bagikan Email Apple ID',
+                        email: 'wisatawan.sumbar@icloud.com',
+                        initialLetter: 'A',
+                        avatarColor: AppColors.ink,
+                        onTap: () {
+                          Navigator.of(sheetContext).pop();
+                          _performAppleSignInProcess(
+                            userName: 'Penjelajah Apple',
+                            userEmail: 'wisatawan.sumbar@icloud.com',
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, indent: 64, color: AppColors.warmBorder),
+                      _buildGoogleAccountTile(
+                        name: 'Sembunyikan Email Saya',
+                        email: 'private.relay@privaterelay.appleid.com',
+                        initialLetter: 'P',
+                        avatarColor: AppColors.forest,
+                        onTap: () {
+                          Navigator.of(sheetContext).pop();
+                          _performAppleSignInProcess(
+                            userName: 'Wisatawan WISGO',
+                            userEmail: 'private.relay@privaterelay.appleid.com',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Apple ID melindungi privasi Anda dan memungkinkan Anda masuk ke WISGO tanpa membagikan kata sandi.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.muted,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _performAppleSignInProcess({
+    required String userName,
+    required String userEmail,
+  }) {
+    setState(() => _isAppleLoading = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.ink,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Masuk dengan Apple ID ($userName)…',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
+
+    Future.delayed(const Duration(milliseconds: 750), () {
+      if (!mounted) return;
+      setState(() => _isAppleLoading = false);
+      AuthSession.instance.setAuthenticatedUser(
+        name: userName,
+        phone: '+62 812-7578-953',
+        email: userEmail,
+        isProfileComplete: true,
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => const SavedPlacesScreen(isGuest: false),
+        ),
+        (route) => false,
+      );
+    });
   }
 
   void _showGoogleAccountPickerSheet() {
@@ -890,6 +1090,73 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.forest,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // Tombol Masuk dengan Apple (Wajib Setara dengan Login Google)
+                          GestureDetector(
+                            onTapDown: (_) =>
+                                setState(() => _isAppleButtonPressed = true),
+                            onTapUp: (_) =>
+                                setState(() => _isAppleButtonPressed = false),
+                            onTapCancel: () =>
+                                setState(() => _isAppleButtonPressed = false),
+                            child: AnimatedScale(
+                              scale: _isAppleButtonPressed ? 0.96 : 1.0,
+                              duration: const Duration(milliseconds: 120),
+                              curve: Curves.easeInOut,
+                              child: SizedBox(
+                                height: 52,
+                                child: ElevatedButton(
+                                  onPressed: _handleAppleSignIn,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1D1D1F),
+                                    foregroundColor: Colors.white,
+                                    elevation: 1,
+                                    shadowColor: const Color(0xFF1D1D1F)
+                                        .withValues(alpha: 0.22),
+                                    side: const BorderSide(
+                                      color: Color(0xFF3A3A3C),
+                                      width: 0.9,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                  ),
+                                  child: _isAppleLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.apple,
+                                              size: 22,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              'Lanjutkan dengan Apple',
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
                                                 letterSpacing: 0.2,
                                               ),
                                             ),

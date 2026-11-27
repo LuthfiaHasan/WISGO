@@ -615,7 +615,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-[#234B24]/15 hover:bg-[#F6F3EC] text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition duration-200 shadow-2xs"
+            className="min-h-[40px] px-3.5 py-2 rounded-xl bg-white border border-[#234B24]/15 hover:bg-[#F6F3EC] text-[#1B1F1A] font-bold text-xs flex items-center gap-2 transition duration-200 shadow-sm"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 text-[#234B24] ${loading ? 'animate-spin' : ''}`}
@@ -628,7 +628,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             <button
               type="button"
               onClick={handleOpenNewModal}
-              className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-xs transition duration-200"
+              className="min-h-[40px] px-4 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-[#F6F3EC] font-bold text-xs flex items-center gap-2 shadow-sm transition duration-200"
             >
               <Plus className="w-4 h-4 text-[#F26B4B]" aria-hidden="true" />
               <span>Tambah Destinasi</span>
@@ -639,7 +639,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
 
       <nav
         aria-label="Sub-tab Destinasi"
-        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-2xs"
+        className="flex overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-2 p-1.5 bg-white rounded-xl border border-[#234B24]/10 shadow-sm"
       >
         {(
           [
@@ -656,7 +656,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
             type="button"
             onClick={() => setActiveSubTab(tab.key)}
             className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeSubTab === tab.key
-                ? 'bg-[#234B24] text-white shadow-xs'
+                ? 'bg-[#234B24] text-white shadow-sm'
                 : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
               }`}
           >
@@ -1114,7 +1114,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(dest)}
-                            className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-xs inline-flex items-center gap-1.5 transition shadow-xs"
+                            className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white font-bold text-xs inline-flex items-center gap-1.5 transition shadow-sm"
                           >
                             <Edit3 className="w-3.5 h-3.5 text-[#F26B4B]" aria-hidden="true" />
                             <span>Edit</span>
@@ -1889,7 +1889,7 @@ export const DestinationsPage: React.FC<DestinationsPageProps> = ({
                         </div>
                       </div>
 
-                      <div className="bg-[#F6F3EC] rounded-3xl border border-[#CFD8BE] overflow-hidden shadow-xs">
+                      <div className="bg-[#F6F3EC] rounded-3xl border border-[#CFD8BE] overflow-hidden shadow-sm">
                         <div className="relative h-40 bg-[#234B24]/10">
                           {editingDest.cover_image ? (
                             <img

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/wisgo_destination_image.dart';
 import '../../data/models/fair_price_tariff_model.dart';
 
 /// Item 7: Komponen Tabel Fair-Price Barometer Vertikal + Kalkulator Simulasi Biaya Resmi
@@ -72,11 +74,13 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
                   fit: StackFit.expand,
                   children: [
                     Container(color: AppColors.forest),
-                    Image.network(
-                      dest.imageUrl,
+                    WisgoDestinationImage(
+                      source: dest.imageUrl,
+                      destinationId: dest.id,
+                      destinationTitle: dest.title,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: AppColors.forest),
+                      cacheWidth: 800,
+                      fallback: const ColoredBox(color: AppColors.forest),
                     ),
                     Container(
                       decoration: BoxDecoration(
@@ -416,110 +420,367 @@ class _FairPriceBarometerTableState extends State<FairPriceBarometerTable> {
   }
 
   void _showReportSheet(BuildContext context, SavedDestinationModel dest) {
+    final amountCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+    String selectedType = 'Tiket Masuk';
+    String? errorMsg;
+
+    const tariffTypes = [
+      'Tiket Masuk',
+      'Parkir Motor',
+      'Parkir Mobil',
+      'Pemandu / Fasilitas',
+      'Lainnya',
+    ];
+
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      backgroundColor: AppColors.cream,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.sageBorder,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Laporan Ketidaksesuaian Tarif Resmi',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${dest.title} (${dest.region})',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.muted,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.cream,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.warmBorder),
-                  ),
-                  child: const Text(
-                    'Laporan Anda tercatat beserta titik lokasi GPS dan acuan Perda terkait untuk ditindaklanjuti oleh petugas pengawasan setempat.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.45,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(sheetContext).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: AppColors.ink,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+        return StatefulBuilder(
+          builder: (modalCtx, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(modalCtx).bottom,
+              ),
+              child: SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppColors.warmBorder,
+                            borderRadius: BorderRadius.circular(99),
                           ),
-                          content: const Text(
-                            'Laporan tarif berhasil dikirim ke pos pengawasan.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.cream,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Laporan Ketidaksesuaian Tarif Resmi',
+                              style: TextStyle(
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(sheetContext).pop(),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              size: 20,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '${dest.title} (${dest.region})',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 1. Pilih jenis tarif yang bermasalah
+                      const Text(
+                        'Jenis Tarif yang Dilaporkan',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 7,
+                        children: tariffTypes.map((type) {
+                          final active = selectedType == type;
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () =>
+                                  setModalState(() => selectedType = type),
+                              borderRadius: BorderRadius.circular(999),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: active
+                                      ? AppColors.sage.withValues(alpha: 0.9)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: active
+                                        ? AppColors.brush.withValues(alpha: 0.55)
+                                        : AppColors.warmBorder,
+                                    width: active ? 1.2 : 1.0,
+                                  ),
+                                ),
+                                child: Text(
+                                  type,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: active
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    color: active
+                                        ? AppColors.forest
+                                        : AppColors.ink,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // 2. Input Nominal yang Diminta di Lokasi
+                      const Text(
+                        'Nominal yang Diminta di Lokasi (Opsional)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: amountCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(9),
+                        ],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixText: 'Rp ',
+                          prefixStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.forest,
+                          ),
+                          hintText: 'Contoh: 25000',
+                          hintStyle: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.muted.withValues(alpha: 0.6),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide:
+                                const BorderSide(color: AppColors.warmBorder),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide:
+                                const BorderSide(color: AppColors.warmBorder),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.brush,
+                              width: 1.5,
                             ),
                           ),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.forest,
-                      foregroundColor: AppColors.cream,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    child: const Text(
-                      'Kirim Laporan Sekarang',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(height: 14),
+
+                      // 3. Input Keterangan / Kronologi Laporan (Bisa Diketikan Langsung)
+                      const Text(
+                        'Keterangan / Detail Kejadian',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: noteCtrl,
+                        minLines: 3,
+                        maxLines: 5,
+                        textCapitalization: TextCapitalization.sentences,
+                        onChanged: (_) {
+                          if (errorMsg != null) {
+                            setModalState(() => errorMsg = null);
+                          }
+                        },
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.45,
+                          color: AppColors.ink,
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText:
+                              'Tuliskan ketidaksesuaian tarif yang dialami (misal: diminta parkir Rp 20.000 tanpa karcis resmi)...',
+                          hintStyle: TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.muted.withValues(alpha: 0.65),
+                          ),
+                          contentPadding: const EdgeInsets.all(14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide:
+                                const BorderSide(color: AppColors.warmBorder),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: errorMsg != null
+                                  ? AppColors.danger
+                                  : AppColors.warmBorder,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.brush,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (errorMsg != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          errorMsg!,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.danger,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.my_location_rounded,
+                            size: 14,
+                            color: AppColors.brush,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Titik GPS & acuan ${dest.perdaRef} otomatis terlampir.',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.muted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Tombol Pil Kirim Laporan
+                      Container(
+                        width: double.infinity,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          gradient: const LinearGradient(
+                            colors: [AppColors.brush, AppColors.forest],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.forest.withValues(alpha: 0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(999),
+                            onTap: () {
+                              final note = noteCtrl.text.trim();
+                              if (note.isEmpty) {
+                                setModalState(() {
+                                  errorMsg =
+                                      'Mohon tuliskan keterangan ketidaksesuaian tarif terlebih dahulu.';
+                                });
+                                return;
+                              }
+                              final rawAmt = amountCtrl.text.trim();
+                              final amtSuffix =
+                                  rawAmt.isNotEmpty ? ' (Rp $rawAmt)' : '';
+                              Navigator.of(sheetContext).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: AppColors.forest,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  content: Text(
+                                    'Laporan $selectedType$amtSuffix berhasil dikirim ke pos pengawasan.',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.cream,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Center(
+                              child: Text(
+                                'Kirim Laporan Sekarang',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.cream,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

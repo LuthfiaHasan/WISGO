@@ -38,7 +38,6 @@ import { ChallengePage } from './pages/ChallengePage';
 import { CommandCenterPage } from './pages/CommandCenterPage';
 import { PartnersPage } from './pages/PartnersPage';
 import { PublicSmartQRView } from './pages/PublicSmartQRView';
-import { PublicGroupInviteView } from './pages/PublicGroupInviteView';
 import { PublicLandingPage } from './pages/PublicLandingPage';
 import { SmartQRPlacardModal } from './components/SmartQRPlacardModal';
 import { ExecutiveAnalyticsPage } from './pages/ExecutiveAnalyticsPage';
@@ -67,11 +66,10 @@ export const App: React.FC = () => {
   );
   const [tripGoCount, setTripGoCount] = useState<number>(() => OpenTripsRepo.getAll().length);
 
-  const [publicView, setPublicView] = useState<'landing' | 'login' | 'qr' | 'group' | null>(() => {
+  const [publicView, setPublicView] = useState<'landing' | 'login' | 'qr' | null>(() => {
     const path = window.location.pathname;
     const hash = window.location.hash;
     if (path.includes('/qr/') || hash.includes('/qr/')) return 'qr';
-    if (path.includes('/join') || hash.includes('/join')) return 'group';
     if (path.includes('/login') || hash.includes('/login')) return 'login';
     if (path.includes('/admin') || hash.includes('/admin')) return null;
     const stored = getStoredAdminSession();
@@ -79,10 +77,10 @@ export const App: React.FC = () => {
   });
   const [publicPreviewDest, setPublicPreviewDest] = useState<Destination | null>(null);
 
-  // Cross-Navigation antara Studio Panorama 360° / Denah 2D & Direktori Mitra UMKM
+  // Cross-Navigation antara Studio Panorama 360° & Direktori Mitra UMKM
   const [studioNavTarget, setStudioNavTarget] = useState<{
     destId?: string;
-    tab?: 'panorama' | 'denah';
+    tab?: 'panorama';
   } | null>(null);
   const [partnerNavTargetId, setPartnerNavTargetId] = useState<string | null>(null);
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'intel_heatmap' | 'system_benchmark'>(
@@ -149,8 +147,6 @@ export const App: React.FC = () => {
       const match = destinations.find((d) => d.slug === slug || d.id === slug);
       setPublicPreviewDest(match || destinations[0]);
       setPublicView('qr');
-    } else if (path.includes('/join') || hash.includes('/join')) {
-      setPublicView('group');
     } else if (path.includes('/login') || hash.includes('/login')) {
       setPublicView('login');
     }
@@ -196,16 +192,11 @@ export const App: React.FC = () => {
 
   const handleNavigateToStudio360 = (
     destId: string,
-    tab: 'panorama' | 'denah' = 'denah'
+    tab: 'panorama' = 'panorama'
   ) => {
     setStudioNavTarget({ destId, tab });
     setActiveMenu('cms_360');
-    showToast(
-      tab === 'denah'
-        ? 'Membuka Editor Denah Kawasan 2D untuk destinasi terkait.'
-        : 'Membuka Panorama 360° destinasi terkait.',
-      'info'
-    );
+    showToast('Membuka Panorama 360° destinasi terkait.', 'info');
   };
 
   const handleNavigateToPartner = (partnerId?: string) => {
@@ -240,7 +231,6 @@ export const App: React.FC = () => {
           if (dest) setPublicPreviewDest(dest);
           setPublicView('qr');
         }}
-        onNavigateToJoin={() => setPublicView('group')}
       />
     );
   }
@@ -251,16 +241,6 @@ export const App: React.FC = () => {
       <PublicSmartQRView
         destination={previewTarget}
         allDestinations={destinations}
-        onBackToAdmin={() => setPublicView(session ? null : 'landing')}
-        showToast={showToast}
-      />
-    );
-  }
-
-  if (publicView === 'group') {
-    return (
-      <PublicGroupInviteView
-        groupCode="WISGO-MINANG-88"
         onBackToAdmin={() => setPublicView(session ? null : 'landing')}
         showToast={showToast}
       />

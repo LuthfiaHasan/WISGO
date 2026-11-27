@@ -55,6 +55,12 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
+/* Prevent parent Tailwind space-y-* from shifting fixed full-screen modal overlays */
+.fixed.inset-0 {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
 /* Native <dialog> modal scroll containment (dialog guide) */
 dialog:modal {
   overscroll-behavior: contain;
@@ -145,7 +151,7 @@ dialog::backdrop {
   min-inline-size: 980px;
   --label-2: "Wilayah & Kategori";
   --label-3: "4 Statistik Keputusan";
-  --label-4: "5 Indikator Medan";
+  --label-4: "4 Indikator Medan";
   --label-5: "Standar Tarif Perda";
   --label-6: "Edukasi & Adat";
   --label-7: "Tindakan";

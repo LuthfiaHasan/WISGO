@@ -51,6 +51,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.byType(LocationOnboardingScreen), findsOneWidget);
+    // 6. Verify 'Lewati' button exists on LocationOnboardingScreen and skips to Beranda
+    expect(find.text('Lewati'), findsOneWidget);
+    await tester.tap(find.text('Lewati'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.byType(SavedPlacesScreen), findsOneWidget);
   });
 
   testWidgets('SplashScreen Lewati button navigates directly to SavedPlacesScreen as Guest without login', (tester) async {

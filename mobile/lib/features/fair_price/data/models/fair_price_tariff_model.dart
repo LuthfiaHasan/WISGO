@@ -184,7 +184,7 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
       ),
       UserReview(
         author: 'Nurul Aisyah',
-        rating: 4.8,
+        rating: 5.0,
         date: '1 minggu lalu',
         comment:
             'Warung UMKM dekat pos 1 menyajikan goreng pisang dan kopi hangat dengan harga wajar tanpa getok.',
@@ -195,7 +195,7 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
       ),
       UserReview(
         author: 'Fajar Pratama',
-        rating: 4.7,
+        rating: 4.0,
         date: '2 minggu lalu',
         comment:
             'Tersedia toilet dan bilas air bersih setelah bermain air. Sangat membantu melihat denah lokasi sebelum naik.',
@@ -343,7 +343,7 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
       ),
       UserReview(
         author: 'Maya Sari',
-        rating: 4.9,
+        rating: 5.0,
         date: '4 hari lalu',
         comment:
             'Di puncak ada warung UMKM jual es kelapa muda dan pisang bakar keju. Tempat duduk gratis jika memesan minuman.',
@@ -479,7 +479,7 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
       ),
       UserReview(
         author: 'Siti Aminah',
-        rating: 4.9,
+        rating: 5.0,
         date: '3 hari lalu',
         comment:
             'Harga makanan di warung warga sangat terjangkau, ada galamai asli Harau. Parkir mobil Rp 5.000 diberi karcis resmi.',
@@ -1296,7 +1296,7 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
       ),
       UserReview(
         author: 'Rina Marlina',
-        rating: 4.8,
+        rating: 4.0,
         date: '1 minggu lalu',
         comment:
             'Sangat edukatif untuk keluarga. Karcis masuk Rp 15.000 sudah termasuk asuransi Jasa Raharja resmi.',
@@ -1440,7 +1440,7 @@ const List<SavedDestinationModel> kAllSumbarDestinations = [
       ),
       UserReview(
         author: 'Dewi Anggraini',
-        rating: 4.7,
+        rating: 4.0,
         date: '5 hari lalu',
         comment:
             'Menuruni Kelok 44 sangat berkesan. Parkir di gardu pandang kelok 37 resmi Rp 3.000 dijaga warga ramah.',

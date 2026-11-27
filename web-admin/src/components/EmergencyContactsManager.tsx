@@ -152,7 +152,7 @@ export const EmergencyContactsManager: React.FC<EmergencyContactsManagerProps> =
 
   return (
     <div className="space-y-5">
-      <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl p-5 border border-[#234B24]/10 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-extrabold text-[#1B1F1A] flex items-center gap-2">
