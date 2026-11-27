@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/open_trip_model.dart';
+import '../../utils/organizer_media_helper.dart';
 
 /// Form Buat Open Trip Baru
 /// Memenuhi Persyaratan:
@@ -29,12 +31,12 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
     'Lembah Harau & Sarasah Bunta',
     'Jam Gadang Bukittinggi',
     'Istano Basa Pagaruyung',
-    'Ekowisata Air Terjun Nyarai (Hidden Gem)',
+    'Ekowisata Air Terjun Nyarai',
     'Kawasan Bahari Mandeh',
-    'Jembatan Akar Bayang (Hidden Gem)',
+    'Jembatan Akar Bayang',
     'Desa Wisata Nagari Tuo Pariangan',
-    'Masjid Raya Sumatera Barat (Religi)',
-    'Los Lambuang Nasi Kapau Pasar Ateh (Kuliner)',
+    'Masjid Raya Sumatera Barat',
+    'Los Lambuang Nasi Kapau Pasar Ateh',
     'Danau Singkarak & Kuliner Ikan Bilih',
   ];
 
@@ -42,10 +44,10 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
   late String _autoDeterminedCategory;
 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController(text: '125000');
-  final TextEditingController _quotaMaxController = TextEditingController(text: '8');
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _quotaMaxController = TextEditingController();
 
-  // Titik Kumpul Otomatis Terintegrasi Google Maps (tanpa ketik manual)
+  // Titik Kumpul Terintegrasi Google Maps
   static const Map<String, Map<String, dynamic>> _meetingPointsByDestination = {
     'Lembah Harau & Sarasah Bunta': {
       'name': 'Rest Area Simpang Harau',
@@ -54,7 +56,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       'lng': 100.6721,
     },
     'Jam Gadang Bukittinggi': {
-      'name': 'Pelataran Jam Gadang (Gerbang Utama)',
+      'name': 'Pelataran Jam Gadang',
       'address': 'Jl. Raya Pasar Ateh, Guguk Panjang, Kota Bukittinggi',
       'lat': -0.3052,
       'lng': 100.3692,
@@ -65,7 +67,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       'lat': -0.4712,
       'lng': 100.6214,
     },
-    'Ekowisata Air Terjun Nyarai (Hidden Gem)': {
+    'Ekowisata Air Terjun Nyarai': {
       'name': 'Posko Pokdarwis LA Nyarai',
       'address': 'Korong Gamaran, Salibutan Lubuk Alung, Kab. Padang Pariaman',
       'lat': -0.6654,
@@ -77,7 +79,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       'lat': -1.2135,
       'lng': 100.4158,
     },
-    'Jembatan Akar Bayang (Hidden Gem)': {
+    'Jembatan Akar Bayang': {
       'name': 'Area Parkir Jembatan Akar Pulut-Pulut',
       'address': 'Nagari Pulut-Pulut, Kec. IV Nagari Bayang Utara, Pesisir Selatan',
       'lat': -1.2491,
@@ -89,13 +91,13 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       'lat': -0.4534,
       'lng': 100.5112,
     },
-    'Masjid Raya Sumatera Barat (Religi)': {
+    'Masjid Raya Sumatera Barat': {
       'name': 'Pelataran Timur Masjid Raya Sumbar',
       'address': 'Jl. Khatib Sulaiman, Alai Parak Kopi, Kota Padang',
       'lat': -0.9242,
       'lng': 100.3623,
     },
-    'Los Lambuang Nasi Kapau Pasar Ateh (Kuliner)': {
+    'Los Lambuang Nasi Kapau Pasar Ateh': {
       'name': 'Pintu Masuk Pasar Ateh / Los Lambuang',
       'address': 'Jl. Pasar Atas, Benteng Pasar Atas, Kota Bukittinggi',
       'lat': -0.3046,
@@ -115,25 +117,22 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
   late double _meetingLng;
   String get _googleMapsUrl =>
       'https://www.google.com/maps/search/?api=1&query=$_meetingLat,$_meetingLng';
-  final TextEditingController _hostNameController =
-      TextEditingController(text: 'Rahmat Hidayat (Guide Nagari)');
-  final TextEditingController _hostLicenseController =
-      TextEditingController(text: 'HPI-SB-2024-0412 (Pemandu Berlisensi)');
-  final TextEditingController _hostPhoneController =
-      TextEditingController(text: '0812-7578-953');
-  final TextEditingController _hostSocialController =
-      TextEditingController(text: '@rahmathidayat_guide (Instagram)');
-  final TextEditingController _hostExperienceController =
-      TextEditingController(text: '4+ Tahun Pengalaman Pemandu Wisata Sumbar');
+  final TextEditingController _hostNameController = TextEditingController();
+  final TextEditingController _hostLicenseController = TextEditingController();
+  final TextEditingController _hostPhoneController = TextEditingController();
+  final TextEditingController _hostSocialController = TextEditingController();
+  final TextEditingController _hostExperienceController = TextEditingController();
 
   DateTime _departureDate = DateTime(2026, 12, 12);
   TimeOfDay _departureTime = const TimeOfDay(hour: 6, minute: 30);
-  int _wizardStep = 0; // 0: Data Diri, 1: KTP & Wajah, 2: Level & Detail Trip
+  int _wizardStep = 0; // 0: Data Diri, 1: KTP & Wajah, 2: Detail Trip
   bool _hasUploadedKtp = false;
+  PickedPhotoResult? _ktpPhoto;
   bool _hasVerifiedFace = false;
   String _difficultyLevel = 'Medium'; // 'Easy' | 'Medium' | 'Hard'
   bool get _isHardRoute => _difficultyLevel == 'Hard';
   bool _hasUploadedLicense = false;
+  PickedPhotoResult? _licensePhoto;
 
   // Itinerary Rundown yang diisi manual oleh pembuat trip (Sistem sediakan slot jam)
   late List<TripItineraryStep> _itinerarySteps;
@@ -200,7 +199,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       ),
       TripItineraryStep(
         time: '11.30 - 13.00 WIB',
-        activity: 'Ishoma (Istirahat, Sholat & Santap Kuliner Minang)',
+        activity: 'Ishoma & Santap Kuliner Minang',
         location: 'Gazebo / Rest Area Nagari',
         notes: 'Makan siang bersama sajian khas lokal nagari',
         status: 'Akan Datang',
@@ -303,9 +302,9 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     ),
                     const SizedBox(height: 12),
 
-                    // 1. JAM / WAKTU (DISEDIAKAN SISTEM)
+                    // 1. JAM / WAKTU
                     const Text(
-                      'PILIHAN JAM / WAKTU (DARI SISTEM):',
+                      'PILIHAN JAM / WAKTU',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
@@ -366,16 +365,16 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 2. NAMA KEGIATAN (DIISI MANUAL OLEH PEMBUAT TRIP)
+                    // 2. NAMA KEGIATAN
                     const Text(
-                      'NAMA KEGIATAN / AKTIVITAS (MANUAL):',
+                      'NAMA KEGIATAN',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
                       controller: activityCtrl,
                       decoration: InputDecoration(
-                        hintText: 'Cth: Kumpul & Briefing / Trekking Air Terjun',
+                        hintText: 'Kumpul & Briefing / Trekking Air Terjun',
                         hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
                         filled: true,
                         fillColor: AppColors.cream,
@@ -385,16 +384,16 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 3. LOKASI KEGIATAN (MANUAL)
+                    // 3. LOKASI KEGIATAN
                     const Text(
-                      'LOKASI / TEMPAT (MANUAL):',
+                      'LOKASI',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
                     TextField(
                       controller: locationCtrl,
                       decoration: InputDecoration(
-                        hintText: 'Cth: Titik Kumpul Rest Area / Tebing Echo',
+                        hintText: 'Titik Kumpul Rest Area / Tebing Echo',
                         hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
                         filled: true,
                         fillColor: AppColors.cream,
@@ -404,9 +403,9 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 4. CATATAN / SOP (MANUAL)
+                    // 4. CATATAN
                     const Text(
-                      'CATATAN / INSTRUKSI KHUSUS (MANUAL):',
+                      'CATATAN KHUSUS',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.forest),
                     ),
                     const SizedBox(height: 4),
@@ -414,7 +413,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                       controller: notesCtrl,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        hintText: 'Cth: Wajib memakai alas kaki antiselip & jaket',
+                        hintText: 'Wajib memakai alas kaki antiselip & jaket',
                         hintStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
                         filled: true,
                         fillColor: AppColors.cream,
@@ -548,7 +547,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
           children: [
             TextField(
               controller: titleCtrl,
-              decoration: _inputDecoration('Judul Peraturan (Cth: Wajib Alas Kaki Antiselip)'),
+              decoration: _inputDecoration('Judul peraturan'),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -738,10 +737,68 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
     }
   }
 
+  Future<void> _pickKtpPhoto() async {
+    final result = await pickOrganizerPhotoMax250Kb(
+      defaultFileName: 'foto_ktp_penyelenggara.jpg',
+    );
+    if (!mounted || result.cancelled) return;
+    if (result.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.terracotta,
+          content: Text(result.errorMessage!),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _ktpPhoto = result;
+      _hasUploadedKtp = true;
+    });
+  }
+
+  Future<void> _pickLicensePhoto() async {
+    final result = await pickOrganizerPhotoMax250Kb(
+      defaultFileName: 'lisensi_pemandu.jpg',
+    );
+    if (!mounted || result.cancelled) return;
+    if (result.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.terracotta,
+          content: Text(result.errorMessage!),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _licensePhoto = result;
+      _hasUploadedLicense = true;
+    });
+  }
+
+  Future<void> _openFaceLivenessVerification() async {
+    final verified = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _FaceLivenessDialog(),
+    );
+    if (!mounted) return;
+    if (verified == true) {
+      setState(() => _hasVerifiedFace = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: AppColors.forest,
+          content: Text('Autentikasi wajah berhasil diverifikasi.'),
+        ),
+      );
+    }
+  }
+
   void _submitTrip() {
     if (_titleController.text.trim().isEmpty || _priceController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lengkapi judul perjalanan dan harga')),
+        const SnackBar(content: Text('Lengkapi judul perjalanan dan tarif peserta')),
       );
       return;
     }
@@ -753,7 +810,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
         const SnackBar(
           backgroundColor: AppColors.terracotta,
           content: Text(
-            'Langkah 1: Lengkapi Data Diri (Nama, Nomor Telepon, dan Instagram).',
+            'Lengkapi Nama, Nomor WhatsApp, dan Instagram terlebih dahulu.',
           ),
         ),
       );
@@ -765,7 +822,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
         const SnackBar(
           backgroundColor: AppColors.terracotta,
           content: Text(
-            'Langkah 2: Wajib Upload KTP dan Autentikasi Wajah terlebih dahulu.',
+            'Selesaikan Upload KTP dan Autentikasi Wajah terlebih dahulu.',
           ),
         ),
       );
@@ -777,7 +834,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
         const SnackBar(
           backgroundColor: AppColors.terracotta,
           content: Text(
-            'Langkah 3: Jalur Hard wajib mengisi nomor & Upload Lisensi Pemandu.',
+            'Level Hard wajib Upload Lisensi dan mengisi Keterangan Lisensi.',
           ),
         ),
       );
@@ -789,7 +846,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
         const SnackBar(
           backgroundColor: AppColors.terracotta,
           content: Text(
-            'Langkah 3: Untuk tempat umum, silakan isi Pengalaman Penyelenggara.',
+            'Silakan isi Keterangan Lisensi atau Pengalaman terlebih dahulu.',
           ),
         ),
       );
@@ -961,28 +1018,43 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                   const SizedBox(width: 6),
                   _wizardPill(1, '2. KTP & Wajah'),
                   const SizedBox(width: 6),
-                  _wizardPill(2, '3. Level & Trip'),
+                  _wizardPill(2, '3. Detail Trip'),
                 ],
               ),
               const SizedBox(height: 16),
 
               if (_wizardStep == 0) ...[
-                _buildFieldLabel('LANGKAH 1 • DATA DIRI PENYELENGGARA'),
+                _buildFieldLabel('DATA DIRI PENYELENGGARA'),
+                const SizedBox(height: 6),
+                const Text(
+                  'Nama',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
+                ),
                 const SizedBox(height: 4),
                 TextField(
                   controller: _hostNameController,
-                  decoration: _inputDecoration('Nama Lengkap'),
+                  decoration: _inputDecoration('Masukkan nama lengkap'),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+                const Text(
+                  'Nomor WhatsApp',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
+                ),
+                const SizedBox(height: 4),
                 TextField(
                   controller: _hostPhoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: _inputDecoration('Nomor Telepon / WhatsApp Aktif'),
+                  decoration: _inputDecoration('08xxxxxxxxxx'),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+                const Text(
+                  'Instagram',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
+                ),
+                const SizedBox(height: 4),
                 TextField(
                   controller: _hostSocialController,
-                  decoration: _inputDecoration('Akun Instagram (Cth: @username)'),
+                  decoration: _inputDecoration('@username'),
                 ),
                 const SizedBox(height: 18),
                 ElevatedButton(
@@ -993,7 +1065,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           backgroundColor: AppColors.terracotta,
-                          content: Text('Lengkapi Nama, Nomor Telepon, dan Instagram terlebih dahulu.'),
+                          content: Text('Lengkapi Nama, Nomor WhatsApp, dan Instagram terlebih dahulu.'),
                         ),
                       );
                       return;
@@ -1012,7 +1084,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                   ),
                 ),
               ] else if (_wizardStep == 1) ...[
-                _buildFieldLabel('LANGKAH 2 • UPLOAD KTP + AUTENTIKASI WAJAH'),
+                _buildFieldLabel('UPLOAD KTP & AUTENTIKASI WAJAH'),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -1023,50 +1095,67 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                       color: _hasUploadedKtp ? AppColors.successBorder : AppColors.warmBorder,
                     ),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(9),
-                        decoration: BoxDecoration(
-                          color: _hasUploadedKtp ? AppColors.successBg : AppColors.creamSubtle,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: _hasUploadedKtp ? AppColors.successBg : AppColors.creamSubtle,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              _hasUploadedKtp ? Icons.check_circle_rounded : Icons.badge_outlined,
+                              size: 20,
+                              color: _hasUploadedKtp ? AppColors.success : AppColors.forest,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Upload KTP',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
+                                ),
+                                Text(
+                                  _hasUploadedKtp && _ktpPhoto != null
+                                      ? '${_ktpPhoto!.name} • ${_ktpPhoto!.formattedSizeKb}'
+                                      : 'Foto JPG, JPEG, PNG, atau gambar lainnya, maksimal 250 KB',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: _hasUploadedKtp ? AppColors.success : AppColors.muted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          OutlinedButton(
+                            onPressed: _pickKtpPhoto,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.forest,
+                              side: const BorderSide(color: AppColors.sageBorder),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text(_hasUploadedKtp ? 'Ganti' : 'Upload KTP', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                      if (_hasUploadedKtp && _ktpPhoto?.bytes != null) ...[
+                        const SizedBox(height: 10),
+                        ClipRRect(
                           borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            _ktpPhoto!.bytes!,
+                            height: 110,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        child: Icon(
-                          _hasUploadedKtp ? Icons.check_circle_rounded : Icons.badge_outlined,
-                          size: 20,
-                          color: _hasUploadedKtp ? AppColors.success : AppColors.forest,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Upload Foto e-KTP',
-                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.ink),
-                            ),
-                            Text(
-                              _hasUploadedKtp
-                                  ? 'e-KTP berhasil diunggah'
-                                  : 'Wajib unggah foto KTP yang jelas',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: _hasUploadedKtp ? AppColors.success : AppColors.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      OutlinedButton(
-                        onPressed: () => setState(() => _hasUploadedKtp = true),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.forest,
-                          side: const BorderSide(color: AppColors.sageBorder),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: Text(_hasUploadedKtp ? 'Ganti' : 'Upload KTP', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -1105,8 +1194,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                             ),
                             Text(
                               _hasVerifiedFace
-                                  ? 'Autentikasi wajah cocok dengan KTP ✓'
-                                  : 'Swafoto liveness untuk pencocokan KTP',
+                                  ? 'Autentikasi wajah terverifikasi ✓'
+                                  : 'Nyalakan kamera lalu ikuti arahan tengok kanan & kiri',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: _hasVerifiedFace ? AppColors.success : AppColors.muted,
@@ -1116,13 +1205,13 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                         ),
                       ),
                       OutlinedButton(
-                        onPressed: () => setState(() => _hasVerifiedFace = true),
+                        onPressed: _openFaceLivenessVerification,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.forest,
                           side: const BorderSide(color: AppColors.sageBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: Text(_hasVerifiedFace ? 'Ulangi' : 'Verifikasi', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                        child: Text(_hasVerifiedFace ? 'Ulangi' : 'Buka Kamera', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),
@@ -1165,14 +1254,14 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                        child: const Text('Lanjut ke Level & Trip →', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
+                        child: const Text('Lanjut ke Detail Trip →', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
                       ),
                     ),
                   ],
                 ),
               ] else ...[
-              // LANGKAH 3: LEVEL (EASY / MEDIUM / HARD) & LISENSI / PENGALAMAN + DETAIL TRIP
-              _buildFieldLabel('LANGKAH 3 • LEVEL JALUR & LISENSI / PENGALAMAN'),
+              // LANGKAH 3: DETAIL TRIP & LISENSI
+              _buildFieldLabel('DETAIL TRIP'),
               Container(
                 padding: const EdgeInsets.all(12),
                 margin: const EdgeInsets.only(bottom: 14),
@@ -1195,7 +1284,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                               selected: selected,
                               label: Center(
                                 child: Text(
-                                  lvl == 'Hard' ? 'Hard (Lisensi)' : lvl,
+                                  lvl,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
@@ -1234,7 +1323,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                             SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'Level Hard: Penyelenggara WAJIB mengupload Lisensi Pemandu (HPI / BNSP / Guide Gunung).',
+                                'Level Hard wajib mengupload lisensi pemandu resmi.',
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.terracotta),
                               ),
                             ),
@@ -1245,9 +1334,9 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                         children: [
                           Expanded(
                             child: Text(
-                              _hasUploadedLicense
-                                  ? 'Dokumen lisensi berhasil diunggah ✓'
-                                  : 'Belum ada file lisensi diunggah',
+                              _hasUploadedLicense && _licensePhoto != null
+                                  ? '${_licensePhoto!.name} • ${_licensePhoto!.formattedSizeKb}'
+                                  : 'Belum ada foto lisensi diunggah',
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
@@ -1256,7 +1345,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                             ),
                           ),
                           OutlinedButton(
-                            onPressed: () => setState(() => _hasUploadedLicense = true),
+                            onPressed: _pickLicensePhoto,
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.forest,
                               side: const BorderSide(color: AppColors.sageBorder),
@@ -1266,11 +1355,16 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      const Text(
+                        'Keterangan Lisensi',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
+                      ),
+                      const SizedBox(height: 4),
                       TextField(
                         controller: _hostLicenseController,
-                        decoration: _inputDecoration('Nomor Lisensi Pemandu (Wajib Level Hard)'),
+                        maxLines: 2,
+                        decoration: _inputDecoration('Masukkan nomor dan keterangan lisensi'),
                       ),
-                      const SizedBox(height: 8),
                     ] else ...[
                       Container(
                         padding: const EdgeInsets.all(9),
@@ -1285,25 +1379,30 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'Level $_difficultyLevel: Tidak wajib upload lisensi — cukup sertakan Pengalaman memandu/mengelola trip.',
+                                'Level $_difficultyLevel tidak wajib upload lisensi, cukup sertakan keterangan pengalaman.',
                                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.forest),
                               ),
                             ),
                           ],
                         ),
                       ),
+                      const Text(
+                        'Keterangan Lisensi',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.ink),
+                      ),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: _hostExperienceController,
+                        maxLines: 2,
+                        decoration: _inputDecoration('Masukkan pengalaman memandu atau keterangan lisensi'),
+                      ),
                     ],
-                    TextField(
-                      controller: _hostExperienceController,
-                      maxLines: 2,
-                      decoration: _inputDecoration('Pengalaman Penyelenggara (Cth: 3 Tahun Guide Wisata Sumbar)'),
-                    ),
                   ],
                 ),
               ),
 
-              // 1. ATURAN 1: PILIH DESTINASI TUNGGAL (Single Destination)
-              _buildFieldLabel('1. TUJUAN / DESTINASI TUNGGAL (WAJIB 1 DESTINASI)'),
+              // Tujuan Destinasi
+              _buildFieldLabel('TUJUAN DESTINASI'),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
@@ -1442,8 +1541,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 14),
 
-              // Titik Kumpul Otomatis (Google Maps — Tanpa Ketik Manual)
-              _buildFieldLabel('TITIK KUMPUL (OTOMATIS GOOGLE MAPS)'),
+              // Titik Kumpul
+              _buildFieldLabel('TITIK KUMPUL'),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -1556,11 +1655,11 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildFieldLabel('TARIF PER PESERTA (RP)'),
+                        _buildFieldLabel('TARIF PESERTA'),
                         TextField(
                           controller: _priceController,
                           keyboardType: TextInputType.number,
-                          decoration: _inputDecoration('Contoh: 125000'),
+                          decoration: _inputDecoration(),
                         ),
                       ],
                     ),
@@ -1574,7 +1673,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                         TextField(
                           controller: _quotaMaxController,
                           keyboardType: TextInputType.number,
-                          decoration: _inputDecoration('Contoh: 8 Orang'),
+                          decoration: _inputDecoration(),
                         ),
                       ],
                     ),
@@ -1583,8 +1682,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 14),
 
-              // RUNDOWN & ITINERARY PERJALANAN (DIISI MANUAL OLEH PEMBUAT TRIP)
-              _buildFieldLabel('RUNDOWN ITINERARY (DIISI MANUAL OLEH PEMBUAT TRIP)'),
+              // RUNDOWN & ITINERARY PERJALANAN
+              _buildFieldLabel('RUNDOWN ITINERARY'),
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -1738,8 +1837,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 14),
 
-              // Detail Fasilitas & Layanan (Include & Exclude — Diinput Penyelenggara)
-              _buildFieldLabel('DETAIL FASILITAS (INCLUDE & EXCLUDE)'),
+              // Detail Fasilitas & Layanan
+              _buildFieldLabel('DETAIL FASILITAS'),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -1754,7 +1853,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Termasuk dalam Harga (Include):',
+                          'Termasuk dalam Harga',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.success),
                         ),
                         TextButton.icon(
@@ -1795,7 +1894,7 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Tidak Termasuk (Exclude):',
+                          'Tidak Termasuk',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.danger),
                         ),
                         TextButton.icon(
@@ -1836,8 +1935,8 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
               ),
               const SizedBox(height: 14),
 
-              // Peraturan & SOP Perjalanan (Diinput Penyelenggara karena tiap tempat berbeda)
-              _buildFieldLabel('PERATURAN & SOP PERJALANAN (KHUSUS LOKASI INI)'),
+              // Peraturan & SOP Perjalanan
+              _buildFieldLabel('PERATURAN & SOP PERJALANAN'),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -2015,9 +2114,9 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
     );
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  InputDecoration _inputDecoration([String? hint]) {
     return InputDecoration(
-      hintText: hint,
+      hintText: (hint == null || hint.isEmpty) ? null : hint,
       hintStyle: const TextStyle(fontSize: 11.5, color: AppColors.muted),
       filled: true,
       fillColor: AppColors.cream,
@@ -2029,6 +2128,253 @@ class _OpenTripCreateSheetState extends State<OpenTripCreateSheet> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.forest, width: 1.5),
+      ),
+    );
+  }
+}
+
+/// Dialog Kamera Live untuk Verifikasi / Autentikasi Wajah (Hadap Depan → Kanan → Kiri)
+class _FaceLivenessDialog extends StatefulWidget {
+  const _FaceLivenessDialog();
+
+  @override
+  State<_FaceLivenessDialog> createState() => _FaceLivenessDialogState();
+}
+
+class _FaceLivenessDialogState extends State<_FaceLivenessDialog> {
+  static const List<Map<String, dynamic>> _steps = [
+    {
+      'title': 'Hadap Depan',
+      'instruction': 'Posisikan wajah lurus di tengah bingkai kamera',
+      'icon': Icons.face_rounded,
+    },
+    {
+      'title': 'Tengok ke Kanan',
+      'instruction': 'Putar kepala perlahan ke arah kanan',
+      'icon': Icons.arrow_forward_rounded,
+    },
+    {
+      'title': 'Tengok ke Kiri',
+      'instruction': 'Putar kepala perlahan ke arah kiri',
+      'icon': Icons.arrow_back_rounded,
+    },
+  ];
+
+  int _stepIndex = 0;
+  bool _cameraReady = false;
+  bool _completed = false;
+  String? _cameraError;
+  Timer? _autoTimer;
+
+  void _startAutoStepTimer() {
+    _autoTimer?.cancel();
+    _autoTimer = Timer(const Duration(milliseconds: 2400), () {
+      if (!mounted || _completed) return;
+      _advanceStep();
+    });
+  }
+
+  void _advanceStep() {
+    _autoTimer?.cancel();
+    if (_stepIndex < _steps.length - 1) {
+      setState(() => _stepIndex++);
+      if (_cameraReady) {
+        _startAutoStepTimer();
+      }
+    } else {
+      setState(() => _completed = true);
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted) Navigator.pop(context, true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = _steps[_stepIndex];
+    final progress = _completed ? 1.0 : (_stepIndex + 1) / _steps.length;
+
+    return Dialog(
+      backgroundColor: AppColors.cream,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.verified_user_rounded, color: AppColors.forest, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Autentikasi Wajah',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.muted),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Live Camera Oval Frame
+            Container(
+              width: 220,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(110),
+                border: Border.all(
+                  color: _completed ? AppColors.success : AppColors.forest,
+                  width: 3.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.forest.withValues(alpha: 0.16),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(106),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    LiveFaceCameraView(
+                      onCameraReady: () {
+                        if (!mounted) return;
+                        setState(() => _cameraReady = true);
+                        _startAutoStepTimer();
+                      },
+                      onCameraError: (err) {
+                        if (!mounted) return;
+                        setState(() => _cameraError = err);
+                      },
+                    ),
+                    if (_completed)
+                      Container(
+                        color: AppColors.forest.withValues(alpha: 0.65),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.check_circle_rounded,
+                          size: 64,
+                          color: Colors.white,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Step Progress Bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: AppColors.creamSubtle,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  _completed ? AppColors.success : AppColors.forest,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Instruction Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _completed ? AppColors.successBg : AppColors.bgCard,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _completed ? AppColors.successBorder : AppColors.warmBorder,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _completed ? AppColors.success : AppColors.forest,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _completed ? Icons.check_rounded : current['icon'] as IconData,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _completed
+                              ? 'Wajah Terverifikasi'
+                              : 'Langkah ${_stepIndex + 1}/3 • ${current['title']}',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: _completed ? AppColors.success : AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _completed
+                              ? 'Pencocokan wajah selesai.'
+                              : current['instruction'] as String,
+                          style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Manual / Next Action Button
+            if (!_completed)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _advanceStep,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.forest,
+                    foregroundColor: AppColors.cream,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(
+                    _cameraError != null
+                        ? 'Lanjutkan Langkah ${_stepIndex + 1}/3'
+                        : 'Konfirmasi ${current['title']}',
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
