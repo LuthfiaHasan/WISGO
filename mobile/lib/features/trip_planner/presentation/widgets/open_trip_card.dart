@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../saved/services/destination_review_store.dart';
 import '../../models/open_trip_model.dart';
 import 'destination_panorama_sheet.dart';
 import 'destination_weather_sheet.dart';
@@ -940,6 +941,9 @@ class _OpenTripCardState extends State<OpenTripCard> {
                               setState(() => trip.isTripCompleted = true);
                               OrganizerRatingStore.instance
                                   .markOrganizerTripCompleted();
+                              DestinationReviewStore.instance
+                                  .unlockFromCompletedOpenTrip(
+                                      trip.singleDestination);
                               widget.onTripUpdated?.call();
                             },
                             icon: const Icon(Icons.flag_rounded, size: 14),

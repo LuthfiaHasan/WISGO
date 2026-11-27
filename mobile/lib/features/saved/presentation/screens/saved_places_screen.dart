@@ -3096,7 +3096,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                     },
                     onOpenDestinationReviews: () {
                       final matched = _findDestinationForTrip(trip.singleDestination);
-                      _openDestinationDetailModal(matched);
+                      _openDestinationDetailModal(matched, initialSection: 2);
                     },
                   );
                 }),
@@ -6963,7 +6963,10 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
   // ===========================================================================
   // MODAL 2: DETAIL DESTINASI + ULASAN + RINCIAN BIAYA & PEMESANAN (REQUEST 1 & 4)
   // ===========================================================================
-  void _openDestinationDetailModal(SavedDestinationModel place) {
+  void _openDestinationDetailModal(
+    SavedDestinationModel place, {
+    int initialSection = 0,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -6971,6 +6974,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           destination: place.toFe1Destination(),
           fullData: place,
           initialBookmarked: _savedIds.contains(place.id),
+          initialSection: initialSection,
           onToggleBookmark: () {
             _toggleBookmark(place.id);
           },

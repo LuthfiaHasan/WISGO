@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../saved/services/destination_review_store.dart';
 import '../../models/open_trip_model.dart';
 import 'open_trip_create_sheet.dart';
 import 'open_trip_participants_sheet.dart';
@@ -577,6 +578,9 @@ class _OpenTripOrganizerHubSheetState extends State<OpenTripOrganizerHubSheet> {
                                           setState(() => trip.isTripCompleted = true);
                                           OrganizerRatingStore.instance
                                               .markOrganizerTripCompleted();
+                                          DestinationReviewStore.instance
+                                              .unlockFromCompletedOpenTrip(
+                                                  trip.singleDestination);
                                           widget.onTripsChanged();
                                         },
                                         icon: const Icon(Icons.flag_rounded, size: 15),

@@ -6,6 +6,7 @@ import '../../../core/widgets/wisgo_facility_icon.dart';
 import '../../../core/widgets/crowd_badge.dart';
 import '../../fair_price/data/models/fair_price_tariff_model.dart';
 import '../../fair_price/presentation/widgets/fair_price_barometer_table.dart';
+import '../../saved/services/destination_review_store.dart';
 import '../../trip_planner/models/weather_model.dart';
 import '../../trip_planner/presentation/widgets/destination_weather_sheet.dart';
 import '../models/destination_model.dart';
@@ -22,6 +23,7 @@ class DestinationDetailScreen extends StatefulWidget {
   final VoidCallback? onToggleBookmark;
   final VoidCallback? onOpenBarometer;
   final VoidCallback? onOpenLeaderboard;
+  final int initialSection;
 
   const DestinationDetailScreen({
     super.key,
@@ -32,6 +34,7 @@ class DestinationDetailScreen extends StatefulWidget {
     this.onToggleBookmark,
     this.onOpenBarometer,
     this.onOpenLeaderboard,
+    this.initialSection = 0,
   });
 
   @override
@@ -51,6 +54,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedSection = widget.initialSection.clamp(0, 2);
     _isBookmarked = widget.initialBookmarked;
     _matchedPlace = widget.fullData ??
         kAllSumbarDestinations.firstWhere(
@@ -59,7 +63,10 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
               ),
           orElse: () => kAllSumbarDestinations[1],
         );
-    _reviews = List<UserReview>.from(_matchedPlace.reviews);
+    _reviews = DestinationReviewStore.instance
+        .reviewsForDestination(_matchedPlace);
+    _extraReviewsCount = DestinationReviewStore.instance
+        .extraCountFor(_matchedPlace.id);
     _weather = DestinationWeather.getForDestination(widget.destination.name);
     _loadLiveWeather();
   }
@@ -1444,9 +1451,12 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
       builder: (_) => _AddDestinationReviewModal(
         destination: _matchedPlace,
         onReviewSubmitted: (newReview) {
+          DestinationReviewStore.instance.addReview(_matchedPlace.id, newReview);
           setState(() {
-            _reviews.insert(0, newReview);
-            _extraReviewsCount++;
+            _reviews = DestinationReviewStore.instance
+                .reviewsForDestination(_matchedPlace);
+            _extraReviewsCount = DestinationReviewStore.instance
+                .extraCountFor(_matchedPlace.id);
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1577,28 +1587,67 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _openAddReviewSheet,
-                  icon: const Icon(Icons.add_a_photo_rounded, size: 16),
-                  label: const Text(
-                    'Tambah Ulasan',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.forest,
-                    foregroundColor: AppColors.cream,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(
+              Builder(
+                builder: (context) {
+                  final canWriteReview = DestinationReviewStore.instance
+                      .canWriteReviewForDestination(_matchedPlace);
+                  if (canWriteReview) {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _openAddReviewSheet,
+                        icon: const Icon(Icons.add_a_photo_rounded, size: 16),
+                        label: const Text(
+                          'Tambah Ulasan',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.forest,
+                          foregroundColor: AppColors.cream,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.creamSubtle,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.warmBorder),
                     ),
-                  ),
-                ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lock_outline_rounded,
+                          size: 18,
+                          color: AppColors.muted,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Ulasan Terkunci — Selesaikan kunjungan (Check-In GPS) atau selesaikan Open Trip di destinasi ini terlebih dahulu untuk membuka akses tambah ulasan.',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.muted,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
