@@ -4,7 +4,7 @@ import {
   QrCode,
   Camera,
   Radio,
-  Store,
+  Users,
   BarChart3,
   LogOut,
   Trophy,
@@ -22,7 +22,7 @@ export type AdminMenuKey =
   | 'cms_360'
   | 'challenges'
   | 'command_center'
-  | 'partners'
+  | 'trip_go'
   | 'dispar_analytics';
 
 interface SidebarProps {
@@ -32,7 +32,7 @@ interface SidebarProps {
   backendOnline: boolean;
   totalDestinations: number;
   totalTariffs: number;
-  totalPartnersAndTrips?: number;
+  totalTrips?: number;
   activeEmergencyCount?: number;
   onOpenLandingPage?: () => void;
   onOpenPublicQR?: () => void;
@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   backendOnline,
   totalDestinations,
   totalTariffs,
-  totalPartnersAndTrips = 8,
+  totalTrips = 4,
   activeEmergencyCount = 0,
   onOpenLandingPage,
   onOpenPublicQR,
@@ -113,10 +113,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         icon: <Radio className="w-4 h-4 shrink-0" aria-hidden="true" />,
       },
       {
-        key: 'partners',
-        label: 'UMKM & Trip Go',
-        badge: `${totalPartnersAndTrips}`,
-        icon: <Store className="w-4 h-4 shrink-0" aria-hidden="true" />,
+        key: 'trip_go',
+        label: 'Trip Go',
+        badge: `${totalTrips}`,
+        icon: <Users className="w-4 h-4 shrink-0" aria-hidden="true" />,
       },
       {
         key: 'dispar_analytics',

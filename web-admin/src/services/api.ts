@@ -21,7 +21,6 @@ import {
   OpenTrip,
   OpenTripStatus,
   PanoramaScene,
-  Partner,
   PungliReport,
   PungliStatus,
   RegencyHeatmapData,
@@ -42,7 +41,6 @@ import {
   MinangPhrasesRepo,
   NotifikasiRepo,
   OpenTripsRepo,
-  PartnersRepo,
   PungliReportsRepo,
   RegencyHeatmapRepo,
   SosSignalsRepo,
@@ -592,44 +590,8 @@ export async function deleteEmergencyContact(id: string): Promise<EmergencyConta
 }
 
 // ============================================================================
-// 4. MITRA UMKM (DIRECT P2P 0% KOMISI) & TRIP GO
+// 4. TRIP GO RESMI (1 DESTINASI TUNGGAL & ESCROW TERVERIFIKASI)
 // ============================================================================
-export async function fetchPartnersCatalog(): Promise<Partner[]> {
-  return PartnersRepo.getAll();
-}
-
-export async function savePartnerWithBridge(
-  partner: Partner,
-  _currentList?: Partner[]
-): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
-  void _currentList;
-  const updatedList = PartnersRepo.save(partner);
-  try {
-    await apiClient.post('/partners', partner);
-    return { updatedList, syncedRemote: true };
-  } catch {
-    return { updatedList, syncedRemote: false };
-  }
-}
-
-export async function deletePartnerWithBridge(
-  partnerId: string,
-  _currentList?: Partner[]
-): Promise<{ updatedList: Partner[]; syncedRemote: boolean }> {
-  void _currentList;
-  const updatedList = PartnersRepo.delete(partnerId);
-  try {
-    await apiClient.delete(`/partners/${partnerId}`);
-    return { updatedList, syncedRemote: true };
-  } catch {
-    return { updatedList, syncedRemote: false };
-  }
-}
-
-export async function trackPartnerWaLead(partnerId: string): Promise<Partner | null> {
-  return PartnersRepo.incrementWaClicks(partnerId);
-}
-
 export async function fetchOpenTrips(): Promise<OpenTrip[]> {
   return OpenTripsRepo.getAll();
 }

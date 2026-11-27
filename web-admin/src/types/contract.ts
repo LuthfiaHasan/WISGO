@@ -16,16 +16,8 @@ export type MasterDestinationCategory =
   | 'Religi'
   | 'Kuliner';
 
-export type CanonicalPartnerCategory =
-  | 'Penginapan'
-  | 'Transportasi'
-  | 'Atraksi'
-  | 'Pakaian Adat'
-  | 'Kuliner';
-
 export type DenahPointCategory =
   | 'PARKIR'
-  | 'UMKM'
   | 'TOILET'
   | 'MUSHOLLA'
   | 'LOKET';
@@ -175,7 +167,7 @@ export interface PanoramaScene {
 export type Scene360 = PanoramaScene;
 
 // ============================================================================
-// 6. DENAH KAWASAN 2D (denah_points — Parkir, UMKM, Toilet, Musholla, Loket)
+// 6. DENAH KAWASAN 2D (denah_points — Parkir, Toilet, Musholla, Loket)
 // ============================================================================
 export interface DenahPoint {
   id: string;
@@ -185,7 +177,6 @@ export interface DenahPoint {
   description: string;
   x: number; // 0 - 100 (% horizontal)
   y: number; // 0 - 100 (% vertikal)
-  partner_id?: string;
 }
 
 // ============================================================================
@@ -717,6 +708,10 @@ export type EscrowStatus =
   | 'DICAIRKAN_KE_PENYELENGGARA'
   | 'DILAPORKAN_INSIDEN';
 
+export type TripVerificationStatus = 'pending_admin' | 'approved' | 'rejected';
+
+export type TripReadinessStage = 'jadwal' | 'persiapan' | 'barang_bawaan' | 'terfinalisasi';
+
 export interface TripChatMessageItem {
   id: string;
   sender_name: string;
@@ -751,6 +746,16 @@ export interface OpenTrip {
   external_activity_terms: string;
   includes: string[];
   excludes: string[];
+  sop_rules?: string[];
+  verification_status?: TripVerificationStatus;
+  verification_rejection_reason?: string;
+  organizer_instagram?: string;
+  is_hard_track?: boolean;
+  organizer_ktp_uploaded?: boolean;
+  organizer_license_number?: string;
+  organizer_experience?: string;
+  readiness_stage?: TripReadinessStage;
+  is_finalized?: boolean;
   escrow_status: EscrowStatus;
   escrow_amount_idr: number;
   offline_rules: {
@@ -808,6 +813,8 @@ export interface OpenTripTransaction {
   amount_idr: number;
   payment_channel: 'QRIS' | 'WISGO_PAY' | 'VIRTUAL_ACCOUNT' | string;
   status: 'BERHASIL' | 'MENUNGGU' | 'REFUND';
+  eticket_code?: string;
+  eticket_issued_at?: string;
   paid_at: string;
 }
 
@@ -820,34 +827,7 @@ export interface PackingTemplate {
 }
 
 // ============================================================================
-// 24. MITRA UMKM (DIRECT P2P 0% KOMISI)
-// ============================================================================
-export interface Partner {
-  id: string;
-  name: string;
-  category: CanonicalPartnerCategory;
-  whatsapp: string;
-  spicy_level?: number;
-  is_verified: boolean;
-  standard_fee: number;
-  fee_myr_estimate?: number;
-  nagari_name: string;
-  city_regency: string;
-  owner_name: string;
-  pokdarwis_sk_number?: string;
-  photo_url?: string;
-  destination_id?: string;
-  destination_name?: string;
-  denah_point_id?: string;
-  halal_certified?: boolean;
-  created_at?: string;
-  wa_click_count: number;
-  direct_payment_methods: string[];
-}
-export type PartnerNagari = Partner;
-
-// ============================================================================
-// 25. NOTIFIKASI, AUTH, HEATMAP, BENCHMARK & GRUP
+// 24. NOTIFIKASI, AUTH, HEATMAP, BENCHMARK & GRUP
 // ============================================================================
 export interface Notifikasi {
   id: string;

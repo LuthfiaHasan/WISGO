@@ -14,18 +14,16 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import { Destination, PanoramaScene, Partner } from '../types/contract';
+import { Destination, PanoramaScene } from '../types/contract';
 import { deleteDestinationScene, saveDestinationScene } from '../services/api';
 import { ImageDropzone } from '../components/ImageDropzone';
 
 interface Studio360PageProps {
   destinations: Destination[];
-  partners?: Partner[];
   onUpdateDestinations: (updated: Destination[]) => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   initialDestId?: string;
   initialTab?: 'panorama';
-  onNavigateToPartner?: (partnerId?: string) => void;
 }
 
 const FALLBACK_PANORAMA = '/assets/synced/panorama_sumbar_default.jpg';

@@ -34,6 +34,7 @@ import {
   OpenTripTransaction,
   PackingTemplate,
   TripChatMessageItem,
+  TripReadinessStage,
 } from '../types/contract';
 import {
   OpenTripsRepo,
@@ -89,6 +90,10 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
   const [newChatMessage, setNewChatMessage] = useState('');
   const [newChatPinned, setNewChatPinned] = useState(false);
 
+  // 5-Step Trip Submission Admin Verification Modal (Sinkron FE-2 pending_admin)
+  const [reviewingTrip, setReviewingTrip] = useState<OpenTrip | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+
   // 7-Points Organizer Modal
   const [selectedOrganizerFor7Points, setSelectedOrganizerFor7Points] =
     useState<OpenTripOrganizer | null>(null);
@@ -110,6 +115,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
   const [formMeetingLng, setFormMeetingLng] = useState<number>(100.3543);
   const [formIncludesText, setFormIncludesText] = useState('');
   const [formExcludesText, setFormExcludesText] = useState('');
+  const [formSopText, setFormSopText] = useState('');
   const [formExternalTerms, setFormExternalTerms] = useState('');
 
   // New Packing Template Item Form
@@ -174,6 +180,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
     setFormMeetingLng(trip.meeting_point_lng ?? 100.3543);
     setFormIncludesText((trip.includes || []).join('\n'));
     setFormExcludesText((trip.excludes || []).join('\n'));
+    setFormSopText((trip.sop_rules || []).join('\n'));
     setFormExternalTerms(trip.external_activity_terms || '');
     setIsTripModalOpen(true);
   };
@@ -194,6 +201,10 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
       .map((s) => s.trim())
       .filter(Boolean);
     const excludes = formExcludesText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const sopRules = formSopText
       .split('\n')
       .map((s) => s.trim())
       .filter(Boolean);
@@ -227,6 +238,11 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
       external_activity_terms: formExternalTerms.trim(),
       includes: includes.length > 0 ? includes : ['Tiket masuk resmi Perda', 'Pemandu lokal berlisensi'],
       excludes: excludes.length > 0 ? excludes : ['Pengeluaran pribadi'],
+      sop_rules: sopRules.length > 0 ? sopRules : editingTrip?.sop_rules,
+      verification_status:
+        editingTrip?.verification_status ||
+        (formStatus === 'Menunggu' ? 'pending_admin' : 'approved'),
+      readiness_stage: editingTrip?.readiness_stage || 'jadwal',
       escrow_status: editingTrip?.escrow_status || 'DITAHAN_DI_ESCROW',
       escrow_amount_idr:
         editingTrip?.escrow_amount_idr ??
@@ -400,6 +416,45 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
 
   const verifiedOrganizersCount = organizers.filter((o) => o.status === 'Terverifikasi').length;
   const pendingOrganizersCount = organizers.filter((o) => o.status === 'Menunggu').length;
+  const pendingTrips = trips.filter((t) => t.verification_status === 'pending_admin');
+
+  const handleVerifyTripSubmission = (decision: 'approved' | 'rejected') => {
+    if (!reviewingTrip) return;
+    if (decision === 'rejected' && !rejectionReason.trim()) {
+      showToast('Isi alasan penolakan agar penyelenggara bisa melengkapi berkasnya.', 'warning');
+      return;
+    }
+    const updated = OpenTripsRepo.verifyTripSubmission(
+      reviewingTrip.id,
+      decision,
+      rejectionReason.trim() || undefined
+    );
+    setTrips(updated);
+    setOrganizers(OpenTripOrganizersRepo.getAll());
+    onTripsChanged?.();
+    showToast(
+      decision === 'approved'
+        ? `Open Trip "${reviewingTrip.title}" disetujui & tayang di Trip Wisatawan! Penyelenggara dapat lanjut ke Langkah 5 (Atur Rencana).`
+        : `Pengajuan "${reviewingTrip.title}" ditolak dan notifikasi alasan dikirim ke penyelenggara.`,
+      decision === 'approved' ? 'success' : 'info'
+    );
+    setReviewingTrip(null);
+    setRejectionReason('');
+  };
+
+  const handleAdvanceReadiness = (trip: OpenTrip, stage: TripReadinessStage) => {
+    const updated = OpenTripsRepo.advanceReadinessStage(trip.id, stage);
+    setTrips(updated);
+    const refreshed = updated.find((t) => t.id === trip.id) || null;
+    if (selectedPlannerTrip?.id === trip.id) setSelectedPlannerTrip(refreshed);
+    const labelMap: Record<TripReadinessStage, string> = {
+      jadwal: '1. Jadwal',
+      persiapan: '2. Persiapan',
+      barang_bawaan: '3. Barang Bawaan',
+      terfinalisasi: '4. Terfinalisasi (Pengingat Keberangkatan Terkirim)',
+    };
+    showToast(`Tahap kesiapan diperbarui ke: ${labelMap[stage]}`, 'success');
+  };
 
   return (
     <div className="space-y-6">
@@ -419,7 +474,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
               </span>
             </div>
             <p className="text-xs text-[#E4E9DA] mt-0.5 leading-relaxed">
-              Sistem pembayaran Escrow di dalam aplikasi <strong>HANYA berlaku untuk Trip Go</strong> (1 destinasi tunggal per perjalanan dengan kategori otomatis &amp; <strong>Grup Chat In-App 100% tanpa WhatsApp</strong>). Mitra UMKM biasa menggunakan <strong>Direct P2P WhatsApp (0% komisi)</strong>.
+              Sistem pembayaran Escrow di dalam aplikasi <strong>berlaku eksklusif untuk Trip Go</strong> (1 destinasi tunggal per perjalanan dengan kategori otomatis, verifikasi 5-langkah penyelenggara, e-Tiket Boarding Pass &amp; <strong>Grup Chat In-App 100% tanpa WhatsApp</strong>).
             </p>
           </div>
         </div>
@@ -456,7 +511,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
             }`}
         >
           <UserCheck className="w-4 h-4" />
-          <span>Verifikasi Penyelenggara (7 Poin)</span>
+          <span>Verifikasi Penyelenggara (5 Info + 2 KYC)</span>
           {pendingOrganizersCount > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-black animate-pulse">
               {pendingOrganizersCount} Menunggu
@@ -548,6 +603,35 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
             </div>
           </div>
 
+          {/* BANNER ANTREAN VERIFIKASI PENGAJUAN OPEN TRIP (LANGKAH 4 FE-2) */}
+          {pendingTrips.length > 0 && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 font-black text-sm">
+                  {pendingTrips.length}
+                </div>
+                <div>
+                  <h3 className="text-xs font-extrabold text-amber-950 uppercase tracking-wide">
+                    Antrean Verifikasi Pengajuan Open Trip Baru (Langkah 4 Penyelenggara)
+                  </h3>
+                  <p className="text-xs text-amber-900 mt-0.5">
+                    Ada <strong>{pendingTrips.length} pengajuan Open Trip</strong> menunggu validasi Data Diri, e-KTP, dan Lisensi/Pengalaman sebelum tayang di tab <em>Trip Wisatawan</em>.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReviewingTrip(pendingTrips[0]);
+                  setRejectionReason('');
+                }}
+                className="min-h-[38px] px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 transition"
+              >
+                Periksa &amp; Verifikasi Sekarang
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredTrips.map((trip) => {
               const destName = trip.destination_name || trip.singleDestination || 'Destinasi Terdaftar';
@@ -574,9 +658,35 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                         <span>{catName}</span>
                       </span>
                       <div className="flex items-center gap-1">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#1E9E5A]/12 text-[#166534]">
-                          {trip.status || 'Terverifikasi'}
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                            trip.verification_status === 'pending_admin'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : trip.verification_status === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-[#1E9E5A]/12 text-[#166534]'
+                          }`}
+                        >
+                          {trip.verification_status === 'pending_admin'
+                            ? 'Menunggu ACC Admin'
+                            : trip.verification_status === 'rejected'
+                              ? 'Ditolak'
+                              : trip.is_finalized
+                                ? 'Terfinalisasi'
+                                : trip.status || 'Terverifikasi'}
                         </span>
+                        {trip.verification_status === 'pending_admin' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReviewingTrip(trip);
+                              setRejectionReason('');
+                            }}
+                            className="px-2 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold"
+                          >
+                            Verifikasi
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleOpenEditTrip(trip)}
@@ -930,6 +1040,7 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                     <th className="py-3.5 px-4 text-center">Kursi</th>
                     <th className="py-3.5 px-4 text-right">Nominal (IDR)</th>
                     <th className="py-3.5 px-4">Kanal Pembayaran</th>
+                    <th className="py-3.5 px-4">e-Tiket Boarding Pass</th>
                     <th className="py-3.5 px-4 text-center">Status</th>
                     <th className="py-3.5 px-4 text-center">Waktu Bayar</th>
                   </tr>
@@ -953,6 +1064,15 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                       </td>
                       <td className="py-3.5 px-4 font-mono font-semibold text-[#4A5248]">
                         {tx.payment_channel}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {tx.eticket_code ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#E4E9DA] text-[#234B24] font-mono font-bold text-[10px]">
+                            ✓ {tx.eticket_code}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-[#767676]">Menunggu lunas</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span
@@ -1182,6 +1302,8 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                       if (matched) {
                         setFormMeetingLat(matched.latitude);
                         setFormMeetingLng(matched.longitude);
+                        setFormMeetingName(`Titik Kumpul Resmi ${matched.name} (Auto GMaps)`);
+                        setFormMeetingAddress(`${matched.city_regency}, Sumatera Barat`);
                       }
                     }}
                     className="w-full min-h-[42px] px-3.5 py-2 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] font-bold text-[#234B24]"
@@ -1351,6 +1473,19 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
 
                 <div className="sm:col-span-2">
                   <label className="block font-bold text-[#1B1F1A] mb-1">
+                    Peraturan &amp; SOP Perjalanan Khusus Destinasi (1 per baris)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formSopText}
+                    onChange={(e) => setFormSopText(e.target.value)}
+                    placeholder="Contoh: Wajib mematuhi barisan pemandu&#10;Bawa pulang sampah pribadi (Zero Waste)"
+                    className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-[#1B1F1A] mb-1">
                     Ketentuan Aktivitas di Luar Aplikasi
                   </label>
                   <textarea
@@ -1412,6 +1547,47 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
             </div>
 
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              {/* 3-Step Sequential Readiness Flow (Sinkron FE-2: Jadwal -> Persiapan -> Barang Bawaan -> Finalisasi) */}
+              <div className="p-4 rounded-2xl bg-[#234B24]/5 border border-[#234B24]/15 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-extrabold text-[#234B24] text-xs">
+                    Alur Kesiapan Berurutan (3-Step → Finalisasi Keberangkatan)
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#234B24] text-white">
+                    {selectedPlannerTrip.is_finalized ? 'TERFINALISASI' : (selectedPlannerTrip.readiness_stage || 'persiapan').toUpperCase()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(
+                    [
+                      { key: 'jadwal', label: '1. Jadwal' },
+                      { key: 'persiapan', label: '2. Persiapan' },
+                      { key: 'barang_bawaan', label: '3. Barang Bawaan' },
+                      { key: 'terfinalisasi', label: '4. Finalisasi' },
+                    ] as const
+                  ).map((step) => {
+                    const order = ['jadwal', 'persiapan', 'barang_bawaan', 'terfinalisasi'];
+                    const currentIdx = order.indexOf(selectedPlannerTrip.readiness_stage || 'persiapan');
+                    const stepIdx = order.indexOf(step.key);
+                    const done = stepIdx <= currentIdx;
+                    return (
+                      <button
+                        key={step.key}
+                        type="button"
+                        onClick={() => handleAdvanceReadiness(selectedPlannerTrip, step.key)}
+                        className={`px-2.5 py-2 rounded-xl text-[11px] font-bold border transition ${
+                          done
+                            ? 'bg-[#234B24] text-white border-[#234B24]'
+                            : 'bg-white text-[#4A5248] border-[#CFD8BE] hover:border-[#234B24]'
+                        }`}
+                      >
+                        {step.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Meeting Point */}
               <div className="p-4 rounded-2xl bg-[#F6F3EC] border border-[#234B24]/10 space-y-2">
                 <div className="flex items-center justify-between">
@@ -1473,6 +1649,20 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                   </ul>
                 </div>
               </div>
+
+              {/* SOP Perjalanan Khusus Destinasi */}
+              {(selectedPlannerTrip.sop_rules && selectedPlannerTrip.sop_rules.length > 0) && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+                  <span className="font-extrabold text-amber-950 block text-xs">
+                    Peraturan &amp; SOP Perjalanan Khusus Destinasi:
+                  </span>
+                  <ul className="space-y-1 text-[11px] text-amber-900 list-disc pl-4">
+                    {selectedPlannerTrip.sop_rules.map((rule, i) => (
+                      <li key={i}>{rule}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* 1. Checklist */}
               <div className="space-y-2.5">
@@ -1797,6 +1987,156 @@ export const OpenTripsSubTab: React.FC<OpenTripsSubTabProps> = ({
                 className="px-5 py-2 rounded-xl bg-[#234B24] text-white text-xs font-bold hover:bg-[#1B3A1C]"
               >
                 Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL VERIFIKASI PENGAJUAN OPEN TRIP BARU (ALUR 5-LANGKAH PENYELENGGARA FE-2) */}
+      {reviewingTrip && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <div className="bg-white rounded-3xl border border-[#CFD8BE] shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="p-5 border-b border-[#234B24]/10 bg-[#234B24] text-white flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-[#F26B4B] text-white">
+                  Langkah 4 · Verifikasi Admin WISGO
+                </span>
+                <h3 className="text-base font-extrabold mt-1">{reviewingTrip.title}</h3>
+                <p className="text-xs text-[#E4E9DA]">
+                  Destinasi: <strong>{reviewingTrip.destination_name}</strong> ·{' '}
+                  {reviewingTrip.is_hard_track ? 'Jalur Berat (Hard — Wajib Lisensi)' : 'Tempat Umum'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReviewingTrip(null)}
+                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 flex-1 text-xs bg-[#F6F3EC]">
+              {/* Langkah 1: Data Diri */}
+              <div className="p-4 rounded-2xl bg-white border border-[#CFD8BE] space-y-1">
+                <span className="text-[10px] font-black uppercase text-[#234B24]">
+                  Langkah 1 · Data Diri Penyelenggara
+                </span>
+                <div className="font-extrabold text-sm text-[#1B1F1A]">
+                  {reviewingTrip.trip_leader_name}
+                </div>
+                <div className="text-[#4A5248] flex flex-wrap gap-3">
+                  <span>Kontak Internal: +{reviewingTrip.contact_wa}</span>
+                  <span>Instagram: <strong>{reviewingTrip.organizer_instagram || '-'}</strong></span>
+                </div>
+              </div>
+
+              {/* Langkah 2: Upload KTP */}
+              <div className="p-4 rounded-2xl bg-white border border-[#CFD8BE] flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-[#234B24] block">
+                    Langkah 2 · Upload e-KTP Penyelenggara
+                  </span>
+                  <span className="font-bold text-[#1B1F1A]">
+                    {reviewingTrip.organizer_ktp_uploaded
+                      ? 'Dokumen e-KTP terunggah & terenkripsi'
+                      : 'Belum mengunggah e-KTP'}
+                  </span>
+                </div>
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
+                    reviewingTrip.organizer_ktp_uploaded
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {reviewingTrip.organizer_ktp_uploaded ? '✓ Terunggah' : '✕ Belum'}
+                </span>
+              </div>
+
+              {/* Langkah 3: Lisensi Hard / Pengalaman Umum */}
+              <div className="p-4 rounded-2xl bg-white border border-[#CFD8BE] space-y-1">
+                <span className="text-[10px] font-black uppercase text-[#234B24] block">
+                  Langkah 3 · {reviewingTrip.is_hard_track ? 'Lisensi Pemandu Jalur Hard (Wajib)' : 'Pengalaman Penyelenggara (Tempat Umum)'}
+                </span>
+                {reviewingTrip.is_hard_track && (
+                  <p className="font-bold text-[#1B1F1A]">
+                    No. Lisensi: {reviewingTrip.organizer_license_number || 'Belum diisi'}
+                  </p>
+                )}
+                <p className="text-[#4A5248]">
+                  Pengalaman: <strong>{reviewingTrip.organizer_experience || '-'}</strong>
+                </p>
+              </div>
+
+              {/* Include / Exclude & SOP */}
+              <div className="p-4 rounded-2xl bg-white border border-[#CFD8BE] space-y-2">
+                <span className="text-[10px] font-black uppercase text-[#234B24] block">
+                  Ringkasan Include, Exclude &amp; SOP Perjalanan
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                  <div>
+                    <strong className="text-emerald-800">Include ({reviewingTrip.includes.length}):</strong>
+                    <ul className="list-disc pl-4 text-[#4A5248] mt-0.5">
+                      {reviewingTrip.includes.slice(0, 3).map((x, i) => (
+                        <li key={i}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <strong className="text-rose-800">Exclude ({reviewingTrip.excludes.length}):</strong>
+                    <ul className="list-disc pl-4 text-[#4A5248] mt-0.5">
+                      {reviewingTrip.excludes.slice(0, 3).map((x, i) => (
+                        <li key={i}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                {reviewingTrip.sop_rules && reviewingTrip.sop_rules.length > 0 && (
+                  <div className="pt-2 border-t border-[#E4E9DA] text-[11px]">
+                    <strong className="text-amber-900">SOP Khusus Destinasi:</strong>
+                    <ul className="list-disc pl-4 text-[#4A5248] mt-0.5">
+                      {reviewingTrip.sop_rules.map((r, i) => (
+                        <li key={i}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#1B1F1A] mb-1">
+                  Catatan / Alasan Penolakan (wajib diisi jika menolak)
+                </label>
+                <textarea
+                  rows={2}
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Contoh: Nomor lisensi pemandu jalur hard belum terbaca jelas..."
+                  className="w-full p-3 rounded-xl bg-white border border-[#CFD8BE] text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-[#CFD8BE] bg-white flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => handleVerifyTripSubmission('rejected')}
+                className="min-h-[40px] px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold"
+              >
+                Tolak Pengajuan
+              </button>
+              <button
+                type="button"
+                onClick={() => handleVerifyTripSubmission('approved')}
+                className="min-h-[40px] px-5 py-2 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold"
+              >
+                Setujui &amp; Buka Langkah 5 (Tayang Publik)
               </button>
             </div>
           </div>

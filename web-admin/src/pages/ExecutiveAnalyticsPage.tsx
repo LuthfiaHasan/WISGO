@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  BarChart3,
   MapPin,
   TrendingUp,
   Download,
@@ -8,7 +7,6 @@ import {
   ShieldCheck,
   AlertTriangle,
   Clock,
-  Store,
   Calendar,
   Flame,
   Activity,
@@ -24,7 +22,6 @@ import {
 } from 'lucide-react';
 import {
   Destination,
-  Partner,
   RegencyHeatmapData,
   GaodeBehaviorRanking,
   StempVisit,
@@ -47,15 +44,12 @@ import {
   OpenTripTransactionsRepo,
   UserChallengeRewardsRepo,
 } from '../services/dbRepository';
-import {
-  PARTNER_CATEGORIES,
-  SUMBAR_REGENCIES,
-} from '../data/mockDestinations';
+import { SUMBAR_REGENCIES } from '../data/mockDestinations';
 import { SystemHealthBenchmarkSubTab } from '../components/SystemHealthBenchmarkSubTab';
 
 export type AnalyticsSubTab =
   | 'heatmap_prediction'
-  | 'partner_performance'
+  | 'trip_gaode'
   | 'incident_recap'
   | 'export_report'
   | 'intel_heatmap'
@@ -152,7 +146,6 @@ interface UnifiedIncidentActionRow {
 
 interface ExecutiveAnalyticsPageProps {
   destinations: Destination[];
-  partners: Partner[];
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   initialSubTab?: AnalyticsSubTab;
 }
@@ -162,7 +155,6 @@ const DAY_WEIGHTS = [1.45, 0.72, 0.68, 0.78, 0.95, 1.25, 1.58]; // Sun..Sat seas
 
 export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
   destinations,
-  partners,
   showToast,
   initialSubTab = 'heatmap_prediction',
 }) => {
@@ -283,24 +275,8 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
     [matchingDestinations]
   );
 
-  // Enrich heatmap regencies with live partner WA clicks
-  const enrichedHeatmapData = useMemo(() => {
-    const clicksByRegency: Record<string, number> = {};
-    partners.forEach((p) => {
-      const key = (p.city_regency || '').toLowerCase();
-      clicksByRegency[key] = (clicksByRegency[key] || 0) + Number(p.wa_click_count || 0);
-    });
-    return heatmapData.map((r) => {
-      const livePartnerClicks = clicksByRegency[r.name.toLowerCase()] || 0;
-      return {
-        ...r,
-        wa_leads_count: Math.max(r.wa_leads_count || 0, livePartnerClicks),
-      };
-    });
-  }, [heatmapData, partners]);
-
   const filteredRegencies = useMemo(() => {
-    return enrichedHeatmapData.filter((item) => {
+    return heatmapData.filter((item) => {
       const matchRegion =
         selectedRegion === 'all' || item.name.toLowerCase() === selectedRegion.toLowerCase();
       let matchCat = true;
@@ -319,7 +295,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       return matchRegion && matchCat && matchSearch && matchStatus;
     });
   }, [
-    enrichedHeatmapData,
+    heatmapData,
     selectedRegion,
     selectedCategory,
     matchingDestinations,
@@ -346,7 +322,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
     avgDwellHours,
     apiSlaLatency,
     apiCacheHitRate,
-    totalWaLeadsDisplay,
     validPassportStamps,
     issuedCertCount,
   } = useMemo(() => {
@@ -447,16 +422,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         )
         : 95;
 
-    const filteredPartners = partners.filter((p) => {
-      const matchReg =
-        selectedRegion === 'all' ||
-        (p.city_regency || '').toLowerCase() === selectedRegion.toLowerCase();
-      return matchReg;
-    });
-    const partnerWaSum = filteredPartners.reduce((acc, p) => acc + Number(p.wa_click_count || 0), 0);
-    const heatmapWaSum = filteredRegencies.reduce((acc, r) => acc + (r.wa_leads_count || 0), 0);
-    const totalWaLeads = Math.max(partnerWaSum, heatmapWaSum);
-
     const certs = UserChallengeRewardsRepo.getAll().filter(
       (c) => c.status === 'HADIAH_TERKIRIM'
     ).length;
@@ -471,14 +436,12 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       avgDwellHours: avgDwell,
       apiSlaLatency: avgLatency,
       apiCacheHitRate: cacheHit,
-      totalWaLeadsDisplay: totalWaLeads,
       validPassportStamps: filteredStemps.length,
       issuedCertCount: certs,
     };
   }, [
     filteredRegencies,
     matchingDestIdSet,
-    partners,
     selectedRegion,
     selectedCategory,
     selectedSegment,
@@ -531,67 +494,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
   const activePredDay =
     reactivePredictionDays[selectedDayIndex] || reactivePredictionDays[0];
-
-  // Live WA Leads per Destination aggregated from Partners + Destinations
-  const liveDestinationWaLeads = useMemo(() => {
-    const map = new Map<
-      string,
-      { destinationName: string; cityRegency: string; totalClicks: number; dominantCategory: string }
-    >();
-
-    partners.forEach((p) => {
-      if (
-        selectedRegion !== 'all' &&
-        (p.city_regency || '').toLowerCase() !== selectedRegion.toLowerCase()
-      ) {
-        return;
-      }
-      const dest = destinations.find((d) => d.id === p.destination_id);
-      if (selectedCategory !== 'all' && dest && !matchingDestIdSet.has(dest.id)) {
-        return;
-      }
-      const key = p.destination_name || dest?.name || p.nagari_name;
-      const prev = map.get(key);
-      const clicks = Number(p.wa_click_count || 0);
-      if (prev) {
-        prev.totalClicks += clicks;
-      } else {
-        map.set(key, {
-          destinationName: key,
-          cityRegency: p.city_regency || 'Sumatera Barat',
-          totalClicks: clicks,
-          dominantCategory: p.category,
-        });
-      }
-    });
-
-    const sorted = Array.from(map.values()).sort((a, b) => b.totalClicks - a.totalClicks);
-    const maxClicks = sorted[0]?.totalClicks || 1;
-    return sorted.map((item) => ({
-      ...item,
-      percentage: Math.max(8, Math.round((item.totalClicks / maxClicks) * 100)),
-    }));
-  }, [partners, destinations, selectedRegion, selectedCategory, matchingDestIdSet]);
-
-  // Live Distribution across 5 Canonical Partner Categories
-  const partnerCategoryDistribution = useMemo(() => {
-    const filtered = partners.filter(
-      (p) =>
-        selectedRegion === 'all' ||
-        (p.city_regency || '').toLowerCase() === selectedRegion.toLowerCase()
-    );
-    const totalClicks = filtered.reduce((acc, p) => acc + Number(p.wa_click_count || 0), 0) || 1;
-    return PARTNER_CATEGORIES.map((cat) => {
-      const catPartners = filtered.filter((p) => p.category === cat);
-      const clicks = catPartners.reduce((acc, p) => acc + Number(p.wa_click_count || 0), 0);
-      return {
-        category: cat,
-        count: catPartners.length,
-        clicks,
-        pct: Math.round((clicks / totalClicks) * 100),
-      };
-    });
-  }, [partners, selectedRegion]);
 
   // Live Top 5 Gaode Rankings from GaodeRankingsRepo
   const liveTop5Gaode = useMemo(() => {
@@ -782,7 +684,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       `# Filter: Wilayah="${selectedRegion}", Kategori="${catName}", Periode="${periodPreset}", Segmen="${selectedSegment}", GPS_Valid="${onlyValidGps}"`,
       `# Total Kunjungan: ${totalVisitorsDisplay.toLocaleString('id-ID')} (Personal: ${personalVisitsCount.toLocaleString('id-ID')} | Trip Go: ${groupVisitsCount.toLocaleString('id-ID')})`,
       `# Total Escrow Trip Go: Rp ${tripGoTotalRevenue.toLocaleString('id-ID')}`,
-      `# Total Leads WA P2P Mitra UMKM: ${totalWaLeadsDisplay.toLocaleString('id-ID')} Klik`,
     ];
 
     const headers = [
@@ -795,7 +696,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
       'Domestik (%)',
       'Wisman MYR (%)',
       'Destinasi Terpopuler',
-      'Leads WA P2P',
     ];
 
     const rows = filteredRegencies.map((r) => {
@@ -811,7 +711,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         `${r.domestic_pct}%`,
         `${r.foreign_myr_pct}%`,
         `"${r.top_destination}"`,
-        r.wa_leads_count || 0,
       ];
     });
 
@@ -857,7 +756,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               <strong>Nomor:</strong> 556/412/DISPAR-SUMBAR/XI/2026
             </div>
             <div>
-              <strong>Perihal:</strong> Laporan Eksekutif Kunjungan, Mitra UMKM, Trip Go &amp; Kepatuhan Lapangan
+              <strong>Perihal:</strong> Laporan Eksekutif Kunjungan, Trip Go &amp; Kepatuhan Lapangan
             </div>
           </div>
           <div className="text-right">
@@ -875,7 +774,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-2 mb-6 p-3 bg-gray-50 border border-gray-300 rounded text-center text-xs">
+        <div className="grid grid-cols-4 gap-2 mb-6 p-3 bg-gray-50 border border-gray-300 rounded text-center text-xs">
           <div>
             <span className="text-[10px] text-gray-600 block">Total Kunjungan</span>
             <strong className="text-sm text-black">
@@ -890,12 +789,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
             <span className="text-[10px] text-gray-600 block">Omset Escrow Trip Go</span>
             <strong className="text-sm text-black font-mono">
               Rp {tripGoTotalRevenue.toLocaleString('id-ID')}
-            </strong>
-          </div>
-          <div>
-            <span className="text-[10px] text-gray-600 block">Leads WA UMKM</span>
-            <strong className="text-sm text-black">
-              {totalWaLeadsDisplay.toLocaleString('id-ID')} Klik
             </strong>
           </div>
           <div>
@@ -960,7 +853,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         <div>
           <h1 className="text-xl lg:text-2xl font-extrabold text-[#1B1F1A]">Analitik Eksekutif</h1>
           <p className="text-xs text-[#4A5248] mt-0.5">
-            Data live kunjungan, konversi WA P2P UMKM, Escrow Trip Go, Top Gaode &amp; kepatuhan 19 Kab/Kota Sumbar.
+            Data live kunjungan, Escrow Trip Go, Top Gaode &amp; kepatuhan 19 Kab/Kota Sumbar.
           </p>
         </div>
 
@@ -1164,14 +1057,14 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
 
         <button
           type="button"
-          onClick={() => setActiveTab('partner_performance')}
-          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === 'partner_performance'
+          onClick={() => setActiveTab('trip_gaode')}
+          className={`h-9 px-3.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${activeTab === 'trip_gaode'
               ? 'bg-[#234B24] text-white shadow-sm'
               : 'text-[#4A5248] hover:text-[#234B24] hover:bg-[#234B24]/5'
             }`}
         >
-          <Store className="w-3.5 h-3.5" />
-          <span>UMKM, Trip Go &amp; Gaode</span>
+          <CreditCard className="w-3.5 h-3.5" />
+          <span>Trip Go &amp; Gaode</span>
         </button>
 
         <button
@@ -1420,7 +1313,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                   <span>Sebaran Kepadatan 19 Kabupaten/Kota Sumatera Barat</span>
                 </h3>
                 <p className="text-xs text-[#4A5248] mt-0.5">
-                  Terintegrasi dengan kode wilayah unik (PPJ Padang Panjang &amp; PDP Padang Pariaman) serta klik leads WA UMKM live.
+                  Terintegrasi dengan kode wilayah unik (PPJ Padang Panjang &amp; PDP Padang Pariaman) serta status kepadatan real-time.
                 </p>
               </div>
 
@@ -1502,12 +1395,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                               {reg.top_destination}
                             </span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Leads WA P2P:</span>
-                            <span className="font-bold text-[#1E9E5A]">
-                              {(reg.wa_leads_count || 0).toLocaleString('id-ID')} Klik
-                            </span>
-                          </div>
                         </div>
                       </div>
 
@@ -1524,8 +1411,8 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
         </div>
       )}
 
-      {/* TAB 2: UMKM, TRIP GO ESCROW & TOP 5 GAODE (100% LIVE) */}
-      {activeTab === 'partner_performance' && (
+      {/* TAB 2: TRIP GO ESCROW & TOP 5 GAODE (100% LIVE) */}
+      {activeTab === 'trip_gaode' && (
         <div className="space-y-6 no-print">
           {/* Rekap Transaksi Escrow Trip Go */}
           <section className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-5">
@@ -1542,7 +1429,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                   <span>Rekapitulasi Transaksi Escrow Trip Go</span>
                 </h3>
                 <p className="text-xs text-[#4A5248] mt-0.5">
-                  Transaksi dalam aplikasi hanya berlaku untuk Trip Go. Mitra UMKM biasa 100% Direct P2P WhatsApp (0% komisi).
+                  Transaksi Escrow dalam aplikasi berlaku khusus untuk paket Trip Go resmi terverifikasi.
                 </p>
               </div>
 
@@ -1575,10 +1462,10 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
               </div>
               <div className="p-4 rounded-2xl bg-[#FEF3C7] border border-[#FCD34D]">
                 <span className="text-[10px] font-extrabold uppercase text-[#92400E] block">
-                  Leads WA UMKM (0% Komisi)
+                  Kuota Trip Go Terjadwal
                 </span>
                 <span className="text-xl font-black text-[#92400E] mt-1 block font-mono">
-                  {totalWaLeadsDisplay.toLocaleString('id-ID')} Klik
+                  {scheduledTripGoPax} Kursi
                 </span>
               </div>
             </div>
@@ -1627,78 +1514,6 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                   ))}
                 </tbody>
               </table>
-            </div>
-          </section>
-
-          {/* Bar Chart Leads WA P2P Mitra UMKM Live */}
-          <section className="bg-white rounded-3xl p-6 lg:p-7 shadow-sm border border-[#234B24]/10 space-y-6">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#234B24]/10 pb-5">
-              <div>
-                <h3 className="text-base lg:text-lg font-extrabold text-[#1B1F1A] flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-[#234B24]" />
-                  <span>Konversi Klik WA P2P Mitra UMKM per Destinasi (Live)</span>
-                </h3>
-                <p className="text-xs text-[#4A5248] mt-0.5">
-                  Dihitung otomatis dari data direktori mitra aktif dan uji pesan WA P2P.
-                </p>
-              </div>
-              <div className="px-3.5 py-1.5 rounded-xl bg-[#1E9E5A]/15 text-[#166534] text-xs font-bold shrink-0">
-                {partners.length} Mitra Terverifikasi
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {liveDestinationWaLeads.length === 0 ? (
-                <div className="p-8 text-center bg-[#F6F3EC] rounded-2xl border border-dashed border-[#CFD8BE] text-xs text-[#767676]">
-                  Tidak ada data leads mitra UMKM untuk filter aktif.
-                </div>
-              ) : (
-                liveDestinationWaLeads.map((item, idx) => (
-                  <div key={item.destinationName} className="space-y-1.5">
-                    <div className="flex flex-wrap items-center justify-between text-xs gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 font-mono font-bold text-[#767676] text-right">
-                          #{idx + 1}
-                        </span>
-                        <strong className="text-[#1B1F1A] font-bold text-sm">
-                          {item.destinationName}
-                        </strong>
-                        <span className="text-[11px] text-[#4A5248]">({item.cityRegency})</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E4E9DA] text-[#234B24]">
-                          {item.dominantCategory}
-                        </span>
-                      </div>
-                      <span className="text-sm font-extrabold text-[#234B24]">
-                        {item.totalClicks.toLocaleString('id-ID')} Klik WA
-                      </span>
-                    </div>
-                    <div className="w-full h-3 rounded-full bg-[#F6F3EC] overflow-hidden border border-[#CFD8BE]">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#234B24] to-[#1E9E5A]"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* 5 Kategori Kanonik Mitra UMKM */}
-            <div className="pt-4 border-t border-[#234B24]/10 grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
-              {partnerCategoryDistribution.map((cat) => (
-                <div
-                  key={cat.category}
-                  className="p-3 bg-[#F6F3EC] rounded-2xl border border-[#CFD8BE]"
-                >
-                  <span className="text-[10px] font-bold uppercase text-[#4A5248] block">
-                    {cat.category}
-                  </span>
-                  <span className="text-base font-extrabold text-[#234B24]">{cat.pct}%</span>
-                  <span className="text-[10px] text-[#767676] block">
-                    {cat.clicks.toLocaleString('id-ID')} Klik ({cat.count} Mitra)
-                  </span>
-                </div>
-              ))}
             </div>
           </section>
 
@@ -2027,7 +1842,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                     Laporan Eksekutif Resmi Dispar (PDF)
                   </h4>
                   <p className="text-xs text-[#4A5248]">
-                    Ber-Kop Surat resmi, rekap kunjungan, omset Escrow Trip Go, Leads WA P2P UMKM, Top 5 Gaode live, serta pengesahan tertanggal {todayFormatted}.
+                    Ber-Kop Surat resmi, rekap kunjungan, omset Escrow Trip Go, Top 5 Gaode live, serta pengesahan tertanggal {todayFormatted}.
                   </p>
                 </div>
                 <button
@@ -2049,7 +1864,7 @@ export const ExecutiveAnalyticsPage: React.FC<ExecutiveAnalyticsPageProps> = ({
                     Data Mentah Spasial 19 Kab/Kota (CSV)
                   </h4>
                   <p className="text-xs text-[#4A5248]">
-                    Dataset tabular seluruh 19 Kab/Kota, kepadatan, rasio domestik/wisman, serta metrik konversi WA P2P UMKM.
+                    Dataset tabular seluruh 19 Kab/Kota, kepadatan, rasio domestik/wisman, serta rekapitulasi Trip Go.
                   </p>
                 </div>
                 <button

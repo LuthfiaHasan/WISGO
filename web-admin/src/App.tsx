@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  Globe,
   Info,
   Menu,
   X,
@@ -10,25 +11,21 @@ import {
 import {
   AdminAuthResponse,
   Destination,
-  Partner,
 } from './types/contract';
 import {
   checkBackendHealth,
   deleteDestinationWithBridge,
-  deletePartnerWithBridge,
   fetchDestinationsWithBridge,
-  fetchPartnersCatalog,
   getStoredAdminSession,
   logoutAdminJWT,
   saveDestinationWithBridge,
-  savePartnerWithBridge,
 } from './services/api';
 import {
   HazardAlertsRepo,
   OpenTripsRepo,
   PungliReportsRepo,
 } from './services/dbRepository';
-import { INITIAL_PARTNERS, MOCK_20_DESTINATIONS } from './data/mockDestinations';
+import { MOCK_20_DESTINATIONS } from './data/mockDestinations';
 import { Sidebar, AdminMenuKey } from './components/Sidebar';
 import { LoginPage } from './pages/LoginPage';
 import { DestinationsPage } from './pages/DestinationsPage';
@@ -36,7 +33,7 @@ import { TariffsAndQRPage } from './pages/TariffsAndQRPage';
 import { Studio360Page } from './pages/Studio360Page';
 import { ChallengePage } from './pages/ChallengePage';
 import { CommandCenterPage } from './pages/CommandCenterPage';
-import { PartnersPage } from './pages/PartnersPage';
+import { TripGoPage } from './pages/TripGoPage';
 import { PublicSmartQRView } from './pages/PublicSmartQRView';
 import { PublicLandingPage } from './pages/PublicLandingPage';
 import { SmartQRPlacardModal } from './components/SmartQRPlacardModal';
@@ -57,7 +54,6 @@ export const App: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<AdminMenuKey>('destinations');
   const [backendOnline, setBackendOnline] = useState<boolean>(false);
   const [destinations, setDestinations] = useState<Destination[]>(MOCK_20_DESTINATIONS);
-  const [partners, setPartners] = useState<Partner[]>(INITIAL_PARTNERS);
   const [selectedTariffDestId, setSelectedTariffDestId] = useState<string>('dest-001');
   const [smartQRModalDest, setSmartQRModalDest] = useState<Destination | null>(null);
 
@@ -77,12 +73,10 @@ export const App: React.FC = () => {
   });
   const [publicPreviewDest, setPublicPreviewDest] = useState<Destination | null>(null);
 
-  // Cross-Navigation antara Studio Panorama 360° & Direktori Mitra UMKM
-  const [studioNavTarget, setStudioNavTarget] = useState<{
+  const [studioNavTarget] = useState<{
     destId?: string;
     tab?: 'panorama';
   } | null>(null);
-  const [partnerNavTargetId, setPartnerNavTargetId] = useState<string | null>(null);
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'intel_heatmap' | 'system_benchmark'>(
     'intel_heatmap'
   );
@@ -110,14 +104,12 @@ export const App: React.FC = () => {
     async (notify = false) => {
       setLoading(true);
       try {
-        const [health, destResult, partnerList] = await Promise.all([
+        const [health, destResult] = await Promise.all([
           checkBackendHealth(),
           fetchDestinationsWithBridge(),
-          fetchPartnersCatalog(),
         ]);
         setBackendOnline(health.online || destResult.online);
         setDestinations(destResult.destinations);
-        setPartners(partnerList);
         setActiveEmergencyCount(computeLiveEmergencyBadge());
         setTripGoCount(OpenTripsRepo.getAll().length);
         if (notify) {
@@ -177,34 +169,6 @@ export const App: React.FC = () => {
         : `${message} (Dihapus lokal — backend offline)`,
       'info'
     );
-  };
-
-  const handleSavePartner = async (partner: Partner) => {
-    const res = await savePartnerWithBridge(partner, partners);
-    setPartners(res.updatedList);
-    setTripGoCount(OpenTripsRepo.getAll().length);
-  };
-
-  const handleDeletePartner = async (partnerId: string) => {
-    const res = await deletePartnerWithBridge(partnerId, partners);
-    setPartners(res.updatedList);
-  };
-
-  const handleNavigateToStudio360 = (
-    destId: string,
-    tab: 'panorama' = 'panorama'
-  ) => {
-    setStudioNavTarget({ destId, tab });
-    setActiveMenu('cms_360');
-    showToast('Membuka Panorama 360° destinasi terkait.', 'info');
-  };
-
-  const handleNavigateToPartner = (partnerId?: string) => {
-    if (partnerId) {
-      setPartnerNavTargetId(partnerId);
-    }
-    setActiveMenu('partners');
-    showToast('Membuka Direktori Mitra UMKM (Direct P2P WhatsApp).', 'info');
   };
 
   const handleOpenTariffManager = (destId: string) => {
@@ -313,12 +277,10 @@ export const App: React.FC = () => {
           <div className="p-6 lg:p-8">
             <Studio360Page
               destinations={destinations}
-              partners={partners}
               onUpdateDestinations={setDestinations}
               showToast={showToast}
               initialDestId={studioNavTarget?.destId}
               initialTab={studioNavTarget?.tab}
-              onNavigateToPartner={handleNavigateToPartner}
             />
           </div>
         );
@@ -339,18 +301,13 @@ export const App: React.FC = () => {
             />
           </div>
         );
-      case 'partners':
+      case 'trip_go':
         return (
           <div className="p-6 lg:p-8">
-            <PartnersPage
-              partners={partners}
+            <TripGoPage
               destinations={destinations}
-              onSavePartner={handleSavePartner}
-              onDeletePartner={handleDeletePartner}
               onTripsChanged={() => setTripGoCount(OpenTripsRepo.getAll().length)}
-              onNavigateToStudio360={(destId, tab) => handleNavigateToStudio360(destId, tab)}
-              initialSelectedPartnerId={partnerNavTargetId || undefined}
-              showToast={showToast}
+              onShowToast={showToast}
             />
           </div>
         );
@@ -359,7 +316,6 @@ export const App: React.FC = () => {
           <div className="p-6 lg:p-8">
             <ExecutiveAnalyticsPage
               destinations={destinations}
-              partners={partners}
               showToast={showToast}
               initialSubTab={analyticsSubTab}
             />
@@ -376,7 +332,7 @@ export const App: React.FC = () => {
     cms_360: 'Panorama 360°',
     challenges: 'Challenge',
     command_center: 'Komando SOS',
-    partners: 'UMKM & Trip Go',
+    trip_go: 'Trip Go',
     dispar_analytics: 'Analitik',
   };
 
@@ -395,7 +351,7 @@ export const App: React.FC = () => {
         backendOnline={backendOnline}
         totalDestinations={destinations.length}
         totalTariffs={totalTariffsCount}
-        totalPartnersAndTrips={partners.length + tripGoCount}
+        totalTrips={tripGoCount}
         activeEmergencyCount={activeEmergencyCount}
         onOpenLandingPage={() => setPublicView('landing')}
         onOpenPublicQR={() => {
@@ -408,28 +364,61 @@ export const App: React.FC = () => {
       />
 
       <main className="flex-1 min-w-0 overflow-x-hidden relative flex flex-col">
-        <header className="lg:hidden sticky top-0 z-30 bg-[#234B24] text-[#F6F3EC] px-4 py-3 flex items-center justify-between border-b border-[#234B24]/20 shadow-sm shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="no-print sticky top-0 z-30 h-14 bg-[#F6F3EC]/85 backdrop-blur-md border-b border-[#234B24]/10 px-4 lg:px-8 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
-              className="p-1.5 rounded-lg text-[#F6F3EC] hover:bg-white/10 active:scale-95 transition-all"
+              className="lg:hidden p-1.5 rounded-lg bg-[#234B24] text-[#F6F3EC] hover:bg-[#1B3B1C] active:scale-95 transition-all"
               aria-label="Buka Menu Navigasi"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center font-black text-xs text-[#F6F3EC]">
-                W
+            <div className="flex lg:hidden items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-[#234B24] p-1 flex items-center justify-center shrink-0">
+                <img
+                  src="/assets/synced/logo_icon.png"
+                  alt="WISGO"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/logo_icon.png';
+                  }}
+                  className="w-full h-full object-contain brightness-0 invert"
+                />
               </div>
-              <span className="font-bold text-sm tracking-tight text-[#F6F3EC]">
-                WISGO <span className="font-normal text-xs text-[#F6F3EC]/70">Admin</span>
+              <span className="font-extrabold text-sm tracking-tight text-[#234B24]">
+                WISGO
+              </span>
+            </div>
+            <div className="hidden lg:flex items-center gap-2 text-xs min-w-0">
+              <span className="font-semibold text-[#5A655A]">Portal Admin WISGO</span>
+              <span className="text-[#234B24]/30">/</span>
+              <span className="font-extrabold text-[#234B24] truncate">
+                {activeLabelMap[activeMenu]}
               </span>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-white/10 text-[#F6F3EC] font-medium text-[11px]">
-            {activeLabelMap[activeMenu]}
-          </span>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 border border-[#234B24]/10 text-[11px] font-bold text-[#234B24]">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  backendOnline ? 'bg-[#1E9E5A] animate-pulse' : 'bg-[#F59E0B]'
+                }`}
+              />
+              <span>{backendOnline ? 'Backend Live' : 'Sinkron Lokal V3'}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setPublicView('landing')}
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/80 hover:bg-white border border-[#234B24]/10 text-[11px] font-bold text-[#234B24] transition"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Beranda Publik</span>
+            </button>
+            <span className="lg:hidden px-2.5 py-1 rounded-full bg-[#234B24] text-[#F6F3EC] font-bold text-[11px]">
+              {activeLabelMap[activeMenu]}
+            </span>
+          </div>
         </header>
 
         {toastMessage && (

@@ -249,6 +249,23 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
   };
 
   const handleIssuePassportCertificate = (user: UserProfileExperience) => {
+    const userStampSet = new Set(
+      stempVisits
+        .filter((v) => v.user_id === user.user_id && v.is_gps_valid)
+        .flatMap((v) => [v.passport_code, v.destination_id].filter(Boolean))
+    );
+    const matchedCount = passportSpots.filter(
+      (spot) => userStampSet.has(spot.code) || userStampSet.has(spot.destination_id)
+    ).length;
+
+    if (matchedCount < passportSpots.length) {
+      showToast(
+        `Sertifikat Gubernur belum dapat diterbitkan. ${user.full_name} baru mengumpulkan ${matchedCount}/${passportSpots.length} stempel resmi.`,
+        'warning'
+      );
+      return;
+    }
+
     const certCode = `WISGO-GUB-SB-${Date.now().toString().slice(-5)}`;
     const newReward: UserChallengeReward = {
       id: `ucr-${Date.now().toString(36)}`,
@@ -257,8 +274,8 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
       user_id: user.user_id,
       tourist_name: user.full_name,
       tourist_phone: user.phone_number,
-      progress_count: stempVisits.filter((v) => v.user_id === user.user_id && v.is_gps_valid).length,
-      target_destination_count: 10,
+      progress_count: matchedCount,
+      target_destination_count: passportSpots.length,
       status: 'HADIAH_TERKIRIM',
       jenis_reward: 'E-Sertifikat Gubernur',
       reward: 'E-Sertifikat Resmi Gubernur Sumatera Barat + 500 XP',
@@ -649,7 +666,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                           )}
                           {!isCert && isVoucher && clm.status === 'HADIAH_TERKIRIM' && (
                             <span className="block text-[10px] text-[#0D9488] font-semibold">
-                              {clm.reward_notes || 'Kode voucher UMKM telah dikirim ke akun wisatawan'}
+                              {clm.reward_notes || 'Kode voucher wisata telah dikirim ke akun wisatawan'}
                             </span>
                           )}
                           {!isCert && !isVoucher && clm.status === 'HADIAH_TERKIRIM' && (
@@ -802,16 +819,38 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                     </option>
                   ))}
                 </select>
-                {inspectedPassportUser && (
-                  <button
-                    type="button"
-                    onClick={() => handleIssuePassportCertificate(inspectedPassportUser)}
-                    className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#234B24] hover:bg-[#1B3B1C] text-white text-xs font-bold inline-flex items-center gap-1.5"
-                  >
-                    <Award className="w-3.5 h-3.5 text-[#F59E0B]" />
-                    <span>Terbitkan E-Sertifikat Gubernur</span>
-                  </button>
-                )}
+                {inspectedPassportUser && (() => {
+                  const matchedCount = passportSpots.filter(
+                    (spot) =>
+                      inspectedUserStamps.has(spot.code) ||
+                      inspectedUserStamps.has(spot.destination_id)
+                  ).length;
+                  const isEligible = matchedCount >= passportSpots.length;
+                  return (
+                    <button
+                      type="button"
+                      disabled={!isEligible}
+                      onClick={() => handleIssuePassportCertificate(inspectedPassportUser)}
+                      title={
+                        isEligible
+                          ? 'Terbitkan E-Sertifikat Resmi Gubernur Sumatera Barat'
+                          : `Wajib menyelesaikan ${passportSpots.length}/${passportSpots.length} stempel GPS terlebih dahulu`
+                      }
+                      className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition ${
+                        isEligible
+                          ? 'bg-[#234B24] hover:bg-[#1B3B1C] text-white'
+                          : 'bg-[#E4E9DA] text-[#4A5248] cursor-not-allowed opacity-80'
+                      }`}
+                    >
+                      <Award className={`w-3.5 h-3.5 ${isEligible ? 'text-[#F59E0B]' : 'text-[#767676]'}`} />
+                      <span>
+                        {isEligible
+                          ? 'Terbitkan E-Sertifikat Gubernur'
+                          : `Butuh ${passportSpots.length}/${passportSpots.length} Stempel (${matchedCount}/${passportSpots.length})`}
+                      </span>
+                    </button>
+                  );
+                })()}
               </div>
             </div>
 
@@ -1268,7 +1307,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                   >
                     <option value="Sertifikat & XP">E-Sertifikat Gubernur &amp; XP</option>
                     <option value="Badge Khusus">Lencana Khusus</option>
-                    <option value="Voucher">Voucher UMKM Nagari</option>
+                    <option value="Voucher">Voucher Wisata Nagari</option>
                     <option value="XP">XP Murni</option>
                   </select>
                 </div>
@@ -1387,7 +1426,7 @@ export const ChallengePage: React.FC<ChallengePageProps> = ({
                 (selectedClaimForReward.jenis_reward || '').toLowerCase().includes('sertifikat')
                   ? 'Catatan penyerahan / keterangan E-Sertifikat Gubernur...'
                   : (selectedClaimForReward.jenis_reward || '').toLowerCase().includes('voucher')
-                    ? 'Kode voucher UMKM & catatan penukaran (kosongkan untuk generate otomatis)...'
+                    ? 'Kode voucher wisata & catatan penukaran (kosongkan untuk generate otomatis)...'
                     : 'Catatan konfirmasi hadiah lencana / XP...'
               }
               className="w-full p-3 rounded-xl bg-[#F6F3EC] border border-[#CFD8BE] text-xs"

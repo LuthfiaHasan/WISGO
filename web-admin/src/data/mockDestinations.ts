@@ -4,7 +4,6 @@
 // ============================================================================
 
 import {
-  CanonicalPartnerCategory,
   CulturalEvent,
   DenahPointCategory,
   Destination,
@@ -18,7 +17,6 @@ import {
   MinangPhrase,
   Notifikasi,
   OpenTrip,
-  Partner,
   PungliReport,
   PungliStatus,
   RegencyHeatmapData,
@@ -44,7 +42,6 @@ import {
   SEED_OFFICIAL_TARIFFS,
   SEED_OPEN_TRIPS,
   SEED_PANORAMA_SCENES,
-  SEED_PARTNERS,
   SEED_PUNGLI_REPORTS,
   SEED_REGENCY_HEATMAP,
   SEED_SOS_SIGNALS,
@@ -91,17 +88,8 @@ export const MASTER_DESTINATION_CATEGORIES: readonly MasterDestinationCategory[]
 
 export const DESTINATION_CATEGORIES = MASTER_DESTINATION_CATEGORIES;
 
-export const PARTNER_CATEGORIES: readonly CanonicalPartnerCategory[] = [
-  'Penginapan',
-  'Transportasi',
-  'Atraksi',
-  'Pakaian Adat',
-  'Kuliner',
-] as const;
-
 export const DENAH_POINT_CATEGORIES: readonly DenahPointCategory[] = [
   'PARKIR',
-  'UMKM',
   'TOILET',
   'MUSHOLLA',
   'LOKET',
@@ -171,31 +159,6 @@ export function normalizeDestinationCategory(raw?: string | null): MasterDestina
   return 'Alam & Geopark';
 }
 
-export function normalizePartnerCategory(raw?: string | null): CanonicalPartnerCategory {
-  if (!raw) return 'Kuliner';
-  const trimmed = raw.trim();
-  if ((PARTNER_CATEGORIES as readonly string[]).includes(trimmed)) {
-    return trimmed as CanonicalPartnerCategory;
-  }
-  const lower = trimmed.toLowerCase();
-  if (lower.includes('homestay') || lower.includes('penginapan') || lower.includes('hotel') || lower.includes('villa')) {
-    return 'Penginapan';
-  }
-  if (lower.includes('kapal') || lower.includes('boat') || lower.includes('transport') || lower.includes('bendi') || lower.includes('rental')) {
-    return 'Transportasi';
-  }
-  if (lower.includes('baju') || lower.includes('pakaian') || lower.includes('adat') || lower.includes('songket')) {
-    return 'Pakaian Adat';
-  }
-  if (lower.includes('kuliner') || lower.includes('makan') || lower.includes('kawa') || lower.includes('kopi') || lower.includes('sate')) {
-    return 'Kuliner';
-  }
-  if (lower.includes('pemandu') || lower.includes('pokdarwis') || lower.includes('atraksi') || lower.includes('guide') || lower.includes('rafting')) {
-    return 'Atraksi';
-  }
-  return 'Atraksi';
-}
-
 export function calculateAdventurerLevel(totalXp: number): {
   level: 1 | 2 | 3 | 4 | 5;
   name: 'Pemula' | 'Penjelajah' | 'Petualang' | 'Perintis' | 'Pengelana';
@@ -220,22 +183,6 @@ export function getCategorySvgPath(category?: string | null): string {
       return '/assets/synced/cat_religi.svg';
     case 'Kuliner':
       return '/assets/synced/cat_kuliner.svg';
-  }
-}
-
-export function getDenahSvgPath(category: DenahPointCategory | string): string {
-  switch (category.toUpperCase()) {
-    case 'PARKIR':
-      return '/assets/synced/denah_parkir.svg';
-    case 'UMKM':
-      return '/assets/synced/denah_umkm.svg';
-    case 'TOILET':
-      return '/assets/synced/denah_toilet.svg';
-    case 'MUSHOLLA':
-      return '/assets/synced/denah_musholla.svg';
-    case 'LOKET':
-    default:
-      return '/assets/synced/denah_loket.svg';
   }
 }
 
@@ -335,7 +282,6 @@ export const MOCK_20_DESTINATIONS: Destination[] = SEED_DESTINATIONS.map((d) => 
   };
 });
 
-export const INITIAL_PARTNERS: Partner[] = SEED_PARTNERS;
 export const INITIAL_PUNGLI_REPORTS: PungliReport[] = SEED_PUNGLI_REPORTS;
 export const INITIAL_SOS_TICKETS: SosSignal[] = SEED_SOS_SIGNALS;
 export const INITIAL_HAZARD_ALERTS: HazardAlert[] = SEED_HAZARD_ALERTS;

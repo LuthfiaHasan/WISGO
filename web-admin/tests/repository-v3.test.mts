@@ -30,9 +30,10 @@ const repoMod = await import('../src/services/dbRepository.ts');
 const destMod = await import('../src/data/mockDestinations.ts');
 const dbSeedMod = await import('../src/data/mockDatabaseV2.ts');
 
-test('1. V3 migration wipes legacy keys and seeds clean v3.2.0 data without Blank Spot', () => {
-  assert.equal(store.get('wisgo_v2_db_version'), '3.2.0');
+test('1. V3 migration wipes legacy keys and seeds clean v3.3.0 data without Blank Spot or UMKM Partners', () => {
+  assert.equal(store.get('wisgo_v2_db_version'), '3.3.0');
   assert.equal(store.get('wisgo_dispar_destinations_v2'), undefined);
+  assert.equal(store.get('wisgo_v3_db_partners'), undefined);
   assert.equal(store.get('wisgo_checklist_challenges'), undefined);
   assert.equal(store.get('wisgo_tourist_ugc_submissions'), undefined);
 
@@ -83,20 +84,27 @@ test('3. DestinationsRepo joins weather from WeatherMonitoringRepo, honors overr
   assert.equal(reloaded?.aturan_destinasi?.[0]?.content, 'Jaga kebersihan sungai.');
 });
 
-test('4. Partner category normalization maps legacy strings to 5 canonical FE-2 categories', () => {
-  assert.equal(destMod.normalizePartnerCategory('Homestay Rumah Gadang'), 'Penginapan');
-  assert.equal(destMod.normalizePartnerCategory('Kapal & Transportasi'), 'Transportasi');
-  assert.equal(destMod.normalizePartnerCategory('Pemandu Pokdarwis'), 'Atraksi');
-  assert.equal(destMod.normalizePartnerCategory('Sewa Baju Adat'), 'Pakaian Adat');
-  assert.equal(destMod.normalizePartnerCategory('Kuliner Halal'), 'Kuliner');
-  const partners = repoMod.PartnersRepo.getAll();
-  assert.ok(partners.length >= 5);
-  for (const p of partners) {
-    assert.ok(
-      ['Penginapan', 'Transportasi', 'Atraksi', 'Pakaian Adat', 'Kuliner'].includes(p.category),
-      `Non-canonical partner category: ${p.category}`
-    );
-  }
+test('4. Trip Go 5-step verification, 3-step readiness progression, and e-Tiket Boarding Pass sync', () => {
+  const pendingTrip = repoMod.OpenTripsRepo.getAll().find((t: { id: string }) => t.id === 'trp-004');
+  assert.ok(pendingTrip, 'trp-004 pending_admin Trip Go seed must exist');
+  assert.equal(pendingTrip.verification_status, 'pending_admin');
+
+  const afterApprove = repoMod.OpenTripsRepo.verifyTripSubmission('trp-004', 'approved');
+  const approved = afterApprove.find((t: { id: string }) => t.id === 'trp-004');
+  assert.equal(approved?.verification_status, 'approved');
+  assert.equal(approved?.status, 'Terverifikasi');
+
+  const afterFinal = repoMod.OpenTripsRepo.advanceReadinessStage('trp-004', 'terfinalisasi');
+  const finalized = afterFinal.find((t: { id: string }) => t.id === 'trp-004');
+  assert.equal(finalized?.readiness_stage, 'terfinalisasi');
+  assert.equal(finalized?.is_finalized, true);
+
+  const txs = repoMod.OpenTripTransactionsRepo.getAll();
+  assert.ok(txs.length > 0);
+  assert.ok(
+    txs.some((tx: { eticket_code?: string }) => typeof tx.eticket_code === 'string' && tx.eticket_code.startsWith('ETK-WISGO-')),
+    'Paid Trip Go transactions must carry ETK-WISGO-* e-Tiket codes'
+  );
 });
 
 test('5. Auto-category for Trip Go resolves accurately into 5 Master Categories', () => {
@@ -106,18 +114,17 @@ test('5. Auto-category for Trip Go resolves accurately into 5 Master Categories'
   assert.equal(destMod.determineCategoryForDestination('Masjid Raya Sumatera Barat'), 'Religi');
   assert.equal(destMod.determineCategoryForDestination('Los Lambuang Nasi Kapau'), 'Kuliner');
   assert.equal(destMod.getCategorySvgPath('Alam & Geopark'), '/assets/synced/cat_alam_geopark.svg');
-  assert.equal(destMod.getDenahSvgPath('UMKM'), '/assets/synced/denah_umkm.svg');
 });
 
-test('6. DenahPointsRepo supports CRUD for 5 canonical 2D map categories', () => {
+test('6. DenahPointsRepo supports CRUD for 4 canonical facility categories (without UMKM)', () => {
   const before = repoMod.DenahPointsRepo.getByDestinationId('dest-001');
   assert.ok(before.length > 0, 'dest-001 should have seeded Denah 2D points');
   repoMod.DenahPointsRepo.save({
     id: 'dnh-test-99',
     destination_id: 'dest-001',
-    category: 'UMKM',
-    title: 'Kedai Kawa Uji',
-    description: 'Test UMKM point',
+    category: 'LOKET',
+    title: 'Loket Resmi Uji',
+    description: 'Test LOKET point',
     x: 42,
     y: 58,
   });

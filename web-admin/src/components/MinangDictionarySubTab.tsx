@@ -218,7 +218,7 @@ export const MinangDictionarySubTab: React.FC<MinangDictionarySubTabProps> = ({
               Hari Pakan
             </span>
           </div>
-          <p className="mt-1 text-xs text-[#4A5248]">Pedoman santun tawar-menawar di UMKM nagari</p>
+          <p className="mt-1 text-xs text-[#4A5248]">Pedoman santun tawar-menawar di pasar &amp; nagari</p>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-[#234B24]/10 shadow-sm">

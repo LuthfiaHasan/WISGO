@@ -1,16 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  ShieldCheck,
   Eye,
   EyeOff,
   Lock,
-  KeyRound,
   UserCheck,
   AlertCircle,
-  CheckCircle2,
   Building2,
-  Radio,
   ArrowLeft,
+  MapPin,
 } from 'lucide-react';
 import { AdminAuthResponse } from '../types/contract';
 import { loginAdminGoogle, loginAdminJWT } from '../services/api';
@@ -21,6 +18,39 @@ interface LoginPageProps {
   backendOnline: boolean;
 }
 
+const SUMBAR_SLIDES = [
+  {
+    src: '/assets/scenery/harau.jpg',
+    title: 'Lembah Harau',
+    location: 'Kab. Lima Puluh Kota',
+  },
+  {
+    src: '/assets/scenery/pagaruyung.jpg',
+    title: 'Istano Basa Pagaruyung',
+    location: 'Kab. Tanah Datar',
+  },
+  {
+    src: '/assets/scenery/mandeh.jpg',
+    title: 'Kawasan Bahari Mandeh',
+    location: 'Kab. Pesisir Selatan',
+  },
+  {
+    src: '/assets/scenery/jam_gadang.jpg',
+    title: 'Jam Gadang',
+    location: 'Kota Bukittinggi',
+  },
+  {
+    src: '/assets/scenery/maninjau.jpg',
+    title: 'Danau Maninjau',
+    location: 'Kab. Agam',
+  },
+  {
+    src: '/assets/scenery/pariangan.jpg',
+    title: 'Nagari Tuo Pariangan',
+    location: 'Kab. Tanah Datar',
+  },
+] as const;
+
 export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
   onBackToLanding,
@@ -29,6 +59,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [email, setEmail] = useState('admin.komando@sumbarprov.go.id');
   const [password, setPassword] = useState('KomandoWISGO2026');
   const [showPassword, setShowPassword] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
@@ -39,6 +70,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  // Auto-rotating crossfade slideshow every 4.5 seconds
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % SUMBAR_SLIDES.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const validateEmailField = (val: string): string => {
     if (!val.trim()) return 'Alamat email kedinasan wajib diisi.';
@@ -127,45 +166,113 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
+  const currentSlide = SUMBAR_SLIDES[activeSlide];
+
   return (
     <div className="min-h-[100dvh] bg-[#F6F3EC] text-[#1B1F1A] flex flex-col lg:flex-row font-sans">
-      {/* Panel Identitas Resmi Dinas Pariwisata Sumatera Barat */}
-      <section className="lg:w-5/12 bg-[#234B24] text-[#F6F3EC] p-6 sm:p-8 lg:p-10 flex flex-col justify-between shrink-0 relative overflow-hidden">
-        <div>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-xl bg-white/10 p-1.5 flex items-center justify-center border border-white/20 shrink-0">
-              <img src="/logo_icon.png" alt="WISGO" className="w-full h-full object-contain" />
-            </div>
-            <span className="font-extrabold text-xl tracking-tight text-[#F6F3EC]">
-              WISGO Sumbar
-            </span>
-          </div>
-
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#A7F3D0] text-[11px] font-semibold tracking-wide">
-            <Building2 className="w-3.5 h-3.5 text-[#1E9E5A]" aria-hidden="true" />
-            <span>PEMERINTAH PROVINSI SUMATERA BARAT</span>
-          </div>
-
-          <h1 className="mt-4 text-2xl lg:text-3xl font-extrabold leading-tight tracking-tight text-[#F6F3EC]">
-            Pusat Komando Wisata Sumatera Barat
-          </h1>
-          <p className="mt-3 text-xs lg:text-sm text-[#F6F3EC]/80 leading-relaxed max-w-md">
-            Portal otoritas terpadu Dinas Pariwisata: manajemen destinasi, tarif resmi Perda, tur 360°, dan siaga komando SOS di 19 Kabupaten/Kota.
-          </p>
+      {/* Panel Kiri: Galeri Pemandangan Sumatera Barat + Crossfade Slideshow + Logo Resmi WISGO */}
+      <section className="relative lg:w-[52%] min-h-[270px] sm:min-h-[320px] lg:min-h-[100dvh] bg-[#234B24] text-[#F6F3EC] overflow-hidden flex flex-col justify-between p-6 sm:p-8 lg:p-10 shrink-0">
+        {/* Auto-Rotating Crossfade Background Slides */}
+        <div className="absolute inset-0 z-0" aria-hidden="true">
+          {SUMBAR_SLIDES.map((slide, idx) => {
+            const isActive = idx === activeSlide;
+            return (
+              <img
+                key={slide.src}
+                src={slide.src}
+                alt={slide.title}
+                loading={idx === 0 ? 'eager' : 'lazy'}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${
+                  isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                }`}
+              />
+            );
+          })}
+          {/* Subtle Forest Green Gradient Overlay for High-Contrast Typography */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#163017]/95 via-[#234B24]/50 to-[#163017]/55" />
         </div>
 
-        <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between text-xs text-[#F6F3EC]/70">
-          <span className="inline-flex items-center gap-2 font-medium">
-            <span className="w-2 h-2 rounded-full bg-[#1E9E5A] animate-pulse" />
-            <span>{backendOnline ? 'Sistem Online' : 'Mode Lokal Aktif'}</span>
+        {/* Top Brand Identity */}
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-2xl bg-white/95 p-1.5 flex items-center justify-center shadow-md border border-white/40 shrink-0">
+              <img
+                src="/assets/synced/logo_icon.png"
+                alt="Logo Resmi WISGO"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/logo_icon.png';
+                }}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div>
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white block leading-none">
+                WISGO Sumbar
+              </span>
+              <span className="text-[10px] font-semibold text-white/80 tracking-wider uppercase block mt-1">
+                Portal Otoritas Pariwisata
+              </span>
+            </div>
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm border border-white/15 text-[11px] font-semibold text-white/95">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                backendOnline ? 'bg-[#1E9E5A] animate-pulse' : 'bg-[#F59E0B]'
+              }`}
+            />
+            <span>{backendOnline ? 'Sistem Online' : 'Mode Lokal V3'}</span>
           </span>
-          <span>&copy; 2026 Dispar Sumbar</span>
+        </div>
+
+        {/* Bottom Caption, Headline & Slide Indicators */}
+        <div className="relative z-10 mt-10 lg:mt-auto space-y-5">
+          <div className="space-y-2.5 max-w-lg">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/15 text-[#E4F7EC] text-[11px] font-semibold tracking-wide">
+              <Building2 className="w-3.5 h-3.5 text-[#A7F3D0]" aria-hidden="true" />
+              <span>DINAS PARIWISATA PROVINSI SUMATERA BARAT</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight text-white drop-shadow-sm">
+              Pusat Komando Wisata Sumatera Barat
+            </h1>
+            <p className="text-xs sm:text-sm text-white/85 leading-relaxed max-w-md hidden sm:block">
+              Kelola destinasi 19 Kab/Kota, tarif resmi Perda, Panorama 360°, verifikasi Trip Go, dan Siaga SOS dalam satu ekosistem terpadu.
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 text-xs text-white/90 font-medium">
+              <MapPin className="w-3.5 h-3.5 text-[#A7F3D0] shrink-0" aria-hidden="true" />
+              <span className="font-bold">{currentSlide.title}</span>
+              <span className="text-white/60">·</span>
+              <span className="text-white/80">{currentSlide.location}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5" role="tablist" aria-label="Pilih pemandangan Sumatera Barat">
+              {SUMBAR_SLIDES.map((slide, idx) => (
+                <button
+                  key={slide.src}
+                  type="button"
+                  role="tab"
+                  aria-selected={idx === activeSlide}
+                  aria-label={`Tampilkan ${slide.title}`}
+                  onClick={() => setActiveSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    idx === activeSlide
+                      ? 'w-6 bg-white'
+                      : 'w-1.5 bg-white/40 hover:bg-white/70'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Panel Formulir Otentikasi Otoritas */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="w-full max-w-md bg-white rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(35,75,36,0.05)] border border-[#234B24]/10">
+      {/* Panel Kanan: Form Otentikasi Ultra-Clean & Proporsional */}
+      <main className="flex-1 flex items-center justify-center p-5 sm:p-8 lg:p-10">
+        <div className="w-full max-w-[420px] bg-white rounded-3xl p-6 sm:p-8 shadow-[0_8px_30px_rgba(35,75,36,0.06)] border border-[#234B24]/10">
           {onBackToLanding && (
             <button
               type="button"
@@ -180,17 +287,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <div className="mb-5">
             <h2
               id="login-heading"
-              className="text-xl font-extrabold text-[#1B1F1A]"
+              className="text-xl font-extrabold text-[#1B1F1A] tracking-tight"
             >
-              Otentikasi Administrator
+              Masuk Portal Admin
             </h2>
-            <p className="text-xs text-[#4A5248] mt-0.5">
-              Pusat Komando Terpadu Dispar Sumbar
+            <p className="text-xs text-[#5A655A] mt-1">
+              Otentikasi akun resmi Dinas Pariwisata Sumatera Barat
             </p>
           </div>
 
-          {/* Akses Cepat Ringkas 1 Baris */}
-          <div className="mb-5 flex items-center justify-between p-2.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10">
+          {/* Akses Cepat Ringkas */}
+          <div className="mb-5 flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/10">
             <div className="flex items-center gap-2 text-xs font-medium text-[#4A5248]">
               <UserCheck className="w-4 h-4 text-[#234B24]" />
               <span>Mode Pengujian</span>
@@ -214,7 +321,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             className="space-y-4"
           >
             {/* Input Email Dinas */}
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-start gap-1.5">
               <label
                 htmlFor="admin-email"
                 className="text-xs font-bold text-[#1B1F1A]"
@@ -244,7 +351,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 enterKeyHint="next"
                 required
                 aria-invalid={emailError ? 'true' : 'false'}
-                className="w-full h-11 px-3.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/15 text-sm text-[#1B1F1A] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
+                className="w-full h-11 px-3.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/15 text-sm text-[#1B1F1A] font-medium focus:outline-none focus:ring-2 focus:ring-[#234B24]"
               />
               {emailError && (
                 <p
@@ -259,7 +366,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
 
             {/* Input Kata Sandi */}
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-start gap-1.5">
               <div className="w-full flex items-center justify-between">
                 <label
                   htmlFor="admin-password"
@@ -309,7 +416,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 enterKeyHint="done"
                 required
                 aria-invalid={passwordError ? 'true' : 'false'}
-                className="w-full h-11 px-3.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/15 text-sm text-[#1B1F1A] font-medium focus:outline-hidden focus:ring-2 focus:ring-[#234B24]"
+                className="w-full h-11 px-3.5 rounded-xl bg-[#F6F3EC] border border-[#234B24]/15 text-sm text-[#1B1F1A] font-medium focus:outline-none focus:ring-2 focus:ring-[#234B24]"
               />
               {passwordError && (
                 <p
@@ -342,21 +449,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             >
               <Lock className="w-3.5 h-3.5" aria-hidden="true" />
               <span>
-                {submitting
-                  ? 'Mengotentikasi...'
-                  : 'Masuk sebagai Administrator'}
+                {submitting ? 'Mengotentikasi...' : 'Masuk sebagai Administrator'}
               </span>
             </button>
 
             {/* Pemisah Alternatif Login */}
-            <div className="relative my-3 flex items-center justify-center">
+            <div className="relative my-2 flex items-center justify-center">
               <div className="w-full border-t border-[#234B24]/10" />
               <span className="absolute bg-white px-2.5 text-[10px] font-bold text-[#767676] uppercase">
                 atau
               </span>
             </div>
 
-            {/* Tombol Login Menggunakan Akun Google */}
+            {/* Tombol Login Google */}
             <button
               type="button"
               disabled={submitting}
@@ -375,6 +480,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <span>Masuk dengan Akun Google</span>
             </button>
           </form>
+
+          <p className="mt-5 text-center text-[11px] text-[#767676]">
+            &copy; 2026 Dinas Pariwisata Provinsi Sumatera Barat
+          </p>
         </div>
       </main>
     </div>

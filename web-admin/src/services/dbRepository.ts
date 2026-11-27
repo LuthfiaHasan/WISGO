@@ -30,7 +30,6 @@ import {
   OpenTripTransaction,
   PackingTemplate,
   PanoramaScene,
-  Partner,
   PostingShareTemplate,
   PungliReport,
   RegencyHeatmapData,
@@ -67,7 +66,6 @@ import {
   SEED_ORGANIZERS,
   SEED_PACKING_TEMPLATES,
   SEED_PANORAMA_SCENES,
-  SEED_PARTNERS,
   SEED_PASSPORT_SPOTS,
   SEED_POSTING_TEMPLATES,
   SEED_PUNGLI_REPORTS,
@@ -89,7 +87,6 @@ import {
   calculateAdventurerLevel,
   normalizeDestinationCategory,
   normalizeHazardSeverity,
-  normalizePartnerCategory,
   normalizePungliStatus,
   normalizeTariffCategory,
   tariffCategoryToId,
@@ -99,7 +96,7 @@ import {
 import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
 const DB_VERSION_KEY = 'wisgo_v2_db_version';
-export const CURRENT_DB_VERSION = '3.2.0';
+export const CURRENT_DB_VERSION = '3.3.0';
 
 export const DB_KEYS = {
   CATEGORIES: 'wisgo_v3_db_categories',
@@ -109,7 +106,6 @@ export const DB_KEYS = {
   OFFICIAL_TARIFFS: 'wisgo_v3_db_official_tariffs',
   PANORAMA_SCENES: 'wisgo_v3_db_panorama_scenes',
   DENAH_POINTS: 'wisgo_v3_db_denah_points',
-  PARTNERS: 'wisgo_v3_db_partners',
   GAODE_RANKINGS: 'wisgo_v3_db_gaode_rankings',
   GAODE_CONFIG: 'wisgo_v3_db_gaode_config',
   PUNGLI_REPORTS: 'wisgo_v3_db_pungli_reports',
@@ -200,6 +196,7 @@ const LEGACY_KEYS_TO_PURGE = [
   'wisgo_v2_db_user_profiles',
   'wisgo_v2_db_posting_templates',
   'wisgo_v2_db_review_settings',
+  'wisgo_v3_db_partners',
 ];
 
 function seedFreshV3Tables(): void {
@@ -210,7 +207,6 @@ function seedFreshV3Tables(): void {
   safeSetLocalStorage(DB_KEYS.OFFICIAL_TARIFFS, JSON.stringify(SEED_OFFICIAL_TARIFFS));
   safeSetLocalStorage(DB_KEYS.PANORAMA_SCENES, JSON.stringify(SEED_PANORAMA_SCENES));
   safeSetLocalStorage(DB_KEYS.DENAH_POINTS, JSON.stringify(SEED_DENAH_POINTS));
-  safeSetLocalStorage(DB_KEYS.PARTNERS, JSON.stringify(SEED_PARTNERS));
   safeSetLocalStorage(DB_KEYS.GAODE_RANKINGS, JSON.stringify(SEED_GAODE_RANKINGS));
   safeSetLocalStorage(DB_KEYS.PUNGLI_REPORTS, JSON.stringify(SEED_PUNGLI_REPORTS));
   safeSetLocalStorage(DB_KEYS.DESTINATION_REVIEWS, JSON.stringify(SEED_DESTINATION_REVIEWS));
@@ -468,7 +464,7 @@ export const Studio360Repo = {
 };
 
 // ============================================================================
-// 6. DENAH KAWASAN 2D REPO (PARKIR, UMKM, TOILET, MUSHOLLA, LOKET)
+// 6. DENAH KAWASAN 2D REPO (PARKIR, TOILET, MUSHOLLA, LOKET)
 // ============================================================================
 export const DenahPointsRepo = {
   getAll: (): DenahPoint[] => readTable<DenahPoint>(DB_KEYS.DENAH_POINTS, SEED_DENAH_POINTS),
@@ -496,58 +492,7 @@ export const DenahPointsRepo = {
 };
 
 // ============================================================================
-// 7. MITRA UMKM REPO (5 Kategori Kanonik Mobile — Direct P2P 0% Komisi)
-// ============================================================================
-export const PartnersRepo = {
-  getAll: (): Partner[] =>
-    readTable<Partner>(DB_KEYS.PARTNERS, SEED_PARTNERS).map((p) => ({
-      ...p,
-      category: normalizePartnerCategory(p.category),
-      wa_click_count: Number(p.wa_click_count ?? 0),
-      direct_payment_methods: Array.isArray(p.direct_payment_methods)
-        ? p.direct_payment_methods
-        : ['QRIS Bank Nagari', 'Tunai di Tempat'],
-    })),
-  save: (partner: Partner): Partner[] => {
-    const list = PartnersRepo.getAll();
-    const idx = list.findIndex((p) => p.id === partner.id);
-    const updated = [...list];
-    const normalized: Partner = {
-      ...partner,
-      category: normalizePartnerCategory(partner.category),
-      whatsapp: partner.whatsapp.replace(/\D/g, ''),
-      wa_click_count: Number(partner.wa_click_count ?? 0),
-      fee_myr_estimate:
-        partner.fee_myr_estimate ?? Number((partner.standard_fee / 3300).toFixed(1)),
-      created_at: partner.created_at || new Date().toISOString(),
-    };
-    if (idx >= 0) updated[idx] = normalized;
-    else updated.unshift(normalized);
-    writeTable(DB_KEYS.PARTNERS, updated);
-    return updated;
-  },
-  delete: (id: string): Partner[] => {
-    const filtered = PartnersRepo.getAll().filter((p) => p.id !== id);
-    writeTable(DB_KEYS.PARTNERS, filtered);
-    return filtered;
-  },
-  incrementWaClicks: (id: string): Partner | null => {
-    const list = PartnersRepo.getAll();
-    let matched: Partner | null = null;
-    const updated = list.map((p) => {
-      if (p.id !== id) return p;
-      matched = { ...p, wa_click_count: (p.wa_click_count || 0) + 1 };
-      return matched;
-    });
-    if (matched) {
-      writeTable(DB_KEYS.PARTNERS, updated);
-    }
-    return matched;
-  },
-};
-
-// ============================================================================
-// 8. WEATHER MONITORING REPO (Open-Meteo Live + Sync Hazard Alerts)
+// 7. WEATHER MONITORING REPO (Open-Meteo Live + Sync Hazard Alerts)
 // ============================================================================
 function mapWmoCodeToIndonesian(code: number): {
   condition: string;
@@ -1492,7 +1437,7 @@ export const UserChallengeRewardsRepo = {
       const defaultNote = isCert
         ? 'E-Sertifikat Gubernur & hadiah diterbitkan resmi oleh Dinas Pariwisata Sumbar.'
         : isVoucher
-          ? `Kode Voucher: VCR-WISGO-${suffix} · Berlaku di mitra UMKM Nagari terdaftar.`
+          ? `Kode Voucher: VCR-WISGO-${suffix} · Berlaku di destinasi & Pokdarwis resmi terdaftar.`
           : 'Lencana & poin XP otomatis terbuka pada profil Jejak WISGO wisatawan.';
       return {
         ...claim,
@@ -1609,7 +1554,21 @@ export const EmergencyContactsRepo = {
 // 16. TRIP GO, PENYELENGGARA, ESCROW & PACKING TEMPLATES
 // ============================================================================
 export const OpenTripsRepo = {
-  getAll: (): OpenTrip[] => readTable<OpenTrip>(DB_KEYS.OPEN_TRIPS, SEED_OPEN_TRIPS),
+  getAll: (): OpenTrip[] => {
+    const raw = readTable<OpenTrip>(DB_KEYS.OPEN_TRIPS, SEED_OPEN_TRIPS);
+    // Pastikan seed trp-004 (pending_admin) tersedia untuk pengujian alur verifikasi 5-langkah jika belum ada di cache lama
+    const hasPendingSeed = raw.some((t) => t.id === 'trp-004');
+    const merged = hasPendingSeed
+      ? raw
+      : [...raw, ...SEED_OPEN_TRIPS.filter((s) => s.id === 'trp-004')];
+    return merged.map((t) => ({
+      ...t,
+      verification_status:
+        t.verification_status ||
+        (t.status === 'Menunggu' ? 'pending_admin' : t.status === 'Ditolak' ? 'rejected' : 'approved'),
+      readiness_stage: t.readiness_stage || (t.is_finalized ? 'terfinalisasi' : 'persiapan'),
+    }));
+  },
   save: (trip: OpenTrip): OpenTrip[] => {
     const list = OpenTripsRepo.getAll();
     const idx = list.findIndex((t) => t.id === trip.id);
@@ -1617,6 +1576,8 @@ export const OpenTripsRepo = {
     const normalized: OpenTrip = {
       ...trip,
       travel_category: normalizeDestinationCategory(trip.travel_category),
+      verification_status: trip.verification_status || 'approved',
+      readiness_stage: trip.readiness_stage || 'jadwal',
       created_at: trip.created_at || new Date().toISOString(),
     };
     if (idx >= 0) updated[idx] = normalized;
@@ -1628,6 +1589,90 @@ export const OpenTripsRepo = {
     const filtered = OpenTripsRepo.getAll().filter((t) => t.id !== id);
     writeTable(DB_KEYS.OPEN_TRIPS, filtered);
     return filtered;
+  },
+  verifyTripSubmission: (
+    id: string,
+    decision: 'approved' | 'rejected',
+    reason?: string
+  ): OpenTrip[] => {
+    let targetTrip: OpenTrip | undefined;
+    const updated = OpenTripsRepo.getAll().map((t) => {
+      if (t.id !== id) return t;
+      targetTrip = {
+        ...t,
+        verification_status: decision,
+        status: decision === 'approved' ? 'Terverifikasi' : 'Ditolak',
+        verification_rejection_reason: decision === 'rejected' ? reason || 'Dokumen verifikasi belum lengkap.' : undefined,
+        readiness_stage: decision === 'approved' ? 'jadwal' : t.readiness_stage,
+      };
+      return targetTrip;
+    });
+    writeTable(DB_KEYS.OPEN_TRIPS, updated);
+
+    if (targetTrip) {
+      // Saling berhubungan: sinkronkan status penyelenggara + kirim notifikasi otomatis ke aplikasi
+      const matchingOrg = OpenTripOrganizersRepo.getAll().find(
+        (o) =>
+          o.name.toLowerCase() === targetTrip!.trip_leader_name.toLowerCase() ||
+          o.phone_number === targetTrip!.contact_wa
+      );
+      if (matchingOrg && decision === 'approved' && matchingOrg.status !== 'Terverifikasi') {
+        OpenTripOrganizersRepo.updateStatus(
+          matchingOrg.id,
+          'Terverifikasi',
+          `Diverifikasi bersamaan dengan persetujuan Open Trip "${targetTrip.title}".`
+        );
+      }
+
+      NotifikasiRepo.create({
+        id: `notif-tg-${Date.now()}`,
+        user_id: targetTrip.user_id,
+        notification_type: 'system',
+        title:
+          decision === 'approved'
+            ? `Open Trip Disetujui: ${targetTrip.title}`
+            : `Open Trip Ditolak: ${targetTrip.title}`,
+        message:
+          decision === 'approved'
+            ? 'Pengajuan Open Trip Anda lolos verifikasi Admin WISGO! Silakan lanjut ke Langkah 5: Atur Rencana & Persiapan.'
+            : `Pengajuan ditolak oleh Admin WISGO. Alasan: ${reason || 'Dokumen KTP/Lisensi belum lengkap.'}`,
+        reference_id: targetTrip.id,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    }
+    return updated;
+  },
+  advanceReadinessStage: (
+    id: string,
+    stage: import('../types/contract').TripReadinessStage
+  ): OpenTrip[] => {
+    let finalizedTrip: OpenTrip | undefined;
+    const updated = OpenTripsRepo.getAll().map((t) => {
+      if (t.id !== id) return t;
+      const next: OpenTrip = {
+        ...t,
+        readiness_stage: stage,
+        is_finalized: stage === 'terfinalisasi',
+      };
+      if (stage === 'terfinalisasi') finalizedTrip = next;
+      return next;
+    });
+    writeTable(DB_KEYS.OPEN_TRIPS, updated);
+
+    if (finalizedTrip) {
+      NotifikasiRepo.create({
+        id: `notif-ready-${Date.now()}`,
+        user_id: finalizedTrip.user_id,
+        notification_type: 'system',
+        title: `Keberangkatan Terfinalisasi: ${finalizedTrip.title}`,
+        message: `Jadwal, Persiapan, dan Barang Bawaan sudah terfinalisasi. Pengingat keberangkatan & e-Tiket aktif dikirim ke seluruh peserta.`,
+        reference_id: finalizedTrip.id,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      });
+    }
+    return updated;
   },
   updateEscrowStatus: (
     id: string,
@@ -1682,13 +1727,30 @@ export const OpenTripOrganizersRepo = {
 
 export const OpenTripTransactionsRepo = {
   getAll: (): OpenTripTransaction[] =>
-    readTable<OpenTripTransaction>(DB_KEYS.OPEN_TRIP_TRANSACTIONS, SEED_OPEN_TRIP_TRANSACTIONS),
+    readTable<OpenTripTransaction>(DB_KEYS.OPEN_TRIP_TRANSACTIONS, SEED_OPEN_TRIP_TRANSACTIONS).map(
+      (tx, idx) =>
+        tx.status === 'BERHASIL' && !tx.eticket_code
+          ? {
+              ...tx,
+              eticket_code: `ETK-WISGO-${String(idx + 1).padStart(3, '0')}`,
+              eticket_issued_at: tx.paid_at,
+            }
+          : tx
+    ),
   save: (tx: OpenTripTransaction): OpenTripTransaction[] => {
     const list = OpenTripTransactionsRepo.getAll();
     const idx = list.findIndex((t) => t.id === tx.id);
     const updated = [...list];
-    if (idx >= 0) updated[idx] = tx;
-    else updated.unshift(tx);
+    const enriched: OpenTripTransaction =
+      tx.status === 'BERHASIL' && !tx.eticket_code
+        ? {
+            ...tx,
+            eticket_code: `ETK-WISGO-${Date.now().toString().slice(-4)}`,
+            eticket_issued_at: new Date().toISOString(),
+          }
+        : tx;
+    if (idx >= 0) updated[idx] = enriched;
+    else updated.unshift(enriched);
     writeTable(DB_KEYS.OPEN_TRIP_TRANSACTIONS, updated);
     return updated;
   },
