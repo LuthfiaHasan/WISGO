@@ -6982,9 +6982,6 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
             Navigator.pop(pageCtx);
             _openPlaceBarometer(place.baroIndex);
           },
-          onOpenLeaderboard: () {
-            _openGeodeRankingModal(place);
-          },
         ),
       ),
     );
@@ -7121,14 +7118,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     );
   }
 
-  void _openGeodeRankingModal([SavedDestinationModel? dest]) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _GeodeRankingModal(dest: dest),
-    );
-  }
+
 
   // ===========================================================================
   // MODAL 9: PANTAU LOKASI ROMBONGAN (ITEM 17)
@@ -7864,7 +7854,7 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                                           value:
                                               '${challenge.currentCheckpoints}/${challenge.targetCheckpoints}',
                                           label: AppLocale.tr('Misi', 'Quests'),
-                                          onTap: _openGeodeRankingModal,
+                                          onTap: _openDigitalPassportModal,
                                         ),
                                       ),
                                       Container(
@@ -8072,70 +8062,34 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _openGeodeRankingModal,
-                                icon: const Icon(
-                                  Icons.leaderboard_rounded,
-                                  size: 16,
-                                ),
-                                label: const Text(
-                                  'Geode Ranking',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFFF3DCAA),
-                                  side: BorderSide(
-                                    color: AppColors.goldSoft
-                                        .withValues(alpha: 0.65),
-                                  ),
-                                  backgroundColor:
-                                      Colors.white.withValues(alpha: 0.06),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 11,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _openDigitalPassportModal,
+                            icon: const Icon(Icons.verified_rounded, size: 16),
+                            label: Text(
+                              AppLocale.tr(
+                                'Paspor Digital',
+                                'Digital Passport',
+                              ),
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _openDigitalPassportModal,
-                                icon: const Icon(Icons.verified_rounded, size: 16),
-                                label: Text(
-                                  AppLocale.tr(
-                                    'Paspor Digital',
-                                    'Digital Passport',
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFD49D4A),
-                                  foregroundColor: const Color(0xFF1F1307),
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 11,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFD49D4A),
+                              foregroundColor: const Color(0xFF1F1307),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 11,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -11643,371 +11597,3 @@ IconData _getFacilityIcon(String name) {
   return Icons.check_circle_outline_rounded;
 }
 
-
-// =============================================================================
-// MODAL GEODE RANKING & PAPAN PERINGKAT SPASIAL (ITEM USE CASE DIAGRAM)
-// =============================================================================
-class _GeodeRankingModal extends StatefulWidget {
-  final SavedDestinationModel? dest;
-  const _GeodeRankingModal({this.dest});
-
-  @override
-  State<_GeodeRankingModal> createState() => _GeodeRankingModalState();
-}
-
-class _GeodeRankingModalState extends State<_GeodeRankingModal> {
-  bool _isGpsCheckedIn = false;
-  bool _isRecalculating = false;
-  int _userGeodeScore = 2500;
-  double _userGeodeDistanceKm = 465.4;
-
-  void _verifyGpsCheckin() {
-    setState(() {
-      _isGpsCheckedIn = true;
-      _userGeodeScore += 250;
-      _userGeodeDistanceKm += 18.5;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('📍 Koordinat Geospasial Terverifikasi (<500m)! Skor Geode bertambah +250 GP.'),
-        backgroundColor: AppColors.forest,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _recalculateGeodeRanking() {
-    setState(() => _isRecalculating = true);
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) {
-        setState(() {
-          _isRecalculating = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Rekalkulasi Geode Ranking Berhasil! Seluruh data titik spasial GPS telah disinkronkan oleh Admin Dispar.'),
-            backgroundColor: AppColors.forest,
-          ),
-        );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final destName = widget.dest?.title ?? 'Kawasan Wisata Sumatera Barat';
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.sageBorder,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.goldMinang, AppColors.warningDark],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.leaderboard_rounded, color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Geode Ranking Penjelajah',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.ink),
-                    ),
-                    Text(
-                      'Papan Peringkat Spasial • Direkalkulasi oleh Admin Dispar',
-                      style: TextStyle(fontSize: 11, color: AppColors.muted),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded, color: AppColors.muted),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // User Geode Status Card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.forest, AppColors.ink],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.forest.withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('POSISI RANKING ANDA', style: TextStyle(fontSize: 11, color: AppColors.sage, fontWeight: FontWeight.w800)),
-                        Text('Peringkat #3 Se-Sumbar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.goldMinang,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text('Tier Geode Platinum', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        Text('$_userGeodeScore GP', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.goldSoft)),
-                        const Text('Skor Geode', style: TextStyle(fontSize: 11, color: AppColors.sage)),
-                      ],
-                    ),
-                    Container(width: 1, height: 24, color: Colors.white24),
-                    Column(
-                      children: [
-                        Text('${_userGeodeDistanceKm.toStringAsFixed(1)} km', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
-                        const Text('Jarak Geodesik', style: TextStyle(fontSize: 11, color: AppColors.sage)),
-                      ],
-                    ),
-                    Container(width: 1, height: 24, color: Colors.white24),
-                    Column(
-                      children: [
-                        Text(_isGpsCheckedIn ? '10/10' : '9/10', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
-                        const Text('Tertaklukkan', style: TextStyle(fontSize: 11, color: AppColors.sage)),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Tombol Rekalkulasi Geode Ranking
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _isRecalculating ? null : _recalculateGeodeRanking,
-              icon: _isRecalculating
-                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.sync_rounded, size: 16, color: AppColors.forest),
-              label: Text(
-                _isRecalculating ? 'Merekalkulasi Peringkat Geospasial...' : 'Rekalkulasi Geode Ranking Saya',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forest),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.forest),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // GPS Proximity Check-in Box (jika dibuka pada destinasi tertentu)
-          if (widget.dest != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _isGpsCheckedIn ? AppColors.successBg : AppColors.warningBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: _isGpsCheckedIn ? AppColors.success : AppColors.warning,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _isGpsCheckedIn ? Icons.check_circle_rounded : Icons.my_location_rounded,
-                    color: _isGpsCheckedIn ? AppColors.success : AppColors.warningDark,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isGpsCheckedIn ? 'Koordinat Spasial Terverifikasi' : 'Check-in Geospasial di Kawasan',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            color: _isGpsCheckedIn ? AppColors.success : AppColors.warningDark,
-                          ),
-                        ),
-                        Text(
-                          _isGpsCheckedIn
-                              ? 'Stempel check-in di $destName (+250 GP)'
-                              : 'Berada di $destName (< 500m geofence)',
-                          style: const TextStyle(fontSize: 11, color: AppColors.muted),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!_isGpsCheckedIn)
-                    ElevatedButton(
-                      onPressed: _verifyGpsCheckin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.forest,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('Check-in', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          const Text(
-            'PAPAN PERINGKAT SPASIAL (TOP 5):',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1),
-          ),
-          const SizedBox(height: 8),
-
-          // Leaderboard List
-          Expanded(
-            child: ListView(
-              children: [
-                _buildRankRow(1, 'Rangkayo Sutan', '10/10 Destinasi', '520.4 km', '2.950 GP', 'Diamond', false),
-                _buildRankRow(2, 'Pendekar Marapulai', '10/10 Destinasi', '498.1 km', '2.750 GP', 'Diamond', false),
-                _buildRankRow(3, 'Anda (Wisatawan Teladan)', _isGpsCheckedIn ? '10/10 Destinasi' : '9/10 Destinasi', '${_userGeodeDistanceKm.toStringAsFixed(1)} km', '$_userGeodeScore GP', 'Platinum', true),
-                _buildRankRow(4, 'Bundo Penjelajah', '8/10 Destinasi', '412.0 km', '2.200 GP', 'Gold', false),
-                _buildRankRow(5, 'Petualang Singkarak', '7/10 Destinasi', '385.5 km', '1.950 GP', 'Gold', false),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRankRow(int rank, String name, String dest, String dist, String score, String tier, bool isMe) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isMe ? AppColors.creamSubtle : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isMe ? AppColors.goldMinang : AppColors.sageBorder,
-          width: isMe ? 2 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: rank == 1
-                  ? AppColors.goldSoft
-                  : rank == 2
-                      ? const Color(0xFFB0B7BD)
-                      : rank == 3
-                          ? const Color(0xFFCD7F32)
-                          : AppColors.cream,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '#$rank',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                color: rank <= 3 ? Colors.white : AppColors.ink,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
-                          color: isMe ? AppColors.warningDark : AppColors.ink,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isMe) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppColors.goldMinang,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text('Saya', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ],
-                ),
-                Text('$dest • $dist', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(score, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppColors.forest)),
-              Text('Tier $tier', style: const TextStyle(fontSize: 11, color: AppColors.muted)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
