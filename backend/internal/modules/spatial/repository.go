@@ -26,6 +26,12 @@ type Repository interface {
 	UpdateSOSSignalStatus(idOrCode, status, sarUnit string) (*models.SOSSignal, error)
 	UpsertEmergencyContact(contact models.EmergencyContact) models.EmergencyContact
 	DeleteEmergencyContact(id string) error
+
+	// Berita Wisata & Bencana Sumatera Barat (sumbarkita.id & sumbar.antaranews.com)
+	ListSosNews(portalFilter, categoryFilter string, onlyPublished bool) []models.SosNewsItem
+	UpsertSosNews(item models.SosNewsItem) models.SosNewsItem
+	DeleteSosNews(id string) error
+	SyncLivePortalNews() ([]models.SosNewsItem, int)
 }
 
 // CalculateSpatialDistanceKm menghitung jarak spasial GPS dalam km (faktor jalan berliku Minangkabau 1.32x)
@@ -60,6 +66,7 @@ type inMemoryRepository struct {
 	sosSignals        []models.SOSSignal
 	telemetries       map[string]*models.GaodeBehaviorRanking
 	emergencyContacts []models.EmergencyContact
+	sosNews           []models.SosNewsItem
 }
 
 // NewRepository membuat instance repositori spasial baru dengan seeder awal
@@ -71,6 +78,7 @@ func NewRepository() Repository {
 		sosSignals:        SeedSOSSignals(),
 		telemetries:       make(map[string]*models.GaodeBehaviorRanking),
 		emergencyContacts: models.GetDefaultEmergencyContacts(),
+		sosNews:           SeedSumbarPortalNews(),
 	}
 }
 
@@ -403,4 +411,120 @@ func (r *inMemoryRepository) DeleteEmergencyContact(id string) error {
 	}
 	return errors.New("CONTACT_NOT_FOUND")
 }
+
+func (r *inMemoryRepository) ListSosNews(portalFilter, categoryFilter string, onlyPublished bool) []models.SosNewsItem {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	qPortal := strings.ToLower(strings.TrimSpace(portalFilter))
+	qCat := strings.ToLower(strings.TrimSpace(categoryFilter))
+
+	var list []models.SosNewsItem
+	for _, n := range r.sosNews {
+		if onlyPublished && !n.IsPublished {
+			continue
+		}
+		if qPortal != "" && qPortal != "all" {
+			if !strings.Contains(strings.ToLower(n.PortalDomain), qPortal) && !strings.Contains(strings.ToLower(n.Source), qPortal) {
+				continue
+			}
+		}
+		if qCat != "" && qCat != "all" && !strings.Contains(strings.ToLower(n.Category), qCat) {
+			continue
+		}
+		list = append(list, n)
+	}
+	return list
+}
+
+func (r *inMemoryRepository) UpsertSosNews(item models.SosNewsItem) models.SosNewsItem {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if strings.TrimSpace(item.ID) == "" {
+		item.ID = fmt.Sprintf("news-%d", time.Now().UnixNano()%1000000)
+	}
+	if strings.TrimSpace(item.Category) == "" {
+		item.Category = "Info Jalur & Bencana"
+	}
+	if strings.TrimSpace(item.Severity) == "" {
+		item.Severity = "INFO WISATA"
+	}
+	if strings.TrimSpace(item.Region) == "" {
+		item.Region = "Sumatera Barat"
+	}
+	if strings.TrimSpace(item.Source) == "" {
+		item.Source = "Sumbarkita.id • Redaksi Kebencanaan Sumbar"
+	}
+	if strings.TrimSpace(item.PortalDomain) == "" {
+		srcLow := strings.ToLower(item.Source + " " + item.SourceURL)
+		switch {
+		case strings.Contains(srcLow, "sumbarkita"):
+			item.PortalDomain = "sumbarkita.id"
+		case strings.Contains(srcLow, "antara"):
+			item.PortalDomain = "sumbar.antaranews.com"
+		default:
+			item.PortalDomain = "dispar.sumbarprov.go.id"
+		}
+	}
+	if strings.TrimSpace(item.SourceURL) == "" {
+		if item.PortalDomain == "sumbarkita.id" {
+			item.SourceURL = "https://sumbarkita.id/"
+		} else if item.PortalDomain == "sumbar.antaranews.com" {
+			item.SourceURL = "https://sumbar.antaranews.com/"
+		}
+	}
+	if strings.TrimSpace(item.PublishedAt) == "" {
+		item.PublishedAt = time.Now().Format(time.RFC3339)
+	}
+
+	for i, existing := range r.sosNews {
+		if strings.EqualFold(existing.ID, item.ID) {
+			r.sosNews[i] = item
+			return item
+		}
+	}
+	r.sosNews = append([]models.SosNewsItem{item}, r.sosNews...)
+	return item
+}
+
+func (r *inMemoryRepository) DeleteSosNews(id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i, existing := range r.sosNews {
+		if strings.EqualFold(existing.ID, id) {
+			r.sosNews = append(r.sosNews[:i], r.sosNews[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("NEWS_NOT_FOUND")
+}
+
+func (r *inMemoryRepository) SyncLivePortalNews() ([]models.SosNewsItem, int) {
+	liveItems := FetchLivePortalNewsFromRSS()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	addedCount := 0
+	for _, item := range liveItems {
+		exists := false
+		for i, cur := range r.sosNews {
+			if strings.EqualFold(cur.ID, item.ID) || strings.EqualFold(cur.Title, item.Title) {
+				r.sosNews[i] = item
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			r.sosNews = append([]models.SosNewsItem{item}, r.sosNews...)
+			addedCount++
+		}
+	}
+
+	out := make([]models.SosNewsItem, len(r.sosNews))
+	copy(out, r.sosNews)
+	return out, len(liveItems)
+}
+
 

@@ -83,6 +83,23 @@ type VerifyDestinationRequest struct {
 	AdminNotes string `json:"admin_notes,omitempty"`
 }
 
+// RejectNewTourRequest payload penolakan usulan destinasi (new_tour) dengan notifikasi ke pengusul
+type RejectNewTourRequest struct {
+	Reason     string `json:"reason"`
+	AdminNotes string `json:"admin_notes"`
+}
+
+// MergeNewToursInput payload penggabungan usulan duplikat new_tour (pilih data terbaik + foto terbaik)
+type MergeNewToursInput struct {
+	SubmissionIDs           []string         `json:"submission_ids"`
+	Submissions             []models.NewTour `json:"submissions,omitempty"`
+	PrimaryDataSubmissionID string           `json:"primary_data_submission_id"`
+	CoverPhotoSubmissionID  string           `json:"cover_photo_submission_id"`
+	CustomName              string           `json:"custom_name,omitempty"`
+	CustomDescription       string           `json:"custom_description,omitempty"`
+	CustomTips              string           `json:"custom_tips,omitempty"`
+}
+
 // NowTimestamp helper string waktu
 func NowTimestamp() string {
 	return time.Now().Format(time.RFC3339)

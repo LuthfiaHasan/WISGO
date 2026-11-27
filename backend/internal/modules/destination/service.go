@@ -24,6 +24,13 @@ type Service interface {
 	UpdateCMS(id string, payload models.Destination) (*models.Destination, error)
 	DeleteCMS(id string) (string, error)
 	SyncTariffsCMS(id string, tariffs []models.OfficialTariff) (*models.Destination, error)
+
+	// Meja Kurasi Usulan Destinasi Wisatawan (Tabel new_tour)
+	ListNewTours(statusFilter string) []models.NewTour
+	CreateNewTour(input models.NewTour) (models.NewTour, error)
+	ApproveNewTour(id string) (*models.Destination, *models.NewTour, error)
+	RejectNewTour(id string, reason string) (*models.NewTour, error)
+	MergeNewTours(req MergeNewToursInput) (*models.Destination, []models.NewTour, error)
 }
 
 type service struct {
@@ -233,6 +240,27 @@ func (s *service) CreateHiddenGem(input CreateHiddenGemInput) (models.Destinatio
 	dest.MedanIndicator = medan
 
 	created := s.repo.CreateCMS(dest)
+	// Sinkronkan juga ke tabel new_tour agar langsung tampil di Meja Kurasi UgcSubmissionsSubTab.tsx
+	_ = s.repo.UpsertNewTour(models.NewTour{
+		ID:             fmt.Sprintf("nt-%s", created.ID),
+		UserID:         input.UserID,
+		Name:           created.Name,
+		CategoryID:     "cat-hidden-gem",
+		Category:       "Hidden Gem",
+		CityRegency:    created.CityRegency,
+		Description:    created.Description,
+		Latitude:       created.Latitude,
+		Longitude:      created.Longitude,
+		TipsMenjaga:    input.TipsMenjaga,
+		Facilities:     []string{"Jalur Trekking", "Spot Foto Alami"},
+		EstimatedPrice: "Rp 10.000 / orang",
+		PhotoURL:       created.CoverImage,
+		IsSensitive:    true,
+		Status:         "pending",
+		SubmitterName:  input.Contributor,
+		SubmitterPhone: "6281234567890",
+		CreatedAt:      time.Now().Format(time.RFC3339),
+	})
 	return created, nil
 }
 
@@ -250,3 +278,30 @@ func (s *service) VerifySubmission(id string, status string) (*models.Destinatio
 	}
 	return s.repo.VerifyDestination(id, st)
 }
+
+func (s *service) ListNewTours(statusFilter string) []models.NewTour {
+	return s.repo.ListNewTours(statusFilter)
+}
+
+func (s *service) CreateNewTour(input models.NewTour) (models.NewTour, error) {
+	if strings.TrimSpace(input.Name) == "" {
+		return models.NewTour{}, errors.New("Field 'name' (nama destinasi usulan) wajib diisi.")
+	}
+	if strings.TrimSpace(input.TipsMenjaga) == "" {
+		input.TipsMenjaga = "Bawa pulang sampah pribadi, jaga keasrian alam, dan patuhi adat nagari setempat."
+	}
+	return s.repo.UpsertNewTour(input), nil
+}
+
+func (s *service) ApproveNewTour(id string) (*models.Destination, *models.NewTour, error) {
+	return s.repo.ApproveNewTourToDestination(id)
+}
+
+func (s *service) RejectNewTour(id string, reason string) (*models.NewTour, error) {
+	return s.repo.RejectNewTour(id, reason)
+}
+
+func (s *service) MergeNewTours(req MergeNewToursInput) (*models.Destination, []models.NewTour, error) {
+	return s.repo.MergeNewToursToDestination(req)
+}
+

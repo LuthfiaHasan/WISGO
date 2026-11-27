@@ -99,7 +99,7 @@ import {
 import { safeSetLocalStorage } from '../utils/imageOptimizer';
 
 const DB_VERSION_KEY = 'wisgo_v2_db_version';
-export const CURRENT_DB_VERSION = '3.2.0';
+export const CURRENT_DB_VERSION = '3.3.0';
 
 export const DB_KEYS = {
   CATEGORIES: 'wisgo_v3_db_categories',
@@ -238,6 +238,8 @@ function seedFreshV3Tables(): void {
   safeSetLocalStorage(DB_KEYS.REVIEW_SETTINGS, JSON.stringify({ min_character_limit: 30 }));
   safeSetLocalStorage(DB_KEYS.REGENCY_HEATMAP, JSON.stringify(SEED_REGENCY_HEATMAP));
   safeSetLocalStorage(DB_KEYS.SYSTEM_BENCHMARK, JSON.stringify(INITIAL_SYSTEM_BENCHMARK));
+  safeSetLocalStorage(DB_KEYS.SOS_NEWS, JSON.stringify(SEED_SOS_NEWS));
+  safeSetLocalStorage(DB_KEYS.SHUNLU_POIS, JSON.stringify(SEED_SHUNLU_POIS));
 }
 
 export function initializeAndMigrateDatabase(forceReset = false): void {

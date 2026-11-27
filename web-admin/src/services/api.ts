@@ -17,6 +17,7 @@ import {
   HazardAlert,
   HazardSeverity,
   MinangPhrase,
+  NewTour,
   Notifikasi,
   OpenTrip,
   OpenTripStatus,
@@ -25,6 +26,7 @@ import {
   PungliReport,
   PungliStatus,
   RegencyHeatmapData,
+  SosNewsItem,
   SosSignal,
   SosStatus,
   SystemBenchmarkMetrics,
@@ -40,11 +42,13 @@ import {
   GaodeRankingsRepo,
   HazardAlertsRepo,
   MinangPhrasesRepo,
+  NewTourRepo,
   NotifikasiRepo,
   OpenTripsRepo,
   PartnersRepo,
   PungliReportsRepo,
   RegencyHeatmapRepo,
+  SosNewsRepo,
   SosSignalsRepo,
   Studio360Repo,
   SystemBenchmarkRepo,
@@ -589,6 +593,168 @@ export async function saveEmergencyContact(
 
 export async function deleteEmergencyContact(id: string): Promise<EmergencyContact[]> {
   return EmergencyContactsRepo.delete(id);
+}
+
+// ============================================================================
+// 3B. MEJA KURASI USULAN DESTINASI WISATAWAN (Tabel new_tour — Sinkron BE-1)
+// ============================================================================
+export async function fetchNewToursWithBridge(): Promise<{
+  submissions: NewTour[];
+  online: boolean;
+}> {
+  try {
+    const res = await apiClient.get('/destinations/new-tours');
+    const remoteList = res.data?.new_tours as NewTour[] | undefined;
+    if (res.status >= 200 && res.status < 300 && Array.isArray(remoteList) && remoteList.length > 0) {
+      let merged = NewTourRepo.getAll();
+      for (const item of remoteList) {
+        merged = NewTourRepo.save(item);
+      }
+      return { submissions: merged, online: true };
+    }
+  } catch {
+    // Fallback ke penyimpanan lokal V3
+  }
+  return { submissions: NewTourRepo.getAll(), online: false };
+}
+
+export async function createNewTourWithBridge(
+  newItem: NewTour
+): Promise<{ submissions: NewTour[]; syncedRemote: boolean }> {
+  const updated = NewTourRepo.save(newItem);
+  try {
+    const res = await apiClient.post('/destinations/new-tours', newItem);
+    return { submissions: updated, syncedRemote: res.status >= 200 && res.status < 300 };
+  } catch {
+    return { submissions: updated, syncedRemote: false };
+  }
+}
+
+export async function approveNewTourWithBridge(sub: NewTour): Promise<{
+  createdDestination: Destination;
+  submissions: NewTour[];
+  syncedRemote: boolean;
+}> {
+  const createdDestination = NewTourRepo.approveToDestinations(sub);
+  let syncedRemote = false;
+  try {
+    const res = await apiClient.put(`/admin/new-tours/${encodeURIComponent(sub.id)}/approve`);
+    syncedRemote = res.status >= 200 && res.status < 300;
+  } catch {
+    syncedRemote = false;
+  }
+  return {
+    createdDestination,
+    submissions: NewTourRepo.getAll(),
+    syncedRemote,
+  };
+}
+
+export async function rejectNewTourWithBridge(
+  id: string,
+  reason: string
+): Promise<{ submissions: NewTour[]; syncedRemote: boolean }> {
+  const updated = NewTourRepo.rejectWithNotice(id, reason);
+  let syncedRemote = false;
+  try {
+    const res = await apiClient.put(`/admin/new-tours/${encodeURIComponent(id)}/reject`, {
+      reason,
+      admin_notes: reason,
+    });
+    syncedRemote = res.status >= 200 && res.status < 300;
+  } catch {
+    syncedRemote = false;
+  }
+  return { submissions: updated, syncedRemote };
+}
+
+export async function mergeNewToursWithBridge(params: {
+  submissions: NewTour[];
+  primaryDataSubmissionId: string;
+  coverPhotoSubmissionId: string;
+  customName?: string;
+  customDescription?: string;
+  customTips?: string;
+}): Promise<{
+  mergedDestination: Destination;
+  submissions: NewTour[];
+  syncedRemote: boolean;
+}> {
+  const mergedDestination = NewTourRepo.mergeAndApproveToDestination(params);
+  let syncedRemote = false;
+  try {
+    const res = await apiClient.post('/admin/new-tours/merge', {
+      submission_ids: params.submissions.map((s) => s.id),
+      submissions: params.submissions,
+      primary_data_submission_id: params.primaryDataSubmissionId,
+      cover_photo_submission_id: params.coverPhotoSubmissionId,
+      custom_name: params.customName,
+      custom_description: params.customDescription,
+      custom_tips: params.customTips,
+    });
+    syncedRemote = res.status >= 200 && res.status < 300;
+  } catch {
+    syncedRemote = false;
+  }
+  return {
+    mergedDestination,
+    submissions: NewTourRepo.getAll(),
+    syncedRemote,
+  };
+}
+
+// ============================================================================
+// 3C. BERITA WISATA & BENCANA SUMATERA BARAT (sumbarkita.id & sumbar.antaranews.com)
+// ============================================================================
+export async function fetchSosNewsWithBridge(refreshLivePortals = false): Promise<{
+  news: SosNewsItem[];
+  online: boolean;
+  liveFetchedCount: number;
+}> {
+  try {
+    const res = refreshLivePortals
+      ? await apiClient.post('/spatial/news/sync-portals')
+      : await apiClient.get('/spatial/news?include_archived=true');
+    const remoteNews = res.data?.news as SosNewsItem[] | undefined;
+    if (res.status >= 200 && res.status < 300 && Array.isArray(remoteNews) && remoteNews.length > 0) {
+      let merged = SosNewsRepo.getAll();
+      for (const item of remoteNews) {
+        merged = SosNewsRepo.save(item);
+      }
+      return {
+        news: merged,
+        online: true,
+        liveFetchedCount: Number(res.data?.live_rss_fetched ?? remoteNews.length),
+      };
+    }
+  } catch {
+    // Fallback ke penyimpanan lokal V3
+  }
+  return { news: SosNewsRepo.getAll(), online: false, liveFetchedCount: 0 };
+}
+
+export async function saveSosNewsWithBridge(
+  item: SosNewsItem
+): Promise<{ news: SosNewsItem[]; syncedRemote: boolean }> {
+  const updated = SosNewsRepo.save(item);
+  try {
+    const res = await apiClient.post('/spatial/news', item);
+    return { news: updated, syncedRemote: res.status >= 200 && res.status < 300 };
+  } catch {
+    return { news: updated, syncedRemote: false };
+  }
+}
+
+export async function deleteSosNewsWithBridge(
+  id: string
+): Promise<{ news: SosNewsItem[]; syncedRemote: boolean }> {
+  const updated = SosNewsRepo.delete(id);
+  try {
+    const res = await apiClient.delete(`/spatial/news/${encodeURIComponent(id)}`);
+    return { news: updated, syncedRemote: res.status >= 200 && res.status < 300 };
+  } catch {
+    return { news: updated, syncedRemote: false };
+  }
 }
 
 // ============================================================================

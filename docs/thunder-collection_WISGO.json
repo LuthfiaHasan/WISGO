@@ -1,439 +1,490 @@
 {
   "clientName": "Thunder Client",
-  "collectionName": "WISGO (Rancak.in) - BE-1 API Collection",
-  "collectionId": "wisgo-be1-thunder-client",
-  "dateExported": "2026-11-19T08:22:58.682Z",
+  "collectionName": "WISGO (Rancak.in) - BE-1 Production & Sinergi Collection (Full 38 Endpoints)",
+  "collectionId": "wisgo-be1-thunder-client-v3",
+  "dateExported": "2026-11-26T07:05:00.000Z",
   "version": "1.2",
   "folders": [
     {
-      "_id": "f_auth",
-      "name": "01. Autentikasi & Pilihan Aktor",
+      "_id": "f_01_health_auth",
+      "name": "01. Health Check & Autentikasi Sinergi (OTP & Token)",
       "containerId": ""
     },
     {
-      "_id": "f_wisatawan",
-      "name": "02. Aktor Wisatawan (Eksplorasi & Input Wisata)",
+      "_id": "f_02_destinations_weather",
+      "name": "02. Katalog 20 Destinasi, 5 Kategori Induk & Cuaca Live WeatherAPI",
       "containerId": ""
     },
     {
-      "_id": "f_vendor",
-      "name": "03. Aktor Vendor (Input Event)",
+      "_id": "f_03_scenes360",
+      "name": "03. Panorama 360° View & CMS Studio 4-Pin Interaktif",
       "containerId": ""
     },
     {
-      "_id": "f_admin",
-      "name": "04. Aktor Admin Dispar (Verifikasi, Event & CMS)",
+      "_id": "f_04_spatial_shunlu",
+      "name": "04. Spasial PostGIS: Shunlu Searah Rute, Peta Mikro, Audio GPS & TSP",
       "containerId": ""
     },
     {
-      "_id": "f_security",
-      "name": "05. Uji Keamanan & RBAC (Negative Tests)",
+      "_id": "f_05_hazard_sos",
+      "name": "05. Mitigasi Bencana: 4 Radar Jalur Ekstrem, 6 Kontak Darurat & SOS GPS",
+      "containerId": ""
+    },
+    {
+      "_id": "f_06_pungli_qr",
+      "name": "06. Plang Smart QR Fisik & Satgas Saber Pungli",
+      "containerId": ""
+    },
+    {
+      "_id": "f_07_culture_gaode",
+      "name": "07. Kamus Audio Minang, Kalender Budaya & Gaode Behavior Ranking",
+      "containerId": ""
+    },
+    {
+      "_id": "f_08_system_security",
+      "name": "08. Notifikasi, SLA Benchmark <100ms, Sinergi BE-2 & Uji Keamanan RBAC",
       "containerId": ""
     }
   ],
   "requests": [
     {
-      "_id": "req_auth_otp",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_auth",
-      "name": "Kirim Kode OTP (Request OTP)",
-      "url": "{{baseUrl}}/api/v1/auth/request-otp",
+      "_id": "req_01_health",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_01_health_auth",
+      "name": "1.1 Cek Koneksi Server & Database Supabase (/health)",
+      "url": "http://localhost:8080/health",
+      "method": "GET"
+    },
+    {
+      "_id": "req_01_request_otp",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_01_health_auth",
+      "name": "1.2 Kirim Kode OTP WhatsApp (Request OTP)",
+      "url": "http://localhost:8080/api/v1/auth/request-otp",
       "method": "POST",
       "body": {
         "type": "json",
-        "raw": "{\n  \"phone_number\": \"6281234567890\"\n}"
+        "raw": "{\n  \"phone_number\": \"628127578953\"\n}"
       }
     },
     {
-      "_id": "req_auth_wisatawan",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_auth",
-      "name": "Verifikasi OTP - Login Pilihan: Input Wisata (Wisatawan)",
-      "url": "{{baseUrl}}/api/v1/auth/verify-otp",
+      "_id": "req_01_verify_otp_tourist",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_01_health_auth",
+      "name": "1.3 Verifikasi OTP Wisatawan (Dapatkan Token JWT Dinamis)",
+      "url": "http://localhost:8080/api/v1/auth/verify-otp",
       "method": "POST",
       "body": {
         "type": "json",
-        "raw": "{\n  \"phone_number\": \"6281234567890\",\n  \"otp_code\": \"1234\",\n  \"login_choice\": \"wisata\"\n}"
+        "raw": "{\n  \"phone_number\": \"628127578953\",\n  \"otp_code\": \"1234\",\n  \"full_name\": \"Rizky Pratama\",\n  \"login_choice\": \"wisata\"\n}"
       }
     },
     {
-      "_id": "req_auth_vendor",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_auth",
-      "name": "Verifikasi OTP - Login Pilihan: Input Event (Vendor)",
-      "url": "{{baseUrl}}/api/v1/auth/verify-otp",
+      "_id": "req_01_verify_otp_vendor",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_01_health_auth",
+      "name": "1.4 Verifikasi OTP Vendor Event Budaya",
+      "url": "http://localhost:8080/api/v1/auth/verify-otp",
       "method": "POST",
       "body": {
         "type": "json",
-        "raw": "{\n  \"phone_number\": \"6281299998888\",\n  \"otp_code\": \"1234\",\n  \"login_choice\": \"event\"\n}"
+        "raw": "{\n  \"phone_number\": \"6281299998888\",\n  \"otp_code\": \"1234\",\n  \"full_name\": \"Sanggar Budaya Minang\",\n  \"login_choice\": \"event\"\n}"
       }
     },
     {
-      "_id": "req_wisata_categories",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Master 5 Kategori Perjalanan & Live Count (Poin 6)",
-      "url": "{{baseUrl}}/api/v1/categories",
+      "_id": "req_02_categories",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.1 Ambil 5 Master Categories & Jumlah Destinasi (Poin 6)",
+      "url": "http://localhost:8080/api/v1/categories",
       "method": "GET"
     },
     {
-      "_id": "req_wisata_dir",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Direktori Destinasi (+ Spasial Bukittinggi)",
-      "url": "{{baseUrl}}/api/v1/destinations?category=Alam%20%26%20Geopark&lat=-0.3055&lng=100.3692",
+      "_id": "req_02_destinations_all",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.2 Ambil 20 Destinasi Prioritas Sumbar (+ Kalkulasi Jarak GPS dari Bukittinggi)",
+      "url": "http://localhost:8080/api/v1/destinations?lat=-0.3051&lng=100.3692",
       "method": "GET"
     },
     {
-      "_id": "req_wisata_detail",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Detail Destinasi (5 Indikator Medan & Aturan Adat)",
-      "url": "{{baseUrl}}/api/v1/destinations/dest-001",
+      "_id": "req_02_destinations_filter_cat",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.3 Filter Destinasi Berdasarkan ID Kategori Induk (cat-alam-geopark)",
+      "url": "http://localhost:8080/api/v1/destinations?category_id=cat-alam-geopark",
       "method": "GET"
     },
     {
-      "_id": "req_wisata_tariffs",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Tabel Tarif Resmi Perda Lembah Harau",
-      "url": "{{baseUrl}}/api/v1/destinations/dest-001/tariffs",
+      "_id": "req_02_destination_detail_weather",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.4 Detail Destinasi + Cuaca Live WeatherAPI + 5 Indikator Medan + Tarif Perda (Poin 7 & 8)",
+      "url": "http://localhost:8080/api/v1/destinations/dest-001",
       "method": "GET"
     },
     {
-      "_id": "req_wisata_offline",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Unduh Mode Offline Bundle (JSON v2)",
-      "url": "{{baseUrl}}/api/v1/destinations/dest-001/offline-bundle",
+      "_id": "req_02_destination_tariffs",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.5 Tabel Fair-Price Barometer (Tarif Resmi Perda Destinasi)",
+      "url": "http://localhost:8080/api/v1/destinations/dest-001/tariffs",
       "method": "GET"
     },
     {
-      "_id": "req_wisata_360",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Kanvas Tur Imersif 360 & 4 Hotspot Pin",
-      "url": "{{baseUrl}}/api/v1/destinations/dest-001/scenes-360",
+      "_id": "req_02_offline_bundle",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.6 Unduh Paket Mode Offline Bundle + Kontak Darurat (Poin 2)",
+      "url": "http://localhost:8080/api/v1/destinations/dest-001/offline-bundle",
       "method": "GET"
     },
     {
-      "_id": "req_wisata_shunlu",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Pencarian Tempat Mampir Searah (Shunlu POIs)",
-      "url": "{{baseUrl}}/api/v1/spatial/shunlu",
-      "method": "POST",
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"origin_lat\": -0.9471,\n  \"origin_lng\": 100.4172,\n  \"destination_lat\": -0.3055,\n  \"destination_lng\": 100.3692,\n  \"max_detour_minutes\": 20\n}"
-      }
-    },
-    {
-      "_id": "req_wisata_qr",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Resolusi Scanner Plang Smart QR Fisik",
-      "url": "{{baseUrl}}/api/v1/qr/QR-HARAU-01",
-      "method": "GET"
-    },
-    {
-      "_id": "req_wisata_pungli",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Lapor Pungli Wisatawan (Selisih Tarif + GPS)",
-      "url": "{{baseUrl}}/api/v1/pungli/report",
-      "method": "POST",
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"tariff_id\": \"trf-002\",\n  \"incident_category\": \"Parkir Liar\",\n  \"charged_amount_idr\": 20000,\n  \"photo_evidence_url\": \"https://storage.wisgo.sumbar.go.id/evidence/parkir_harau_01.jpg\",\n  \"reporter_notes\": \"Diminta parkir 20rb tanpa karcis resmi Perda di depan gerbang.\",\n  \"incident_lat\": -0.1095,\n  \"incident_lng\": 100.6658\n}"
-      }
-    },
-    {
-      "_id": "req_wisata_hidden_gem",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "[Use Case] Wisatawan: Input Wisata Baru (Hidden Gem)",
-      "url": "{{baseUrl}}/api/v1/destinations/hidden-gem",
+      "_id": "req_02_create_hidden_gem",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.7 Wisatawan: Ajukan Tempat Wisata Baru / Hidden Gem (Wajib Token/UserID)",
+      "url": "http://localhost:8080/api/v1/destinations/hidden-gem",
       "method": "POST",
       "auth": {
         "type": "bearer",
-        "bearer": "{{tokenTourist}}"
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXRvdXJpc3QtMDEiLCJuYW1lIjoiUml6a3kgUHJhdGFtYSAoV2lzYXRhd2FuKSIsInJvbGUiOiJ0b3VyaXN0In0.rancakin_sig_tourist"
       },
       "body": {
         "type": "json",
-        "raw": "{\n  \"name\": \"Air Terjun Sarasah Barasok\",\n  \"category\": \"Hidden Gem\",\n  \"city_regency\": \"Kab. Lima Puluh Kota\",\n  \"description\": \"Air terjun alami tersembunyi dengan formasi tebing karst megah.\",\n  \"latitude\": -0.1582,\n  \"longitude\": 100.6723,\n  \"ticket_price\": 10000,\n  \"road_condition\": \"Jalan Tanah & Setapak\",\n  \"vehicle_accessibility\": \"Hanya Motor / Trail\",\n  \"cellular_signal\": \"Edge / SOS Sinyal Hilang\"\n}"
+        "raw": "{\n  \"user_id\": \"usr-001\",\n  \"name\": \"Air Terjun Sarasah Barasok Harau\",\n  \"city_regency\": \"Kab. Lima Puluh Kota\",\n  \"description\": \"Air terjun alami tersembunyi di balik tebing granit Lembah Harau.\",\n  \"latitude\": -0.1085,\n  \"longitude\": 100.6742,\n  \"vehicle_access\": \"Hanya Motor / Jalan Kaki\",\n  \"trekking_level\": \"Sedang\",\n  \"cellular_signal\": \"Blank Spot\",\n  \"facilities\": \"Belum Ada\",\n  \"guide_need\": \"Disarankan\",\n  \"tips_menjaga\": \"Bawa kembali seluruh sampah plastik dan jangan merusak lumut tebing.\"\n}"
       }
     },
     {
-      "_id": "req_wisata_gaode",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Leaderboard Gaode Ranking (Skor Keaslian Anti-Palsu)",
-      "url": "{{baseUrl}}/api/v1/destinations/rankings/gaode",
-      "method": "GET"
-    },
-    {
-      "_id": "req_wisata_telemetry",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Kirim Telemetri GPS Nyata (>15 menit Dwell)",
-      "url": "{{baseUrl}}/api/v1/spatial/navigation-telemetry",
-      "method": "POST",
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"dwell_time_minutes\": 45,\n  \"is_repeat_visit\": true\n}"
-      }
-    },
-    {
-      "_id": "req_wisata_hazard",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Radar Live Hazard Alert 4 Koridor Ekstrem",
-      "url": "{{baseUrl}}/api/v1/spatial/hazards",
-      "method": "GET"
-    },
-    {
-      "_id": "req_wisata_sos",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Pancaran Sinyal Darurat SOS GPS Wisatawan",
-      "url": "{{baseUrl}}/api/v1/spatial/sos",
-      "method": "POST",
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"sos_code\": \"SOS-PADANG-001\",\n  \"user_phone\": \"6281234567890\",\n  \"emergency_type\": \"Kecelakaan Rem Blong & Terperosok\",\n  \"latitude\": -0.9634,\n  \"longitude\": 100.4725,\n  \"battery_percent\": 18,\n  \"passengers_count\": 4\n}"
-      }
-    },
-    {
-      "_id": "req_wisata_minang",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Kamus Saku Audio Minang (Kato Nan Ampek)",
-      "url": "{{baseUrl}}/api/v1/culture/minang-phrases?category=tawar_pasar",
-      "method": "GET"
-    },
-    {
-      "_id": "req_wisata_events",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Lihat Kalender Budaya & Jadwal Hari Pakan",
-      "url": "{{baseUrl}}/api/v1/culture/events?type=Hari%20Pakan",
-      "method": "GET"
-    },
-    {
-      "_id": "req_wisata_save",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Bookmark / Simpan Destinasi Favorit",
-      "url": "{{baseUrl}}/api/v1/users/saved",
-      "method": "POST",
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"user_id\": \"usr-001\",\n  \"destination_id\": \"dest-001\"\n}"
-      }
-    },
-    {
-      "_id": "req_vendor_input_event",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_vendor",
-      "name": "[Use Case] Vendor: Input Event Budaya / Hari Pakan Nagari",
-      "url": "{{baseUrl}}/api/v1/culture/events",
-      "method": "POST",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenVendor}}"
-      },
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"title\": \"Festival Tabuik Pariaman 2026\",\n  \"event_type\": \"Festival Budaya\",\n  \"nagari_location\": \"Pantai Gandoriah\",\n  \"city_regency\": \"Kota Pariaman\",\n  \"schedule_rule\": \"Setiap 10 Muharram (Puncak Hoyak Tabuik)\",\n  \"next_event_date\": \"2026-07-25\",\n  \"latitude\": -0.6264,\n  \"longitude\": 100.119,\n  \"highlight_item\": \"Prosesi Hoyak Tabuik setinggi 12 meter dilarung ke laut saat senja.\",\n  \"cultural_etiquette\": \"Hormati jalannya prosesi arak-arakan dan jaga kebersihan pantai.\"\n}"
-      }
-    },
-    {
-      "_id": "req_vendor_list_events",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_vendor",
-      "name": "Vendor: Cek Event Terdaftar di Kalender",
-      "url": "{{baseUrl}}/api/v1/culture/events?city_regency=Kota%20Pariaman",
-      "method": "GET"
-    },
-    {
-      "_id": "req_admin_verify",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "[Use Case] Admin Dispar: Verifikasi / Setujui Input Wisata",
-      "url": "{{baseUrl}}/api/v1/admin/destinations/dest-021/verify",
-      "method": "PATCH",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      },
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"status\": \"verified\"\n}"
-      }
-    },
-    {
-      "_id": "req_admin_create_event",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "[Use Case] Admin Dispar: CRUD Event (Create Event Budaya)",
-      "url": "{{baseUrl}}/api/v1/admin/culture/events",
-      "method": "POST",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      },
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"title\": \"Pacu Terbang Itik Payakumbuh\",\n  \"event_type\": \"Tradisi Adat\",\n  \"nagari_location\": \"Gelanggang Aur Kuning\",\n  \"city_regency\": \"Kota Payakumbuh\",\n  \"schedule_rule\": \"Setiap Minggu Ke-2 & Ke-4\",\n  \"next_event_date\": \"2026-12-10\",\n  \"latitude\": -0.2248,\n  \"longitude\": 100.63,\n  \"highlight_item\": \"Perlombaan itik terbang melintasi jarak 800 meter hingga 1 km.\",\n  \"cultural_etiquette\": \"Tidak bersorak saat itik dilepaskan agar fokus terbang lurus.\"\n}"
-      }
-    },
-    {
-      "_id": "req_admin_update_event",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "[Use Case] Admin Dispar: CRUD Event (Update Event Budaya)",
-      "url": "{{baseUrl}}/api/v1/admin/culture/events/cult-001",
-      "method": "PUT",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      },
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"title\": \"Aleknagari Pacu Jawi Musim Panen 2026\",\n  \"schedule_rule\": \"Setiap Sabtu Sore bergilir antar nagari\"\n}"
-      }
-    },
-    {
-      "_id": "req_admin_delete_event",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "[Use Case] Admin Dispar: CRUD Event (Delete Event Budaya)",
-      "url": "{{baseUrl}}/api/v1/admin/culture/events/cult-001",
-      "method": "DELETE",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      }
-    },
-    {
-      "_id": "req_admin_tariffs",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "Admin Dispar: Kelola Tarif Resmi Perda",
-      "url": "{{baseUrl}}/api/v1/admin/destinations/dest-001/tariffs",
-      "method": "PUT",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      },
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"tariffs\": [\n    {\n      \"item_name\": \"Tiket Masuk Wisatawan Nusantara\",\n      \"price\": 10000,\n      \"unit\": \"Per Orang\",\n      \"regulation_ref\": \"Perda No. 04 Th 2024\"\n    },\n    {\n      \"item_name\": \"Parkir Roda Empat (Mobil)\",\n      \"price\": 10000,\n      \"unit\": \"Per Mobil\",\n      \"regulation_ref\": \"Perda No. 04 Th 2024\"\n    }\n  ]\n}"
-      }
-    },
-    {
-      "_id": "req_admin_pungli_status",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "Admin Dispar: Komando Satgas Saber Pungli",
-      "url": "{{baseUrl}}/api/v1/admin/pungli/pungli-001/status",
-      "method": "PATCH",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      },
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"status\": \"verified\",\n  \"investigation_notes\": \"Petugas lapangan Satpol PP mendatangi lokasi dan menertibkan juru parkir liar.\",\n  \"penalty_action\": \"Teguran tertulis & pemulihan tarif resmi sesuai Perda\"\n}"
-      }
-    },
-    {
-      "_id": "req_admin_hazard_trigger",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "Admin Dispar: Siarkan Alert Cuaca/Bencana Jalur Ekstrem",
-      "url": "{{baseUrl}}/api/v1/admin/hazards/trigger",
-      "method": "POST",
-      "auth": {
-        "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      },
-      "body": {
-        "type": "json",
-        "raw": "{\n  \"corridor_code\": \"SITINJAU-LAUIK\",\n  \"status\": \"warning\",\n  \"weather_status\": \"Hujan Lebat\",\n  \"road_condition\": \"Truk Tronton Mogok di Tikungan Panorama 1, Buka Tutup 1 Jalur\"\n}"
-      }
-    },
-    {
-      "_id": "req_admin_benchmark",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "Admin Dispar: Live SLA Benchmark <100ms & Audit Spasial",
-      "url": "{{baseUrl}}/api/v1/admin/system/benchmark",
+      "_id": "req_02_admin_pending",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.8 Admin Dispar: Lihat Daftar Usulan Hidden Gem Menunggu Verifikasi",
+      "url": "http://localhost:8080/api/v1/admin/destinations/pending",
       "method": "GET",
       "auth": {
         "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
       }
     },
     {
-      "_id": "req_admin_cache_flush",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_admin",
-      "name": "Admin Dispar: Manual Flush In-Memory TTL Cache",
-      "url": "{{baseUrl}}/api/v1/admin/cache/flush",
-      "method": "POST",
+      "_id": "req_02_admin_verify_hidden_gem",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.9 Admin Dispar: Setujui / Verifikasi Usulan Hidden Gem",
+      "url": "http://localhost:8080/api/v1/admin/destinations/dest-021/verify",
+      "method": "PATCH",
       "auth": {
         "type": "bearer",
-        "bearer": "{{tokenAdminDispar}}"
-      }
-    },
-    {
-      "_id": "req_sec_no_token",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_security",
-      "name": "Keamanan: Tolak Akses Admin Tanpa Token (Expect 401)",
-      "url": "{{baseUrl}}/api/v1/admin/destinations/dest-021/verify",
-      "method": "PATCH",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      },
       "body": {
         "type": "json",
         "raw": "{\n  \"status\": \"verified\"\n}"
       }
     },
     {
-      "_id": "req_sec_forbidden_role",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_security",
-      "name": "Keamanan: Tolak Wisatawan Akses CRUD Admin (Expect 403)",
-      "url": "{{baseUrl}}/api/v1/admin/culture/events",
-      "method": "POST",
+      "_id": "req_02_admin_crud_destination",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.10 Admin Dispar: Update Data Destinasi (CMS)",
+      "url": "http://localhost:8080/api/v1/admin/destinations/dest-001",
+      "method": "PUT",
       "auth": {
         "type": "bearer",
-        "bearer": "{{tokenTourist}}"
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
       },
       "body": {
         "type": "json",
-        "raw": "{\n  \"title\": \"Event Ilegal\"\n}"
+        "raw": "{\n  \"name\": \"Lembah Harau (Aka Barayun & Sarasah Bunta)\",\n  \"crowd_level\": \"Ramai\"\n}"
       }
     },
     {
-      "_id": "req_emergency_contacts",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Daftar Kontak Darurat Resmi Sumbar (BPBD, PMI, Damkar)",
-      "url": "{{baseUrl}}/api/v1/spatial/emergency-contacts",
+      "_id": "req_02_admin_sync_tariffs",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_02_destinations_weather",
+      "name": "2.11 Admin Dispar: Sinkronisasi Tarif Resmi Perda Destinasi",
+      "url": "http://localhost:8080/api/v1/admin/destinations/dest-001/tariffs",
+      "method": "PUT",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      },
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"tariffs\": [\n    {\n      \"item_name\": \"Tiket Masuk Kawasan Lembah Harau\",\n      \"category\": \"tiket\",\n      \"price\": 15000,\n      \"unit\": \"per orang\",\n      \"regulation_ref\": \"Perda Kab. Lima Puluh Kota No. 7/2023\"\n    },\n    {\n      \"item_name\": \"Parkir Resmi Mobil\",\n      \"category\": \"parkir\",\n      \"price\": 5000,\n      \"unit\": \"per kendaraan\",\n      \"regulation_ref\": \"Peraturan Nagari Tarantang No. 2/2024\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_03_get_scenes360",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_03_scenes360",
+      "name": "3.1 Ambil Kanvas Foto Panorama 360° & 4 Pin Hotspot (Poin 9)",
+      "url": "http://localhost:8080/api/v1/destinations/dest-001/scenes-360",
       "method": "GET"
     },
     {
-      "_id": "req_sos_offline_sync",
-      "colId": "wisgo-be1-thunder-client",
-      "containerId": "f_wisatawan",
-      "name": "Sinkronisasi Sinyal SOS Offline (Idempotent)",
-      "url": "{{baseUrl}}/api/v1/spatial/sos",
+      "_id": "req_03_get_hotspots",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_03_scenes360",
+      "name": "3.2 Ambil Daftar Pin Hotspot pada Scene 360° Tertentu",
+      "url": "http://localhost:8080/api/v1/scenes-360/scene-harau-aerial-01/hotspots",
+      "method": "GET"
+    },
+    {
+      "_id": "req_03_admin_create_scene",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_03_scenes360",
+      "name": "3.3 Admin CMS Studio 360°: Unggah Foto Panorama Baru",
+      "url": "http://localhost:8080/api/v1/admin/scenes-360",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      },
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"title\": \"Panorama Tebing Echo Point Harau\",\n  \"type\": \"ground\",\n  \"panorama_url\": \"https://cdn.rancak.in/360/harau-echo-point.jpg\",\n  \"initial_pitch\": -5.0,\n  \"initial_yaw\": 180.0\n}"
+      }
+    },
+    {
+      "_id": "req_03_admin_add_hotspot",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_03_scenes360",
+      "name": "3.4 Admin CMS Studio 360°: Tempel Pin Interaktif (Pitch/Yaw & Voice Text)",
+      "url": "http://localhost:8080/api/v1/admin/scenes-360/scene-harau-aerial-01/hotspots",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      },
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"type\": \"fasilitas\",\n  \"title\": \"Musala & Toilet Bersih Sarasah Bunta\",\n  \"pitch\": -12.5,\n  \"yaw\": 210.0,\n  \"voice_text\": \"Di sebelah kanan terdapat fasilitas musala dan toilet bersih yang dikelola Pokdarwis Nagari.\",\n  \"description\": \"Fasilitas ibadah dan sanitasi resmi kawasan Lembah Harau.\"\n}"
+      }
+    },
+    {
+      "_id": "req_04_shunlu_post",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_04_spatial_shunlu",
+      "name": "4.1 Engine Pencarian Searah Rute Shunlu (+X Menit Detour)",
+      "url": "http://localhost:8080/api/v1/spatial/along-route",
       "method": "POST",
       "body": {
         "type": "json",
-        "raw": "{\n  \"sos_code\": \"SOS-OFFLINE-202611-001\",\n  \"is_offline_sync\": true,\n  \"tourist_name\": \"Rombongan Malalak\",\n  \"phone_number\": \"081234567890\",\n  \"emergency_type\": \"Longsor Tebing Menutup Jalan\",\n  \"latitude\": -0.32,\n  \"longitude\": 100.22,\n  \"battery_percent\": 14,\n  \"passengers_count\": 3\n}"
+        "raw": "{\n  \"origin_lat\": -0.9471,\n  \"origin_lng\": 100.4172,\n  \"destination_lat\": -0.3051,\n  \"destination_lng\": 100.3692,\n  \"category\": \"rm_padang\",\n  \"max_detour_min\": 15\n}"
+      }
+    },
+    {
+      "_id": "req_04_nearby_postgis",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_04_spatial_shunlu",
+      "name": "4.2 Query Spasial PostGIS Destinasi Terdekat dalam Radius KM",
+      "url": "http://localhost:8080/api/v1/spatial/nearby?lat=-0.3051&lng=100.3692&radius=40",
+      "method": "GET"
+    },
+    {
+      "_id": "req_04_micro_map",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_04_spatial_shunlu",
+      "name": "4.3 Peta Mikro Pejalan Kaki Kawasan Wisata (GeoJSON & Zona)",
+      "url": "http://localhost:8080/api/v1/destinations/dest-001/micro-map",
+      "method": "GET"
+    },
+    {
+      "_id": "req_04_audio_gps",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_04_spatial_shunlu",
+      "name": "4.4 Pemicu Audio Narasi Otomatis Berbasis Radius GPS (<= 15 Meter)",
+      "url": "http://localhost:8080/api/v1/spatial/audio-trigger-check",
+      "method": "POST",
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"user_lat\": -0.1023,\n  \"user_lng\": 100.6728\n}"
+      }
+    },
+    {
+      "_id": "req_04_optimize_tsp",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_04_spatial_shunlu",
+      "name": "4.5 Multi-Stop TSP Route Optimizer (Urutan Rute Terpendek Sumbar)",
+      "url": "http://localhost:8080/api/v1/routes/optimize-tsp",
+      "method": "POST",
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"start_lat\": -0.9471,\n  \"start_lng\": 100.4172,\n  \"destination_ids\": [\"dest-001\", \"dest-002\", \"dest-004\", \"dest-006\"]\n}"
+      }
+    },
+    {
+      "_id": "req_05_live_hazards",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_05_hazard_sos",
+      "name": "5.1 Radar 4 Koridor Jalur Ekstrem + Cuaca Live WeatherAPI (Poin 7.2)",
+      "url": "http://localhost:8080/api/v1/spatial/hazards",
+      "method": "GET"
+    },
+    {
+      "_id": "req_05_emergency_contacts",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_05_hazard_sos",
+      "name": "5.2 Daftar 6 Nomor Darurat Bencana Resmi Sumbar (Poin 2)",
+      "url": "http://localhost:8080/api/v1/spatial/emergency-contacts",
+      "method": "GET"
+    },
+    {
+      "_id": "req_05_admin_upsert_contact",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_05_hazard_sos",
+      "name": "5.3 Admin Dispar: Tambah / Update Kontak Darurat Resmi",
+      "url": "http://localhost:8080/api/v1/spatial/emergency-contacts",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      },
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"corridor_code\": \"SITINJAU-LAUIK\",\n  \"agency_type\": \"SAR\",\n  \"agency_name\": \"Posko Siaga Basarnas Panorama 2 Sitinjau\",\n  \"phone_number\": \"(0751) 7051115\",\n  \"whatsapp_number\": \"62811660115\",\n  \"city\": \"Kota Padang\"\n}"
+      }
+    },
+    {
+      "_id": "req_05_post_sos",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_05_hazard_sos",
+      "name": "5.4 Sinkronisasi Sinyal Darurat SOS GPS (Mode Online / Auto-Sync Offline)",
+      "url": "http://localhost:8080/api/v1/spatial/sos",
+      "method": "POST",
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"sos_code\": \"SOS-SUMBAR-901\",\n  \"tourist_name\": \"Budi Santoso\",\n  \"phone_number\": \"628127578953\",\n  \"emergency_type\": \"Kendaraan Mogok di Tanjakan Ekstrem\",\n  \"latitude\": -0.9468,\n  \"longitude\": 100.5182,\n  \"battery_percent\": 42,\n  \"passengers_count\": 3,\n  \"is_offline_sync\": true,\n  \"notes\": \"Butuh ganjal ban dan derek di dekat Panorama 1 Sitinjau Lauik.\"\n}"
+      }
+    },
+    {
+      "_id": "req_05_admin_trigger_hazard",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_05_hazard_sos",
+      "name": "5.5 Admin Dispar: Siarkan Status Bencana Jalur Ekstrem & Rute Alternatif",
+      "url": "http://localhost:8080/api/v1/admin/hazards/trigger",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      },
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"corridor_code\": \"SITINJAU-LAUIK\",\n  \"severity\": \"Siaga\",\n  \"hazard_type\": \"Hujan Lebat & Kabut Tebal\",\n  \"weather_status\": \"Hujan Lebat (19°C)\",\n  \"message\": \"Jarak pandang di bawah 15 meter di Panorama 1, sistem buka-tutup aktif.\",\n  \"detour_route\": \"Gunakan jalur alternatif Padang - Padang Panjang - Solok.\"\n}"
+      }
+    },
+    {
+      "_id": "req_06_smart_qr",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_06_pungli_qr",
+      "name": "6.1 Scan Plang Smart QR Fisik Destinasi (Cek Tarif Resmi Perda)",
+      "url": "http://localhost:8080/api/v1/qr/QR-SMBR-LPK-001",
+      "method": "GET"
+    },
+    {
+      "_id": "req_06_report_pungli",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_06_pungli_qr",
+      "name": "6.2 Wisatawan: Lapor Aduan Pungli Anonim (+ Komparasi Selisih Perda)",
+      "url": "http://localhost:8080/api/v1/pungli/report",
+      "method": "POST",
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"destination_id\": \"dest-001\",\n  \"reporter_name\": \"Wisatawan Anonim\",\n  \"incident_category\": \"parkir_liar\",\n  \"charged_amount_idr\": 25000,\n  \"photo_evidence\": \"https://cdn.rancak.in/evidence/karcis-parkir-liar.jpg\",\n  \"latitude\": -0.1025,\n  \"longitude\": 100.6725,\n  \"description\": \"Diminta tarif parkir mobil Rp 25.000 tanpa karcis resmi Perda (tarif resmi Rp 5.000).\"\n}"
+      }
+    },
+    {
+      "_id": "req_06_admin_update_pungli",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_06_pungli_qr",
+      "name": "6.3 Admin Satgas Saber Pungli: Verifikasi & Tindak Lanjut Tiket Pungli",
+      "url": "http://localhost:8080/api/v1/admin/pungli/pungli-001/status",
+      "method": "PATCH",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      },
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"status\": \"Ditindaklanjuti\",\n  \"satgas_notes\": \"Tim Satgas Saber Pungli dan Dishub telah menertibkan oknum juru parkir liar di lokasi.\"\n}"
+      }
+    },
+    {
+      "_id": "req_07_minang_phrases",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_07_culture_gaode",
+      "name": "7.1 Ambil Kamus Saku Audio Bahasa Minang (Kato Nan Ampek)",
+      "url": "http://localhost:8080/api/v1/culture/minang-phrases",
+      "method": "GET"
+    },
+    {
+      "_id": "req_07_culture_events",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_07_culture_gaode",
+      "name": "7.2 Ambil Kalender Budaya & Jadwal Hari Pakan Nagari",
+      "url": "http://localhost:8080/api/v1/culture/events",
+      "method": "GET"
+    },
+    {
+      "_id": "req_07_vendor_create_event",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_07_culture_gaode",
+      "name": "7.3 Vendor / Admin: Input Event Festival Budaya Baru",
+      "url": "http://localhost:8080/api/v1/culture/events",
+      "method": "POST",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXZlbmRvci0wMSIsIm5hbWUiOiJTYW5nZ2FyIEJ1ZGF5YSBNaW5hbmcgKFZlbmRvcikiLCJyb2xlIjoidmVuZG9yIn0.rancakin_sig_vendor"
+      },
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"title\": \"Festival Hoyak Tabuik Pariaman 2026\",\n  \"event_type\": \"Festival Budaya\",\n  \"nagari_location\": \"Pantai Gandoriah\",\n  \"city_regency\": \"Kota Pariaman\",\n  \"schedule_rule\": \"Puncak 10 Muharram\",\n  \"next_event_date\": \"2026-07-26\",\n  \"latitude\": -0.6264,\n  \"longitude\": 100.1190,\n  \"highlight_item\": \"Prosesi arak-arakan Tabuik Pasa dan Tabuik Subarang menuju Pantai Gandoriah.\",\n  \"cultural_etiquette\": \"Berpakaian sopan dan ikuti arahan ninik mamak serta panitia nagari.\"\n}"
+      }
+    },
+    {
+      "_id": "req_07_gaode_rankings",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_07_culture_gaode",
+      "name": "7.4 Leaderboard Gaode Behavior Ranking & Rekalkulasi Bobot",
+      "url": "http://localhost:8080/api/v1/rankings/gaode/recalculate",
+      "method": "POST"
+    },
+    {
+      "_id": "req_08_notifications_broadcast",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_08_system_security",
+      "name": "8.1 Broadcast Notifikasi In-App ke Wisatawan (Tabel notifikasi BE-1)",
+      "url": "http://localhost:8080/api/v1/notifications/broadcast",
+      "method": "POST",
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"user_id\": \"usr-001\",\n  \"notification_type\": \"HAZARD_ALERT\",\n  \"title\": \"Siaga Cuaca Jalur Sitinjau Lauik\",\n  \"message\": \"Hujan lebat terdeteksi via WeatherAPI di Panorama 1. Gunakan gigi rendah dan jaga jarak aman.\",\n  \"reference_id\": \"SITINJAU-LAUIK\"\n}"
+      }
+    },
+    {
+      "_id": "req_08_sla_benchmark",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_08_system_security",
+      "name": "8.2 Admin Dispar: Uji Beban Live SLA Benchmark (<100ms) + Catat api_telemetry_logs",
+      "url": "http://localhost:8080/api/v1/admin/system/benchmark",
+      "method": "GET",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluLWRpc3Bhci0wMSIsIm5hbWUiOiJBZG1pbiBEaXNwYXIgU3VtYmFyIChGUy0xKSIsInJvbGUiOiJhZG1pbl9kaXNwYXIifQ.rancakin_sig_admin"
+      }
+    },
+    {
+      "_id": "req_08_security_negative_403",
+      "colId": "wisgo-be1-thunder-client-v3",
+      "containerId": "f_08_system_security",
+      "name": "8.3 Uji Keamanan RBAC: Tolak Token Wisatawan di Endpoint Admin (Expect 403 Forbidden)",
+      "url": "http://localhost:8080/api/v1/admin/destinations/dest-001",
+      "method": "DELETE",
+      "auth": {
+        "type": "bearer",
+        "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXRvdXJpc3QtMDEiLCJuYW1lIjoiUml6a3kgUHJhdGFtYSAoV2lzYXRhd2FuKSIsInJvbGUiOiJ0b3VyaXN0In0.rancakin_sig_tourist"
       }
     }
   ]
